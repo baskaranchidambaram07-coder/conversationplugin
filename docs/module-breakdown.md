@@ -416,7 +416,8 @@ State on 12 November 2026 (pull requests 26 to 31 into `module/m04-conversation-
   - recovering an answer whose gateway stopped mid-turn: it is marked failed after 6 minutes.
 - Latency (`backend/loadtest.py`): with 10 visitors at once the gateway adds 36 ms at the median and 76 ms at the 95th percentile to the first word, within the 150 ms budget.
   - Beyond about 15 visitors, the build machine saturates its four processors. It runs the load generator, the fake PF, PostgreSQL and other work at the same time, so the figure then measures the machine, not the gateway.
-  - On the pipeline's own runner, with 25 visitors at once, the gateway adds 25 ms at the median and 111 ms at the 95th percentile (first run, 12 November 2026). That run meets the done condition's latency budget.
+  - On the pipeline's own runner, with 25 visitors at once, the gateway adds 20 to 33 ms at the median and 79 to 94 ms at the 95th percentile, over three runs on 12 November 2026. That meets the done condition's latency budget.
+  - An earlier version did not always meet it: one run reached 167 ms. A profile showed the gateway's code idle and waiting on the database, so a turn now starts in four statements instead of nine, and the connection pool is larger and steady.
   - A test against a deployed instance from a separate machine belongs with M14.
 - For M5: sessions use `ucp.sessions.Keys` (HS256, rotating by `kid`) and `Session(user_id, tenant_id, widget_id, config_version, mode)`. `POST /v1/sessions` refuses a host token with `forbidden` until M5 verifies it. Each widget's `sign_in` is `anonymous`, `signed_in` or `both`.
 - For M6: keep the four connector events, and end each `send` with exactly one `Final` or `Failed`. Profiles come from `UCP_AGENT_PROFILES`.
