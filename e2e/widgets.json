@@ -20,7 +20,10 @@
         "http://127.0.0.1:4174"
       ],
       "sign_in": "anonymous",
-      "agent_profile": "fake-pf"
+      "agent_profile": "fake-pf",
+      "limits": {
+        "sessions_per_minute_per_address": 1000
+      }
     },
     "w_load": {
       "tenant_id": "t_load",
@@ -74,6 +77,9 @@
         "provider": "college-portal",
         "issuer": "https://portal.example.ac.uk",
         "secret": "portal-test"
+      },
+      "limits": {
+        "sessions_per_minute_per_address": 1000
       }
     }
   },

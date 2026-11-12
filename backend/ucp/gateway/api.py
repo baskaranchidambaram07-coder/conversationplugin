@@ -69,7 +69,8 @@ async def start_session(body: protocol.SessionRequest, request: Request) -> prot
     if not widget:
         raise Problem("not_found")
     address = request.client.host if request.client else "unknown"
-    limiter.check(f"sessions:{address}", widget.document.limits.sessions_per_minute_per_address)
+    # Counted per widget, as each widget sets its own limit.
+    limiter.check(f"sessions:{widget.widget_id}:{address}", widget.document.limits.sessions_per_minute_per_address)
     document, keys = widget.document, _keys(request)
     if body.host_token is None:
         if document.sign_in == "signed_in":
