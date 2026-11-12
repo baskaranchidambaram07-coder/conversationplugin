@@ -20,12 +20,14 @@ from sqlalchemy import (
     Table,
     Text,
     UniqueConstraint,
+    delete,
     func,
     insert,
     select,
     update,
 )
 from sqlalchemy.dialects.postgresql import JSONB
+from sqlalchemy.dialects.postgresql import insert as pg_insert
 from sqlalchemy.ext.asyncio import AsyncEngine
 
 from ucp.protocol import ApiError, Block, Conversation, Message
@@ -95,6 +97,25 @@ STALE_ERROR = {
     "retry_after": None,
     "reference": "r_abandoned",
 }
+
+identities = Table(
+    "identities",
+    metadata,
+    Column("tenant_id", Text, primary_key=True),
+    Column("provider", Text, primary_key=True),
+    Column("subject", Text, primary_key=True),  # the host's ID for the user: never an email address or a name
+    Column("user_id", Text, nullable=False, unique=True),
+    Column("created_at", DateTime(timezone=True), nullable=False, server_default=func.now()),
+)
+
+used_host_tokens = Table(
+    "used_host_tokens",
+    metadata,
+    Column("widget_id", Text, primary_key=True),
+    Column("token_hash", Text, primary_key=True),  # a hash of the token's jti, kept until the token expires
+    Column("expires_at", DateTime(timezone=True), nullable=False),
+    Index("used_host_tokens_by_expiry", "expires_at"),
+)
 
 
 def new_id(prefix: str) -> str:
@@ -167,6 +188,32 @@ class Store:
             .limit(1)
         )
         return (await db.execute(query)).first()
+
+    # Signed-in visitors (M5)
+
+    async def user_for(self, tenant_id: str, provider: str, subject: str) -> str:
+        """Our user ID for a host's user, the same every time they come back. Made on first sight."""
+        row = {"tenant_id": tenant_id, "provider": provider, "subject": subject, "user_id": new_id("u")}
+        query = (
+            pg_insert(identities)
+            .values(row)
+            .on_conflict_do_update(index_elements=["tenant_id", "provider", "subject"], set_={"subject": subject})
+            .returning(identities.c.user_id)
+        )
+        async with self.engine.begin() as db:
+            return (await db.execute(query)).scalar_one()
+
+    async def use_host_token(self, widget_id: str, token_hash: str, expires_at: datetime) -> bool:
+        """Records a host token as used. False if it was used before, which makes it a replay."""
+        query = (
+            pg_insert(used_host_tokens)
+            .values(widget_id=widget_id, token_hash=token_hash, expires_at=expires_at)
+            .on_conflict_do_nothing()
+            .returning(used_host_tokens.c.token_hash)
+        )
+        async with self.engine.begin() as db:
+            await db.execute(delete(used_host_tokens).where(used_host_tokens.c.expires_at < func.now()))
+            return (await db.execute(query)).first() is not None
 
     # Conversations
 

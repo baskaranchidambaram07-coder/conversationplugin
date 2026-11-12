@@ -59,6 +59,10 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     pipeline.install(app)
     app.state.keys = Keys(settings.session_keys) if settings.session_keys else None
     app.state.limiter = Limiter()
+    app.state.host_secrets = {
+        name: Keys(value).keys for name, value in json.loads(settings.host_secrets or "{}").items()
+    }
+    app.state.signed_in_seconds = settings.signed_in_seconds
     app.include_router(public.router)
     app.include_router(api.router)
     if settings.web_dir:

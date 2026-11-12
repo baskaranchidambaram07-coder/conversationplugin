@@ -12,6 +12,8 @@ class Settings:
     web_dir: Path | None = None  # the built loader and chat: web/loader/dist and web/widget/dist below it
     session_keys: str | None = None  # "id:secret,id:secret", the first signs (ucp.sessions.Keys)
     agent_profiles: str | None = None  # JSON: {"profile name": {PF connection, see ucp.pf.PfProfile}}
+    host_secrets: str | None = None  # JSON: {"secret name": "id:secret,id:secret"}, for widgets' host tokens
+    signed_in_seconds: int = 900  # a signed-in session; the chat renews it through the host's getToken
 
     @classmethod
     def from_env(cls) -> "Settings":
@@ -21,4 +23,6 @@ class Settings:
             web_dir=Path(web_dir) if web_dir else None,
             session_keys=os.environ.get("UCP_SESSION_KEYS"),
             agent_profiles=os.environ.get("UCP_AGENT_PROFILES"),
+            host_secrets=os.environ.get("UCP_HOST_SECRETS"),
+            signed_in_seconds=int(os.environ.get("UCP_SIGNED_IN_SECONDS", "900")),
         )

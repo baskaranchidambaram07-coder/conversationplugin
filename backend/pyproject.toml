@@ -10,8 +10,8 @@ dependencies = [
     "asyncpg>=0.30",
     "pydantic>=2.14",
     "alembic>=1.16",
-    "pyjwt>=2.10",
     "httpx2>=2.16",
+    "pyjwt[crypto]>=2.10",
 ]
 
 [dependency-groups]
