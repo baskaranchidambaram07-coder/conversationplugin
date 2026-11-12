@@ -18,7 +18,7 @@ from ucp.gateway.pipeline import Problem
 
 ALGORITHM = "HS256"
 ANONYMOUS_SECONDS = 3600
-LEEWAY = 30  # seconds of clock difference between gateway instances
+LEEWAY = 5  # seconds of clock difference between gateway instances, which share a synced clock
 
 
 @dataclass(frozen=True)

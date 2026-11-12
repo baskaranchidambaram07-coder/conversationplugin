@@ -162,8 +162,32 @@ async function gateway(request, response, path) {
   return json(response, 404, problem("not_found"));
 }
 
+// A stand-in for a customer's backend, on the host's own origin: it signs a host token for the signed-in user
+// named in the address, with the Node snippet a customer would copy (examples/token-signing), and counts calls.
+const portal = JSON.parse(await readFile(new URL("e2e/widgets.json", root), "utf8"));
+const [secretId, secret] = portal.test_host_secrets["portal-test"].split(":");
+Object.assign(process.env, {
+  UCP_WIDGET_SECRET: secret,
+  UCP_SECRET_ID: secretId,
+  UCP_ISSUER: portal.widgets.w_portal.identity.issuer,
+  UCP_WIDGET_ID: "w_portal",
+});
+const { widgetToken } = await import(new URL("examples/token-signing/node/sign.mjs", root));
+const tokenCalls = {};
+
+function portalBackend(url, response) {
+  const user = url.searchParams.get("user");
+  if (url.pathname === "/portal/calls") return json(response, 200, tokenCalls);
+  if (!user) return json(response, 401, { error: "not signed in" });
+  tokenCalls[user] = (tokenCalls[user] ?? 0) + 1;
+  response.writeHead(200, { "content-type": "text/plain", "cache-control": "no-store" });
+  response.end(widgetToken(user));
+}
+
 createServer(async (request, response) => {
-  const path = new URL(request.url, "http://x").pathname;
+  const url = new URL(request.url, "http://x");
+  const path = url.pathname;
+  if (path.startsWith("/portal/")) return portalBackend(url, response);
   if (path.startsWith("/v1/") && !path.endsWith("/config")) return gateway(request, response, path);
   const [status, type, body, headers] = await file(path).catch(() => [404, "text/plain", "not found"]);
   // The configuration is public and read from the customer's page, so any origin may read it, without cookies.
