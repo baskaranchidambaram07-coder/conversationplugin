@@ -1,0 +1,32 @@
+{
+  "detector": {
+    "ignoreRules": [],
+    "ignoreFiles": [],
+    "ignoreValues": [
+      {
+        "rule": "icon-tile-stack",
+        "value": "*",
+        "files": [
+          ".impeccable/mocks/decision/challenger-wayfinding.html"
+        ],
+        "createdAt": "2026-11-12T12:23:28.946Z",
+        "reason": "Claude decided: the pictogram inset sits beside the heading in a flex row (airport sign-band grammar), not stacked above it; throwaway decision sketch"
+      },
+      {
+        "rule": "bounce-easing",
+        "value": "cubic-bezier(.34, 1.56, .64, 1)",
+        "createdAt": "2026-11-12T12:31:19.872Z",
+        "reason": "Claude decided: the direction contract's signature soft spring on launcher press release (Warm Consumer App world, chosen by the user); never on entry; removed under reduced motion"
+      },
+      {
+        "rule": "cream-palette",
+        "value": "*",
+        "files": [
+          "e2e/chat-stub.html"
+        ],
+        "createdAt": "2026-11-12T12:31:27.408Z",
+        "reason": "User chose the Warm Consumer App world (warm tinted ground) on the decision page on 2026-11-12; the stand-in chat page paints that world's ground"
+      }
+    ]
+  }
+}

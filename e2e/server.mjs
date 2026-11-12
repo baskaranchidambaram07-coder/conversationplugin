@@ -19,6 +19,8 @@ async function answer(path) {
     const body = configs[config[1]];
     return body ? [200, "application/json", JSON.stringify(body)] : [404, "application/json", "{}"];
   }
+  // A stand-in for the chat page (module M2), so the loader can be tested on its own.
+  if (/^\/embed\/[\w-]+$/.test(path)) return [200, types.html, await readFile(new URL("e2e/chat-stub.html", root))];
   const page = path.match(/^\/hosts\/([a-z-]+)\.html$/);
   if (page) return [200, types.html, await readFile(new URL(`e2e/hosts/${page[1]}.html`, root))];
   return [404, "text/plain", "not found"];
