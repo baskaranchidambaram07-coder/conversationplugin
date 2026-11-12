@@ -52,7 +52,7 @@ Points that matter for the connector:
 - **Two different IDs share one field name.** `MESSAGE_DETAILS` gives the real `message_id` and a separate `message_content_id`. Events 4 to 8 carry a field called `message_id` that actually holds the content ID. Only the ID from `MESSAGE_DETAILS` works with the fetch call; the other returns HTTP 500.
 - **Every event carries identifiers.** Events 3 to 8 carry the agent version ID and conversation ID, and event 3 carries the workspace ID. Event 7 carries cost and token counts. None of this may reach the browser.
 - **Each word event is large.** About 220 bytes carry a few characters of text. The gateway re-sends them in a compact form.
-- **Words arrive in a burst, not a trickle.** See section 7.
+- **Short answers arrive at once; long answers stream steadily.** See section 7.
 
 ## 5. Sending without a stream, and fetching the answer
 
@@ -71,8 +71,9 @@ Points that matter for the connector:
 - **Rate limit:** 5,000 calls a minute, reported in `ratelimit-limit`, `ratelimit-remaining` and `ratelimit-reset` headers on each response.
 - **Context window reported:** 922,000 tokens. The model is from the Claude Sonnet family, one version behind the latest, by Intellect's standing preference.
 - **First event:** 30 to 70 milliseconds after the request.
-- **First word of the answer:** about 3 to 5 seconds.
-- **Words arrive together.** In a long answer the model worked for 4.1 seconds. The stream was silent for 3.8 seconds after the start event, then all 203 word events arrived within a third of a second. Short answers behaved the same way.
+- **First word of the answer:** about 2 to 5 seconds.
+- **Short answers arrive at once.** Where the model finished within a few seconds, all the word events arrived together at the end.
+- **Long answers stream steadily.** With a second staging agent that answers at length, a 6,100-character answer arrived as 452 events over 23 seconds, and a 3,000-character answer as 207 events over 10 seconds. The pace was even, about 20 events a second, each carrying about 13 characters.
 - **After the last word:** the end event followed after 0.5 to 1.3 seconds and the final event a quarter of a second later.
 
 ## 8. Error shapes
@@ -95,7 +96,7 @@ There are four, and only one of them uses the HTTP status in the normal way.
 | PF completes an answer after a hang-up, and the fetch call returns it | A dropped stream is recovered by fetching the answer. No resume logic is needed. | M4-T7, M6-T4 |
 | Hanging up cancels nothing | The stop button stops the display only. The answer is still stored and marked as stopped, so our transcript matches what the agent remembers. | M4-T7, M2-T4 |
 | Events carry identifiers, cost and counts | The allow-list forwards answer text only. Counts and cost go to usage metering. | D15, M13-T5 |
-| Short answers arrive in one burst after seconds of silence | The chat shows a working state from PF's first notice. Longer answers are expected to stream; that needs a test with an agent that answers at length. | M2-T5 |
+| The first word takes 2 to 5 seconds; long answers then stream at about 20 events a second | The chat shows a working state from PF's first notice, and redraws at most about 20 times a second while an answer streams. | M2-T5, M2-T6 |
 | Send-then-poll exists | It is the fallback transport. | D2 |
 | Answers are Markdown and fenced blocks survive | The fenced-block convention for charts and diagrams works without any change to PF. | D9 |
 | The record has fields for file references, generated images and files, sources and citations | The message format reserves image, file and sources blocks. Attachments look feasible. | M0-T3, M10 |
@@ -109,7 +110,7 @@ Answered on 12 November 2026:
 
 - Conversations are not to be deleted for now.
 - PF has no call to cancel a reply in progress.
-- Short answers arrive at once; longer answers stream. The staging agent kept every answer short, even when asked for 600 words, so a streamed long answer has not been observed yet.
+- Short answers arrive at once; longer answers stream. Confirmed the same day with a second staging agent that answers at length (section 7).
 
 Still open:
 
@@ -124,4 +125,6 @@ Still open:
 
 The raw streams and results are in `spikes/pf_capture_out/`, which is excluded from version control because the files contain staging identifiers. Cleaned copies will become the test data for the fake PF and the connector tests.
 
-The captures created four test conversations in the staging workspace. Their names start with `ucp-capture-` and `ucp-probe-`, and they can be deleted.
+The long answers are the main samples for the fake PF and the renderer tests. One of them contains headings, an eleven-row table, a code block and a diagram block, all of which came through unchanged.
+
+The captures created six test conversations in the staging workspace. Their names start with `ucp-capture-` and `ucp-probe-`, and they can be deleted.
