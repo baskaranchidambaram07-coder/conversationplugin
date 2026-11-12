@@ -9,6 +9,7 @@ import { type Bridge, connect, type Mode } from "./chat/bridge";
 import { type Problem, problemOf } from "./chat/problem";
 import { type Answer, pending } from "./chat/state";
 import { runTurn } from "./chat/turn";
+import { BlockView } from "./render/registry";
 import { strings as t } from "./strings";
 
 const LIMIT = 4000;
@@ -367,13 +368,6 @@ function TurnView({
       </article>
     </div>
   );
-}
-
-function BlockView({ block }: { block: Block }) {
-  const content = typeof block.text === "string" ? block.text : "";
-  // Markdown shows as plain text until the rendering engine (M3) draws it.
-  if (block.type === "text" || block.type === "markdown") return content ? <p className="text">{content}</p> : null;
-  return <p className="text unknown">{content || t.unknownBlock}</p>;
 }
 
 function ProblemNote({ problem, action, onAction }: { problem: Problem; action?: string; onAction?: () => void }) {
