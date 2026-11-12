@@ -1,6 +1,7 @@
-// Serves the loader tests. Host pages are opened on http://127.0.0.1:4174 and load our side (the loader, the
-// widget configuration and, later, the chat page) from http://localhost:4174: two origins, as in production,
-// where the customer's site and ours never share one.
+// Serves the browser tests. Host pages are opened on http://127.0.0.1:4174 and load our side from
+// http://localhost:4174: two origins, as in production, where the customer's site and ours never share one.
+// Our side is the built loader, the built chat page, widget configurations, and a fake gateway that speaks the
+// API in backend/ucp/protocol.py until the real one (module M4) exists.
 import { readFile } from "node:fs/promises";
 import { createServer } from "node:http";
 
@@ -9,29 +10,124 @@ const example = JSON.parse(await readFile(new URL("protocol/examples/v1/WidgetCo
 const configs = {
   w_test: { ...example, widget_id: "w_test" },
   w_left: { ...example, widget_id: "w_left", launcher_position: "bottom-left" },
+  w_chat: { ...example, widget_id: "w_chat" },
 };
-const types = { html: "text/html; charset=utf-8", js: "text/javascript; charset=utf-8" };
+// These widgets open the stand-in chat (e2e/chat-stub.html), which lets the loader be tested on its own.
+const STAND_IN = new Set(["w_test", "w_left"]);
+const types = {
+  html: "text/html; charset=utf-8",
+  js: "text/javascript; charset=utf-8",
+  css: "text/css; charset=utf-8",
+  woff2: "font/woff2",
+  json: "application/json",
+};
 
-async function answer(path) {
+// The long answer is the one Purple Fabric gave in the recording the fake PF replays.
+const long = (await readFile(new URL("backend/fakepf/recordings/long.sse", root), "utf8"))
+  .split("\n")
+  .filter((line) => line.includes('"FINAL_RESPONSE"'))
+  .map((line) => JSON.parse(line.slice(6)).content.response)[0];
+const SHORT = "The library is open from 10:00 to 18:00 on Sundays. In exam weeks it stays open until 22:00.";
+
+async function file(path) {
   if (path === "/loader.js") return [200, types.js, await readFile(new URL("web/loader/dist/loader.js", root))];
   const config = path.match(/^\/v1\/widgets\/([\w-]+)\/config$/);
   if (config) {
     const body = configs[config[1]];
-    return body ? [200, "application/json", JSON.stringify(body)] : [404, "application/json", "{}"];
+    return body ? [200, types.json, JSON.stringify(body)] : [404, types.json, "{}"];
   }
-  // A stand-in for the chat page (module M2), so the loader can be tested on its own.
-  if (/^\/embed\/[\w-]+$/.test(path)) return [200, types.html, await readFile(new URL("e2e/chat-stub.html", root))];
+  const embed = path.match(/^\/embed\/([\w-]+)$/);
+  if (embed && STAND_IN.has(embed[1])) return [200, types.html, await readFile(new URL("e2e/chat-stub.html", root))];
+  if (embed) return [200, types.html, await readFile(new URL("web/widget/dist/index.html", root))];
+  const asset = path.match(/^\/assets\/([\w.-]+)\.(js|css|woff2)$/);
+  if (asset) return [200, types[asset[2]], await readFile(new URL(`web/widget/dist/assets/${asset[1]}.${asset[2]}`, root))];
   const page = path.match(/^\/hosts\/([a-z-]+)\.html$/);
   if (page) return [200, types.html, await readFile(new URL(`e2e/hosts/${page[1]}.html`, root))];
   return [404, "text/plain", "not found"];
 }
 
+// The fake gateway. Words in a message pick a behaviour, as the fake PF does: [long], [slow], [busy], [fail].
+let next = 0;
+const id = (prefix) => `${prefix}_${(++next).toString(36)}`;
+const sessions = new Set();
+const messages = new Map();
+const problem = (code) => ({ code, message: "test gateway", retryable: true, retry_after: null, reference: id("r") });
+
+function json(response, status, body) {
+  response.writeHead(status, { "content-type": types.json, "cache-control": "no-store" });
+  response.end(JSON.stringify(body));
+}
+
+async function readBody(request) {
+  let text = "";
+  for await (const chunk of request) text += chunk;
+  try {
+    return JSON.parse(text);
+  } catch {
+    return null;
+  }
+}
+
+async function stream(response, conversationId, body) {
+  const envelope = { v: 1, conversation_id: conversationId, message_id: id("m"), correlation_id: id("r") };
+  const text = body.text.includes("[long]") ? long : SHORT;
+  const record = { id: envelope.message_id, role: "assistant", status: "in_progress", blocks: [], error: null };
+  messages.set(envelope.message_id, { ...record, created_at: new Date().toISOString().replace(/\.\d+Z$/, "Z") });
+  response.writeHead(200, { "content-type": "text/event-stream", "cache-control": "no-store" });
+  let seq = 0;
+  const send = (event) => response.write(`data: ${JSON.stringify({ ...envelope, seq: seq++, ...event })}\n\n`);
+  const pause = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+  response.write(": ping\n\n");
+  send({ type: "message.started" });
+  await pause(body.text.includes("[slow]") ? 5000 : 400); // a moment of "finding an answer"
+  send({ type: "content_block.started", index: 0, block: { type: "markdown", text: "" } });
+  const words = text.match(/\S+\s*/g) ?? [];
+  for (let at = 0; at < words.length; at += 3) {
+    if (body.text.includes("[fail]") && at >= 6) {
+      send({ type: "message.failed", error: problem("assistant_unavailable") });
+      return response.end();
+    }
+    send({ type: "content_block.delta", index: 0, text: words.slice(at, at + 3).join("") });
+    await pause(25);
+  }
+  const block = { type: "markdown", text };
+  send({ type: "content_block.completed", index: 0, block });
+  send({ type: "message.completed" });
+  messages.set(envelope.message_id, { ...messages.get(envelope.message_id), status: "complete", blocks: [block] });
+  response.end();
+}
+
+async function gateway(request, response, path) {
+  if (request.method === "POST" && path === "/v1/sessions") {
+    const body = await readBody(request);
+    if (!body || !configs[body.widget_id]) return json(response, 400, problem("invalid_request"));
+    const token = id("s");
+    sessions.add(token);
+    return json(response, 200, { token, expires_in: 3600 });
+  }
+  if (!sessions.has((request.headers.authorization ?? "").replace(/^Bearer /, ""))) {
+    return json(response, 401, problem("session_expired"));
+  }
+  if (request.method === "POST" && path === "/v1/conversations") {
+    const now = new Date().toISOString().replace(/\.\d+Z$/, "Z");
+    return json(response, 201, { id: id("c"), title: null, created_at: now, updated_at: now });
+  }
+  const send = path.match(/^\/v1\/conversations\/([\w-]+)\/messages$/);
+  if (request.method === "POST" && send) {
+    const body = await readBody(request);
+    if (typeof body?.text !== "string" || !/\S/.test(body.text)) return json(response, 400, problem("invalid_request"));
+    if (body.text.includes("[busy]")) return json(response, 429, { ...problem("rate_limited"), retry_after: 30 });
+    return stream(response, send[1], body);
+  }
+  const read = path.match(/^\/v1\/conversations\/[\w-]+\/messages\/([\w-]+)$/);
+  if (request.method === "GET" && read && messages.has(read[1])) return json(response, 200, messages.get(read[1]));
+  return json(response, 404, problem("not_found"));
+}
+
 createServer(async (request, response) => {
-  const [status, type, body] = await answer(new URL(request.url, "http://x").pathname).catch(() => [
-    404,
-    "text/plain",
-    "not found",
-  ]);
+  const path = new URL(request.url, "http://x").pathname;
+  if (path.startsWith("/v1/") && !path.endsWith("/config")) return gateway(request, response, path);
+  const [status, type, body] = await file(path).catch(() => [404, "text/plain", "not found"]);
   // The configuration is public and read from the customer's page, so any origin may read it, without cookies.
   response.writeHead(status, { "content-type": type, "access-control-allow-origin": "*", "cache-control": "no-store" });
   response.end(body);
