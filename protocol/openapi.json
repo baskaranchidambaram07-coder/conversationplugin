@@ -8,6 +8,7 @@
     "/healthz": {
       "get": {
         "summary": "Healthz",
+        "description": "The process is up. The load balancer restarts a task that stops answering.",
         "operationId": "healthz_healthz_get",
         "responses": {
           "200": {
@@ -20,6 +21,29 @@
                   },
                   "type": "object",
                   "title": "Response Healthz Healthz Get"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/readyz": {
+      "get": {
+        "summary": "Readyz",
+        "description": "The gateway can serve: its database answers.",
+        "operationId": "readyz_readyz_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": {
+                    "type": "string"
+                  },
+                  "type": "object",
+                  "title": "Response Readyz Readyz Get"
                 }
               }
             }

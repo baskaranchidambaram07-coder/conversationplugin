@@ -1,18 +1,57 @@
 """Conversation gateway: the public runtime API (M4)."""
 
-from fastapi import FastAPI
+from contextlib import asynccontextmanager
+
+from fastapi import FastAPI, Request
+from sqlalchemy import text
+from sqlalchemy.ext.asyncio import create_async_engine
 
 from ucp.gateway import pipeline
+from ucp.gateway.pipeline import Problem
+from ucp.settings import Settings
+from ucp.store import Store
 
 
-def create_app() -> FastAPI:
+def create_app(settings: Settings | None = None) -> FastAPI:
+    settings = settings or Settings.from_env()
+
+    @asynccontextmanager
+    async def lifespan(app: FastAPI):
+        engine = create_async_engine(settings.database_url, pool_size=10, max_overflow=10, pool_pre_ping=True)
+        app.state.store = Store(engine)
+        try:
+            yield
+        finally:
+            await engine.dispose()
+
     # The API description is exported to protocol/openapi.json (ucp.gateway.openapi), never served: the gateway is
     # public and describes nothing about itself.
-    app = FastAPI(title="Conversation Gateway", version="1", docs_url=None, redoc_url=None, openapi_url=None)
+    app = FastAPI(
+        title="Conversation Gateway",
+        version="1",
+        docs_url=None,
+        redoc_url=None,
+        openapi_url=None,
+        lifespan=lifespan if settings.database_url else None,
+    )
     pipeline.install(app)
 
     @app.get("/healthz")
     async def healthz() -> dict[str, str]:
+        """The process is up. The load balancer restarts a task that stops answering."""
+        return {"status": "ok"}
+
+    @app.get("/readyz")
+    async def readyz(request: Request) -> dict[str, str]:
+        """The gateway can serve: its database answers."""
+        store: Store | None = getattr(request.app.state, "store", None)
+        if not store:
+            raise Problem("assistant_unavailable", retryable=True)
+        try:
+            async with store.engine.connect() as db:
+                await db.execute(text("select 1"))
+        except Exception as error:
+            raise Problem("assistant_unavailable", retryable=True) from error
         return {"status": "ok"}
 
     return app
