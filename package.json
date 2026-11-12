@@ -2,6 +2,7 @@
   "name": "conversationplugin",
   "private": true,
   "workspaces": [
+    "protocol",
     "web/loader",
     "web/widget",
     "e2e"
