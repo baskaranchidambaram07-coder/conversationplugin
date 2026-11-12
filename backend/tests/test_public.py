@@ -21,7 +21,7 @@ def document(**changes) -> dict:
         "tenant_id": "t_college",
         "public": PUBLIC,
         "allowed_domains": ["https://www.example.org", "https://*.example.ac.uk"],
-        "sign_in": "both",
+        "sign_in": "anonymous",
         "agent_profile": "pf-staging",
         **changes,
     }
