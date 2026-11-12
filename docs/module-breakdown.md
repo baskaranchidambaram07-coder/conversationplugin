@@ -434,11 +434,11 @@ What this tells us:
 - Every stream event carries the agent and conversation IDs, one carries the workspace ID, and the final event carries token counts and cost. This is exactly what R13 keeps out of the browser. The counts and cost feed usage metering (M13).
 - A fenced diagram block and a Markdown table came through PF unchanged, which supports D9.
 - Staging allows 5,000 calls a minute and reports the remaining allowance in response headers.
-- The first word of an answer took 3 to 5 seconds, and the words then arrived in one burst instead of a trickle. The chat must show a working state from PF's first notice.
+- The first word of an answer takes 2 to 5 seconds. Short answers then arrive at once; long answers stream steadily at about 20 small events a second. The chat must show a working state from PF's first notice.
 - The conversation name is visible inside PF, so it carries our opaque conversation ID and no personal data.
 - We take the calls and field names from the snippet and write the connector fresh. The snippet shares one token across the whole process, assumes the token lifetime, fixes the tenant name in the address and waits for the whole reply before returning. None of that suits a multi-tenant streaming gateway.
 
-Answered by you on 12 November 2026: conversations are not deleted for now; PF has no call to cancel a reply; short answers arrive at once and longer answers stream. The staging agent kept every answer short, even when asked for 600 words, so a streamed long answer has not been observed yet.
+Answered by you on 12 November 2026: conversations are not deleted for now; PF has no call to cancel a reply; short answers arrive at once and longer answers stream. The last point was confirmed the same day with a second staging agent that answers at length.
 
 Still to ask the PF team, because a capture cannot answer these:
 
@@ -806,7 +806,6 @@ Proceeding with the recommended default unless you object: Terraform (D13); auto
 | Risk | Effect | Mitigation |
 |---|---|---|
 | Conversations are not deleted for now, and PF cannot cancel a reply | A request to erase someone's data has to be handled by your team by hand; a stopped answer still runs and is remembered | Agree the purge policy before production; a stopped answer is stored and marked as stopped |
-| A long answer has not been seen streaming, because the staging agent answers briefly | The streaming display is untested against a real long answer | Show a working state from PF's first notice; test with an agent that answers at length before the customer sandbox opens |
 | Ten days to the base version | The full test lists in section 8 cannot all be run by 22 November | The base version carries the core suites (section 14); the rest are completed before production |
 | The repository is public | Anything committed is published and licensed for reuse | Confirmed as intended. Credentials, staging identifiers and internal source documents are excluded; secret scanning runs on every push from M0 onward |
 | The build machine has no Docker | Images cannot be built or run locally | The GitHub pipeline builds and starts the image on every pull request |
