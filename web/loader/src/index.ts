@@ -1,6 +1,7 @@
 // The embed loader. It runs on the customer's page, so it must stay tiny and must never throw into that page.
 // It stores nothing on the visitor's device and adds exactly one global, `UCP`.
 import { fromChat, type LoaderMessage } from "@ucp/protocol/bridge";
+import { inkOn, isColor } from "@ucp/protocol/brand";
 import type { WidgetConfig } from "@ucp/protocol/v1";
 
 export const VERSION = "0.1.0";
@@ -8,29 +9,14 @@ export const VERSION = "0.1.0";
 const WIDGET_ID = /^[A-Za-z0-9_-]{1,64}$/;
 const INK = "#2b241f"; // the world's ink; also the launcher colour when a configuration has no valid brand colour
 
-function luminance(hex: string) {
-  const [r = 0, g = 0, b = 0] = [1, 3, 5].map((at) => {
-    const c = parseInt(hex.slice(at, at + 2), 16) / 255;
-    return c <= 0.04045 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4;
-  });
-  return 0.2126 * r + 0.7152 * g + 0.0722 * b;
-}
-
-export function contrast(a: string, b: string) {
-  const [light, dark] = [luminance(a), luminance(b)].sort((x, y) => y - x) as [number, number];
-  return (light + 0.05) / (dark + 0.05);
-}
-
 /** The display settings the loader uses, each checked: a bad value falls back to a default, never into the page. */
 export function settings(config: Partial<WidgetConfig>) {
   const title = typeof config.title === "string" ? config.title.trim().slice(0, 80) : "";
-  const color =
-    typeof config.brand_color === "string" && /^#[0-9a-f]{6}$/i.test(config.brand_color) ? config.brand_color : INK;
+  const color = isColor(config.brand_color) ? config.brand_color : INK;
   return {
     title: title || "Chat",
     color,
-    // Whichever of white or black stands out more on the brand colour, so no brand can make the icon unreadable.
-    ink: contrast(color, "#ffffff") >= contrast(color, "#000000") ? "#ffffff" : "#000000",
+    ink: inkOn(color), // so no brand colour can make the icon unreadable
     left: config.launcher_position === "bottom-left",
   };
 }
