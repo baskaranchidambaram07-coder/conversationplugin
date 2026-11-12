@@ -306,6 +306,15 @@ State on 12 November 2026 (pull requests 12 to 15 into `module/m01-embed-loader`
 - M2-T13 Privacy notice and consent slot, configurable per widget. A permanent notice that the user is talking to an AI assistant and what it cannot do. A configurable "other ways to get help" link to a person or another channel. Transcript download for the user.
 - M2-T14 Performance: load renderers on demand; keep long conversations responsive.
 
+State on 12 November 2026 (pull requests 17 to 20 into `module/m02-conversation-ui`):
+
+- Built for the base version: T1, T2 (light only), T3, T4, T5 (without feedback buttons), T6, the base part of T7 (follow the newest message unless the visitor scrolled up; a jump back), T9, T10, T11 (English), T12, the base part of T13 (the AI notice and the "Powered by Purple Fabric" note), and T14's size limit (first load about 76 KB compressed against 100 KB, checked in the pipeline). Markdown shows as plain text until M3 renders it.
+- Deferred: T8 history panel (needs M7's list endpoint; before 22 November); the five configurable scroll settings; feedback buttons; dark mode (`color_scheme` is ignored); the privacy and consent slot, the help link and transcript download; automated visual-regression baselines; real devices.
+- The API the chat calls is part of the message format (`SessionRequest`, `Session`, `SendMessage` in `backend/ucp/protocol.py`). Until M4 exists, browser tests run against a fake gateway in `e2e/server.mjs`; the plan's "real gateway, fake PF" integration tests move to M4.
+- For M4: `POST /v1/sessions`, `POST /v1/conversations`, `POST /v1/conversations/{id}/messages` (a stream of `StreamEvent` lines with a `: ping` heartbeat at least every 15 s, since the chat treats 20 s of silence as a stalled stream; a repeated `client_message_id` returns the same reply), and `GET /v1/conversations/{id}/messages/{message_id}` (the chat polls it to recover a stalled or dropped stream). Every error is an `ApiError`; the chat shows its own wording, never the gateway's. Serve the built chat at `/embed/{id}` with `frame-ancestors` from the widget's allowed domains; it needs only its own origin for scripts, styles, fonts and calls, plus `https:` images for customer logos.
+- For M5: an anonymous session cannot be renewed (the chat offers a new chat instead); a signed-in one is renewed with a fresh host token and the call replayed once.
+- The bridge gained `hidden` (loader to chat, on closing), so the chat pauses its animations out of sight.
+
 **Tests**
 
 - Unit: stream state for every event order including duplicates, gaps and failure mid-block; stream parsing when chunks split an event or a multi-byte character; theme mapping and contrast check; scroll decisions as a pure function of position and policy; string lookup and fallback.
