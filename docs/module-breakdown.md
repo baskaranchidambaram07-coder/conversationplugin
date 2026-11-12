@@ -390,6 +390,46 @@ State on 12 November 2026 (pull requests 22 to 24 into `module/m03-rendering-eng
 - M4-T9 Resilience: time limits; retries only before the first word is streamed; a circuit breaker per PF connection; a cap on concurrent turns per tenant.
 - M4-T10 Feedback endpoint.
 
+State on 12 November 2026 (pull requests 26 to 31 into `module/m04-conversation-gateway`):
+
+- Built for the base version:
+  - T1: the API description is exported to `protocol/openapi.json` with a drift check, never served.
+  - T2: a correlation ID, a 64 KB body limit, security headers and an access log without secrets. API calls are accepted only from our own chat page. Limits per address, per session and per tenant are kept in memory.
+  - T3: the public settings, the chat page with its content policy and per-widget `frame-ancestors`, and the loader and chat files, all from one origin.
+  - T4 for anonymous visitors.
+  - T5 without delete.
+  - T6: streamed or as one JSON message; safe to repeat; one turn at a time; `: ping` every 15 s.
+  - T7, and T9.
+  - T8: widgets seeded from a file with `python -m ucp.widgets seed`, cached 30 s.
+- Built here from M6 and M7, as agreed:
+  - the agent-connector interface and the core of the PF connector (`ucp/connector.py`, `ucp/pf.py`);
+  - the PostgreSQL storage core with Alembic migrations (`ucp/store.py`, `ucp/migrations/`).
+- One command runs the whole stack locally: `backend/devstack.py` (gateway, fake PF and seeded widgets). It covers part of M0-T6.
+- Deferred:
+  - T10 feedback;
+  - an explicit stop: an answer the visitor stopped is stored as complete;
+  - daily quotas in PostgreSQL;
+  - generated-request fuzzing;
+  - the automated security scan (M12);
+  - deployment tests (M14);
+  - the one-hour soak, scale-out, rolling-deployment and failover tests;
+  - recovering an answer whose gateway stopped mid-turn: it is marked failed after 6 minutes.
+- Latency (`backend/loadtest.py`): with 10 visitors at once the gateway adds 36 ms at the median and 76 ms at the 95th percentile to the first word, within the 150 ms budget.
+  - Beyond about 15 visitors, the build machine saturates its four processors. It runs the load generator, the fake PF, PostgreSQL and other work at the same time, so the figure then measures the machine, not the gateway.
+  - On the pipeline's own runner, with 25 visitors at once, the gateway adds 20 to 33 ms at the median and 79 to 94 ms at the 95th percentile, over three runs on 12 November 2026. That meets the done condition's latency budget.
+  - An earlier version did not always meet it: one run reached 167 ms. A profile showed the gateway's code idle and waiting on the database, so a turn now starts in four statements instead of nine, and the connection pool is larger and steady.
+  - A test against a deployed instance from a separate machine belongs with M14.
+- For M5: sessions use `ucp.sessions.Keys` (HS256, rotating by `kid`) and `Session(user_id, tenant_id, widget_id, config_version, mode)`. `POST /v1/sessions` refuses a host token with `forbidden` until M5 verifies it. Each widget's `sign_in` is `anonymous`, `signed_in` or `both`.
+- For M6: keep the four connector events, and end each `send` with exactly one `Final` or `Failed`. Profiles come from `UCP_AGENT_PROFILES`.
+- For M7: the storage interface is `ucp.store.Store`, and every call takes an `Owner`.
+- For M8: a widget's published document is `ucp.widgets.WidgetDocument`. Publishing writes a new version row to `widgets`.
+- For M14:
+  - settings come from the environment: `UCP_DATABASE_URL`, `UCP_SESSION_KEYS`, `UCP_AGENT_PROFILES`, and `UCP_WEB_DIR`, which the image sets;
+  - run `python -m ucp.migrate` before each release;
+  - build the image from the repository root;
+  - health is at `/healthz` and readiness at `/readyz`;
+  - the load balancer's idle timeout must exceed the 15 s heartbeat.
+
 **Tests**
 
 - Unit: event conversion; turn handling at each failure point; repeat-request logic; the public configuration contains only fields on an explicit allow-list; error mapping.

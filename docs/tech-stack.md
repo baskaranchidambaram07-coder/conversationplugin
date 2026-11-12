@@ -7,11 +7,11 @@ Status: 12 November 2026. Everything marked "verified" was run on that date, on 
 | Area | State | What is left |
 |---|---|---|
 | Source control and branch model | In place | Nothing |
-| Backend toolchain | Verified: lint and three tests pass | Nothing |
+| Backend toolchain | Verified: lint and the backend tests pass | Nothing |
 | Web toolchain | Verified: type checks, unit tests and builds pass | Nothing |
 | Browser testing | Verified on Chromium, Firefox, WebKit and a phone profile | Real devices, before production |
 | Build pipeline | Verified: all four jobs pass on GitHub | Nothing |
-| Container image | Verified in the pipeline: it builds and its health endpoint answers | Nothing |
+| Container image | Verified in the pipeline: it builds, with the loader and chat inside, and answers | Nothing |
 | Local database | PostgreSQL 17 runs while a test command runs, then stops | Your decision on running it as a Windows service |
 | Infrastructure tool | Terraform installed, checksum verified | The configuration itself is module M14 |
 | AWS access for development | Verified: 13 needed actions allowed, 8 forbidden ones refused | Nothing |
@@ -31,7 +31,17 @@ Status: 12 November 2026. Everything marked "verified" was run on that date, on 
 | Tests | pytest | 9.2 | With httpx2 2.16 as the test client, which FastAPI now requires |
 | Lint, format, security rules | Ruff | 0.17 | One tool; includes the Bandit security checks |
 
-Added when first used: Alembic for database migrations, PyJWT for tokens, OpenTelemetry for traces and metrics.
+| Database migrations | Alembic | 1.20 | Each change to the tables, tested down and up (`python -m ucp.migrate`) |
+| Session tokens | PyJWT | 2.15 | Signs and checks the gateway's short-lived session tokens; M5 uses it for host tokens too |
+| HTTP client for PF | httpx2 | 2.16 | Streams PF's replies; also FastAPI's test client |
+
+Added when first used: OpenTelemetry for traces and metrics.
+
+The gateway reads its settings from the environment when it starts:
+- `UCP_DATABASE_URL`: the PostgreSQL address.
+- `UCP_SESSION_KEYS`: the token-signing keys, as `id:secret,…`; the first one signs.
+- `UCP_AGENT_PROFILES`: the PF connection profiles, as JSON.
+- `UCP_WEB_DIR`: where the built loader and chat are. The image sets this one.
 
 ## 3. Web
 
@@ -60,13 +70,14 @@ Size budgets:
 
 ## 4. Build pipeline
 
-GitHub Actions runs four jobs on every pull request and on every push to `main`, `develop` and the module branches:
+GitHub Actions runs five jobs on every pull request and on every push to `main`, `develop` and the module branches:
 
 | Job | What it does |
 |---|---|
 | Backend lint and tests | Installs from the lock file, runs Ruff and pytest against a PostgreSQL 17 container |
 | Web checks, builds and browser tests | Type checks, unit tests, both builds, the loader size limit, then Playwright on all four targets |
-| Container image builds and starts | Builds the gateway image and checks that its health endpoint answers |
+| Gateway journeys and load | Runs the real chat against the real gateway, with PostgreSQL and the fake PF, on three browser engines. Then runs the API journey script and the load test, which checks the gateway adds at most 150 ms to the first word at the 95th percentile |
+| Container image builds and starts | Builds the gateway image from the repository root (a Node stage builds the loader and chat into it), checks that it answers, sends no server header and serves the loader |
 | Secret scan | Runs gitleaks over the whole history |
 
 The backend tests and the web tests each include a check that the generated message-format files (`protocol/schema/v1.json` and `protocol/src/v1.ts`) match their source, so a forgotten regeneration fails the pipeline.
@@ -133,6 +144,13 @@ After `npm install` on this Windows machine, check `package-lock.json` before co
 | Loader size limit | `npm run size --workspace @ucp/loader` |
 | Chat first-load size limit | `npm run size --workspace @ucp/widget` |
 | Browser tests | `npm run build && npm run e2e` |
+| The whole stack locally: gateway on port 8200, fake PF on 8100, widgets from `e2e/widgets.json` | `npm run build`, then `cd backend && bash ../scripts/with-localdb.sh uv run --env-file ../.env python devstack.py` |
+| Browser journeys through the real gateway (starts the stack itself) | `npm run build && npm run e2e:gateway` |
+| API journey against a running gateway (also the smoke test after a deployment) | `cd backend && uv run python journey.py http://localhost:8200 w_gateway` |
+| Load test against the running stack (start it with `FAKE_PF_SPEED=0.1`) | `cd backend && uv run python loadtest.py --visitors 25 --turns 5` |
+| Bring a database's tables up to date | `cd backend && UCP_DATABASE_URL=... uv run python -m ucp.migrate` |
+| Publish widgets from a file | `cd backend && UCP_DATABASE_URL=... uv run python -m ucp.widgets seed path/to/widgets.json` |
+| Regenerate the API description after changing a route | `cd backend && uv run python -m ucp.gateway.openapi` |
 | Regenerate the message format after changing `backend/ucp/protocol.py` | `cd backend && uv run python -m ucp.protocol && cd .. && npm run generate --workspace @ucp/protocol` |
 | Run the fake PF on port 8100 (behaviours are listed in `backend/fakepf/app.py`) | `cd backend && uv run uvicorn fakepf.app:app --port 8100` |
 | Rebuild the fake PF's recordings from new captures (only where `spikes/pf_capture_out/` exists) | `python spikes/clean_pf_recordings.py` |

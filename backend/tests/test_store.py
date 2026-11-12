@@ -95,9 +95,8 @@ async def test_a_finished_answer_frees_the_conversation_and_reads_back_without_a
     mine = owner()
     conversation = await store.create_conversation(mine)
     first = await store.start_turn(mine, conversation.id, "k1", "Hi", 1)
-    await store.set_agent_message(first.answer_id, "pf-message-id")
     error = ApiError(code="assistant_unavailable", message="x", retryable=True, retry_after=None, reference="r_1")
-    await store.finish(first.answer_id, "failed", [{"type": "markdown", "text": "Partial"}], error)
+    await store.finish(first.answer_id, "failed", [{"type": "markdown", "text": "Partial"}], error, "pf-message-id")
 
     second = await store.start_turn(mine, conversation.id, "k2", "Again", 1)
     answer = await store.message(mine, conversation.id, first.answer_id)

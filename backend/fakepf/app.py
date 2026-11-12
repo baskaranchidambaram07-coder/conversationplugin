@@ -19,6 +19,7 @@ import asyncio
 import copy
 import itertools
 import json
+import os
 import re
 import time
 from pathlib import Path
@@ -205,4 +206,4 @@ def create_app(time_scale: float = 1.0) -> FastAPI:
     return app
 
 
-app = create_app()
+app = create_app(float(os.environ.get("FAKE_PF_SPEED", "1")))  # devstack.py sets it; 1 is the recorded pace
