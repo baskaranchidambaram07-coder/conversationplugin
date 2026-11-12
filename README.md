@@ -10,6 +10,8 @@ Status: planning complete, build starting. Target: a base version in the develop
 - `docs/pf-capability-sheet.md`: observed behaviour of the agent platform's conversation API
 - `docs/government-readiness.md`: what UK public-sector and regulated customers require
 - `docs/tech-stack.md`: the technology and infrastructure stack, its state, and the commands to run it
+- `docs/threat-model.md`: what we protect, from whom, and which control and test answers each threat
+- `docs/supported-browsers.md`: the browsers, devices and conditions the widget supports, and how each is tested
 - `infra/aws/iam/`: the AWS policies for the development environment
 
 ## Branches
