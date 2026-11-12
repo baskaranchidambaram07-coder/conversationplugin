@@ -3,6 +3,10 @@
   "version": "1.0.0",
   "private": true,
   "type": "module",
+  "exports": {
+    "./bridge": "./src/bridge.ts",
+    "./v1": "./src/v1.ts"
+  },
   "scripts": {
     "generate": "node generate.mjs",
     "typecheck": "tsc --noEmit",
