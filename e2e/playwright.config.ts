@@ -1,4 +1,9 @@
+import path from "node:path";
+
 import { defineConfig, devices } from "@playwright/test";
+
+// The browsers live inside the project folder, so nothing is left elsewhere on the machine.
+process.env.PLAYWRIGHT_BROWSERS_PATH ??= path.resolve(import.meta.dirname, "../.tools/ms-playwright");
 
 export default defineConfig({
   testDir: "./tests",

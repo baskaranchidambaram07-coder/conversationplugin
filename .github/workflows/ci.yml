@@ -48,6 +48,9 @@ jobs:
   web:
     name: Web checks, builds and browser tests
     runs-on: ubuntu-latest
+    env:
+      # Same place as on a developer machine, so the install step and the tests agree.
+      PLAYWRIGHT_BROWSERS_PATH: ${{ github.workspace }}/.tools/ms-playwright
     steps:
       - uses: actions/checkout@v7
       - uses: actions/setup-node@v7
