@@ -8,6 +8,7 @@ import remarkGfm from "remark-gfm";
 import { strings as t } from "../strings";
 import { safeHref } from "./links";
 import { fenceRenderer } from "./registry";
+import { Table } from "./Table";
 
 function Link({ href, children }: { href: string | null; children: ReactNode }) {
   return href ? (
@@ -34,6 +35,7 @@ const components: Components = {
   h4: shifted(5),
   h5: shifted(6),
   h6: shifted(6),
+  table: Table,
   // A fenced block goes to the renderer registered for its language, or to the code renderer.
   pre: ({ node }) => {
     const code = node?.children.find((child) => child.type === "element" && child.tagName === "code");

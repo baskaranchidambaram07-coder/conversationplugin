@@ -46,7 +46,16 @@ async function file(path) {
   return [404, "text/plain", "not found"];
 }
 
-// The fake gateway. Words in a message pick a behaviour, as the fake PF does: [long], [slow], [busy], [fail],
+// [table] answers with a table long enough to fold and wide enough to scroll sideways on a phone.
+const TABLE = [
+  "Laundry rooms, by house:",
+  "",
+  "| House | Room | Weekdays | Weekends | Machines | Card or coins |",
+  "|---|---|---|---|---|---|",
+  ...Array.from({ length: 14 }, (_, n) => `| House ${n + 1} | Basement ${String.fromCharCode(65 + (n % 4))} | 07:00 to 23:00 | 08:00 to 22:00 | ${6 + (n % 5)} | Card only |`),
+].join("\n");
+
+// The fake gateway. Words in a message pick a behaviour, as the fake PF does: [long], [table], [slow], [busy], [fail],
 // [drop] (the stream is cut, but the answer still finishes and can be fetched) and [expire] (the session ends
 // once per question).
 let next = 0;
@@ -73,7 +82,7 @@ async function readBody(request) {
 
 async function stream(response, conversationId, body) {
   const envelope = { v: 1, conversation_id: conversationId, message_id: id("m"), correlation_id: id("r") };
-  const text = body.text.includes("[long]") ? long : SHORT;
+  const text = body.text.includes("[long]") ? long : body.text.includes("[table]") ? TABLE : SHORT;
   const record = { id: envelope.message_id, role: "assistant", status: "in_progress", blocks: [], error: null };
   messages.set(envelope.message_id, { ...record, created_at: new Date().toISOString().replace(/\.\d+Z$/, "Z") });
   response.writeHead(200, { "content-type": "text/event-stream", "cache-control": "no-store" });

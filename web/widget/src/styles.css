@@ -8,6 +8,7 @@
   --brand: var(--ink);
   --on-brand: var(--paper);
   --gutter: 16px;
+  --mono: ui-monospace, "Cascadia Mono", "SF Mono", Menlo, Consolas, monospace;
   color-scheme: light;
 }
 
@@ -253,6 +254,223 @@ h1 {
   }
 }
 
+/* Rendered answers (M3): Markdown, code and tables, in the world's own materials. */
+
+.md {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  align-self: stretch;
+  min-width: 0;
+  text-wrap: pretty;
+}
+
+.md > *,
+.md :is(ul, ol) {
+  margin: 0;
+}
+
+.md :is(h2, h3, h4, h5, h6) {
+  margin-block-start: 6px;
+  line-height: 1.3;
+  font-weight: 700;
+  text-wrap: balance;
+}
+
+.md > :first-child {
+  margin-block-start: 0;
+}
+
+.md h2 {
+  font-size: 18px;
+}
+
+.md h3 {
+  font-size: 16px; /* a step by weight alone, below the 18px h2 */
+}
+
+.md :is(h4, h5, h6) {
+  font-size: 15px;
+  color: var(--umber);
+}
+
+.md :is(ul, ol) {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding-inline-start: 1.35em;
+}
+
+.md li::marker {
+  color: var(--umber);
+}
+
+.md blockquote {
+  padding: 10px 14px;
+  border-radius: 12px;
+  background: var(--ground);
+}
+
+.md a {
+  color: var(--ink);
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 3px;
+}
+
+.md a:hover {
+  text-decoration-thickness: 2px;
+}
+
+.md :not(pre) > code {
+  padding: 1px 6px;
+  border-radius: 6px;
+  background: var(--ground);
+  box-shadow: 0 0 0 1px var(--sand);
+  font: 0.9em var(--mono);
+}
+
+.md hr {
+  width: 100%;
+  border: 0;
+  border-block-start: 1px solid var(--sand);
+}
+
+.code,
+.table {
+  align-self: stretch;
+  min-width: 0;
+  margin: 0;
+  overflow: hidden;
+  border-radius: 12px;
+  box-shadow: 0 0 0 1px var(--sand);
+}
+
+.code {
+  background: var(--ground);
+}
+
+.code figcaption,
+.tools {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 6px;
+}
+
+.code figcaption {
+  justify-content: space-between;
+  white-space: nowrap;
+  padding-inline-start: 14px;
+  border-block-end: 1px solid var(--sand);
+  font-size: 13px;
+  font-weight: 650;
+  color: var(--umber);
+}
+
+.code pre {
+  margin: 0;
+  padding: 12px 14px;
+  overflow-x: auto;
+  font: 13.5px/1.6 var(--mono);
+  tab-size: 2;
+  scrollbar-width: thin;
+}
+
+.code .quiet,
+.tools .quiet {
+  flex-shrink: 0;
+  margin: 0;
+  white-space: nowrap;
+}
+
+.code figcaption > span {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Wide code and tables scroll sideways. A soft shadow shows at an edge only while there is more to see that way
+   (the backgrounds attached to the content cover it at the ends), and the scrollbar is dark enough to notice. */
+.code pre,
+.table .scroll {
+  --edge: var(--ground);
+  background:
+    linear-gradient(to right, var(--edge) 40%, transparent) left / 28px 100% no-repeat local,
+    linear-gradient(to left, var(--edge) 40%, transparent) right / 28px 100% no-repeat local,
+    radial-gradient(farthest-side at 0 50%, rgba(43, 36, 31, 0.22), transparent) left / 12px 100% no-repeat scroll,
+    radial-gradient(farthest-side at 100% 50%, rgba(43, 36, 31, 0.22), transparent) right / 12px 100% no-repeat scroll,
+    var(--edge);
+  scrollbar-color: rgba(111, 98, 90, 0.6) transparent;
+}
+
+.table .scroll {
+  --edge: var(--paper);
+}
+
+.code pre:focus-visible,
+.table .scroll:focus-visible {
+  outline-offset: -3px;
+}
+
+.table {
+  background: var(--paper);
+}
+
+.table .scroll {
+  overflow: auto;
+  scrollbar-width: thin;
+}
+
+/* Only a long table the visitor has expanded scrolls on its own, with its header held; a short one never traps a
+   thumb inside the conversation. */
+.table .expanded {
+  max-height: min(70vh, 560px);
+}
+
+.table table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  font-size: 14.5px;
+  font-variant-numeric: tabular-nums;
+  line-height: 1.45;
+}
+
+.table th {
+  position: sticky;
+  inset-block-start: 0;
+  padding: 8px 12px;
+  background: var(--sand);
+  font-weight: 700;
+  text-align: start;
+  white-space: nowrap;
+}
+
+.table :is(th, td) {
+  overflow-wrap: normal; /* cells wrap between words; a wide table scrolls sideways instead */
+}
+
+.table td {
+  min-width: 8ch;
+  padding: 8px 12px;
+  border-block-start: 1px solid var(--sand);
+  vertical-align: top;
+}
+
+.table :is(th, td) + :is(th, td) {
+  border-inline-start: 1px solid var(--sand);
+}
+
+.folded tbody tr:nth-child(n + 11) {
+  display: none;
+}
+
+.tools {
+  flex-wrap: wrap;
+  border-block-start: 1px solid var(--sand);
+}
+
 /* Suggested questions: pressable, so they carry the customer's colour (the Pressable Colour Rule). */
 
 .prompts {
@@ -485,7 +703,9 @@ textarea::placeholder {
   .card,
   .mine,
   .prompts button,
-  .send {
+  .send,
+  .code,
+  .table {
     border: 1px solid CanvasText;
   }
 }

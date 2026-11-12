@@ -52,7 +52,7 @@ test("a fenced block is shown as labelled code; a diagram fence is labelled as d
   const box = draw("```python\nprint('hi')\n```\n\n```mermaid\nflowchart LR\n  A --> B\n```");
   const figures = box.querySelectorAll("figure.code");
 
-  expect([...figures].map((figure) => figure.querySelector("figcaption")?.textContent)).toEqual([
+  expect([...figures].map((figure) => figure.querySelector("figcaption span")?.textContent)).toEqual([
     "python",
     "Diagram source",
   ]);
@@ -94,7 +94,8 @@ const CORPUS = [
 test.each(CORPUS)("the injection attempt %j runs, loads and styles nothing", (attempt) => {
   const box = draw(attempt);
 
-  expect(box.querySelectorAll("script, iframe, style, img, svg, object, embed, link, meta")).toHaveLength(0);
+  // Our own icons are the only SVG allowed: content can never produce one, since raw HTML is never rendered.
+  expect(box.querySelectorAll("script, iframe, style, img, svg:not(.glyph), object, embed, link, meta")).toHaveLength(0);
   for (const element of box.querySelectorAll("*")) {
     expect([...element.attributes].filter((attribute) => /^on/i.test(attribute.name))).toEqual([]);
     expect(element.getAttribute("style") ?? "").not.toMatch(/url\(|expression|javascript/i);
