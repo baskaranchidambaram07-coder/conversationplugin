@@ -77,11 +77,33 @@ visibility:visible;opacity:1;transform:none;box-shadow:none}
 @media (prefers-reduced-motion:reduce){.launcher,.launcher:hover,.launcher:active,.panel{transform:none;transition:opacity .2s,visibility 0s .2s}
 .open .panel::before{animation:none}}
 @media (forced-colors:active){.launcher{border:2px solid ButtonText}.panel{border:1px solid CanvasText}}`;
-const ICON = (name: string, path: string) =>
-  `<svg class="${name}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" ` +
-  `stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="${path}"/></svg>`;
-const ICONS =
-  ICON("chat", "M20 11.5a7.5 7.5 0 0 1-11.1 6.6L4 19.5l1.4-4.6A7.5 7.5 0 1 1 20 11.5z") + ICON("x", "M6 6l12 12M18 6 6 18");
+const ICONS = {
+  chat: "M20 11.5a7.5 7.5 0 0 1-11.1 6.6L4 19.5l1.4-4.6A7.5 7.5 0 1 1 20 11.5z",
+  x: "M6 6l12 12M18 6 6 18",
+};
+const SVG = "http://www.w3.org/2000/svg";
+
+// Everything is built with DOM calls and styled through CSSOM: no innerHTML, no <style> element, no style
+// attribute. A host page with a strict content policy or Trusted Types therefore blocks none of it.
+function icon(doc: Document, name: keyof typeof ICONS) {
+  const svg = doc.createElementNS(SVG, "svg");
+  const path = doc.createElementNS(SVG, "path");
+  const attributes: Record<string, string> = {
+    class: name,
+    viewBox: "0 0 24 24",
+    fill: "none",
+    stroke: "currentColor",
+    "stroke-width": "2",
+    "stroke-linecap": "round",
+    "stroke-linejoin": "round",
+    "aria-hidden": "true",
+    focusable: "false",
+  };
+  for (const [key, value] of Object.entries(attributes)) svg.setAttribute(key, value);
+  path.setAttribute("d", ICONS[name]);
+  svg.appendChild(path);
+  return svg;
+}
 
 export type MountOptions = {
   widgetId: string;
@@ -126,20 +148,35 @@ function mount(origin: string, options: MountOptions, win: Window): Widget | und
     }
     if (!place) return say(`✗ no element on the page matches "${target}"`);
     const { title, color, ink, left } = settings(config);
-    host = doc.createElement("div");
+    // Our own element name, so a host page's rules for div and friends miss it; important inline display and
+    // height so even `* { all: unset !important }` cannot collapse it.
+    host = doc.createElement("ucp-widget");
     host.setAttribute("data-ucp", "");
-    if (inline) host.style.height = "100%";
+    host.style.setProperty("display", "block", "important");
+    if (inline) host.style.setProperty("height", "100%", "important");
     const root = host.attachShadow({ mode: "open" });
-    // Only checked colours are written into markup; the title is set as an attribute, never as HTML.
-    root.innerHTML =
-      `<style>${CSS}</style><div class="w${left ? " left" : ""}${inline ? " inline" : ""}" ` +
-      `style="--brand:${color};--ink:${ink}"><div class="panel"></div>` +
-      (inline ? "" : `<button class="launcher" type="button" aria-expanded="false">${ICONS}</button>`) +
-      `</div>`;
-    const frame = root.firstElementChild?.nextElementSibling as HTMLElement;
-    const panel = frame.firstElementChild as HTMLElement;
-    const button = root.querySelector("button");
-    button?.setAttribute("aria-label", title);
+    if ((root.adoptedStyleSheets as CSSStyleSheet[] | undefined) !== undefined) {
+      const sheet = new CSSStyleSheet();
+      sheet.replaceSync(CSS);
+      root.adoptedStyleSheets = [sheet];
+    } else {
+      // shortcut: only test environments without constructable stylesheets (jsdom) get a <style> element.
+      root.appendChild(doc.createElement("style")).textContent = CSS;
+    }
+    const frame = root.appendChild(doc.createElement("div"));
+    frame.className = `w${left ? " left" : ""}${inline ? " inline" : ""}`;
+    frame.style.setProperty("--brand", color);
+    frame.style.setProperty("--ink", ink);
+    const panel = frame.appendChild(doc.createElement("div"));
+    panel.className = "panel";
+    const button = inline ? null : frame.appendChild(doc.createElement("button"));
+    if (button) {
+      button.className = "launcher";
+      button.type = "button";
+      button.setAttribute("aria-expanded", "false");
+      button.setAttribute("aria-label", title);
+      button.append(icon(doc, "chat"), icon(doc, "x"));
+    }
     let iframe: HTMLIFrameElement | undefined;
     let connected = false;
     let timer: ReturnType<typeof setTimeout> | undefined;

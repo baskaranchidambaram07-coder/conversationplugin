@@ -1,0 +1,24 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <!-- Our one origin in script-src, frame-src and connect-src, and nothing else for us: no inline styles, and
+         Trusted Types enforced, as a government or bank site might set it. -->
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="default-src 'none'; img-src 'self'; script-src 'nonce-host' http://localhost:4174; frame-src http://localhost:4174; connect-src http://localhost:4174; style-src 'nonce-host'; require-trusted-types-for 'script'"
+    />
+    <title>Strict content policy</title>
+    <script nonce="host">
+      window.violations = [];
+      document.addEventListener("securitypolicyviolation", (event) =>
+        window.violations.push(`${event.effectiveDirective} ${event.blockedURI}`),
+      );
+    </script>
+  </head>
+  <body>
+    <h1>A site with a strict content policy</h1>
+    <script async src="http://localhost:4174/loader.js" data-widget-id="w_test"></script>
+  </body>
+</html>

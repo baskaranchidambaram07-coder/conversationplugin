@@ -1,0 +1,25 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Hostile styles</title>
+    <style>
+      /* Careless global CSS of the kind a widget meets in the wild. */
+      body * { all: unset !important; }
+      div, iframe, button, svg { display: none !important; }
+      body { font: 40px/3 Georgia, serif; color: #f00; }
+      /* A fixed banner with a huge z-index over the corner where the launcher sits. */
+      .overlay {
+        position: fixed !important; right: 0 !important; bottom: 0 !important; display: block !important;
+        width: 50vw !important; height: 50vh !important; z-index: 999999 !important;
+        background: rgba(255, 0, 0, 0.15) !important;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>A page with hostile global styles</h1>
+    <aside class="overlay" aria-hidden="true"></aside>
+    <script async src="http://localhost:4174/loader.js" data-widget-id="w_test"></script>
+  </body>
+</html>

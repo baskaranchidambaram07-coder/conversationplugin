@@ -201,7 +201,8 @@ test("the launcher takes its name, colour and corner from the configuration, and
 
   expect(launcher().getAttribute("aria-label")).toBe("Ask us");
   expect(launcher().getAttribute("aria-expanded")).toBe("false");
-  expect(root().querySelector(".w")?.getAttribute("style")).toBe("--brand:#5B2A86;--ink:#ffffff");
+  const style = (root().querySelector(".w") as HTMLElement).style;
+  expect([style.getPropertyValue("--brand"), style.getPropertyValue("--ink")]).toEqual(["#5B2A86", "#ffffff"]);
   expect(root().querySelector(".w")?.classList.contains("left")).toBe(true);
 });
 

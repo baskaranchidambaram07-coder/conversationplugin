@@ -262,6 +262,15 @@ Each module lists its tests under the same headings. A heading is omitted where 
 
 Later: Web Component; React, Angular and Vue wrappers; unread-message badge.
 
+State on 12 November 2026 (pull requests 12 to 15 into `module/m01-embed-loader`):
+
+- Built for the base version: T1, T2, T3, T4 (floating and inline; full-page mode deferred), T5, T7, T10, the `mount`, `unmount`, `open`, `close` and `toggle` part of T6, and the `unmount` part of T8. The loader is under 4 KB compressed.
+- Deferred: `on`/`off` events and host typings (rest of T6); route-change tests and import during server rendering (rest of T8); the script-free iframe snippet (T9, needs M2's page); versioned and updating URLs with an integrity hash (T11, with M14); full-page mode; the microphone permission (voice is release 2); two widgets on one page; a host that is itself framed; framework host pages (M15's samples); real devices.
+- Visual world: "Warm Consumer App", chosen by you through the impeccable skill. `PRODUCT.md` and `DESIGN.md` at the repository root hold the product truth and the design system; M2 inherits both. One small "Powered by Purple Fabric" note belongs inside the open chat (M2).
+- One origin serves the loader, the chat page and the API (`GET /v1/widgets/{id}/config` and `/embed/{id}`). A host's content policy needs that origin in `script-src`, `frame-src` and `connect-src`, and nothing else: the loader uses no inline style or markup, so it works under a strict policy with Trusted Types.
+- For M4: the configuration response must allow any origin (`Access-Control-Allow-Origin: *`) and needs no cookies; the chat page lives at `/embed/{id}`.
+- For M2: the chat must speak the chat's half of `protocol/src/bridge.ts` (send `ready`; pin the parent's origin from `init`; ask `get-token` when `signedIn`; focus its input on `shown`); post `close` from a close button in its own header (the launcher is covered when the chat is full screen) and on Escape. In Playwright's WebKit on Windows a cross-origin chat's own `focus()` is ignored; check input focus on real Safari.
+
 **Tests**
 
 - Unit: attribute parsing; queue order; double-load; mount options cannot override server policy; message validation; wrong-origin messages ignored; viewport-to-layout rules; `unmount` leaves nothing behind.

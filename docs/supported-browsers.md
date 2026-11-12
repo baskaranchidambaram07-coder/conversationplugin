@@ -25,7 +25,7 @@ These floors are older than the support policy, so a supported browser is never 
 
 | Part | Built for | Set in |
 |---|---|---|
-| Loader on the host page | ES2019 | `web/loader/package.json` |
+| Loader on the host page | ES2019, plus Shadow DOM and constructable stylesheets (Chrome 73, Firefox 101, Safari 16.4) | `web/loader/package.json`, `web/loader/src/index.ts` |
 | Chat in the iframe | Chrome 111, Edge 111, Firefox 114, Safari 16.4, iOS 16.4 (Vite 8.3's default target) | `web/widget/vite.config.ts` (no override) |
 
 ## 2. Devices and screen sizes
