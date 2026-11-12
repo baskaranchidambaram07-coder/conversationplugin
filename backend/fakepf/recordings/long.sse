@@ -1,0 +1,642 @@
+: conversation_id="00000000000000000000a001"
+: message_id="00000000000000000000a002"
+: message_content_id="00000000000000000000a003"
+: asset_version_id="00000000-0000-4000-8000-00000000a005"
+: workspace_id="00000000-0000-4000-8000-00000000a004"
+: query="Explain how HTTPS works in about 400 words. Include a markdown table comparing TLS 1.2 and TLS 1.3, a short code block, and a mermaid sequence diagram in a fenced code block."
+
+: at_ms=30
+data: {"content":"Stream connection established successfully"}
+
+: at_ms=30
+data: {"content":"Agent Execution InProgress"}
+
+: at_ms=51
+data: {"asset_version_id":"00000000-0000-4000-8000-00000000a005","conversation_id":"00000000000000000000a001","message_id":"00000000000000000000a002","message_content_id":"00000000000000000000a003","event":"MESSAGE_DETAILS","content":{"message_id":"00000000000000000000a002","conversation_id":"00000000000000000000a001","created_date":"2026-11-12T11:03:06.022Z","modified_date":"2026-11-12T11:03:06.022Z","workspace_id":"00000000-0000-4000-8000-00000000a004","schema_version":"v2","content_type":"QUERY","message_content":[{"message_content_id":"00000000000000000000a003","query":"Explain how HTTPS works in about 400 words. Include a markdown table comparing TLS 1.2 and TLS 1.3, a short code block, and a mermaid sequence diagram in a fenced code block.","ref_file_ids":[],"generated_images":[],"debug_logs":[],"traces":[],"selected_tools":[],"status":"IN_PROGRESS","_id":"00000000000000000000b001","sources":[],"citation":[],"notification_steps":[],"notification_timeline":[]}],"_id":"00000000000000000000b002","file_content":[],"additional_task":[],"__v":0},"status":"SUCCESS"}
+
+: at_ms=996
+data: {"asset_version_id": "00000000-0000-4000-8000-00000000a005", "conversation_id": "00000000000000000000a001", "message_id": "00000000000000000000a003", "event": "LLM_RESPONSE_STREAM", "content": "", "status": "START"}
+
+: at_ms=1916
+data: {"asset_version_id": "00000000-0000-4000-8000-00000000a005", "conversation_id": "00000000000000000000a001", "message_id": "00000000000000000000a003", "event": "LLM_RESPONSE_STREAM", "content": "# How", "status": "IN_PROGRESS"}
+
+: at_ms=1964
+data: {"asset_version_id": "00000000-0000-4000-8000-00000000a005", "conversation_id": "00000000000000000000a001", "message_id": "00000000000000000000a003", "event": "LLM_RESPONSE_STREAM", "content": " HTTPS Works", "status": "IN_PROGRESS"}
+
+: at_ms=2016
+data: {"asset_version_id": "00000000-0000-4000-8000-00000000a005", "conversation_id": "00000000000000000000a001", "message_id": "00000000000000000000a003", "event": "LLM_RESPONSE_STREAM", "content": "\n\nHTTPS (H", "status": "IN_PROGRESS"}
+
+: at_ms=2065
+data: {"asset_version_id": "00000000-0000-4000-8000-00000000a005", "conversation_id": "00000000000000000000a001", "message_id": "00000000000000000000a003", "event": "LLM_RESPONSE_STREAM", "content": "ypertext Transf", "status": "IN_PROGRESS"}
+
+: at_ms=2116
+data: {"asset_version_id": "00000000-0000-4000-8000-00000000a005", "conversation_id": "00000000000000000000a001", "message_id": "00000000000000000000a003", "event": "LLM_RESPONSE_STREAM", "content": "er Protocol Secure", "status": "IN_PROGRESS"}
+
+: at_ms=2164
+data: {"asset_version_id": "00000000-0000-4000-8000-00000000a005", "conversation_id": "00000000000000000000a001", "message_id": "00000000000000000000a003", "event": "LLM_RESPONSE_STREAM", "content": ") is the", "status": "IN_PROGRESS"}
+
+: at_ms=2211
+data: {"asset_version_id": "00000000-0000-4000-8000-00000000a005", "conversation_id": "00000000000000000000a001", "message_id": "00000000000000000000a003", "event": "LLM_RESPONSE_STREAM", "content": " sec", "status": "IN_PROGRESS"}
+
+: at_ms=2263
+data: {"asset_version_id": "00000000-0000-4000-8000-00000000a005", "conversation_id": "00000000000000000000a001", "message_id": "00000000000000000000a003", "event": "LLM_RESPONSE_STREAM", "content": "ure version of HTTP,", "status": "IN_PROGRESS"}
+
+: at_ms=2312
+data: {"asset_version_id": "00000000-0000-4000-8000-00000000a005", "conversation_id": "00000000000000000000a001", "message_id": "00000000000000000000a003", "event": "LLM_RESPONSE_STREAM", "content": " encrypting data ex", "status": "IN_PROGRESS"}
+
+: at_ms=2363
+data: {"asset_version_id": "00000000-0000-4000-8000-00000000a005", "conversation_id": "00000000000000000000a001", "message_id": "00000000000000000000a003", "event": "LLM_RESPONSE_STREAM", "content": "changed between a client (", "status": "IN_PROGRESS"}
+
+: at_ms=2414
+data: {"asset_version_id": "00000000-0000-4000-8000-00000000a005", "conversation_id": "00000000000000000000a001", "message_id": "00000000000000000000a003", "event": "LLM_RESPONSE_STREAM", "content": "browser) and a server using **", "status": "IN_PROGRESS"}
+
+: at_ms=2465
+data: {"asset_version_id": "00000000-0000-4000-8000-00000000a005", "conversation_id": "00000000000000000000a001", "message_id": "00000000000000000000a003", "event": "LLM_RESPONSE_STREAM", "content": "TLS (Transport", "status": "IN_PROGRESS"}
+
+: at_ms=2515
+data: {"asset_version_id": "00000000-0000-4000-8000-00000000a005", "conversation_id": "00000000000000000000a001", "message_id": "00000000000000000000a003", "event": "LLM_RESPONSE_STREAM", "content": " Layer Security)**. This", "status": "IN_PROGRESS"}
+
+: at_ms=2563
+data: {"asset_version_id": "00000000-0000-4000-8000-00000000a005", "conversation_id": "00000000000000000000a001", "message_id": "00000000000000000000a003", "event": "LLM_RESPONSE_STREAM", "content": " ", "status": "IN_PROGRESS"}
+
+: at_ms=2612
+data: {"asset_version_id": "00000000-0000-4000-8000-00000000a005", "conversation_id": "00000000000000000000a001", "message_id": "00000000000000000000a003", "event": "LLM_RESPONSE_STREAM", "content": "ensures conf", "status": "IN_PROGRESS"}
+
+: at_ms=2663
+data: {"asset_version_id": "00000000-0000-4000-8000-00000000a005", "conversation_id": "00000000000000000000a001", "message_id": "00000000000000000000a003", "event": "LLM_RESPONSE_STREAM", "content": "identiality, integrity", "status": "IN_PROGRESS"}
+
+: at_ms=2713
+data: {"asset_version_id": "00000000-0000-4000-8000-00000000a005", "conversation_id": "00000000000000000000a001", "message_id": "00000000000000000000a003", "event": "LLM_RESPONSE_STREAM", "content": ", and authentication of", "status": "IN_PROGRESS"}
+
+: at_ms=2761
+data: {"asset_version_id": "00000000-0000-4000-8000-00000000a005", "conversation_id": "00000000000000000000a001", "message_id": "00000000000000000000a003", "event": "LLM_RESPONSE_STREAM", "content": " data in", "status": "IN_PROGRESS"}
+
+: at_ms=2812
+data: {"asset_version_id": "00000000-0000-4000-8000-00000000a005", "conversation_id": "00000000000000000000a001", "message_id": "00000000000000000000a003", "event": "LLM_RESPONSE_STREAM", "content": " transit.\n\n## The Process", "status": "IN_PROGRESS"}
+
+: at_ms=2862
+data: {"asset_version_id": "00000000-0000-4000-8000-00000000a005", "conversation_id": "00000000000000000000a001", "message_id": "00000000000000000000a003", "event": "LLM_RESPONSE_STREAM", "content": " Overview\n\n1. **T", "status": "IN_PROGRESS"}
+
+: at_ms=2912
+data: {"asset_version_id": "00000000-0000-4000-8000-00000000a005", "conversation_id": "00000000000000000000a001", "message_id": "00000000000000000000a003", "event": "LLM_RESPONSE_STREAM", "content": "CP Conn", "status": "IN_PROGRESS"}
+
+: at_ms=2963
+data: {"asset_version_id": "00000000-0000-4000-8000-00000000a005", "conversation_id": "00000000000000000000a001", "message_id": "00000000000000000000a003", "event": "LLM_RESPONSE_STREAM", "content": "ection**: The client establishes", "status": "IN_PROGRESS"}
+
+: at_ms=3014
+data: {"asset_version_id": "00000000-0000-4000-8000-00000000a005", "conversation_id": "00000000000000000000a001", "message_id": "00000000000000000000a003", "event": "LLM_RESPONSE_STREAM", "content": " a TCP connection with", "status": "IN_PROGRESS"}
+
+: at_ms=3063
+data: {"asset_version_id": "00000000-0000-4000-8000-00000000a005", "conversation_id": "00000000000000000000a001", "message_id": "00000000000000000000a003", "event": "LLM_RESPONSE_STREAM", "content": " the server (", "status": "IN_PROGRESS"}
+
+: at_ms=3113
+data: {"asset_version_id": "00000000-0000-4000-8000-00000000a005", "conversation_id": "00000000000000000000a001", "message_id": "00000000000000000000a003", "event": "LLM_RESPONSE_STREAM", "content": "typically port 443).\n2", "status": "IN_PROGRESS"}
+
+: at_ms=3163
+data: {"asset_version_id": "00000000-0000-4000-8000-00000000a005", "conversation_id": "00000000000000000000a001", "message_id": "00000000000000000000a003", "event": "LLM_RESPONSE_STREAM", "content": ". **TLS Handsh", "status": "IN_PROGRESS"}
+
+: at_ms=3212
+data: {"asset_version_id": "00000000-0000-4000-8000-00000000a005", "conversation_id": "00000000000000000000a001", "message_id": "00000000000000000000a003", "event": "LLM_RESPONSE_STREAM", "content": "ake**:", "status": "IN_PROGRESS"}
+
+: at_ms=3264
+data: {"asset_version_id": "00000000-0000-4000-8000-00000000a005", "conversation_id": "00000000000000000000a001", "message_id": "00000000000000000000a003", "event": "LLM_RESPONSE_STREAM", "content": " Client and server negotiate enc", "status": "IN_PROGRESS"}
+
+: at_ms=3313
+data: {"asset_version_id": "00000000-0000-4000-8000-00000000a005", "conversation_id": "00000000000000000000a001", "message_id": "00000000000000000000a003", "event": "LLM_RESPONSE_STREAM", "content": "ryption parameters, ex", "status": "IN_PROGRESS"}
+
+: at_ms=3364
+data: {"asset_version_id": "00000000-0000-4000-8000-00000000a005", "conversation_id": "00000000000000000000a001", "message_id": "00000000000000000000a003", "event": "LLM_RESPONSE_STREAM", "content": "change certificates, and establ", "status": "IN_PROGRESS"}
+
+: at_ms=3414
+data: {"asset_version_id": "00000000-0000-4000-8000-00000000a005", "conversation_id": "00000000000000000000a001", "message_id": "00000000000000000000a003", "event": "LLM_RESPONSE_STREAM", "content": "ish a shared secret key.", "status": "IN_PROGRESS"}
+
+: at_ms=3465
+data: {"asset_version_id": "00000000-0000-4000-8000-00000000a005", "conversation_id": "00000000000000000000a001", "message_id": "00000000000000000000a003", "event": "LLM_RESPONSE_STREAM", "content": "\n3. **Certificate", "status": "IN_PROGRESS"}
+
+: at_ms=3514
+data: {"asset_version_id": "00000000-0000-4000-8000-00000000a005", "conversation_id": "00000000000000000000a001", "message_id": "00000000000000000000a003", "event": "LLM_RESPONSE_STREAM", "content": " Verification**: The client", "status": "IN_PROGRESS"}
+
+: at_ms=3565
+data: {"asset_version_id": "00000000-0000-4000-8000-00000000a005", "conversation_id": "00000000000000000000a001", "message_id": "00000000000000000000a003", "event": "LLM_RESPONSE_STREAM", "content": " verifies the server's certific", "status": "IN_PROGRESS"}
+
+: at_ms=3615
+data: {"asset_version_id": "00000000-0000-4000-8000-00000000a005", "conversation_id": "00000000000000000000a001", "message_id": "00000000000000000000a003", "event": "LLM_RESPONSE_STREAM", "content": "ate against tr", "status": "IN_PROGRESS"}
+
+: at_ms=3665
+data: {"asset_version_id": "00000000-0000-4000-8000-00000000a005", "conversation_id": "00000000000000000000a001", "message_id": "00000000000000000000a003", "event": "LLM_RESPONSE_STREAM", "content": "usted Certificate Auth", "status": "IN_PROGRESS"}
+
+: at_ms=3715
+data: {"asset_version_id": "00000000-0000-4000-8000-00000000a005", "conversation_id": "00000000000000000000a001", "message_id": "00000000000000000000a003", "event": "LLM_RESPONSE_STREAM", "content": "orities (CAs)", "status": "IN_PROGRESS"}
+
+: at_ms=3764
+data: {"asset_version_id": "00000000-0000-4000-8000-00000000a005", "conversation_id": "00000000000000000000a001", "message_id": "00000000000000000000a003", "event": "LLM_RESPONSE_STREAM", "content": " to conf", "status": "IN_PROGRESS"}
+
+: at_ms=3814
+data: {"asset_version_id": "00000000-0000-4000-8000-00000000a005", "conversation_id": "00000000000000000000a001", "message_id": "00000000000000000000a003", "event": "LLM_RESPONSE_STREAM", "content": "irm ident", "status": "IN_PROGRESS"}
+
+: at_ms=3863
+data: {"asset_version_id": "00000000-0000-4000-8000-00000000a005", "conversation_id": "00000000000000000000a001", "message_id": "00000000000000000000a003", "event": "LLM_RESPONSE_STREAM", "content": "ity.\n4. **Sym", "status": "IN_PROGRESS"}
+
+: at_ms=3913
+data: {"asset_version_id": "00000000-0000-4000-8000-00000000a005", "conversation_id": "00000000000000000000a001", "message_id": "00000000000000000000a003", "event": "LLM_RESPONSE_STREAM", "content": "metric Enc", "status": "IN_PROGRESS"}
+
+: at_ms=3965
+data: {"asset_version_id": "00000000-0000-4000-8000-00000000a005", "conversation_id": "00000000000000000000a001", "message_id": "00000000000000000000a003", "event": "LLM_RESPONSE_STREAM", "content": "ryption**: Once the hand", "status": "IN_PROGRESS"}
+
+: at_ms=4014
+data: {"asset_version_id": "00000000-0000-4000-8000-00000000a005", "conversation_id": "00000000000000000000a001", "message_id": "00000000000000000000a003", "event": "LLM_RESPONSE_STREAM", "content": "shake completes, both", "status": "IN_PROGRESS"}
+
+: at_ms=4063
+data: {"asset_version_id": "00000000-0000-4000-8000-00000000a005", "conversation_id": "00000000000000000000a001", "message_id": "00000000000000000000a003", "event": "LLM_RESPONSE_STREAM", "content": " par", "status": "IN_PROGRESS"}
+
+: at_ms=4113
+data: {"asset_version_id": "00000000-0000-4000-8000-00000000a005", "conversation_id": "00000000000000000000a001", "message_id": "00000000000000000000a003", "event": "LLM_RESPONSE_STREAM", "content": "ties use symmetric encry", "status": "IN_PROGRESS"}
+
+: at_ms=4164
+data: {"asset_version_id": "00000000-0000-4000-8000-00000000a005", "conversation_id": "00000000000000000000a001", "message_id": "00000000000000000000a003", "event": "LLM_RESPONSE_STREAM", "content": "ption (faster than asymm", "status": "IN_PROGRESS"}
+
+: at_ms=4213
+data: {"asset_version_id": "00000000-0000-4000-8000-00000000a005", "conversation_id": "00000000000000000000a001", "message_id": "00000000000000000000a003", "event": "LLM_RESPONSE_STREAM", "content": "etric) to", "status": "IN_PROGRESS"}
+
+: at_ms=4263
+data: {"asset_version_id": "00000000-0000-4000-8000-00000000a005", "conversation_id": "00000000000000000000a001", "message_id": "00000000000000000000a003", "event": "LLM_RESPONSE_STREAM", "content": " encrypt all subsequ", "status": "IN_PROGRESS"}
+
+: at_ms=4313
+data: {"asset_version_id": "00000000-0000-4000-8000-00000000a005", "conversation_id": "00000000000000000000a001", "message_id": "00000000000000000000a003", "event": "LLM_RESPONSE_STREAM", "content": "ent data.\n5. **", "status": "IN_PROGRESS"}
+
+: at_ms=4364
+data: {"asset_version_id": "00000000-0000-4000-8000-00000000a005", "conversation_id": "00000000000000000000a001", "message_id": "00000000000000000000a003", "event": "LLM_RESPONSE_STREAM", "content": "Secure Data Transfer", "status": "IN_PROGRESS"}
+
+: at_ms=4413
+data: {"asset_version_id": "00000000-0000-4000-8000-00000000a005", "conversation_id": "00000000000000000000a001", "message_id": "00000000000000000000a003", "event": "LLM_RESPONSE_STREAM", "content": "**: H", "status": "IN_PROGRESS"}
+
+: at_ms=4464
+data: {"asset_version_id": "00000000-0000-4000-8000-00000000a005", "conversation_id": "00000000000000000000a001", "message_id": "00000000000000000000a003", "event": "LLM_RESPONSE_STREAM", "content": "TTP requests and responses", "status": "IN_PROGRESS"}
+
+: at_ms=4514
+data: {"asset_version_id": "00000000-0000-4000-8000-00000000a005", "conversation_id": "00000000000000000000a001", "message_id": "00000000000000000000a003", "event": "LLM_RESPONSE_STREAM", "content": " are now encrypted, prot", "status": "IN_PROGRESS"}
+
+: at_ms=4564
+data: {"asset_version_id": "00000000-0000-4000-8000-00000000a005", "conversation_id": "00000000000000000000a001", "message_id": "00000000000000000000a003", "event": "LLM_RESPONSE_STREAM", "content": "ecting against e", "status": "IN_PROGRESS"}
+
+: at_ms=4613
+data: {"asset_version_id": "00000000-0000-4000-8000-00000000a005", "conversation_id": "00000000000000000000a001", "message_id": "00000000000000000000a003", "event": "LLM_RESPONSE_STREAM", "content": "avesdropping and t", "status": "IN_PROGRESS"}
+
+: at_ms=4664
+data: {"asset_version_id": "00000000-0000-4000-8000-00000000a005", "conversation_id": "00000000000000000000a001", "message_id": "00000000000000000000a003", "event": "LLM_RESPONSE_STREAM", "content": "ampering.\n\n## Sequ", "status": "IN_PROGRESS"}
+
+: at_ms=4714
+data: {"asset_version_id": "00000000-0000-4000-8000-00000000a005", "conversation_id": "00000000000000000000a001", "message_id": "00000000000000000000a003", "event": "LLM_RESPONSE_STREAM", "content": "ence Diagram\n\n```m", "status": "IN_PROGRESS"}
+
+: at_ms=4764
+data: {"asset_version_id": "00000000-0000-4000-8000-00000000a005", "conversation_id": "00000000000000000000a001", "message_id": "00000000000000000000a003", "event": "LLM_RESPONSE_STREAM", "content": "ermaid\nsequence", "status": "IN_PROGRESS"}
+
+: at_ms=4814
+data: {"asset_version_id": "00000000-0000-4000-8000-00000000a005", "conversation_id": "00000000000000000000a001", "message_id": "00000000000000000000a003", "event": "LLM_RESPONSE_STREAM", "content": "Diagram\n    participant", "status": "IN_PROGRESS"}
+
+: at_ms=4864
+data: {"asset_version_id": "00000000-0000-4000-8000-00000000a005", "conversation_id": "00000000000000000000a001", "message_id": "00000000000000000000a003", "event": "LLM_RESPONSE_STREAM", "content": " Client", "status": "IN_PROGRESS"}
+
+: at_ms=4914
+data: {"asset_version_id": "00000000-0000-4000-8000-00000000a005", "conversation_id": "00000000000000000000a001", "message_id": "00000000000000000000a003", "event": "LLM_RESPONSE_STREAM", "content": "\n    participant Server", "status": "IN_PROGRESS"}
+
+: at_ms=4964
+data: {"asset_version_id": "00000000-0000-4000-8000-00000000a005", "conversation_id": "00000000000000000000a001", "message_id": "00000000000000000000a003", "event": "LLM_RESPONSE_STREAM", "content": "\n\n    Client->>Server:", "status": "IN_PROGRESS"}
+
+: at_ms=5014
+data: {"asset_version_id": "00000000-0000-4000-8000-00000000a005", "conversation_id": "00000000000000000000a001", "message_id": "00000000000000000000a003", "event": "LLM_RESPONSE_STREAM", "content": " ClientHello (sup", "status": "IN_PROGRESS"}
+
+: at_ms=5065
+data: {"asset_version_id": "00000000-0000-4000-8000-00000000a005", "conversation_id": "00000000000000000000a001", "message_id": "00000000000000000000a003", "event": "LLM_RESPONSE_STREAM", "content": "ported ", "status": "IN_PROGRESS"}
+
+: at_ms=5113
+data: {"asset_version_id": "00000000-0000-4000-8000-00000000a005", "conversation_id": "00000000000000000000a001", "message_id": "00000000000000000000a003", "event": "LLM_RESPONSE_STREAM", "content": "ciphers, T", "status": "IN_PROGRESS"}
+
+: at_ms=5165
+data: {"asset_version_id": "00000000-0000-4000-8000-00000000a005", "conversation_id": "00000000000000000000a001", "message_id": "00000000000000000000a003", "event": "LLM_RESPONSE_STREAM", "content": "LS version)\n    Server", "status": "IN_PROGRESS"}
+
+: at_ms=5214
+data: {"asset_version_id": "00000000-0000-4000-8000-00000000a005", "conversation_id": "00000000000000000000a001", "message_id": "00000000000000000000a003", "event": "LLM_RESPONSE_STREAM", "content": "->>Client: Server", "status": "IN_PROGRESS"}
+
+: at_ms=5264
+data: {"asset_version_id": "00000000-0000-4000-8000-00000000a005", "conversation_id": "00000000000000000000a001", "message_id": "00000000000000000000a003", "event": "LLM_RESPONSE_STREAM", "content": "Hello (ch", "status": "IN_PROGRESS"}
+
+: at_ms=5315
+data: {"asset_version_id": "00000000-0000-4000-8000-00000000a005", "conversation_id": "00000000000000000000a001", "message_id": "00000000000000000000a003", "event": "LLM_RESPONSE_STREAM", "content": "osen cipher, certific", "status": "IN_PROGRESS"}
+
+: at_ms=5364
+data: {"asset_version_id": "00000000-0000-4000-8000-00000000a005", "conversation_id": "00000000000000000000a001", "message_id": "00000000000000000000a003", "event": "LLM_RESPONSE_STREAM", "content": "ate)\n    Client->>", "status": "IN_PROGRESS"}
+
+: at_ms=5413
+data: {"asset_version_id": "00000000-0000-4000-8000-00000000a005", "conversation_id": "00000000000000000000a001", "message_id": "00000000000000000000a003", "event": "LLM_RESPONSE_STREAM", "content": "Client", "status": "IN_PROGRESS"}
+
+: at_ms=5464
+data: {"asset_version_id": "00000000-0000-4000-8000-00000000a005", "conversation_id": "00000000000000000000a001", "message_id": "00000000000000000000a003", "event": "LLM_RESPONSE_STREAM", "content": ": Verify certificate against", "status": "IN_PROGRESS"}
+
+: at_ms=5515
+data: {"asset_version_id": "00000000-0000-4000-8000-00000000a005", "conversation_id": "00000000000000000000a001", "message_id": "00000000000000000000a003", "event": "LLM_RESPONSE_STREAM", "content": " CA\n    Client->>", "status": "IN_PROGRESS"}
+
+: at_ms=5564
+data: {"asset_version_id": "00000000-0000-4000-8000-00000000a005", "conversation_id": "00000000000000000000a001", "message_id": "00000000000000000000a003", "event": "LLM_RESPONSE_STREAM", "content": "Server: Key Exch", "status": "IN_PROGRESS"}
+
+: at_ms=5615
+data: {"asset_version_id": "00000000-0000-4000-8000-00000000a005", "conversation_id": "00000000000000000000a001", "message_id": "00000000000000000000a003", "event": "LLM_RESPONSE_STREAM", "content": "ange (pre-master", "status": "IN_PROGRESS"}
+
+: at_ms=5664
+data: {"asset_version_id": "00000000-0000-4000-8000-00000000a005", "conversation_id": "00000000000000000000a001", "message_id": "00000000000000000000a003", "event": "LLM_RESPONSE_STREAM", "content": " secret,", "status": "IN_PROGRESS"}
+
+: at_ms=5716
+data: {"asset_version_id": "00000000-0000-4000-8000-00000000a005", "conversation_id": "00000000000000000000a001", "message_id": "00000000000000000000a003", "event": "LLM_RESPONSE_STREAM", "content": " encrypted)\n    ", "status": "IN_PROGRESS"}
+
+: at_ms=5765
+data: {"asset_version_id": "00000000-0000-4000-8000-00000000a005", "conversation_id": "00000000000000000000a001", "message_id": "00000000000000000000a003", "event": "LLM_RESPONSE_STREAM", "content": "Server->>Client: Fin", "status": "IN_PROGRESS"}
+
+: at_ms=5814
+data: {"asset_version_id": "00000000-0000-4000-8000-00000000a005", "conversation_id": "00000000000000000000a001", "message_id": "00000000000000000000a003", "event": "LLM_RESPONSE_STREAM", "content": "ished (", "status": "IN_PROGRESS"}
+
+: at_ms=5864
+data: {"asset_version_id": "00000000-0000-4000-8000-00000000a005", "conversation_id": "00000000000000000000a001", "message_id": "00000000000000000000a003", "event": "LLM_RESPONSE_STREAM", "content": "hand", "status": "IN_PROGRESS"}
+
+: at_ms=5913
+data: {"asset_version_id": "00000000-0000-4000-8000-00000000a005", "conversation_id": "00000000000000000000a001", "message_id": "00000000000000000000a003", "event": "LLM_RESPONSE_STREAM", "content": "shake complete)\n    ", "status": "IN_PROGRESS"}
+
+: at_ms=5966
+data: {"asset_version_id": "00000000-0000-4000-8000-00000000a005", "conversation_id": "00000000000000000000a001", "message_id": "00000000000000000000a003", "event": "LLM_RESPONSE_STREAM", "content": "Client->>Server: Fin", "status": "IN_PROGRESS"}
+
+: at_ms=6014
+data: {"asset_version_id": "00000000-0000-4000-8000-00000000a005", "conversation_id": "00000000000000000000a001", "message_id": "00000000000000000000a003", "event": "LLM_RESPONSE_STREAM", "content": "ished (handshake complete)", "status": "IN_PROGRESS"}
+
+: at_ms=6064
+data: {"asset_version_id": "00000000-0000-4000-8000-00000000a005", "conversation_id": "00000000000000000000a001", "message_id": "00000000000000000000a003", "event": "LLM_RESPONSE_STREAM", "content": "\n    Note over Client,", "status": "IN_PROGRESS"}
+
+: at_ms=6116
+data: {"asset_version_id": "00000000-0000-4000-8000-00000000a005", "conversation_id": "00000000000000000000a001", "message_id": "00000000000000000000a003", "event": "LLM_RESPONSE_STREAM", "content": "Server: Symmetric", "status": "IN_PROGRESS"}
+
+: at_ms=6165
+data: {"asset_version_id": "00000000-0000-4000-8000-00000000a005", "conversation_id": "00000000000000000000a001", "message_id": "00000000000000000000a003", "event": "LLM_RESPONSE_STREAM", "content": " session", "status": "IN_PROGRESS"}
+
+: at_ms=6214
+data: {"asset_version_id": "00000000-0000-4000-8000-00000000a005", "conversation_id": "00000000000000000000a001", "message_id": "00000000000000000000a003", "event": "LLM_RESPONSE_STREAM", "content": " key established\n    Client->>", "status": "IN_PROGRESS"}
+
+: at_ms=6264
+data: {"asset_version_id": "00000000-0000-4000-8000-00000000a005", "conversation_id": "00000000000000000000a001", "message_id": "00000000000000000000a003", "event": "LLM_RESPONSE_STREAM", "content": "Server: Encrypted", "status": "IN_PROGRESS"}
+
+: at_ms=6314
+data: {"asset_version_id": "00000000-0000-4000-8000-00000000a005", "conversation_id": "00000000000000000000a001", "message_id": "00000000000000000000a003", "event": "LLM_RESPONSE_STREAM", "content": " HTTP Request", "status": "IN_PROGRESS"}
+
+: at_ms=6366
+data: {"asset_version_id": "00000000-0000-4000-8000-00000000a005", "conversation_id": "00000000000000000000a001", "message_id": "00000000000000000000a003", "event": "LLM_RESPONSE_STREAM", "content": "\n    Server->>Client:", "status": "IN_PROGRESS"}
+
+: at_ms=6414
+data: {"asset_version_id": "00000000-0000-4000-8000-00000000a005", "conversation_id": "00000000000000000000a001", "message_id": "00000000000000000000a003", "event": "LLM_RESPONSE_STREAM", "content": " Encrypted HTT", "status": "IN_PROGRESS"}
+
+: at_ms=6465
+data: {"asset_version_id": "00000000-0000-4000-8000-00000000a005", "conversation_id": "00000000000000000000a001", "message_id": "00000000000000000000a003", "event": "LLM_RESPONSE_STREAM", "content": "P Response\n```\n\n## T", "status": "IN_PROGRESS"}
+
+: at_ms=6515
+data: {"asset_version_id": "00000000-0000-4000-8000-00000000a005", "conversation_id": "00000000000000000000a001", "message_id": "00000000000000000000a003", "event": "LLM_RESPONSE_STREAM", "content": "LS 1.2 v", "status": "IN_PROGRESS"}
+
+: at_ms=6566
+data: {"asset_version_id": "00000000-0000-4000-8000-00000000a005", "conversation_id": "00000000000000000000a001", "message_id": "00000000000000000000a003", "event": "LLM_RESPONSE_STREAM", "content": "s TLS 1.3", "status": "IN_PROGRESS"}
+
+: at_ms=6615
+data: {"asset_version_id": "00000000-0000-4000-8000-00000000a005", "conversation_id": "00000000000000000000a001", "message_id": "00000000000000000000a003", "event": "LLM_RESPONSE_STREAM", "content": "\n\n| Feature | TL", "status": "IN_PROGRESS"}
+
+: at_ms=6665
+data: {"asset_version_id": "00000000-0000-4000-8000-00000000a005", "conversation_id": "00000000000000000000a001", "message_id": "00000000000000000000a003", "event": "LLM_RESPONSE_STREAM", "content": "S 1.2 | T", "status": "IN_PROGRESS"}
+
+: at_ms=6716
+data: {"asset_version_id": "00000000-0000-4000-8000-00000000a005", "conversation_id": "00000000000000000000a001", "message_id": "00000000000000000000a003", "event": "LLM_RESPONSE_STREAM", "content": "LS 1.3 |", "status": "IN_PROGRESS"}
+
+: at_ms=6765
+data: {"asset_version_id": "00000000-0000-4000-8000-00000000a005", "conversation_id": "00000000000000000000a001", "message_id": "00000000000000000000a003", "event": "LLM_RESPONSE_STREAM", "content": "\n|---|---|---|", "status": "IN_PROGRESS"}
+
+: at_ms=6818
+data: {"asset_version_id": "00000000-0000-4000-8000-00000000a005", "conversation_id": "00000000000000000000a001", "message_id": "00000000000000000000a003", "event": "LLM_RESPONSE_STREAM", "content": "\n| Handshake Round", "status": "IN_PROGRESS"}
+
+: at_ms=6866
+data: {"asset_version_id": "00000000-0000-4000-8000-00000000a005", "conversation_id": "00000000000000000000a001", "message_id": "00000000000000000000a003", "event": "LLM_RESPONSE_STREAM", "content": " Trips | 2 round", "status": "IN_PROGRESS"}
+
+: at_ms=6916
+data: {"asset_version_id": "00000000-0000-4000-8000-00000000a005", "conversation_id": "00000000000000000000a001", "message_id": "00000000000000000000a003", "event": "LLM_RESPONSE_STREAM", "content": " trips | 1 round tr", "status": "IN_PROGRESS"}
+
+: at_ms=6968
+data: {"asset_version_id": "00000000-0000-4000-8000-00000000a005", "conversation_id": "00000000000000000000a001", "message_id": "00000000000000000000a003", "event": "LLM_RESPONSE_STREAM", "content": "ip (0-", "status": "IN_PROGRESS"}
+
+: at_ms=7015
+data: {"asset_version_id": "00000000-0000-4000-8000-00000000a005", "conversation_id": "00000000000000000000a001", "message_id": "00000000000000000000a003", "event": "LLM_RESPONSE_STREAM", "content": "RTT poss", "status": "IN_PROGRESS"}
+
+: at_ms=7065
+data: {"asset_version_id": "00000000-0000-4000-8000-00000000a005", "conversation_id": "00000000000000000000a001", "message_id": "00000000000000000000a003", "event": "LLM_RESPONSE_STREAM", "content": "ible) |\n| Hand", "status": "IN_PROGRESS"}
+
+: at_ms=7116
+data: {"asset_version_id": "00000000-0000-4000-8000-00000000a005", "conversation_id": "00000000000000000000a001", "message_id": "00000000000000000000a003", "event": "LLM_RESPONSE_STREAM", "content": "shake Speed | Sl", "status": "IN_PROGRESS"}
+
+: at_ms=7166
+data: {"asset_version_id": "00000000-0000-4000-8000-00000000a005", "conversation_id": "00000000000000000000a001", "message_id": "00000000000000000000a003", "event": "LLM_RESPONSE_STREAM", "content": "ower | Faster |\n|", "status": "IN_PROGRESS"}
+
+: at_ms=7219
+data: {"asset_version_id": "00000000-0000-4000-8000-00000000a005", "conversation_id": "00000000000000000000a001", "message_id": "00000000000000000000a003", "event": "LLM_RESPONSE_STREAM", "content": " Sup", "status": "IN_PROGRESS"}
+
+: at_ms=7265
+data: {"asset_version_id": "00000000-0000-4000-8000-00000000a005", "conversation_id": "00000000000000000000a001", "message_id": "00000000000000000000a003", "event": "LLM_RESPONSE_STREAM", "content": "ported C", "status": "IN_PROGRESS"}
+
+: at_ms=7316
+data: {"asset_version_id": "00000000-0000-4000-8000-00000000a005", "conversation_id": "00000000000000000000a001", "message_id": "00000000000000000000a003", "event": "LLM_RESPONSE_STREAM", "content": "ipher Suites | Many", "status": "IN_PROGRESS"}
+
+: at_ms=7365
+data: {"asset_version_id": "00000000-0000-4000-8000-00000000a005", "conversation_id": "00000000000000000000a001", "message_id": "00000000000000000000a003", "event": "LLM_RESPONSE_STREAM", "content": " (", "status": "IN_PROGRESS"}
+
+: at_ms=7415
+data: {"asset_version_id": "00000000-0000-4000-8000-00000000a005", "conversation_id": "00000000000000000000a001", "message_id": "00000000000000000000a003", "event": "LLM_RESPONSE_STREAM", "content": "including wea", "status": "IN_PROGRESS"}
+
+: at_ms=7465
+data: {"asset_version_id": "00000000-0000-4000-8000-00000000a005", "conversation_id": "00000000000000000000a001", "message_id": "00000000000000000000a003", "event": "LLM_RESPONSE_STREAM", "content": "ker ones like", "status": "IN_PROGRESS"}
+
+: at_ms=7515
+data: {"asset_version_id": "00000000-0000-4000-8000-00000000a005", "conversation_id": "00000000000000000000a001", "message_id": "00000000000000000000a003", "event": "LLM_RESPONSE_STREAM", "content": " RC4,", "status": "IN_PROGRESS"}
+
+: at_ms=7565
+data: {"asset_version_id": "00000000-0000-4000-8000-00000000a005", "conversation_id": "00000000000000000000a001", "message_id": "00000000000000000000a003", "event": "LLM_RESPONSE_STREAM", "content": " CBC) | Re", "status": "IN_PROGRESS"}
+
+: at_ms=7618
+data: {"asset_version_id": "00000000-0000-4000-8000-00000000a005", "conversation_id": "00000000000000000000a001", "message_id": "00000000000000000000a003", "event": "LLM_RESPONSE_STREAM", "content": "duced,", "status": "IN_PROGRESS"}
+
+: at_ms=7665
+data: {"asset_version_id": "00000000-0000-4000-8000-00000000a005", "conversation_id": "00000000000000000000a001", "message_id": "00000000000000000000a003", "event": "LLM_RESPONSE_STREAM", "content": " only str", "status": "IN_PROGRESS"}
+
+: at_ms=7714
+data: {"asset_version_id": "00000000-0000-4000-8000-00000000a005", "conversation_id": "00000000000000000000a001", "message_id": "00000000000000000000a003", "event": "LLM_RESPONSE_STREAM", "content": "ong A", "status": "IN_PROGRESS"}
+
+: at_ms=7764
+data: {"asset_version_id": "00000000-0000-4000-8000-00000000a005", "conversation_id": "00000000000000000000a001", "message_id": "00000000000000000000a003", "event": "LLM_RESPONSE_STREAM", "content": "EAD ", "status": "IN_PROGRESS"}
+
+: at_ms=7815
+data: {"asset_version_id": "00000000-0000-4000-8000-00000000a005", "conversation_id": "00000000000000000000a001", "message_id": "00000000000000000000a003", "event": "LLM_RESPONSE_STREAM", "content": "ciphers |\n| For", "status": "IN_PROGRESS"}
+
+: at_ms=7864
+data: {"asset_version_id": "00000000-0000-4000-8000-00000000a005", "conversation_id": "00000000000000000000a001", "message_id": "00000000000000000000a003", "event": "LLM_RESPONSE_STREAM", "content": "ward Secrecy |", "status": "IN_PROGRESS"}
+
+: at_ms=7914
+data: {"asset_version_id": "00000000-0000-4000-8000-00000000a005", "conversation_id": "00000000000000000000a001", "message_id": "00000000000000000000a003", "event": "LLM_RESPONSE_STREAM", "content": " Optional | Mandatory", "status": "IN_PROGRESS"}
+
+: at_ms=7965
+data: {"asset_version_id": "00000000-0000-4000-8000-00000000a005", "conversation_id": "00000000000000000000a001", "message_id": "00000000000000000000a003", "event": "LLM_RESPONSE_STREAM", "content": " |\n| Key Exch", "status": "IN_PROGRESS"}
+
+: at_ms=8014
+data: {"asset_version_id": "00000000-0000-4000-8000-00000000a005", "conversation_id": "00000000000000000000a001", "message_id": "00000000000000000000a003", "event": "LLM_RESPONSE_STREAM", "content": "ange |", "status": "IN_PROGRESS"}
+
+: at_ms=8064
+data: {"asset_version_id": "00000000-0000-4000-8000-00000000a005", "conversation_id": "00000000000000000000a001", "message_id": "00000000000000000000a003", "event": "LLM_RESPONSE_STREAM", "content": " R", "status": "IN_PROGRESS"}
+
+: at_ms=8114
+data: {"asset_version_id": "00000000-0000-4000-8000-00000000a005", "conversation_id": "00000000000000000000a001", "message_id": "00000000000000000000a003", "event": "LLM_RESPONSE_STREAM", "content": "SA, DH, EC", "status": "IN_PROGRESS"}
+
+: at_ms=8163
+data: {"asset_version_id": "00000000-0000-4000-8000-00000000a005", "conversation_id": "00000000000000000000a001", "message_id": "00000000000000000000a003", "event": "LLM_RESPONSE_STREAM", "content": "DHE |", "status": "IN_PROGRESS"}
+
+: at_ms=8213
+data: {"asset_version_id": "00000000-0000-4000-8000-00000000a005", "conversation_id": "00000000000000000000a001", "message_id": "00000000000000000000a003", "event": "LLM_RESPONSE_STREAM", "content": " Only", "status": "IN_PROGRESS"}
+
+: at_ms=8263
+data: {"asset_version_id": "00000000-0000-4000-8000-00000000a005", "conversation_id": "00000000000000000000a001", "message_id": "00000000000000000000a003", "event": "LLM_RESPONSE_STREAM", "content": " ECDHE (R", "status": "IN_PROGRESS"}
+
+: at_ms=8313
+data: {"asset_version_id": "00000000-0000-4000-8000-00000000a005", "conversation_id": "00000000000000000000a001", "message_id": "00000000000000000000a003", "event": "LLM_RESPONSE_STREAM", "content": "SA key", "status": "IN_PROGRESS"}
+
+: at_ms=8363
+data: {"asset_version_id": "00000000-0000-4000-8000-00000000a005", "conversation_id": "00000000000000000000a001", "message_id": "00000000000000000000a003", "event": "LLM_RESPONSE_STREAM", "content": " exchange removed) |", "status": "IN_PROGRESS"}
+
+: at_ms=8413
+data: {"asset_version_id": "00000000-0000-4000-8000-00000000a005", "conversation_id": "00000000000000000000a001", "message_id": "00000000000000000000a003", "event": "LLM_RESPONSE_STREAM", "content": "\n| Renegotiation |", "status": "IN_PROGRESS"}
+
+: at_ms=8463
+data: {"asset_version_id": "00000000-0000-4000-8000-00000000a005", "conversation_id": "00000000000000000000a001", "message_id": "00000000000000000000a003", "event": "LLM_RESPONSE_STREAM", "content": " Allowed (", "status": "IN_PROGRESS"}
+
+: at_ms=8513
+data: {"asset_version_id": "00000000-0000-4000-8000-00000000a005", "conversation_id": "00000000000000000000a001", "message_id": "00000000000000000000a003", "event": "LLM_RESPONSE_STREAM", "content": "security", "status": "IN_PROGRESS"}
+
+: at_ms=8563
+data: {"asset_version_id": "00000000-0000-4000-8000-00000000a005", "conversation_id": "00000000000000000000a001", "message_id": "00000000000000000000a003", "event": "LLM_RESPONSE_STREAM", "content": " risk) | Remov", "status": "IN_PROGRESS"}
+
+: at_ms=8613
+data: {"asset_version_id": "00000000-0000-4000-8000-00000000a005", "conversation_id": "00000000000000000000a001", "message_id": "00000000000000000000a003", "event": "LLM_RESPONSE_STREAM", "content": "ed |\n| Compression |", "status": "IN_PROGRESS"}
+
+: at_ms=8663
+data: {"asset_version_id": "00000000-0000-4000-8000-00000000a005", "conversation_id": "00000000000000000000a001", "message_id": "00000000000000000000a003", "event": "LLM_RESPONSE_STREAM", "content": " Sup", "status": "IN_PROGRESS"}
+
+: at_ms=8714
+data: {"asset_version_id": "00000000-0000-4000-8000-00000000a005", "conversation_id": "00000000000000000000a001", "message_id": "00000000000000000000a003", "event": "LLM_RESPONSE_STREAM", "content": "ported (", "status": "IN_PROGRESS"}
+
+: at_ms=8762
+data: {"asset_version_id": "00000000-0000-4000-8000-00000000a005", "conversation_id": "00000000000000000000a001", "message_id": "00000000000000000000a003", "event": "LLM_RESPONSE_STREAM", "content": "vulnerable to CR", "status": "IN_PROGRESS"}
+
+: at_ms=8812
+data: {"asset_version_id": "00000000-0000-4000-8000-00000000a005", "conversation_id": "00000000000000000000a001", "message_id": "00000000000000000000a003", "event": "LLM_RESPONSE_STREAM", "content": "IME att", "status": "IN_PROGRESS"}
+
+: at_ms=8862
+data: {"asset_version_id": "00000000-0000-4000-8000-00000000a005", "conversation_id": "00000000000000000000a001", "message_id": "00000000000000000000a003", "event": "LLM_RESPONSE_STREAM", "content": "ack) | Remov", "status": "IN_PROGRESS"}
+
+: at_ms=8914
+data: {"asset_version_id": "00000000-0000-4000-8000-00000000a005", "conversation_id": "00000000000000000000a001", "message_id": "00000000000000000000a003", "event": "LLM_RESPONSE_STREAM", "content": "ed |\n| Static", "status": "IN_PROGRESS"}
+
+: at_ms=8963
+data: {"asset_version_id": "00000000-0000-4000-8000-00000000a005", "conversation_id": "00000000000000000000a001", "message_id": "00000000000000000000a003", "event": "LLM_RESPONSE_STREAM", "content": " R", "status": "IN_PROGRESS"}
+
+: at_ms=9011
+data: {"asset_version_id": "00000000-0000-4000-8000-00000000a005", "conversation_id": "00000000000000000000a001", "message_id": "00000000000000000000a003", "event": "LLM_RESPONSE_STREAM", "content": "SA Support", "status": "IN_PROGRESS"}
+
+: at_ms=9062
+data: {"asset_version_id": "00000000-0000-4000-8000-00000000a005", "conversation_id": "00000000000000000000a001", "message_id": "00000000000000000000a003", "event": "LLM_RESPONSE_STREAM", "content": " | Y", "status": "IN_PROGRESS"}
+
+: at_ms=9113
+data: {"asset_version_id": "00000000-0000-4000-8000-00000000a005", "conversation_id": "00000000000000000000a001", "message_id": "00000000000000000000a003", "event": "LLM_RESPONSE_STREAM", "content": "es | No |\n| Released", "status": "IN_PROGRESS"}
+
+: at_ms=9162
+data: {"asset_version_id": "00000000-0000-4000-8000-00000000a005", "conversation_id": "00000000000000000000a001", "message_id": "00000000000000000000a003", "event": "LLM_RESPONSE_STREAM", "content": " | 2008", "status": "IN_PROGRESS"}
+
+: at_ms=9212
+data: {"asset_version_id": "00000000-0000-4000-8000-00000000a005", "conversation_id": "00000000000000000000a001", "message_id": "00000000000000000000a003", "event": "LLM_RESPONSE_STREAM", "content": " | 2018 |", "status": "IN_PROGRESS"}
+
+: at_ms=9262
+data: {"asset_version_id": "00000000-0000-4000-8000-00000000a005", "conversation_id": "00000000000000000000a001", "message_id": "00000000000000000000a003", "event": "LLM_RESPONSE_STREAM", "content": "\n\n## Example: Chec", "status": "IN_PROGRESS"}
+
+: at_ms=9312
+data: {"asset_version_id": "00000000-0000-4000-8000-00000000a005", "conversation_id": "00000000000000000000a001", "message_id": "00000000000000000000a003", "event": "LLM_RESPONSE_STREAM", "content": "king H", "status": "IN_PROGRESS"}
+
+: at_ms=9362
+data: {"asset_version_id": "00000000-0000-4000-8000-00000000a005", "conversation_id": "00000000000000000000a001", "message_id": "00000000000000000000a003", "event": "LLM_RESPONSE_STREAM", "content": "TTPS in", "status": "IN_PROGRESS"}
+
+: at_ms=9411
+data: {"asset_version_id": "00000000-0000-4000-8000-00000000a005", "conversation_id": "00000000000000000000a001", "message_id": "00000000000000000000a003", "event": "LLM_RESPONSE_STREAM", "content": " Code", "status": "IN_PROGRESS"}
+
+: at_ms=9463
+data: {"asset_version_id": "00000000-0000-4000-8000-00000000a005", "conversation_id": "00000000000000000000a001", "message_id": "00000000000000000000a003", "event": "LLM_RESPONSE_STREAM", "content": "\n\nHere's a simple", "status": "IN_PROGRESS"}
+
+: at_ms=9511
+data: {"asset_version_id": "00000000-0000-4000-8000-00000000a005", "conversation_id": "00000000000000000000a001", "message_id": "00000000000000000000a003", "event": "LLM_RESPONSE_STREAM", "content": " Python example using", "status": "IN_PROGRESS"}
+
+: at_ms=9560
+data: {"asset_version_id": "00000000-0000-4000-8000-00000000a005", "conversation_id": "00000000000000000000a001", "message_id": "00000000000000000000a003", "event": "LLM_RESPONSE_STREAM", "content": " the", "status": "IN_PROGRESS"}
+
+: at_ms=9611
+data: {"asset_version_id": "00000000-0000-4000-8000-00000000a005", "conversation_id": "00000000000000000000a001", "message_id": "00000000000000000000a003", "event": "LLM_RESPONSE_STREAM", "content": " `requests` library to make", "status": "IN_PROGRESS"}
+
+: at_ms=9660
+data: {"asset_version_id": "00000000-0000-4000-8000-00000000a005", "conversation_id": "00000000000000000000a001", "message_id": "00000000000000000000a003", "event": "LLM_RESPONSE_STREAM", "content": " a sec", "status": "IN_PROGRESS"}
+
+: at_ms=9711
+data: {"asset_version_id": "00000000-0000-4000-8000-00000000a005", "conversation_id": "00000000000000000000a001", "message_id": "00000000000000000000a003", "event": "LLM_RESPONSE_STREAM", "content": "ure HTTPS request and", "status": "IN_PROGRESS"}
+
+: at_ms=9760
+data: {"asset_version_id": "00000000-0000-4000-8000-00000000a005", "conversation_id": "00000000000000000000a001", "message_id": "00000000000000000000a003", "event": "LLM_RESPONSE_STREAM", "content": " in", "status": "IN_PROGRESS"}
+
+: at_ms=9811
+data: {"asset_version_id": "00000000-0000-4000-8000-00000000a005", "conversation_id": "00000000000000000000a001", "message_id": "00000000000000000000a003", "event": "LLM_RESPONSE_STREAM", "content": "spect the T", "status": "IN_PROGRESS"}
+
+: at_ms=9861
+data: {"asset_version_id": "00000000-0000-4000-8000-00000000a005", "conversation_id": "00000000000000000000a001", "message_id": "00000000000000000000a003", "event": "LLM_RESPONSE_STREAM", "content": "LS version:\n\n```python", "status": "IN_PROGRESS"}
+
+: at_ms=9910
+data: {"asset_version_id": "00000000-0000-4000-8000-00000000a005", "conversation_id": "00000000000000000000a001", "message_id": "00000000000000000000a003", "event": "LLM_RESPONSE_STREAM", "content": "\nimport requests", "status": "IN_PROGRESS"}
+
+: at_ms=9961
+data: {"asset_version_id": "00000000-0000-4000-8000-00000000a005", "conversation_id": "00000000000000000000a001", "message_id": "00000000000000000000a003", "event": "LLM_RESPONSE_STREAM", "content": "\nimport ssl\n\nresponse = requ", "status": "IN_PROGRESS"}
+
+: at_ms=10011
+data: {"asset_version_id": "00000000-0000-4000-8000-00000000a005", "conversation_id": "00000000000000000000a001", "message_id": "00000000000000000000a003", "event": "LLM_RESPONSE_STREAM", "content": "ests.get(\"https://example.", "status": "IN_PROGRESS"}
+
+: at_ms=10060
+data: {"asset_version_id": "00000000-0000-4000-8000-00000000a005", "conversation_id": "00000000000000000000a001", "message_id": "00000000000000000000a003", "event": "LLM_RESPONSE_STREAM", "content": "com\")\nprint(\"Status", "status": "IN_PROGRESS"}
+
+: at_ms=10111
+data: {"asset_version_id": "00000000-0000-4000-8000-00000000a005", "conversation_id": "00000000000000000000a001", "message_id": "00000000000000000000a003", "event": "LLM_RESPONSE_STREAM", "content": " Code:\", response.status_", "status": "IN_PROGRESS"}
+
+: at_ms=10161
+data: {"asset_version_id": "00000000-0000-4000-8000-00000000a005", "conversation_id": "00000000000000000000a001", "message_id": "00000000000000000000a003", "event": "LLM_RESPONSE_STREAM", "content": "code)\nprint(\"Neg", "status": "IN_PROGRESS"}
+
+: at_ms=10212
+data: {"asset_version_id": "00000000-0000-4000-8000-00000000a005", "conversation_id": "00000000000000000000a001", "message_id": "00000000000000000000a003", "event": "LLM_RESPONSE_STREAM", "content": "otiated", "status": "IN_PROGRESS"}
+
+: at_ms=10263
+data: {"asset_version_id": "00000000-0000-4000-8000-00000000a005", "conversation_id": "00000000000000000000a001", "message_id": "00000000000000000000a003", "event": "LLM_RESPONSE_STREAM", "content": " Protocol:\", response.ra", "status": "IN_PROGRESS"}
+
+: at_ms=10310
+data: {"asset_version_id": "00000000-0000-4000-8000-00000000a005", "conversation_id": "00000000000000000000a001", "message_id": "00000000000000000000a003", "event": "LLM_RESPONSE_STREAM", "content": "w.connection.s", "status": "IN_PROGRESS"}
+
+: at_ms=10361
+data: {"asset_version_id": "00000000-0000-4000-8000-00000000a005", "conversation_id": "00000000000000000000a001", "message_id": "00000000000000000000a003", "event": "LLM_RESPONSE_STREAM", "content": "ock.version", "status": "IN_PROGRESS"}
+
+: at_ms=10410
+data: {"asset_version_id": "00000000-0000-4000-8000-00000000a005", "conversation_id": "00000000000000000000a001", "message_id": "00000000000000000000a003", "event": "LLM_RESPONSE_STREAM", "content": "())", "status": "IN_PROGRESS"}
+
+: at_ms=10461
+data: {"asset_version_id": "00000000-0000-4000-8000-00000000a005", "conversation_id": "00000000000000000000a001", "message_id": "00000000000000000000a003", "event": "LLM_RESPONSE_STREAM", "content": "\n```\n\n## Why H", "status": "IN_PROGRESS"}
+
+: at_ms=10510
+data: {"asset_version_id": "00000000-0000-4000-8000-00000000a005", "conversation_id": "00000000000000000000a001", "message_id": "00000000000000000000a003", "event": "LLM_RESPONSE_STREAM", "content": "TTPS Matters", "status": "IN_PROGRESS"}
+
+: at_ms=10560
+data: {"asset_version_id": "00000000-0000-4000-8000-00000000a005", "conversation_id": "00000000000000000000a001", "message_id": "00000000000000000000a003", "event": "LLM_RESPONSE_STREAM", "content": "\n\n- **Conf", "status": "IN_PROGRESS"}
+
+: at_ms=10610
+data: {"asset_version_id": "00000000-0000-4000-8000-00000000a005", "conversation_id": "00000000000000000000a001", "message_id": "00000000000000000000a003", "event": "LLM_RESPONSE_STREAM", "content": "identiality**: Enc", "status": "IN_PROGRESS"}
+
+: at_ms=10661
+data: {"asset_version_id": "00000000-0000-4000-8000-00000000a005", "conversation_id": "00000000000000000000a001", "message_id": "00000000000000000000a003", "event": "LLM_RESPONSE_STREAM", "content": "rypts data so attackers", "status": "IN_PROGRESS"}
+
+: at_ms=10710
+data: {"asset_version_id": "00000000-0000-4000-8000-00000000a005", "conversation_id": "00000000000000000000a001", "message_id": "00000000000000000000a003", "event": "LLM_RESPONSE_STREAM", "content": " can", "status": "IN_PROGRESS"}
+
+: at_ms=10761
+data: {"asset_version_id": "00000000-0000-4000-8000-00000000a005", "conversation_id": "00000000000000000000a001", "message_id": "00000000000000000000a003", "event": "LLM_RESPONSE_STREAM", "content": "'t read int", "status": "IN_PROGRESS"}
+
+: at_ms=10810
+data: {"asset_version_id": "00000000-0000-4000-8000-00000000a005", "conversation_id": "00000000000000000000a001", "message_id": "00000000000000000000a003", "event": "LLM_RESPONSE_STREAM", "content": "ercepted traffic.", "status": "IN_PROGRESS"}
+
+: at_ms=10860
+data: {"asset_version_id": "00000000-0000-4000-8000-00000000a005", "conversation_id": "00000000000000000000a001", "message_id": "00000000000000000000a003", "event": "LLM_RESPONSE_STREAM", "content": "\n- **Integrity**:", "status": "IN_PROGRESS"}
+
+: at_ms=10910
+data: {"asset_version_id": "00000000-0000-4000-8000-00000000a005", "conversation_id": "00000000000000000000a001", "message_id": "00000000000000000000a003", "event": "LLM_RESPONSE_STREAM", "content": " Det", "status": "IN_PROGRESS"}
+
+: at_ms=10961
+data: {"asset_version_id": "00000000-0000-4000-8000-00000000a005", "conversation_id": "00000000000000000000a001", "message_id": "00000000000000000000a003", "event": "LLM_RESPONSE_STREAM", "content": "ects any", "status": "IN_PROGRESS"}
+
+: at_ms=11011
+data: {"asset_version_id": "00000000-0000-4000-8000-00000000a005", "conversation_id": "00000000000000000000a001", "message_id": "00000000000000000000a003", "event": "LLM_RESPONSE_STREAM", "content": " tampering with", "status": "IN_PROGRESS"}
+
+: at_ms=11060
+data: {"asset_version_id": "00000000-0000-4000-8000-00000000a005", "conversation_id": "00000000000000000000a001", "message_id": "00000000000000000000a003", "event": "LLM_RESPONSE_STREAM", "content": " data in", "status": "IN_PROGRESS"}
+
+: at_ms=11110
+data: {"asset_version_id": "00000000-0000-4000-8000-00000000a005", "conversation_id": "00000000000000000000a001", "message_id": "00000000000000000000a003", "event": "LLM_RESPONSE_STREAM", "content": " transit.\n- **Auth", "status": "IN_PROGRESS"}
+
+: at_ms=11160
+data: {"asset_version_id": "00000000-0000-4000-8000-00000000a005", "conversation_id": "00000000000000000000a001", "message_id": "00000000000000000000a003", "event": "LLM_RESPONSE_STREAM", "content": "entication**: Conf", "status": "IN_PROGRESS"}
+
+: at_ms=11210
+data: {"asset_version_id": "00000000-0000-4000-8000-00000000a005", "conversation_id": "00000000000000000000a001", "message_id": "00000000000000000000a003", "event": "LLM_RESPONSE_STREAM", "content": "irms you", "status": "IN_PROGRESS"}
+
+: at_ms=11261
+data: {"asset_version_id": "00000000-0000-4000-8000-00000000a005", "conversation_id": "00000000000000000000a001", "message_id": "00000000000000000000a003", "event": "LLM_RESPONSE_STREAM", "content": "'re communicating with the leg", "status": "IN_PROGRESS"}
+
+: at_ms=11310
+data: {"asset_version_id": "00000000-0000-4000-8000-00000000a005", "conversation_id": "00000000000000000000a001", "message_id": "00000000000000000000a003", "event": "LLM_RESPONSE_STREAM", "content": "itimate server, not an", "status": "IN_PROGRESS"}
+
+: at_ms=11360
+data: {"asset_version_id": "00000000-0000-4000-8000-00000000a005", "conversation_id": "00000000000000000000a001", "message_id": "00000000000000000000a003", "event": "LLM_RESPONSE_STREAM", "content": " imposter.\n\nTLS", "status": "IN_PROGRESS"}
+
+: at_ms=11410
+data: {"asset_version_id": "00000000-0000-4000-8000-00000000a005", "conversation_id": "00000000000000000000a001", "message_id": "00000000000000000000a003", "event": "LLM_RESPONSE_STREAM", "content": " 1.3's", "status": "IN_PROGRESS"}
+
+: at_ms=11460
+data: {"asset_version_id": "00000000-0000-4000-8000-00000000a005", "conversation_id": "00000000000000000000a001", "message_id": "00000000000000000000a003", "event": "LLM_RESPONSE_STREAM", "content": " stre", "status": "IN_PROGRESS"}
+
+: at_ms=11510
+data: {"asset_version_id": "00000000-0000-4000-8000-00000000a005", "conversation_id": "00000000000000000000a001", "message_id": "00000000000000000000a003", "event": "LLM_RESPONSE_STREAM", "content": "amlined handshake and", "status": "IN_PROGRESS"}
+
+: at_ms=11560
+data: {"asset_version_id": "00000000-0000-4000-8000-00000000a005", "conversation_id": "00000000000000000000a001", "message_id": "00000000000000000000a003", "event": "LLM_RESPONSE_STREAM", "content": " remov", "status": "IN_PROGRESS"}
+
+: at_ms=11610
+data: {"asset_version_id": "00000000-0000-4000-8000-00000000a005", "conversation_id": "00000000000000000000a001", "message_id": "00000000000000000000a003", "event": "LLM_RESPONSE_STREAM", "content": "al of vulnerable leg", "status": "IN_PROGRESS"}
+
+: at_ms=11660
+data: {"asset_version_id": "00000000-0000-4000-8000-00000000a005", "conversation_id": "00000000000000000000a001", "message_id": "00000000000000000000a003", "event": "LLM_RESPONSE_STREAM", "content": "acy features", "status": "IN_PROGRESS"}
+
+: at_ms=11709
+data: {"asset_version_id": "00000000-0000-4000-8000-00000000a005", "conversation_id": "00000000000000000000a001", "message_id": "00000000000000000000a003", "event": "LLM_RESPONSE_STREAM", "content": " make", "status": "IN_PROGRESS"}
+
+: at_ms=11759
+data: {"asset_version_id": "00000000-0000-4000-8000-00000000a005", "conversation_id": "00000000000000000000a001", "message_id": "00000000000000000000a003", "event": "LLM_RESPONSE_STREAM", "content": " it signific", "status": "IN_PROGRESS"}
+
+: at_ms=11809
+data: {"asset_version_id": "00000000-0000-4000-8000-00000000a005", "conversation_id": "00000000000000000000a001", "message_id": "00000000000000000000a003", "event": "LLM_RESPONSE_STREAM", "content": "antly faster and more secure", "status": "IN_PROGRESS"}
+
+: at_ms=11859
+data: {"asset_version_id": "00000000-0000-4000-8000-00000000a005", "conversation_id": "00000000000000000000a001", "message_id": "00000000000000000000a003", "event": "LLM_RESPONSE_STREAM", "content": " than TLS 1.2", "status": "IN_PROGRESS"}
+
+: at_ms=11912
+data: {"asset_version_id": "00000000-0000-4000-8000-00000000a005", "conversation_id": "00000000000000000000a001", "message_id": "00000000000000000000a003", "event": "LLM_RESPONSE_STREAM", "content": ", which is why most modern brow", "status": "IN_PROGRESS"}
+
+: at_ms=11959
+data: {"asset_version_id": "00000000-0000-4000-8000-00000000a005", "conversation_id": "00000000000000000000a001", "message_id": "00000000000000000000a003", "event": "LLM_RESPONSE_STREAM", "content": "sers and servers now prio", "status": "IN_PROGRESS"}
+
+: at_ms=12009
+data: {"asset_version_id": "00000000-0000-4000-8000-00000000a005", "conversation_id": "00000000000000000000a001", "message_id": "00000000000000000000a003", "event": "LLM_RESPONSE_STREAM", "content": "ritize it", "status": "IN_PROGRESS"}
+
+: at_ms=12060
+data: {"asset_version_id": "00000000-0000-4000-8000-00000000a005", "conversation_id": "00000000000000000000a001", "message_id": "00000000000000000000a003", "event": "LLM_RESPONSE_STREAM", "content": " by", "status": "IN_PROGRESS"}
+
+: at_ms=12109
+data: {"asset_version_id": "00000000-0000-4000-8000-00000000a005", "conversation_id": "00000000000000000000a001", "message_id": "00000000000000000000a003", "event": "LLM_RESPONSE_STREAM", "content": " default.", "status": "IN_PROGRESS"}
+
+: at_ms=12614
+data: {"asset_version_id": "00000000-0000-4000-8000-00000000a005", "conversation_id": "00000000000000000000a001", "message_id": "00000000000000000000a003", "event": "LLM_RESPONSE_STREAM", "content": "", "status": "END"}
+
+: at_ms=12832
+data: {"asset_version_id": "00000000-0000-4000-8000-00000000a005", "conversation_id": "00000000000000000000a001", "message_id": "00000000000000000000a003", "event": "FINAL_RESPONSE", "content": {"asset_version_id": "00000000-0000-4000-8000-00000000a005", "conversation_id": "00000000000000000000a001", "message_id": "00000000000000000000a003", "query": "Explain how HTTPS works in about 400 words. Include a markdown table comparing TLS 1.2 and TLS 1.3, a short code block, and a mermaid sequence diagram in a fenced code block.", "response": "# How HTTPS Works\n\nHTTPS (Hypertext Transfer Protocol Secure) is the secure version of HTTP, encrypting data exchanged between a client (browser) and a server using **TLS (Transport Layer Security)**. This ensures confidentiality, integrity, and authentication of data in transit.\n\n## The Process Overview\n\n1. **TCP Connection**: The client establishes a TCP connection with the server (typically port 443).\n2. **TLS Handshake**: Client and server negotiate encryption parameters, exchange certificates, and establish a shared secret key.\n3. **Certificate Verification**: The client verifies the server's certificate against trusted Certificate Authorities (CAs) to confirm identity.\n4. **Symmetric Encryption**: Once the handshake completes, both parties use symmetric encryption (faster than asymmetric) to encrypt all subsequent data.\n5. **Secure Data Transfer**: HTTP requests and responses are now encrypted, protecting against eavesdropping and tampering.\n\n## Sequence Diagram\n\n```mermaid\nsequenceDiagram\n    participant Client\n    participant Server\n\n    Client->>Server: ClientHello (supported ciphers, TLS version)\n    Server->>Client: ServerHello (chosen cipher, certificate)\n    Client->>Client: Verify certificate against CA\n    Client->>Server: Key Exchange (pre-master secret, encrypted)\n    Server->>Client: Finished (handshake complete)\n    Client->>Server: Finished (handshake complete)\n    Note over Client,Server: Symmetric session key established\n    Client->>Server: Encrypted HTTP Request\n    Server->>Client: Encrypted HTTP Response\n```\n\n## TLS 1.2 vs TLS 1.3\n\n| Feature | TLS 1.2 | TLS 1.3 |\n|---|---|---|\n| Handshake Round Trips | 2 round trips | 1 round trip (0-RTT possible) |\n| Handshake Speed | Slower | Faster |\n| Supported Cipher Suites | Many (including weaker ones like RC4, CBC) | Reduced, only strong AEAD ciphers |\n| Forward Secrecy | Optional | Mandatory |\n| Key Exchange | RSA, DH, ECDHE | Only ECDHE (RSA key exchange removed) |\n| Renegotiation | Allowed (security risk) | Removed |\n| Compression | Supported (vulnerable to CRIME attack) | Removed |\n| Static RSA Support | Yes | No |\n| Released | 2008 | 2018 |\n\n## Example: Checking HTTPS in Code\n\nHere's a simple Python example using the `requests` library to make a secure HTTPS request and inspect the TLS version:\n\n```python\nimport requests\nimport ssl\n\nresponse = requests.get(\"https://example.com\")\nprint(\"Status Code:\", response.status_code)\nprint(\"Negotiated Protocol:\", response.raw.connection.sock.version())\n```\n\n## Why HTTPS Matters\n\n- **Confidentiality**: Encrypts data so attackers can't read intercepted traffic.\n- **Integrity**: Detects any tampering with data in transit.\n- **Authentication**: Confirms you're communicating with the legitimate server, not an imposter.\n\nTLS 1.3's streamlined handshake and removal of vulnerable legacy features make it significantly faster and more secure than TLS 1.2, which is why most modern browsers and servers now prioritize it by default.", "additional_model_output": {"logprobs": {"raw_response": {"content": []}}}, "metrics": {"total_tokens": 3238, "total_cost": 0.01638, "prompt_tokens": 2000, "completion_tokens": 1238, "total_llm_time": 11.119148015975952, "successful_requests": 1, "total_time": 12.747}, "sources": [], "citation": [], "llm_citation": null, "traces": [], "debug_trace_ids": [], "add_ons": {}, "evals": {}, "artifacts": [], "message_status": "SUCCESS", "artifacts_generated": {"files": []}, "context_usage": {"context_window": 872000, "context_usage_pct": 0.23, "overhead_tokens": 38, "tokens_until_compaction": -1, "compaction_count": 0, "compaction_available": false, "overhead_bound": false}}, "status": "SUCCESS"}
+
+: at_ms=12832
+data: {"asset_version_id": "00000000-0000-4000-8000-00000000a005", "conversation_id": "00000000000000000000a001", "message_id": "00000000000000000000a003", "event": "STREAM_END", "content": "", "status": "SUCCESS"}
