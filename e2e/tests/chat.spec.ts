@@ -114,3 +114,77 @@ test("at 280 px wide nothing in the chat spills sideways", async ({ page }) => {
   );
   expect(overflow).toBe(0);
 });
+
+async function ask(page: Page, question: string) {
+  const field = chat(page).getByRole("textbox", { name: "Your question" });
+  await field.fill(question);
+  await field.press("Enter");
+}
+
+test("a stream cut off part-way is recovered: the finished answer is fetched and shown, with no error", async ({
+  page,
+}) => {
+  await openChat(page);
+  await ask(page, "When does the library open on Sunday? [drop]");
+
+  await expect(chat(page).getByRole("article").getByText(/stays open until 22:00\.$/)).toBeVisible();
+  await expect(chat(page).getByRole("button", { name: "Copy answer" })).toBeVisible();
+  await expect(chat(page).getByRole("alert")).toHaveCount(0);
+});
+
+test("a signed-in resident whose session ends mid-conversation never notices: it is renewed with a fresh token", async ({
+  page,
+}) => {
+  await page.goto(`${HOST}/chat-signed-in.html`);
+  await launcher(page).click();
+  await ask(page, "When does the library open on Sunday? [expire]");
+
+  await expect(chat(page).getByRole("article").getByText(/stays open until 22:00\.$/)).toBeVisible();
+  await expect(chat(page).getByRole("alert")).toHaveCount(0);
+  expect(await page.evaluate(() => (window as unknown as { tokenCalls: number }).tokenCalls)).toBe(2);
+});
+
+test("while a long answer streams, a visitor who scrolls up to read is not pulled down, and can jump back", async ({
+  page,
+}) => {
+  await openChat(page);
+  await ask(page, "How does HTTPS work? [long]");
+  await expect(chat(page).getByRole("article").getByText(/HTTPS/)).toBeVisible();
+  const frame = chatFrame(page)!;
+  const position = () => frame.evaluate(() => document.querySelector(".log")!.scrollTop);
+  // Scroll up only once the answer is well past the bottom of the view, as a reader would.
+  await expect
+    .poll(() => frame.evaluate(() => {
+      const log = document.querySelector(".log")!;
+      return log.scrollHeight - log.clientHeight;
+    }))
+    .toBeGreaterThan(300);
+  await frame.evaluate(() => {
+    const log = document.querySelector(".log")!;
+    log.scrollTop = 0;
+    log.dispatchEvent(new Event("scroll"));
+  });
+  await page.waitForTimeout(1000); // the answer keeps growing meanwhile
+
+  expect(await position()).toBe(0);
+  await chat(page).getByRole("button", { name: "Go to the latest message" }).click();
+  await expect
+    .poll(() => frame.evaluate(() => {
+      const log = document.querySelector(".log")!;
+      return log.scrollHeight - log.scrollTop - log.clientHeight;
+    }))
+    .toBeLessThan(48);
+});
+
+test("closing the chat while it waits for an answer pauses its animation", async ({ page }) => {
+  await openChat(page);
+  await ask(page, "When does the library open on Sunday? [slow]");
+  await expect(chat(page).getByRole("img", { name: "Finding an answer" })).toBeVisible();
+  await chat(page).getByRole("button", { name: "Close chat" }).click();
+
+  const frame = chatFrame(page)!;
+  await expect
+    .poll(() => frame.evaluate(() => document.getAnimations().every((animation) => animation.playState === "paused")))
+    .toBe(true);
+  expect(await frame.evaluate(() => document.getAnimations().length)).toBeGreaterThan(0);
+});

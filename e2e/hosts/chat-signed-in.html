@@ -1,0 +1,24 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>The College portal, with the real chat</title>
+  </head>
+  <body>
+    <h1>A portal page for a signed-in resident</h1>
+    <script>
+      // The host's own backend would sign this token for its signed-in user.
+      window.tokenCalls = 0;
+      window.UCP = window.UCP || function () { (UCP.q = UCP.q || []).push(arguments) };
+      UCP("mount", {
+        widgetId: "w_chat",
+        getToken: () => {
+          window.tokenCalls += 1;
+          return Promise.resolve(["resident", "token", window.tokenCalls].join("-"));
+        },
+      });
+    </script>
+    <script async src="http://localhost:4174/loader.js"></script>
+  </body>
+</html>

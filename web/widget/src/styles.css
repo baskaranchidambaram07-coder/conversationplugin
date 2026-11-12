@@ -161,8 +161,8 @@ h1 {
   padding: 4px var(--gutter) 16px;
   scrollbar-width: thin;
   scrollbar-color: var(--sand) transparent;
-  /* Long answers slide softly under the header instead of being cut at its edge. */
-  mask-image: linear-gradient(to bottom, transparent, var(--ink) 14px); /* a mask reads only opacity */
+  /* Long answers slide softly under the header and into the composer instead of being cut at either edge. */
+  mask-image: linear-gradient(transparent, var(--ink) 14px, var(--ink) calc(100% - 14px), transparent);
 }
 
 .notice {
@@ -449,6 +449,12 @@ textarea::placeholder {
   .mine {
     max-width: 92%;
   }
+}
+
+/* The loader has closed the panel: nothing may keep animating out of sight. */
+.paused,
+.paused * {
+  animation-play-state: paused !important;
 }
 
 @media (prefers-reduced-motion: reduce) {

@@ -370,6 +370,15 @@ test("each later opening tells a connected chat it is shown, so it can take focu
   expect(sent.mock.calls).toEqual([[{ ucp: 1, type: "shown" }, ORIGIN]]);
 });
 
+test("closing a connected chat tells it it is hidden, so it can stop animating", async () => {
+  const { sent, fromChat } = await openWithBridge();
+  fromChat({ ucp: 1, type: "ready" });
+  sent.mockClear();
+  api()("close");
+
+  expect(sent.mock.calls).toEqual([[{ ucp: 1, type: "hidden" }, ORIGIN]]);
+});
+
 test.each([
   ["a string", () => "signed-by-host", "signed-by-host", "UCP: ✓ token supplied"],
   ["a promise of a string", async () => "signed-by-host", "signed-by-host", "UCP: ✓ token supplied"],
