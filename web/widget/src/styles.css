@@ -305,6 +305,22 @@ h1 {
   color: var(--umber);
 }
 
+/* A task's box hangs where a bullet would, so its words line up with the rest of the list. */
+.md .task-list-item {
+  list-style: none;
+}
+
+.md .task {
+  display: inline-flex;
+  margin-inline: -1.35em calc(1.1em - 18px); /* the space after the box makes up the last 0.25em */
+  vertical-align: -3px;
+}
+
+.md .task .glyph {
+  width: 18px;
+  height: 18px;
+}
+
 .md blockquote {
   padding: 10px 14px;
   border-radius: 12px;

@@ -15,6 +15,8 @@ export const strings = {
   copy: "Copy answer",
   copied: "Copied",
   copyFailed: "Could not copy",
+  taskDone: "Done",
+  taskOpen: "Not done",
   retry: "Try again",
   newChat: "Start a new chat",
   unknownBlock: "This part of the answer cannot be shown here.",
