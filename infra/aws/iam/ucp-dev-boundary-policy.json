@@ -1,0 +1,59 @@
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Sid": "ProjectNamedResources",
+      "Effect": "Allow",
+      "Action": [
+        "ecs:*",
+        "ecr:*",
+        "logs:*",
+        "s3:*",
+        "secretsmanager:GetSecretValue",
+        "secretsmanager:DescribeSecret"
+      ],
+      "Resource": [
+        "arn:aws:ecs:us-east-1:*:cluster/ucp-dev-*",
+        "arn:aws:ecs:us-east-1:*:service/ucp-dev-*/*",
+        "arn:aws:ecs:us-east-1:*:task/ucp-dev-*/*",
+        "arn:aws:ecs:us-east-1:*:task-definition/ucp-dev-*:*",
+        "arn:aws:ecr:us-east-1:*:repository/ucp-dev-*",
+        "arn:aws:logs:us-east-1:*:log-group:/ucp-dev/*",
+        "arn:aws:secretsmanager:us-east-1:*:secret:ucp-dev/*",
+        "arn:aws:s3:::ucp-dev-*"
+      ]
+    },
+    {
+      "Sid": "UnscopedBasics",
+      "Effect": "Allow",
+      "Action": [
+        "ecr:GetAuthorizationToken",
+        "ecs:RegisterTaskDefinition",
+        "ecs:DeregisterTaskDefinition",
+        "ecs:Describe*",
+        "ecs:List*",
+        "elasticloadbalancing:Describe*",
+        "cloudfront:CreateInvalidation",
+        "cloudfront:GetInvalidation",
+        "cloudfront:GetDistribution",
+        "cloudwatch:PutMetricData",
+        "ssmmessages:CreateControlChannel",
+        "ssmmessages:CreateDataChannel",
+        "ssmmessages:OpenControlChannel",
+        "ssmmessages:OpenDataChannel",
+        "xray:PutTraceSegments",
+        "xray:PutTelemetryRecords"
+      ],
+      "Resource": "*"
+    },
+    {
+      "Sid": "PassProjectRolesToEcsTasks",
+      "Effect": "Allow",
+      "Action": "iam:PassRole",
+      "Resource": "arn:aws:iam::*:role/ucp-dev-*",
+      "Condition": {
+        "StringEquals": { "iam:PassedToService": "ecs-tasks.amazonaws.com" }
+      }
+    }
+  ]
+}

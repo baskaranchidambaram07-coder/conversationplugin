@@ -225,7 +225,7 @@ Each module lists its tests under the same headings. A heading is omitted where 
 **Tasks**
 
 - M0-T1 PF discovery. Done on 12 November 2026 against staging. The capture script (`spikes/pf_capture.py`) recorded login, conversation creation, streaming, the fetch call, hang-up behaviour and error shapes. Output: `pf-capability-sheet.md` and the recorded samples. Remaining: the questions for the PF team listed under M6.
-- M0-T2 Repository, coding standards, and a build pipeline that lints, type-checks, tests and builds every package.
+- M0-T2 Repository, coding standards, and a build pipeline that lints, type-checks, tests and builds every package. Done on 12 November 2026; see `tech-stack.md`.
 - M0-T3 Protocol version 1: content blocks (Markdown, table, chart, code, diagram, image, file, sources, fallback), stream events (`message.started`, `content_block.started`, `content_block.delta`, `content_block.completed`, `message.completed`, `message.failed`), the event envelope (schema version, conversation ID, message ID, sequence number, correlation ID), the error format, and the public widget configuration. Defined as Python models; JSON Schema and TypeScript types generated.
 - M0-T4 Example files for every block and event, valid and invalid. These are the shared test data for all modules.
 - M0-T5 Fake PF server with scripted behaviours: normal stream, slow reply, error mid-stream, expired token, rate limit.
@@ -780,6 +780,8 @@ For each new cloud the work is two small adapters, one Terraform stack, and a re
 | Target | A base version in the development environment by 22 November 2026 (section 14). |
 | Repository visibility | Public, under the Apache 2.0 licence. Confirmed. |
 | Base version scope | Section 14 confirmed. The admin console follows after 22 November. |
+| Toolchain | Chosen, installed and verified on the build machine. Versions and commands are in `tech-stack.md`. |
+| Pull requests | Feature branches are merged into module branches without review. Merges into `develop` and `main` wait for your word. |
 | PF hosting | Staging runs in the US; production runs in the UK (London). UK customers are served only through production, and staging carries test data only. |
 | Certifications | Intellect holds the certificates UK buyers ask for (Cyber Essentials, ISO 27001). |
 | Hosting | We host on AWS. A government customer that requires a particular provider gets a dedicated deployment on AWS, Azure or GCP. Private data centres are out of scope (D16). |
@@ -791,8 +793,8 @@ For each new cloud the work is two small adapters, one Terraform stack, and a re
 
 ### Still open
 
-1. **AWS access for development.** The AWS identity configured on the build machine can read S3 and Lambda only. Creating the development environment needs an identity allowed to manage containers, the database, networking, the load balancer, content delivery, secrets, logs and service roles. Needed by 18 November.
-2. **Tools on the build machine.** It has no Docker, so container images are built in GitHub Actions. PostgreSQL and Terraform need installing, with your permission.
+1. **AWS access for development.** The two policies in `infra/aws/iam/` need creating, and the deployer policy attaching to `service-commandline-user`. The steps are in the README in that folder. Needed by 18 November.
+2. **Local database as a service.** PostgreSQL runs on the build machine only while a test command runs. Registering it as a Windows service would keep it running between commands; that needs your approval.
 3. **Purge policy.** With your team. Until it is decided, nothing is hidden or deleted.
 4. **Web addresses for production.** A name under a domain Intellect owns, for the loader, the chat and the API. Not needed for the development sandbox.
 5. **Remaining PF questions.** Section 10 of `pf-capability-sheet.md`.
