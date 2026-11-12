@@ -1,6 +1,6 @@
 # Technology and Infrastructure Stack
 
-Status: 12 November 2026. Everything marked "verified" was installed and run on the build machine on that date. The build machine is a Windows Server instance on AWS without Docker.
+Status: 12 November 2026. Everything marked "verified" was run on that date, on the build machine or in the GitHub pipeline. The build machine is a Windows Server instance on AWS without Docker.
 
 ## 1. Readiness at a glance
 
@@ -10,8 +10,8 @@ Status: 12 November 2026. Everything marked "verified" was installed and run on 
 | Backend toolchain | Verified: lint and three tests pass | Nothing |
 | Web toolchain | Verified: type checks, unit tests and builds pass | Nothing |
 | Browser testing | Verified on Chromium, Firefox, WebKit and a phone profile | Real devices, before production |
-| Build pipeline | Defined in `.github/workflows/ci.yml`; runs on every pull request | Nothing |
-| Container image | Built and started in the pipeline, because the build machine has no Docker | Nothing |
+| Build pipeline | Verified: all four jobs pass on GitHub | Nothing |
+| Container image | Verified in the pipeline: it builds and its health endpoint answers | Nothing |
 | Local database | PostgreSQL 17 runs while a test command runs, then stops | Your decision on running it as a Windows service |
 | Infrastructure tool | Terraform installed, checksum verified | The configuration itself is module M14 |
 | AWS access for development | Blocked | Attach the two policies in `infra/aws/iam/` |
