@@ -26,6 +26,15 @@
         ],
         "createdAt": "2026-11-12T12:31:27.408Z",
         "reason": "User chose the Warm Consumer App world (warm tinted ground) on the decision page on 2026-11-12; the stand-in chat page paints that world's ground"
+      },
+      {
+        "rule": "design-system-color",
+        "value": "*",
+        "files": [
+          "e2e/hosts/*.html"
+        ],
+        "createdAt": "2026-11-12T13:08:16.158Z",
+        "reason": "Claude decided: these pages stand in for customers' own sites, which by definition do not use the widget's palette"
       }
     ]
   }

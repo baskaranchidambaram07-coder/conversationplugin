@@ -1,0 +1,15 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>A page that already uses the name UCP</title>
+    <script>
+      window.UCP = { version: "theirs" };
+    </script>
+  </head>
+  <body>
+    <h1>A page whose own code already defines UCP</h1>
+    <script async src="http://localhost:4174/loader.js" data-widget-id="w_test"></script>
+  </body>
+</html>
