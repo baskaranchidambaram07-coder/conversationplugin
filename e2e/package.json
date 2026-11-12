@@ -4,7 +4,8 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "e2e": "playwright test"
+    "e2e": "playwright test",
+    "e2e:gateway": "playwright test --config gateway.config.ts"
   },
   "devDependencies": {
     "@axe-core/playwright": "^4.14.0",
