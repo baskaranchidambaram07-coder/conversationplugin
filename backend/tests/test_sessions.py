@@ -168,3 +168,10 @@ def test_the_limiter_counts_a_rolling_minute_per_key():
     assert refused.value.code == "rate_limited" and 0 < refused.value.retry_after <= 60
     limiter.hits["a"] = type(limiter.hits["a"])(t - 61 for t in limiter.hits["a"])
     limiter.check("a", 3)
+
+
+def test_one_widgets_sessions_do_not_use_up_anothers_limit(client, widgets):
+    for _ in range(2):
+        assert start(client, widgets["open"]).status_code == 200
+
+    assert start(client, widgets["strict"]).status_code == 200  # its own allowance of two is untouched
