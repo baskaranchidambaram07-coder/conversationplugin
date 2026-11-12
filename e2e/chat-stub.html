@@ -1,0 +1,22 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Chat stand-in</title>
+    <style>
+      body { margin: 0; padding: 24px; background: #fbf3ea; color: #2b241f; font: 16px/1.5 system-ui, sans-serif; }
+    </style>
+  </head>
+  <body>
+    <h1>Chat stand-in</h1>
+    <p>Module M2 replaces this page with the real chat.</p>
+    <button type="button" id="close">Close chat</button>
+    <script>
+      // shortcut: posts to any origin until the bridge handshake pins the parent's origin (next M1 pull request).
+      const close = () => parent.postMessage({ ucp: 1, type: "close" }, "*");
+      document.getElementById("close").addEventListener("click", close);
+      addEventListener("keydown", (event) => event.key === "Escape" && close());
+    </script>
+  </body>
+</html>
