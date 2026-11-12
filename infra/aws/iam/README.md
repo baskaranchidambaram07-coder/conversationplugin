@@ -2,24 +2,35 @@
 
 Two policies give the identity that builds the development environment what it needs and no more. They assume the region `us-east-1`, the IAM user `service-commandline-user`, and that every resource the project creates has a name starting with `ucp-dev`.
 
-| File | What it is | Where it goes |
-|---|---|---|
-| `ucp-dev-boundary-policy.json` | The ceiling for any role the project creates | A customer managed policy named exactly `ucp-dev-boundary`. It is attached to nothing. |
-| `ucp-dev-deployer-policy.json` | What the deploying identity may do | A customer managed policy named `ucp-dev-deployer`, attached to `service-commandline-user`. |
+| File | Policy name | What it is | Attached to |
+|---|---|---|---|
+| `ucp-dev-boundary.json` | `ucp-dev-boundary` | The ceiling for any role the project creates | Nothing |
+| `ucp-dev-deployer.json` | `ucp-dev-deployer` | What the deploying identity may do | The user `service-commandline-user` |
+
+Each policy is named after its file, without `.json`. The deployer policy refers to the boundary by that exact name.
+
+## Both must be managed policies, not inline policies
+
+An inline policy is one typed directly onto a user. It cannot be used here, for two reasons:
+
+- All inline policies on one user share a limit of 2,048 characters. The deployer policy is 4,688. A managed policy may be up to 6,144.
+- AWS accepts only a managed policy as a permissions boundary.
+
+If the boundary document was added to the user as an inline policy, remove it from the user. It does no harm there, but it is not acting as a boundary, and it gives the user permissions that were meant only as a ceiling for other roles.
 
 ## Steps for an AWS administrator
 
 In the IAM console:
 
-1. Policies, Create policy, JSON tab. Paste `ucp-dev-boundary-policy.json`. Name it `ucp-dev-boundary`. The name matters, because the deployer policy refers to it.
-2. Policies, Create policy, JSON tab. Paste `ucp-dev-deployer-policy.json`. Name it `ucp-dev-deployer`.
-3. Users, `service-commandline-user`, Add permissions, Attach policies directly, choose `ucp-dev-deployer`.
+1. In the left menu choose **Policies** (not Users). Choose **Create policy**, then the **JSON** tab. Paste the contents of `ucp-dev-boundary.json`. Choose Next, enter the name `ucp-dev-boundary`, and create it. Attach it to nothing.
+2. Again under **Policies**, **Create policy**, **JSON**. Paste `ucp-dev-deployer.json`. Name it `ucp-dev-deployer` and create it.
+3. Now go to **Users**, open `service-commandline-user`, choose **Add permissions**, then **Attach policies directly**. Search for `ucp-dev-deployer`, tick it, and add it.
 
 Or from a command line with administrator rights, run from this folder:
 
 ```
-aws iam create-policy --policy-name ucp-dev-boundary --policy-document file://ucp-dev-boundary-policy.json
-aws iam create-policy --policy-name ucp-dev-deployer --policy-document file://ucp-dev-deployer-policy.json
+aws iam create-policy --policy-name ucp-dev-boundary --policy-document file://ucp-dev-boundary.json
+aws iam create-policy --policy-name ucp-dev-deployer --policy-document file://ucp-dev-deployer.json
 aws iam attach-user-policy --user-name service-commandline-user --policy-arn arn:aws:iam::<account-id>:policy/ucp-dev-deployer
 ```
 

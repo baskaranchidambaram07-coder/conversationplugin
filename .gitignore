@@ -1,4 +1,6 @@
 .env
+# Local tools, the local database with its passwords, and test browsers. Never published.
+.tools/
 spikes/pf_capture_out/
 __pycache__/
 .venv/

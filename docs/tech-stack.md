@@ -14,7 +14,7 @@ Status: 12 November 2026. Everything marked "verified" was run on that date, on 
 | Container image | Verified in the pipeline: it builds and its health endpoint answers | Nothing |
 | Local database | PostgreSQL 17 runs while a test command runs, then stops | Your decision on running it as a Windows service |
 | Infrastructure tool | Terraform installed, checksum verified | The configuration itself is module M14 |
-| AWS access for development | Blocked | Attach the two policies in `infra/aws/iam/` |
+| AWS access for development | Blocked | Create the two managed policies in `infra/aws/iam/` and attach the deployer one |
 | Purple Fabric staging | Verified by live capture | Remaining questions in `pf-capability-sheet.md` |
 | Production in London | Not started | Account access and web addresses |
 
@@ -88,18 +88,20 @@ Not part of the base version: a web application firewall, our own web addresses 
 
 ## 6. What was put on the build machine
 
-Nothing was installed system-wide and no service was registered. Everything is under two folders and can be removed by deleting them.
+Nothing was installed system-wide and no service was registered. Everything the project needs is inside the project folder, in `.tools`, which git ignores. Deleting that folder removes it all.
 
-| Location | Contents |
+| Location in the project | Contents |
 |---|---|
-| `C:\tools\ucp\terraform\` | Terraform 1.17.2 |
-| `C:\tools\ucp\pgsql\` | PostgreSQL 17.11 server programs, from the EnterpriseDB download |
-| `C:\tools\ucp\pgdata\` | The local database files |
-| `C:\tools\ucp\pg-superuser.txt`, `pg-app.txt` | Generated database passwords |
-| `C:\tools\ucp\downloads\` | The two downloaded archives |
-| `%LOCALAPPDATA%\ms-playwright\` | The Playwright browsers |
+| `.tools\terraform\` | Terraform 1.17.2 |
+| `.tools\pgsql\` | PostgreSQL 17.11 server programs, from the EnterpriseDB download |
+| `.tools\pgdata\` | The local database files |
+| `.tools\pg-superuser.txt`, `.tools\pg-app.txt` | Generated database passwords |
+| `.tools\ms-playwright\` | The Playwright browsers |
+| `backend\.venv\`, `node_modules\` | Python and Node packages |
 
-The project's `.env` file gained two settings, `DATABASE_URL` and `TEST_DATABASE_URL`. The file is never committed.
+The download caches of uv and npm stay where those tools keep them, in the user profile.
+
+The project's `.env` file holds the local settings: the Purple Fabric connection, the staging workspace and agent IDs, and the two database addresses. It is never committed.
 
 The local database listens on `127.0.0.1` only, requires a password, and the application connects as a role without administrator rights.
 
@@ -114,4 +116,6 @@ Run from the repository root in Git Bash.
 | Web type checks, unit tests, builds | `npm run typecheck && npm test && npm run build` |
 | Loader size limit | `npm run size --workspace @ucp/loader` |
 | Browser tests | `npm run build && npm run e2e` |
+| Install or update the test browsers | `PLAYWRIGHT_BROWSERS_PATH="$PWD/.tools/ms-playwright" npx playwright install` |
+| Terraform | `.tools/terraform/terraform.exe` |
 | Check AWS access | `bash infra/aws/iam/verify-access.sh` |

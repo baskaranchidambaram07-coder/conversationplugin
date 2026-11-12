@@ -1,13 +1,12 @@
 #!/usr/bin/env bash
 # Runs a command with the local PostgreSQL started, then stops it again.
 # Usage: scripts/with-localdb.sh <command> [args...]
-# The server is the portable copy under $UCP_TOOLS (default C:\tools\ucp); it listens on 127.0.0.1 only.
+# The server is the portable copy in the project's .tools folder; it listens on 127.0.0.1 only.
 set -euo pipefail
 
-tools="${UCP_TOOLS:-/c/tools/ucp}"
+tools="$(cd "$(dirname "$0")/.." && pwd)/.tools"
 pg_ctl="$tools/pgsql/bin/pg_ctl.exe"
-data="C:/tools/ucp/pgdata"
-[ -n "${UCP_TOOLS:-}" ] && data="$(cygpath -m "$tools")/pgdata"
+data="$(cygpath -m "$tools/pgdata")"
 
 started=0
 if ! "$pg_ctl" -D "$data" status > /dev/null 2>&1; then
