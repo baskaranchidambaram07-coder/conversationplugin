@@ -109,7 +109,11 @@ The project's `.env` file holds the local settings: the Purple Fabric connection
 
 The local database listens on `127.0.0.1` only, requires a password, and the application connects as a role without administrator rights.
 
-## 7. Commands
+## 7. Browser tests for the loader
+
+`e2e/server.mjs` serves the loader tests on port 4174. Host pages in `e2e/hosts/` open on `http://127.0.0.1:4174`; our side (the built loader, sample widget configurations and a stand-in chat page, `e2e/chat-stub.html`, that speaks the chat's half of the bridge) is served from `http://localhost:4174`. The two names are different origins, as a customer's site and ours always are. The host pages cover a plain site, a signed-in portal, inline placement, the left corner, a right-to-left site, a strict content policy with Trusted Types, hostile global CSS, and a page that already defines `UCP`.
+
+## 8. Commands
 
 Run from the repository root in Git Bash.
 

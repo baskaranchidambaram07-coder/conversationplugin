@@ -1,0 +1,26 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Signed-in portal</title>
+  </head>
+  <body>
+    <h1>A portal page for a signed-in resident</h1>
+    <script>
+      // The host's own backend would sign this token for its signed-in user. It is assembled at run time so the
+      // page's own source does not contain it, as on a real portal, and the tests can search for it everywhere.
+      window.tokenCalls = 0;
+      window.UCP = window.UCP || function () { (UCP.q = UCP.q || []).push(arguments) };
+      UCP("mount", {
+        widgetId: "w_test",
+        debug: true,
+        getToken: () => {
+          window.tokenCalls += 1;
+          return Promise.resolve(["host", "signed", "token", "for", "tests"].join("-"));
+        },
+      });
+    </script>
+    <script async src="http://localhost:4174/loader.js"></script>
+  </body>
+</html>

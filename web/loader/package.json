@@ -6,10 +6,11 @@
   "scripts": {
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
-    "build": "esbuild src/index.ts --bundle --minify --format=iife --target=es2019 --outfile=dist/loader.js",
+    "build": "esbuild src/main.ts --bundle --minify --format=iife --target=es2019 --outfile=dist/loader.js",
     "size": "node scripts/check-size.mjs"
   },
   "devDependencies": {
+    "@ucp/protocol": "^1.0.0",
     "esbuild": "^0.28.2"
   }
 }

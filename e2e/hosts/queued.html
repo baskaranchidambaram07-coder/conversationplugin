@@ -1,0 +1,16 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Calls before the loader</title>
+  </head>
+  <body>
+    <h1>A page that calls the widget before the loader has arrived</h1>
+    <script>
+      window.UCP = window.UCP || function () { (UCP.q = UCP.q || []).push(arguments) };
+      UCP("mount", { widgetId: "w_test", debug: true });
+    </script>
+    <script async src="http://localhost:4174/loader.js"></script>
+  </body>
+</html>

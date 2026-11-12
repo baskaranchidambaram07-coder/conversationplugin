@@ -1,0 +1,90 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-11-12T12:45:00Z",
+  "title": "Design System: Conversation Plugin",
+  "extensions": {
+    "colorMeta": {
+      "warm-ground": { "role": "neutral", "displayName": "Warm Cream Ground", "canonical": "#fbf3ea", "tonalRamp": ["#0d0b09", "#282420", "#46413c", "#666059", "#88817a", "#aaa49d", "#cdc8c3", "#f1eeea"] },
+      "soft-border": { "role": "neutral", "displayName": "Soft Sand Border", "canonical": "#e7dacb", "tonalRamp": ["#0e0b07", "#2a241d", "#494037", "#6a5f53", "#8b8074", "#ada398", "#cfc8bf", "#f3eee8"] },
+      "ink": { "role": "neutral", "displayName": "Warm Ink", "canonical": "#2b241f", "tonalRamp": ["#0d0b09", "#282421", "#47413c", "#67605a", "#89817b", "#aba39f", "#cec8c4", "#f1eeeb"] },
+      "secondary-ink": { "role": "neutral", "displayName": "Muted Umber", "canonical": "#6f625a", "tonalRamp": ["#0e0a08", "#2a241f", "#49403a", "#6a5e57", "#8c7f78", "#aea39c", "#d0c7c2", "#f3edea"] },
+      "paper-white": { "role": "neutral", "displayName": "Paper White", "canonical": "#ffffff", "tonalRamp": ["#0b0b0b", "#252525", "#424242", "#616161", "#828282", "#a5a5a5", "#c9c9c9", "#eeeeee"] }
+    },
+    "typographyMeta": {},
+    "shadows": [
+      { "name": "launcher-rest", "value": "0 10px 24px -10px rgba(43,36,31,.55), 0 2px 6px -2px rgba(43,36,31,.3)", "purpose": "The closed launcher at rest." },
+      { "name": "launcher-hover", "value": "0 14px 30px -10px rgba(43,36,31,.6), 0 3px 8px -2px rgba(43,36,31,.32)", "purpose": "Launcher on pointer hover, paired with a 2px lift." },
+      { "name": "panel", "value": "0 24px 60px -24px rgba(43,36,31,.45), 0 8px 20px -12px rgba(43,36,31,.25)", "purpose": "The floating panel. None when inline." },
+      { "name": "focus-ring", "value": "outline: 3px solid #fff; outline-offset: 2px; box-shadow: 0 0 0 7px #2b241f", "purpose": "Two-tone focus ring that holds on any host page and any brand colour." }
+    ],
+    "motion": [
+      { "name": "ease-out-soft", "value": "cubic-bezier(.16,1,.3,1)", "purpose": "Panel rise-and-fade (200ms) and shadow changes." },
+      { "name": "spring-release", "value": "transform .4s cubic-bezier(.34,1.56,.64,1)", "purpose": "Launcher settling back after a press, with a slight overshoot. Release only, never entry." },
+      { "name": "press-in", "value": "transform .08s ease-out; scale(.92)", "purpose": "Launcher press." },
+      { "name": "panel-rise", "value": "translateY(12px) to none, opacity 0 to 1, 200ms", "purpose": "Panel open and close. Reduced motion keeps only the opacity fade." },
+      { "name": "loading-spin", "value": "rotate(1turn) .9s linear infinite", "purpose": "Loading mark, only while the panel is open and the chat has not loaded." }
+    ],
+    "breakpoints": [
+      { "name": "full-screen-width", "value": "max-width: 599.98px" },
+      { "name": "full-screen-height", "value": "max-height: 519.98px" }
+    ]
+  },
+  "components": [
+    {
+      "name": "Launcher",
+      "kind": "button",
+      "refersTo": "launcher",
+      "description": "The 56px round launcher in the customer's colour, glyph ink chosen by contrast. Sample brand shown.",
+      "html": "<button class=\"ds-launcher\" type=\"button\" aria-label=\"Chat\" style=\"--brand:#5B2A86;--ink:#ffffff\"><svg viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M20 11.5a7.5 7.5 0 0 1-11.1 6.6L4 19.5l1.4-4.6A7.5 7.5 0 1 1 20 11.5z\"/></svg></button>",
+      "css": ".ds-launcher{all:unset;box-sizing:border-box;width:56px;height:56px;border-radius:50%;display:grid;place-items:center;cursor:pointer;background:var(--brand,#2b241f);color:var(--ink,#fff);box-shadow:0 10px 24px -10px rgba(43,36,31,.55),0 2px 6px -2px rgba(43,36,31,.3);transition:transform .4s cubic-bezier(.34,1.56,.64,1),box-shadow .2s cubic-bezier(.16,1,.3,1)}.ds-launcher svg{width:26px;height:26px}@media (hover:hover){.ds-launcher:hover{transform:translateY(-2px);box-shadow:0 14px 30px -10px rgba(43,36,31,.6),0 3px 8px -2px rgba(43,36,31,.32)}}.ds-launcher:active{transform:scale(.92);transition:transform .08s ease-out}.ds-launcher:focus-visible{outline:3px solid #fff;outline-offset:2px;box-shadow:0 0 0 7px #2b241f}@media (prefers-reduced-motion:reduce){.ds-launcher,.ds-launcher:hover,.ds-launcher:active{transform:none;transition:none}}"
+    },
+    {
+      "name": "Launcher (unbranded fallback)",
+      "kind": "button",
+      "refersTo": "launcher-unbranded",
+      "description": "The launcher when a configuration has no valid brand colour: Warm Ink with a white glyph.",
+      "html": "<button class=\"ds-launcher-ink\" type=\"button\" aria-label=\"Chat\"><svg viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M6 6l12 12M18 6 6 18\"/></svg></button>",
+      "css": ".ds-launcher-ink{all:unset;box-sizing:border-box;width:56px;height:56px;border-radius:50%;display:grid;place-items:center;cursor:pointer;background:#2b241f;color:#fff;box-shadow:0 10px 24px -10px rgba(43,36,31,.55),0 2px 6px -2px rgba(43,36,31,.3);transition:transform .4s cubic-bezier(.34,1.56,.64,1)}.ds-launcher-ink svg{width:26px;height:26px}.ds-launcher-ink:active{transform:scale(.92);transition:transform .08s ease-out}.ds-launcher-ink:focus-visible{outline:3px solid #fff;outline-offset:2px;box-shadow:0 0 0 7px #2b241f}"
+    },
+    {
+      "name": "Panel with loading mark",
+      "kind": "card",
+      "refersTo": "panel",
+      "description": "The warm 24px panel frame that holds the chat, shown before the chat page loads.",
+      "html": "<div class=\"ds-panel\" role=\"presentation\"></div>",
+      "css": ".ds-panel{position:relative;box-sizing:border-box;width:min(400px,100%);height:360px;border-radius:24px;overflow:hidden;background:#fbf3ea;border:1px solid #e7dacb;box-shadow:0 24px 60px -24px rgba(43,36,31,.45),0 8px 20px -12px rgba(43,36,31,.25);animation:ds-rise .2s cubic-bezier(.16,1,.3,1)}.ds-panel::before{content:\"\";position:absolute;inset:0;margin:auto;width:28px;height:28px;box-sizing:border-box;border-radius:50%;border:3px solid #e7dacb;border-top-color:#6f625a;animation:ds-spin .9s linear infinite}@keyframes ds-spin{to{transform:rotate(1turn)}}@keyframes ds-rise{from{opacity:0;transform:translateY(12px)}}@media (prefers-reduced-motion:reduce){.ds-panel{animation-name:ds-fade}.ds-panel::before{animation:none}@keyframes ds-fade{from{opacity:0}}}"
+    }
+  ],
+  "narrative": {
+    "northStar": "The Polite Guest",
+    "overview": "The widget is a friendly consumer app sitting on someone else's page. It arrives as one small round button in the customer's colour and opens into a soft, warm-grounded panel that looks like an app the visitor already knows how to use. It does not dress up the host page or compete with it: the host's design comes first, the customer's colour comes second, and the world's own materials (a warm cream ground, a soft sand border, a deep warm ink) stay quiet underneath.\n\nDepth is long, soft and low-contrast, tinted with the world's ink rather than grey. Motion is small and physical: a press that settles back with a slight overshoot, a panel that rises a short way and fades in without bouncing. Under reduced motion every movement goes and only the fade stays.\n\nThe world refuses the category default for chat widgets: no coloured header bar, no avatar, no two-tone bubbles. The customer's colour appears only on things that can be pressed.",
+    "keyCharacteristics": [
+      "Warm tinted ground, soft border and warm ink; never pure grey.",
+      "The customer's brand colour fills only actionable elements.",
+      "Generous, friendly corners: 24px panel, fully round launcher.",
+      "Long, soft, ink-tinted shadows.",
+      "A press spring on release, a short rise-and-fade on open, no entry bounce.",
+      "Full screen on small windows; a floating panel anchored to the launcher's corner elsewhere."
+    ],
+    "rules": [
+      { "name": "The Pressable Colour Rule", "body": "The customer's brand colour appears only on things that can be pressed. Never on a header bar, a background, a border or a message surface.", "section": "colors" },
+      { "name": "The Warm Neutral Rule", "body": "Every neutral, including shadow tint, comes from the world's warm ink family. No cool or pure greys.", "section": "colors" },
+      { "name": "The Long Soft Shadow Rule", "body": "Shadows are long, soft, negatively spread and ink-tinted. No hard edges, no offsets without blur, no neutral black.", "section": "elevation" }
+    ],
+    "dos": [
+      "Do keep the brand colour on pressable things only, and pick the glyph colour (white or black) by contrast at runtime.",
+      "Do tint every shadow with Warm Ink (`rgba(43,36,31,…)`) and keep it long and soft.",
+      "Do use the two-tone focus ring (3px white outline, 7px Warm Ink band) on anything the widget draws over the host page.",
+      "Do open with a 12px rise and a 200ms fade on `cubic-bezier(.16,1,.3,1)`, and keep only the fade under reduced motion.",
+      "Do spring only on release (`cubic-bezier(.34,1.56,.64,1)`), never on entry.",
+      "Do go full screen under 600px wide or 520px tall, with no radius and no border."
+    ],
+    "donts": [
+      "Don't use a coloured header bar, an avatar, or two-tone message bubbles.",
+      "Don't fill backgrounds, borders or message surfaces with the brand colour.",
+      "Don't use cool or pure greys for neutrals or shadows.",
+      "Don't run any animation while the widget is closed.",
+      "Don't bounce the panel on entry."
+    ]
+  }
+}
