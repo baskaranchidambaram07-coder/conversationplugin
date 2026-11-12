@@ -5,6 +5,96 @@
     "version": "1"
   },
   "paths": {
+    "/v1/widgets/{widget_id}/config": {
+      "get": {
+        "summary": "A widget's display settings, read by the loader on the customer's page",
+        "operationId": "config_v1_widgets__widget_id__config_get",
+        "parameters": [
+          {
+            "name": "widget_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^[A-Za-z0-9_-]{1,64}$",
+              "description": "Our opaque ID. Never a PF ID.",
+              "title": "Widget Id"
+            },
+            "description": "Our opaque ID. Never a PF ID."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WidgetConfig"
+                }
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/sessions": {
+      "post": {
+        "summary": "Start a session for a visitor of a widget",
+        "operationId": "start_session_v1_sessions_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SessionRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Session"
+                }
+              }
+            }
+          },
+          "4XX": {
+            "description": "Client Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/healthz": {
       "get": {
         "summary": "Healthz",
@@ -49,6 +139,286 @@
             }
           }
         }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "ApiError": {
+        "properties": {
+          "code": {
+            "type": "string",
+            "enum": [
+              "invalid_request",
+              "session_expired",
+              "forbidden",
+              "site_not_allowed",
+              "not_found",
+              "turn_in_progress",
+              "rate_limited",
+              "assistant_unavailable",
+              "internal_error"
+            ],
+            "title": "Code"
+          },
+          "message": {
+            "type": "string",
+            "title": "Message",
+            "description": "Our own wording. Never text from PF."
+          },
+          "retryable": {
+            "type": "boolean",
+            "title": "Retryable"
+          },
+          "retry_after": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "minimum": 0.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Retry After",
+            "description": "Seconds to wait before retrying."
+          },
+          "reference": {
+            "$ref": "#/components/schemas/Id",
+            "description": "The correlation ID, shown to the user so support can find the request."
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "code",
+          "message",
+          "retryable",
+          "retry_after",
+          "reference"
+        ],
+        "title": "ApiError",
+        "description": "The body of every error response, and the payload of `message.failed`."
+      },
+      "HTTPValidationError": {
+        "properties": {
+          "detail": {
+            "items": {
+              "$ref": "#/components/schemas/ValidationError"
+            },
+            "type": "array",
+            "title": "Detail"
+          }
+        },
+        "type": "object",
+        "title": "HTTPValidationError"
+      },
+      "Id": {
+        "type": "string",
+        "pattern": "^[A-Za-z0-9_-]{1,64}$",
+        "description": "Our opaque ID. Never a PF ID."
+      },
+      "Session": {
+        "properties": {
+          "token": {
+            "type": "string",
+            "maxLength": 4096,
+            "minLength": 1,
+            "title": "Token"
+          },
+          "expires_in": {
+            "type": "integer",
+            "exclusiveMinimum": 0.0,
+            "title": "Expires In",
+            "description": "Seconds until the token expires."
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "token",
+          "expires_in"
+        ],
+        "title": "Session",
+        "description": "Reply to POST /v1/sessions. The token is opaque to the browser and goes back as `Authorization: Bearer`."
+      },
+      "SessionRequest": {
+        "properties": {
+          "widget_id": {
+            "$ref": "#/components/schemas/Id"
+          },
+          "host_token": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 8192,
+                "minLength": 1
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Host Token"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "widget_id",
+          "host_token"
+        ],
+        "title": "SessionRequest",
+        "description": "Body of POST /v1/sessions. A signed-in visitor brings the token the host signed for them; anyone else, null."
+      },
+      "ValidationError": {
+        "properties": {
+          "loc": {
+            "items": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "integer"
+                }
+              ]
+            },
+            "type": "array",
+            "title": "Location"
+          },
+          "msg": {
+            "type": "string",
+            "title": "Message"
+          },
+          "type": {
+            "type": "string",
+            "title": "Error Type"
+          },
+          "input": {
+            "title": "Input"
+          },
+          "ctx": {
+            "type": "object",
+            "title": "Context"
+          }
+        },
+        "type": "object",
+        "required": [
+          "loc",
+          "msg",
+          "type"
+        ],
+        "title": "ValidationError"
+      },
+      "WidgetConfig": {
+        "properties": {
+          "v": {
+            "type": "integer",
+            "const": 1,
+            "title": "V"
+          },
+          "widget_id": {
+            "$ref": "#/components/schemas/Id"
+          },
+          "title": {
+            "type": "string",
+            "maxLength": 80,
+            "minLength": 1,
+            "title": "Title"
+          },
+          "welcome_message": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 1000,
+                "minLength": 1
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Welcome Message"
+          },
+          "suggested_prompts": {
+            "items": {
+              "type": "string",
+              "maxLength": 200,
+              "minLength": 1
+            },
+            "type": "array",
+            "maxItems": 4,
+            "title": "Suggested Prompts"
+          },
+          "ai_notice": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 500,
+                "minLength": 1
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ai Notice",
+            "description": "Null means the widget's own wording."
+          },
+          "brand_color": {
+            "type": "string",
+            "pattern": "^#[0-9A-Fa-f]{6}$",
+            "title": "Brand Color"
+          },
+          "logo_url": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 2048,
+                "pattern": "^https://[!-~]+$"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Logo Url"
+          },
+          "color_scheme": {
+            "type": "string",
+            "enum": [
+              "light",
+              "dark",
+              "auto"
+            ],
+            "title": "Color Scheme"
+          },
+          "launcher_position": {
+            "type": "string",
+            "enum": [
+              "bottom-right",
+              "bottom-left"
+            ],
+            "title": "Launcher Position"
+          },
+          "history_enabled": {
+            "type": "boolean",
+            "title": "History Enabled"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "v",
+          "widget_id",
+          "title",
+          "welcome_message",
+          "suggested_prompts",
+          "ai_notice",
+          "brand_color",
+          "logo_url",
+          "color_scheme",
+          "launcher_position",
+          "history_enabled"
+        ],
+        "title": "WidgetConfig"
       }
     }
   }
