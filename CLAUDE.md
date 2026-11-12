@@ -14,6 +14,8 @@ An embeddable chat assistant that any website adds with one script tag, powered 
 - Use the ponytail skill at level full for all code: the smallest change that fully solves the task.
 - Load the impeccable skill before designing or changing any user interface (loader, chat, admin console). The interface must not look machine-made.
 - Every module ships with its tests, in the categories listed for it in the module breakdown. A task is finished only when its tests pass on the build machine and in the GitHub pipeline.
+- Start each module in a new conversation with `/start-module`, for example `/start-module M1`.
+- A hook in `.claude/settings.json` runs the publish scan before every push and blocks the push if the scan finds anything.
 
 ## Branches
 

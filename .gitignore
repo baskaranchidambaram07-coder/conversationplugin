@@ -2,6 +2,9 @@
 # Local tools, the local database with its passwords, and test browsers. Never published.
 .tools/
 spikes/pf_capture_out/
+# Personal Claude Code settings and its working copies. The shared settings in .claude/ are published.
+.claude/settings.local.json
+.claude/worktrees/
 __pycache__/
 .venv/
 .pytest_cache/
