@@ -12,4 +12,6 @@ COPY --from=build /app /app
 ENV PATH="/app/.venv/bin:$PATH" PYTHONUNBUFFERED=1
 USER 10001
 EXPOSE 8000
-CMD ["uvicorn", "ucp.gateway.app:app", "--host", "0.0.0.0", "--port", "8000"]
+# No server header and our own access log (ucp.gateway.pipeline); the client address comes from the load balancer,
+# the only thing that can reach the container; open answers get up to 110 s to finish when a task is replaced.
+CMD ["uvicorn", "ucp.gateway.app:app", "--host", "0.0.0.0", "--port", "8000", "--no-server-header", "--no-access-log",      "--proxy-headers", "--forwarded-allow-ips", "*", "--timeout-graceful-shutdown", "110"]

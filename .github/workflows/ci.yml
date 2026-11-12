@@ -75,6 +75,8 @@ jobs:
       - run: |
           docker run --detach --name gateway --publish 8000:8000 ucp-gateway:ci
           curl --fail --silent --retry 20 --retry-delay 1 --retry-all-errors http://127.0.0.1:8000/healthz
+          # The gateway names no server software.
+          ! curl --silent --head http://127.0.0.1:8000/healthz | grep -i '^server:'
 
   secrets:
     name: Secret scan
