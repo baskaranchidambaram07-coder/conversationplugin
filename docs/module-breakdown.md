@@ -87,7 +87,7 @@ Each decision takes the smallest design that fully meets the requirements. Alter
 
 | # | Decision | Reason |
 |---|---|---|
-| D1 | Small plain-TypeScript loader on the host page; React chat UI in a hosted iframe. The loader draws the launcher button and creates the iframe on first open. | Isolation from host CSS and scripts, one place to update, and the host's browser security policy needs only two entries. A Web Component inside the host page was the alternative; it is deferred because host styles and scripts can interfere and the host page could read the session token. |
+| D1 | Small plain-TypeScript loader on the host page; React chat UI in a hosted iframe. The loader draws the launcher button and creates the iframe on first open. | Isolation from host CSS and scripts, one place to update, and the host's browser security policy needs only our one origin, in three directives. A Web Component inside the host page was the alternative; it is deferred because host styles and scripts can interfere and the host page could read the session token. |
 | D2 | Sending a message returns the streamed reply on the same HTTP response (server-sent events over `fetch`). A plain JSON reply is available as a fallback. | The gateway instance that calls PF is the one streaming to the browser, so no shared message bus is needed. The fallback covers corporate proxies that buffer streams. WebSockets are not needed for text chat. |
 | D3 | One Python codebase (FastAPI), one container image, started in one of two roles: `gateway` (public runtime) or `admin` (control plane). | The document asks for control plane and runtime to be separate. Separate packages and separate network exposure give that without two codebases. |
 | D4 | Interfaces only where something will really be swapped: agent connector, conversation repository, secret store, object store. | These are the four points that differ by agent runtime, database or cloud. Each also needs a fake for testing, so the interface pays for itself immediately. |
@@ -134,7 +134,7 @@ The clock starts when the customer has a published PF conversation agent and its
 |---|---|---|
 | Create the widget in the console: PF agent, allowed domains, theme | 10 min | 10 min |
 | Paste the script tag | 2 min | 2 min |
-| Add two entries to the site's browser security policy, if it has one | 5 min | 5 min |
+| Add our one origin to the site's browser security policy, if it has one | 5 min | 5 min |
 | Identity: paste a token-signing snippet into the host backend, or register the identity provider in the console | not needed | 10 to 30 min |
 | Verify with the built-in installation check | 3 min | 5 min |
 | **Total** | **about 20 min** | **about 30 to 50 min** |
@@ -142,7 +142,7 @@ The clock starts when the customer has a published PF conversation agent and its
 What can still break the hour, and what we do about it:
 
 - **The site's own change-control process.** No technology fixes this. The script-free iframe embed is the lowest-friction option to offer.
-- **Strict browser security policy on the host.** The iframe design keeps the host's change to two entries: our script domain and our frame domain.
+- **Strict browser security policy on the host.** One origin serves the loader, the chat page and the API, so the host adds that one origin to `script-src`, `frame-src` and `connect-src` (the loader fetches the widget configuration). Decided at the start of M1.
 - **Debugging a failed setup.** The loader has a debug mode that prints a checklist: configuration loaded, site allowed, iframe connected, token accepted, PF reachable.
 - **Writing the token endpoint.** Tested snippets in Python, Node, Java, .NET, PHP and Go.
 - **Self-hosted deployments.** The hour covers integrating a widget, not installing the platform in a customer's cloud account.
@@ -812,7 +812,7 @@ Proceeding with the recommended default unless you object: Terraform (D13); auto
 | PF staging runs in the US | UK personal data would leave the UK if it were used in staging | Test data only in staging; UK customers use PF production in London. Confirm that the language model behind PF production also runs in the UK. |
 | Scripted abuse of public widgets | PF cost and capacity | Layered limits and quotas from the first release (M12-T4) |
 | iPhone, WebView and foldable quirks | Broken layout or hidden input on real devices | Real-device pass each release (M2) |
-| Host change control or strict policy | The hour is exceeded for reasons outside the product | Two-entry policy change, script-free option, debug checklist |
+| Host change control or strict policy | The hour is exceeded for reasons outside the product | One-origin policy change, script-free option, debug checklist |
 | Corporate proxies buffer streamed replies | Answers appear all at once or time out | Heartbeats and the JSON fallback (D2) |
 | Diagram and chart libraries are large | Slow on low-end phones | Load on demand, size limits per renderer (M3) |
 

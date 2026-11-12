@@ -52,7 +52,7 @@ The chat lays itself out by the width of its own frame, from 280 px up (M2-T3).
 | Condition | Why | Checked in |
 |---|---|---|
 | Third-party cookies blocked; storage in iframes partitioned or cleared | Safari and other browsers isolate storage inside a third-party iframe (plan section 3, finding 5) | M1, M2 |
-| A strict content policy on the host page | The host adds only our two documented entries | M1 host matrix |
+| A strict content policy on the host page | The host adds only our one origin, in `script-src`, `frame-src` and `connect-src` | M1 host matrix |
 | Zoom at 200% and 400%; reflow at 320 px | WCAG 2.2 AA | M1, M2 |
 | Reduced motion; high-contrast and forced-colours modes | WCAG 2.2 AA and user settings | M1, M2 |
 | A right-to-left host page | Direction-neutral layout from day one | M1, M2 |
