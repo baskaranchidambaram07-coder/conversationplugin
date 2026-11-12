@@ -46,10 +46,13 @@ async function file(path) {
   return [404, "text/plain", "not found"];
 }
 
-// The fake gateway. Words in a message pick a behaviour, as the fake PF does: [long], [slow], [busy], [fail].
+// The fake gateway. Words in a message pick a behaviour, as the fake PF does: [long], [slow], [busy], [fail],
+// [drop] (the stream is cut, but the answer still finishes and can be fetched) and [expire] (the session ends
+// once per question).
 let next = 0;
 const id = (prefix) => `${prefix}_${(++next).toString(36)}`;
 const sessions = new Set();
+const expired = new Set(); // questions whose session has already been ended once
 const messages = new Map();
 const problem = (code) => ({ code, message: "test gateway", retryable: true, retry_after: null, reference: id("r") });
 
@@ -83,6 +86,14 @@ async function stream(response, conversationId, body) {
   send({ type: "content_block.started", index: 0, block: { type: "markdown", text: "" } });
   const words = text.match(/\S+\s*/g) ?? [];
   for (let at = 0; at < words.length; at += 3) {
+    if (body.text.includes("[drop]") && at >= 6) {
+      // Cut the stream; the answer finishes anyway, as PF's does, and the fetch call returns it a moment later.
+      setTimeout(() => {
+        const block = { type: "markdown", text };
+        messages.set(envelope.message_id, { ...messages.get(envelope.message_id), status: "complete", blocks: [block] });
+      }, 1500);
+      return response.destroy();
+    }
     if (body.text.includes("[fail]") && at >= 6) {
       send({ type: "message.failed", error: problem("assistant_unavailable") });
       return response.end();
@@ -117,6 +128,11 @@ async function gateway(request, response, path) {
     const body = await readBody(request);
     if (typeof body?.text !== "string" || !/\S/.test(body.text)) return json(response, 400, problem("invalid_request"));
     if (body.text.includes("[busy]")) return json(response, 429, { ...problem("rate_limited"), retry_after: 30 });
+    if (body.text.includes("[expire]") && !expired.has(body.client_message_id)) {
+      expired.add(body.client_message_id);
+      sessions.delete(request.headers.authorization.replace(/^Bearer /, ""));
+      return json(response, 401, problem("session_expired"));
+    }
     return stream(response, send[1], body);
   }
   const read = path.match(/^\/v1\/conversations\/[\w-]+\/messages\/([\w-]+)$/);

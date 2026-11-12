@@ -190,8 +190,8 @@
       },
       {
         "name": "conversation-fade",
-        "value": "mask-image: linear-gradient(to bottom, transparent, #000 14px)",
-        "purpose": "The conversation fades out over its top 14px under the header."
+        "value": "mask-image: linear-gradient(transparent, var(--ink) 14px, var(--ink) calc(100% - 14px), transparent)",
+        "purpose": "The conversation fades out over its top and bottom 14px, under the header and into the composer."
       }
     ],
     "breakpoints": [

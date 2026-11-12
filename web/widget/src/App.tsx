@@ -7,8 +7,8 @@ import { type CSSProperties, type KeyboardEvent, useEffect, useLayoutEffect, use
 import { type Api, Failure, gateway } from "./chat/api";
 import { type Bridge, connect, type Mode } from "./chat/bridge";
 import { type Problem, problemOf } from "./chat/problem";
-import { type Answer, apply, pending } from "./chat/state";
-import { eventReader } from "./chat/stream";
+import { type Answer, pending } from "./chat/state";
+import { runTurn } from "./chat/turn";
 import { strings as t } from "./strings";
 
 const LIMIT = 4000;
@@ -59,9 +59,12 @@ export function App({ widgetId, win = window }: { widgetId: string; win?: Window
   const [ended, setEnded] = useState<Problem | null>(null);
   const [heard, setHeard] = useState("");
   const [copied, setCopied] = useState<string | null>(null);
-  const [stuck, setStuck] = useState(true); // following the newest message
+  const [away, setAway] = useState(false); // the visitor has scrolled up from the newest message
+  const follow = useRef(true); // a new question always brings the view down
+  const followed = useRef(0); // the content height the view last kept up with
   const [shown, setShown] = useState(0); // how often the loader has shown the chat
   const [logoFailed, setLogoFailed] = useState(false);
+  const [paused, setPaused] = useState(false); // the panel is closed: nothing animates (DESIGN.md)
   const input = useRef<HTMLTextAreaElement>(null);
   const log = useRef<HTMLElement>(null);
   const live = useRef<Live>(null);
@@ -80,14 +83,17 @@ export function App({ widgetId, win = window }: { widgetId: string; win?: Window
   useEffect(() => {
     if (live.current) return; // React's development double start must not connect twice
     const state = { signedIn: false } as Live;
-    state.bridge = connect(
-      win,
-      (chatMode, signedIn) => {
+    state.bridge = connect(win, {
+      init(chatMode, signedIn) {
         state.signedIn = signedIn;
         setMode(chatMode);
       },
-      () => setShown((count) => count + 1),
-    );
+      shown() {
+        setPaused(false);
+        setShown((count) => count + 1);
+      },
+      hidden: () => setPaused(true),
+    });
     state.api = gateway(widgetId, () => (state.signedIn ? state.bridge.token() : Promise.resolve(null)));
     live.current = state;
     void loadConfig();
@@ -107,8 +113,14 @@ export function App({ widgetId, win = window }: { widgetId: string; win?: Window
 
   // Follow the newest message unless the visitor has scrolled up to read something.
   useLayoutEffect(() => {
-    if (stuck && log.current) log.current.scrollTop = log.current.scrollHeight;
-  }, [turns, stuck]);
+    // Decided from where the view is, not from scroll events, which some browsers deliver a frame late: a visitor
+    // still at the end of what was there keeps following; one who scrolled up to read stays where they are.
+    const box = log.current;
+    if (!box) return;
+    if (follow.current || box.scrollTop + box.clientHeight >= followed.current - 48) box.scrollTop = box.scrollHeight;
+    follow.current = false;
+    followed.current = box.scrollHeight;
+  }, [turns]);
 
   useLayoutEffect(() => {
     const field = input.current;
@@ -125,27 +137,22 @@ export function App({ widgetId, win = window }: { widgetId: string; win?: Window
     const session = live.current;
     if (!session || ended) return;
     const key = newKey();
-    setStuck(true);
+    follow.current = true;
     setTurns((all) => [
       ...all.filter((turn) => turn.key !== replacing),
       { key, question, answer: pending(), problem: null },
     ]);
     const stop = new AbortController();
     session.stop = stop;
-    let answer = pending();
     try {
       session.conversation ??= (await session.api.conversation()).id;
-      const reply = await session.api.send(session.conversation, { text: question, client_message_id: key }, stop.signal);
-      const feed = eventReader((event) => {
-        answer = apply(answer, event);
-        change(key, (turn) => ({ ...turn, answer }));
-      });
-      const reader = (reply.body as ReadableStream<Uint8Array>).getReader();
-      for (let chunk = await reader.read(); !chunk.done; chunk = await reader.read()) feed(chunk.value);
+      const answer = await runTurn(session.api, session.conversation, question, key, stop.signal, (next) =>
+        change(key, (turn) => ({ ...turn, answer: next })),
+      );
       if (answer.status === "complete") setHeard(t.answered(plain(answer.blocks)));
-      // shortcut: a stream that ends early is shown as failed; the next pull request recovers the finished answer.
-      else if (answer.status !== "failed") throw new Failure(0, null);
-      else change(key, (turn) => ({ ...turn, problem: problemOf(new Failure(502, answer.error)) }));
+      if (answer.status === "failed") {
+        change(key, (turn) => ({ ...turn, problem: problemOf(new Failure(502, answer.error)) }));
+      }
     } catch (error) {
       if ((error as Error).name === "AbortError") {
         change(key, (turn) => ({ ...turn, answer: { ...turn.answer, status: "stopped" } }));
@@ -204,7 +211,7 @@ export function App({ widgetId, win = window }: { widgetId: string; win?: Window
   const theme = { "--brand": settings.color, "--on-brand": inkOn(settings.color) } as CSSProperties;
   const left = LIMIT - draft.length;
   return (
-    <div className="chat" style={theme}>
+    <div className={paused ? "chat paused" : "chat"} style={theme}>
       <header className="head">
         <span className="logo" aria-hidden="true">
           {settings.logo && !logoFailed ? (
@@ -226,7 +233,7 @@ export function App({ widgetId, win = window }: { widgetId: string; win?: Window
         ref={log}
         onScroll={(event) => {
           const box = event.currentTarget;
-          setStuck(box.scrollHeight - box.scrollTop - box.clientHeight < 48);
+          setAway(box.scrollHeight - box.scrollTop - box.clientHeight >= 48);
         }}
       >
         <p className="notice">{settings.notice}</p>
@@ -258,8 +265,12 @@ export function App({ widgetId, win = window }: { widgetId: string; win?: Window
         {ended && <ProblemNote problem={ended} action={ended.kind === "expired" ? t.newChat : undefined} onAction={startOver} />}
       </main>
 
-      {!stuck && (
-        <button type="button" className="latest" onClick={() => setStuck(true)}>
+      {away && (
+        <button
+          type="button"
+          className="latest"
+          onClick={() => log.current?.scrollTo({ top: log.current.scrollHeight })}
+        >
           <Icon path="M12 5v14M6 13l6 6 6-6" />
           {t.latest}
         </button>

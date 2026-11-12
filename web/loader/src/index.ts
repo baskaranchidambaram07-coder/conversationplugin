@@ -194,7 +194,7 @@ function mount(origin: string, options: MountOptions, win: Window): Widget | und
         doc.documentElement.style.overflow = "hidden";
       }
       if (!open) release();
-      if (open && connected) post({ ucp: 1, type: "shown" });
+      if (connected) post({ ucp: 1, type: open ? "shown" : "hidden" });
       if (open && !inline) iframe?.focus();
       // Focus goes back to the launcher only if it was inside the chat, never taken from elsewhere on the page.
       else if (!open && doc.activeElement === host) button?.focus();

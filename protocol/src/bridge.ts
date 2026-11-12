@@ -9,11 +9,15 @@ export type ChatMessage =
   | { ucp: 1; type: "get-token"; id: number }
   | { ucp: 1; type: "close" };
 
-/** From the loader to the chat. The chat pins the parent's origin from `init` and trusts no other. */
+/**
+ * From the loader to the chat. The chat pins the parent's origin from `init` and trusts no other.
+ * `shown` and `hidden` follow the panel opening and closing, so the chat can take focus and pause its animations.
+ */
 export type LoaderMessage =
   | { ucp: 1; type: "init"; mode: "floating" | "inline"; signedIn: boolean }
   | { ucp: 1; type: "token"; id: number; token: string | null }
-  | { ucp: 1; type: "shown" };
+  | { ucp: 1; type: "shown" }
+  | { ucp: 1; type: "hidden" };
 
 type Candidate = { ucp?: unknown; type?: unknown; [field: string]: unknown };
 
@@ -35,6 +39,7 @@ export function fromLoader(data: unknown): LoaderMessage | null {
       (data.mode === "floating" || data.mode === "inline") &&
       typeof data.signedIn === "boolean") ||
     (data.type === "token" && Number.isInteger(data.id) && (typeof data.token === "string" || data.token === null)) ||
-    data.type === "shown";
+    data.type === "shown" ||
+    data.type === "hidden";
   return ok ? (data as LoaderMessage) : null;
 }

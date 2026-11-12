@@ -9,10 +9,16 @@ export type Bridge = {
   close(): void;
 };
 
-/** Calls onInit once the loader answers, or at once as a full page when nothing framed the chat. */
-export function connect(win: Window, onInit: (mode: Mode, signedIn: boolean) => void, onShown: () => void): Bridge {
+export type Events = {
+  /** Once the loader answers, or at once as a full page when nothing framed the chat. */
+  init(mode: Mode, signedIn: boolean): void;
+  shown(): void;
+  hidden(): void;
+};
+
+export function connect(win: Window, on: Events): Bridge {
   if (win.parent === win) {
-    onInit("page", false);
+    on.init("page", false);
     return { token: async () => null, close: () => {} };
   }
   let origin: string | undefined;
@@ -23,14 +29,15 @@ export function connect(win: Window, onInit: (mode: Mode, signedIn: boolean) => 
     const message = event.source === win.parent ? fromLoader(event.data) : null;
     if (message?.type === "init" && origin === undefined) {
       origin = event.origin;
-      onInit(message.mode, message.signedIn);
+      on.init(message.mode, message.signedIn);
     }
     if (!message || event.origin !== origin) return;
     if (message.type === "token") {
       waiting.get(message.id)?.(message.token);
       waiting.delete(message.id);
     }
-    if (message.type === "shown") onShown();
+    if (message.type === "shown") on.shown();
+    if (message.type === "hidden") on.hidden();
   });
   win.parent.postMessage({ ucp: 1, type: "ready" } satisfies ChatMessage, "*"); // carries nothing
   return {
