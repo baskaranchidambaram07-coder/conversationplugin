@@ -17,6 +17,8 @@ export const strings = {
   retry: "Try again",
   newChat: "Start a new chat",
   unknownBlock: "This part of the answer cannot be shown here.",
+  diagramSource: "Diagram source",
+  image: (description: string) => (description ? `Image: ${description}` : "Image"),
   latest: "Go to the latest message",
   credit: "Powered by Purple Fabric",
   remaining: (left: number) => `${left} characters left`,
