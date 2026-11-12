@@ -11,6 +11,7 @@ class Settings:
     database_url: str | None = None
     web_dir: Path | None = None  # the built loader and chat: web/loader/dist and web/widget/dist below it
     session_keys: str | None = None  # "id:secret,id:secret", the first signs (ucp.sessions.Keys)
+    agent_profiles: str | None = None  # JSON: {"profile name": {PF connection, see ucp.pf.PfProfile}}
 
     @classmethod
     def from_env(cls) -> "Settings":
@@ -19,4 +20,5 @@ class Settings:
             database_url=os.environ.get("UCP_DATABASE_URL"),
             web_dir=Path(web_dir) if web_dir else None,
             session_keys=os.environ.get("UCP_SESSION_KEYS"),
+            agent_profiles=os.environ.get("UCP_AGENT_PROFILES"),
         )

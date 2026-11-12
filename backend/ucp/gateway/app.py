@@ -1,13 +1,16 @@
 """Conversation gateway: the public runtime API (M4)."""
 
-from contextlib import asynccontextmanager
+import json
+from contextlib import AsyncExitStack, asynccontextmanager
 
+import httpx2
 from fastapi import FastAPI, Request
 from sqlalchemy import text
 from sqlalchemy.ext.asyncio import create_async_engine
 
 from ucp.gateway import api, pipeline, public
 from ucp.gateway.pipeline import Problem
+from ucp.pf import PfConnector, PfProfile
 from ucp.sessions import Keys, Limiter
 from ucp.settings import Settings
 from ucp.store import Store
@@ -19,13 +22,19 @@ def create_app(settings: Settings | None = None) -> FastAPI:
 
     @asynccontextmanager
     async def lifespan(app: FastAPI):
-        engine = create_async_engine(settings.database_url, pool_size=10, max_overflow=10, pool_pre_ping=True)
-        app.state.store = Store(engine)
-        app.state.widgets = Widgets(app.state.store)
-        try:
+        async with AsyncExitStack() as stack:
+            if settings.database_url:
+                engine = create_async_engine(settings.database_url, pool_size=10, max_overflow=10, pool_pre_ping=True)
+                stack.push_async_callback(engine.dispose)
+                app.state.store = Store(engine)
+                app.state.widgets = Widgets(app.state.store)
+            # One client for every PF call. PF stays quiet for seconds before the first word, so reads wait 60 s.
+            client = await stack.enter_async_context(
+                httpx2.AsyncClient(timeout=httpx2.Timeout(10, read=60), limits=httpx2.Limits(max_connections=500))
+            )
+            profiles = json.loads(settings.agent_profiles or "{}")
+            app.state.connectors = {name: PfConnector(PfProfile(**value), client) for name, value in profiles.items()}
             yield
-        finally:
-            await engine.dispose()
 
     # The API description is exported to protocol/openapi.json (ucp.gateway.openapi), never served: the gateway is
     # public and describes nothing about itself.
@@ -35,7 +44,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         docs_url=None,
         redoc_url=None,
         openapi_url=None,
-        lifespan=lifespan if settings.database_url else None,
+        lifespan=lifespan,
     )
     pipeline.install(app)
     app.state.keys = Keys(settings.session_keys) if settings.session_keys else None
