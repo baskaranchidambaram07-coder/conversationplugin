@@ -32,6 +32,7 @@ test.each([
   { ucp: 1, type: "token", id: 3, token: "abc" },
   { ucp: 1, type: "token", id: 3, token: null },
   { ucp: 1, type: "shown" },
+  { ucp: 1, type: "hidden" },
 ])("the chat accepts %j", (message) => {
   expect(fromLoader(message)).toBe(message);
 });

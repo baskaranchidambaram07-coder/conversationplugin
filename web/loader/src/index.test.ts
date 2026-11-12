@@ -1,7 +1,9 @@
 // @vitest-environment jsdom
 import { afterEach, beforeEach, expect, test, vi } from "vitest";
 
-import { contrast, fullScreen, settings, start, VERSION } from "./index";
+import { contrast } from "@ucp/protocol/brand";
+
+import { fullScreen, settings, start, VERSION } from "./index";
 
 type Host = Window & { UCP?: unknown };
 const host = window as Host;
@@ -366,6 +368,15 @@ test("each later opening tells a connected chat it is shown, so it can take focu
   api()("open");
 
   expect(sent.mock.calls).toEqual([[{ ucp: 1, type: "shown" }, ORIGIN]]);
+});
+
+test("closing a connected chat tells it it is hidden, so it can stop animating", async () => {
+  const { sent, fromChat } = await openWithBridge();
+  fromChat({ ucp: 1, type: "ready" });
+  sent.mockClear();
+  api()("close");
+
+  expect(sent.mock.calls).toEqual([[{ ucp: 1, type: "hidden" }, ORIGIN]]);
 });
 
 test.each([

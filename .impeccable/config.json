@@ -35,6 +35,15 @@
         ],
         "createdAt": "2026-11-12T13:08:16.158Z",
         "reason": "Claude decided: these pages stand in for customers' own sites, which by definition do not use the widget's palette"
+      },
+      {
+        "rule": "design-system-font",
+        "value": "*",
+        "files": [
+          ".impeccable/mocks/decision/challenger-wayfinding.html"
+        ],
+        "createdAt": "2026-11-12T14:01:45.473Z",
+        "reason": "Claude decided: a spent decision sketch for a direction the user did not choose; never committed, not part of the build"
       }
     ]
   }

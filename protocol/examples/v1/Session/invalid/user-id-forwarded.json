@@ -1,0 +1,5 @@
+{
+  "token": "s_opaque-session-token",
+  "expires_in": 3600,
+  "user_id": "u_123"
+}

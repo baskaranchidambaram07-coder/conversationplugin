@@ -432,6 +432,78 @@
       "title": "MessageStarted",
       "type": "object"
     },
+    "SendMessage": {
+      "additionalProperties": false,
+      "description": "Body of POST /v1/conversations/{id}/messages. The reply streams StreamEvent lines, with `: ping` heartbeats.",
+      "properties": {
+        "text": {
+          "description": "What the visitor typed: 1 to 4,000 characters, not only spaces.",
+          "maxLength": 4000,
+          "minLength": 1,
+          "pattern": "\\S",
+          "type": "string"
+        },
+        "client_message_id": {
+          "$ref": "#/$defs/Id",
+          "description": "Chosen by the chat. Sending again with the same ID returns the same reply."
+        }
+      },
+      "required": [
+        "text",
+        "client_message_id"
+      ],
+      "title": "SendMessage",
+      "type": "object"
+    },
+    "Session": {
+      "additionalProperties": false,
+      "description": "Reply to POST /v1/sessions. The token is opaque to the browser and goes back as `Authorization: Bearer`.",
+      "properties": {
+        "token": {
+          "maxLength": 4096,
+          "minLength": 1,
+          "type": "string"
+        },
+        "expires_in": {
+          "description": "Seconds until the token expires.",
+          "exclusiveMinimum": 0,
+          "type": "integer"
+        }
+      },
+      "required": [
+        "token",
+        "expires_in"
+      ],
+      "title": "Session",
+      "type": "object"
+    },
+    "SessionRequest": {
+      "additionalProperties": false,
+      "description": "Body of POST /v1/sessions. A signed-in visitor brings the token the host signed for them; anyone else, null.",
+      "properties": {
+        "widget_id": {
+          "$ref": "#/$defs/Id"
+        },
+        "host_token": {
+          "anyOf": [
+            {
+              "maxLength": 8192,
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [
+        "widget_id",
+        "host_token"
+      ],
+      "title": "SessionRequest",
+      "type": "object"
+    },
     "StreamEvent": {
       "discriminator": {
         "mapping": {
@@ -635,6 +707,15 @@
     },
     {
       "$ref": "#/$defs/WidgetConfig"
+    },
+    {
+      "$ref": "#/$defs/SessionRequest"
+    },
+    {
+      "$ref": "#/$defs/Session"
+    },
+    {
+      "$ref": "#/$defs/SendMessage"
     }
   ]
 }

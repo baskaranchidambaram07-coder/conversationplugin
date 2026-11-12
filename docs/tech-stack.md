@@ -44,10 +44,12 @@ Added when first used: Alembic for database migrations, PyJWT for tokens, OpenTe
 | Loader build | esbuild | 0.28 | Produces one small file with no dependencies |
 | Unit tests | Vitest with Testing Library and jsdom | 5.1 / 16.3 / 29.1 | Component tests without a browser |
 | Browser tests | Playwright | 1.65 | Chromium 158, Firefox 159, WebKit 27.2, plus phone emulation |
+| Accessibility checks | axe-core for Playwright | 4.14 | A WCAG 2.2 AA scan of every chat state and the launcher; serious or critical findings fail |
+| Chat typeface | Nunito, self-hosted (`@fontsource-variable/nunito`) | 5.3 | Open licence; served from our origin, so visitors' addresses never go to a font host |
 | Message format types | json-schema-to-typescript | 16.0 | Turns the schema the backend exports into TypeScript types (`protocol/src/v1.ts`) |
 | Schema checks in tests | Ajv with ajv-formats | 8.20 / 3.0 | Checks the shared example files against the schema, so the TypeScript side reaches the same verdict as the Python models |
 
-Added when first used: react-markdown with a sanitiser, Recharts, Mermaid, Radix primitives, axe-core for accessibility checks.
+Added when first used: react-markdown with a sanitiser, Recharts, Mermaid, Radix primitives.
 
 Size budgets:
 
@@ -113,6 +115,8 @@ The local database listens on `127.0.0.1` only, requires a password, and the app
 
 `e2e/server.mjs` serves the loader tests on port 4174. Host pages in `e2e/hosts/` open on `http://127.0.0.1:4174`; our side (the built loader, sample widget configurations and a stand-in chat page, `e2e/chat-stub.html`, that speaks the chat's half of the bridge) is served from `http://localhost:4174`. The two names are different origins, as a customer's site and ours always are. The host pages cover a plain site, a signed-in portal, inline placement, the left corner, a right-to-left site, a strict content policy with Trusted Types, hostile global CSS, and a page that already defines `UCP`.
 
+The same server serves the built chat at `/embed/{id}` (the widgets `w_test` and `w_left` get the stand-in instead) and a fake gateway that speaks the API in `backend/ucp/protocol.py`. Words in a test question pick its behaviour: `[long]` (the recorded long answer), `[slow]` (5 s before the first word), `[busy]` (too many messages), `[fail]` (an error part-way), `[drop]` (the stream is cut but the answer can still be fetched) and `[expire]` (the session ends once). M4 replaces it with the real gateway.
+
 ## 8. Commands
 
 Run from the repository root in Git Bash.
@@ -125,6 +129,7 @@ After `npm install` on this Windows machine, check `package-lock.json` before co
 | Backend tests with the local database | `cd backend && bash ../scripts/with-localdb.sh uv run --env-file ../.env pytest` |
 | Web type checks, unit tests, builds | `npm run typecheck && npm test && npm run build` |
 | Loader size limit | `npm run size --workspace @ucp/loader` |
+| Chat first-load size limit | `npm run size --workspace @ucp/widget` |
 | Browser tests | `npm run build && npm run e2e` |
 | Regenerate the message format after changing `backend/ucp/protocol.py` | `cd backend && uv run python -m ucp.protocol && cd .. && npm run generate --workspace @ucp/protocol` |
 | Run the fake PF on port 8100 (behaviours are listed in `backend/fakepf/app.py`) | `cd backend && uv run uvicorn fakepf.app:app --port 8100` |
