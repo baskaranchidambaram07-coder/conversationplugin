@@ -66,15 +66,63 @@ jobs:
       - run: npx playwright install --with-deps
       - run: npm run e2e
 
+  gateway:
+    name: Gateway journeys and load
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_USER: ucp
+          POSTGRES_PASSWORD: ci-only
+          POSTGRES_DB: ucp_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U ucp -d ucp_test"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      UCP_DATABASE_URL: postgresql+asyncpg://ucp:ci-only@127.0.0.1:5432/ucp_test
+      PLAYWRIGHT_BROWSERS_PATH: ${{ github.workspace }}/.tools/ms-playwright
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: npm
+      - uses: astral-sh/setup-uv@v10.3.3
+        with:
+          version: "0.9.24"
+      - run: npm ci
+      - run: npm run build
+      - run: uv sync --frozen
+        working-directory: backend
+      - run: npx playwright install --with-deps chromium firefox webkit
+      # The real chat on a customer's page, through the real gateway (backend/devstack.py) to the fake PF.
+      - run: npm run e2e:gateway
+      - name: API journey and load test (gateway adds at most 150 ms to the first word at the 95th percentile)
+        working-directory: backend
+        run: |
+          FAKE_PF_SPEED=0.1 uv run python devstack.py &
+          curl --fail --silent --retry 60 --retry-delay 1 --retry-all-errors http://127.0.0.1:8200/readyz
+          uv run python journey.py http://localhost:8200 w_gateway
+          uv run python loadtest.py --visitors 25 --turns 5
+
   image:
     name: Container image builds and starts
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
-      - run: docker build --tag ucp-gateway:ci backend
+      - run: docker build --file backend/Dockerfile --tag ucp-gateway:ci .
       - run: |
           docker run --detach --name gateway --publish 8000:8000 ucp-gateway:ci
           curl --fail --silent --retry 20 --retry-delay 1 --retry-all-errors http://127.0.0.1:8000/healthz
+          # The gateway names no server software.
+          ! curl --silent --head http://127.0.0.1:8000/healthz | grep -i '^server:'
+          # The built loader and chat are inside, and served.
+          curl --fail --silent http://127.0.0.1:8000/loader.js > /dev/null
 
   secrets:
     name: Secret scan

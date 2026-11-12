@@ -11,11 +11,6 @@ DATABASE_URL = os.environ.get("TEST_DATABASE_URL")
 pytestmark = pytest.mark.anyio
 
 
-@pytest.fixture
-def anyio_backend():
-    return "asyncio"
-
-
 @pytest.mark.skipif(not DATABASE_URL, reason="TEST_DATABASE_URL is not set")
 async def test_postgres_is_reachable_and_is_version_17():
     engine = create_async_engine(DATABASE_URL)

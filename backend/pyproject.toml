@@ -9,12 +9,14 @@ dependencies = [
     "sqlalchemy[asyncio]>=2.0.36",
     "asyncpg>=0.30",
     "pydantic>=2.14",
+    "alembic>=1.16",
+    "pyjwt>=2.10",
+    "httpx2>=2.16",
 ]
 
 [dependency-groups]
 dev = [
     "pytest>=8.3",
-    "httpx2>=2.0",
     "ruff>=0.8",
 ]
 
