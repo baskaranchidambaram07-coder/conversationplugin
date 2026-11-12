@@ -185,6 +185,34 @@ class WidgetConfig(_Model):
     history_enabled: bool
 
 
+# API requests and replies. The gateway (M4) implements them; the chat (M2) calls them.
+
+
+class SessionRequest(_Model):
+    """Body of POST /v1/sessions. A signed-in visitor brings the token the host signed for them; anyone else, null."""
+
+    widget_id: Id
+    host_token: Annotated[str, Field(min_length=1, max_length=8192)] | None
+
+
+class Session(_Model):
+    """Reply to POST /v1/sessions. The token is opaque to the browser and goes back as `Authorization: Bearer`."""
+
+    token: Annotated[str, Field(min_length=1, max_length=4096)]
+    expires_in: Annotated[int, Field(gt=0)] = Field(description="Seconds until the token expires.")
+
+
+class SendMessage(_Model):
+    """Body of POST /v1/conversations/{id}/messages. The reply streams StreamEvent lines, with `: ping` heartbeats."""
+
+    text: Annotated[str, Field(min_length=1, max_length=4000, pattern=r"\S")] = Field(
+        description="What the visitor typed: 1 to 4,000 characters, not only spaces."
+    )
+    client_message_id: Id = Field(
+        description="Chosen by the chat. Sending again with the same ID returns the same reply."
+    )
+
+
 PUBLIC_TYPES = {
     "Block": Block,
     "StreamEvent": StreamEvent,
@@ -192,6 +220,9 @@ PUBLIC_TYPES = {
     "Conversation": Conversation,
     "Message": Message,
     "WidgetConfig": WidgetConfig,
+    "SessionRequest": SessionRequest,
+    "Session": Session,
+    "SendMessage": SendMessage,
 }
 ADAPTERS = {name: TypeAdapter(kind) for name, kind in PUBLIC_TYPES.items()}
 

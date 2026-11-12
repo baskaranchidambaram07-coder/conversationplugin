@@ -1,6 +1,7 @@
 // Generated from schema/v1.json by `npm run generate --workspace @ucp/protocol`. Do not edit.
 
-export type Protocol = Block | StreamEvent | ApiError | Conversation | Message | WidgetConfig;
+export type Protocol =
+  Block | StreamEvent | ApiError | Conversation | Message | WidgetConfig | SessionRequest | Session | SendMessage;
 export type Block = TextBlock | MarkdownBlock | UnknownBlock;
 export type StreamEvent =
   MessageStarted | ContentBlockStarted | ContentBlockDelta | ContentBlockCompleted | MessageCompleted | MessageFailed;
@@ -180,4 +181,34 @@ export interface WidgetConfig {
   color_scheme: "light" | "dark" | "auto";
   launcher_position: "bottom-right" | "bottom-left";
   history_enabled: boolean;
+}
+/**
+ * Body of POST /v1/sessions. A signed-in visitor brings the token the host signed for them; anyone else, null.
+ */
+export interface SessionRequest {
+  widget_id: Id;
+  host_token: string | null;
+}
+/**
+ * Reply to POST /v1/sessions. The token is opaque to the browser and goes back as `Authorization: Bearer`.
+ */
+export interface Session {
+  token: string;
+  /**
+   * Seconds until the token expires.
+   */
+  expires_in: number;
+}
+/**
+ * Body of POST /v1/conversations/{id}/messages. The reply streams StreamEvent lines, with `: ping` heartbeats.
+ */
+export interface SendMessage {
+  /**
+   * What the visitor typed: 1 to 4,000 characters, not only spaces.
+   */
+  text: string;
+  /**
+   * Our opaque ID. Never a PF ID.
+   */
+  client_message_id: string;
 }
