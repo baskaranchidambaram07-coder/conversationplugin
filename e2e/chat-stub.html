@@ -10,13 +10,39 @@
   </head>
   <body>
     <h1>Chat stand-in</h1>
-    <p>Module M2 replaces this page with the real chat.</p>
+    <p>Module M2 replaces this page with the real chat. It speaks the chat's half of the bridge.</p>
+    <p id="who">Not connected</p>
     <button type="button" id="close">Close chat</button>
     <script>
-      // shortcut: posts to any origin until the bridge handshake pins the parent's origin (next M1 pull request).
-      const close = () => parent.postMessage({ ucp: 1, type: "close" }, "*");
+      // The chat's half of protocol/src/bridge.ts. The token is kept in a variable, never written to the page.
+      let parentOrigin;
+      window.receivedToken = undefined;
+      const send = (message) => parentOrigin && parent.postMessage(message, parentOrigin);
+      addEventListener("message", (event) => {
+        const message = event.data;
+        if (event.source !== parent || !message || message.ucp !== 1) return;
+        if (message.type === "init" && !parentOrigin) {
+          parentOrigin = event.origin; // pinned: from now on only the loader's origin is trusted or written to
+          document.body.dataset.mode = message.mode;
+          document.getElementById("who").textContent = message.signedIn ? "Signing in" : "Anonymous";
+          if (message.signedIn) send({ ucp: 1, type: "get-token", id: 1 });
+        }
+        if (event.origin !== parentOrigin) return;
+        if (message.type === "token") {
+          window.receivedToken = message.token;
+          document.getElementById("who").textContent = message.token ? "Signed in" : "Sign-in failed";
+        }
+        if (message.type === "shown") {
+          window.shownCount = (window.shownCount || 0) + 1;
+          document.getElementById("close").focus();
+        }
+      });
+      const close = () => send({ ucp: 1, type: "close" });
       document.getElementById("close").addEventListener("click", close);
       addEventListener("keydown", (event) => event.key === "Escape" && close());
+      // A chat from a later release says things this loader does not know, and adds fields; it must still connect.
+      parent.postMessage({ ucp: 1, type: "added-in-a-later-release" }, "*");
+      parent.postMessage({ ucp: 1, type: "ready", chatRelease: "9.9.9" }, "*");
     </script>
   </body>
 </html>

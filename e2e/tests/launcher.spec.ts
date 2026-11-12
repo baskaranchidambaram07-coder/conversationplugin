@@ -65,7 +65,8 @@ test("the chat opens beside the launcher on a large screen, or over the whole sc
     expect(open).toEqual({ x: 0, y: 0, width, height });
     await expect(launcher(page)).toBeHidden();
     expect(await page.evaluate(() => document.documentElement.style.overflow)).toBe("hidden");
-    // The launcher is covered, so the chat's own close button is the way out.
+    // The launcher is covered, so the chat's own close button is the way out, once the bridge is connected.
+    await expect(page.frameLocator("[data-ucp] iframe").getByText("Anonymous")).toBeVisible();
     await page.frameLocator("[data-ucp] iframe").getByRole("button", { name: "Close chat" }).click();
     await expect(launcher(page)).toBeVisible();
     expect(await page.evaluate(() => document.documentElement.style.overflow)).toBe("");
@@ -98,8 +99,8 @@ test("by keyboard, Enter opens the chat and moves focus into it, and Escape insi
   await expect(launcher(page)).toHaveAttribute("aria-expanded", "true");
   expect(await focused()).toBe("IFRAME");
 
-  // Wait until the chat page is ready to hear the key, then press Escape with focus inside the chat.
-  await expect(page.frameLocator("[data-ucp] iframe").getByRole("button", { name: "Close chat" })).toBeVisible();
+  // Wait until the bridge is connected, then press Escape with focus inside the chat.
+  await expect(page.frameLocator("[data-ucp] iframe").getByText("Anonymous")).toBeVisible();
   await page.keyboard.press("Escape");
   await expect(launcher(page)).toHaveAttribute("aria-expanded", "false");
   expect(await focused()).toBe("BUTTON");
