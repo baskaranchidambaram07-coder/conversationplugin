@@ -9,6 +9,8 @@ Status: planning complete, build starting. Target: a base version in the develop
 - `docs/module-breakdown.md`: requirements, design decisions, and modules M0 to M15 with their tasks and tests
 - `docs/pf-capability-sheet.md`: observed behaviour of the agent platform's conversation API
 - `docs/government-readiness.md`: what UK public-sector and regulated customers require
+- `docs/tech-stack.md`: the technology and infrastructure stack, its state, and the commands to run it
+- `infra/aws/iam/`: the AWS policies for the development environment
 
 ## Branches
 
