@@ -1,0 +1,19 @@
+.env
+# Local tools, the local database with its passwords, and test browsers. Never published.
+.tools/
+spikes/pf_capture_out/
+# Personal Claude Code settings and its working copies. The shared settings in .claude/ are published.
+.claude/settings.local.json
+.claude/worktrees/
+__pycache__/
+.venv/
+.pytest_cache/
+.ruff_cache/
+node_modules/
+dist/
+test-results/
+playwright-report/
+
+# Internal source material. Remove these two lines to track the files.
+universal_conversation_platform_internal_discussion.docx
+Universal Conversational Embed SDK Architecture.png

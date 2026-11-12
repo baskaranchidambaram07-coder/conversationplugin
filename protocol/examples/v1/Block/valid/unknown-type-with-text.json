@@ -1,0 +1,19 @@
+{
+  "type": "chart",
+  "text": "Applications rose from 120 in May to 180 in June.",
+  "series": [
+    {
+      "name": "Applications",
+      "points": [
+        [
+          "May",
+          120
+        ],
+        [
+          "June",
+          180
+        ]
+      ]
+    }
+  ]
+}

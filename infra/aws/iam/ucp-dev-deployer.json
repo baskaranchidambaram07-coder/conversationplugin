@@ -1,0 +1,214 @@
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Sid": "ReadForPlanning",
+      "Effect": "Allow",
+      "Action": [
+        "ec2:Describe*",
+        "elasticloadbalancing:Describe*",
+        "rds:Describe*",
+        "rds:ListTagsForResource",
+        "ecs:Describe*",
+        "ecs:List*",
+        "ecr:GetAuthorizationToken",
+        "ecr:DescribeRepositories",
+        "logs:DescribeLogGroups",
+        "cloudwatch:Describe*",
+        "cloudwatch:Get*",
+        "cloudwatch:List*",
+        "secretsmanager:ListSecrets",
+        "secretsmanager:GetRandomPassword",
+        "s3:ListAllMyBuckets",
+        "iam:ListOpenIDConnectProviders"
+      ],
+      "Resource": "*"
+    },
+    {
+      "Sid": "TaskDefinitions",
+      "Effect": "Allow",
+      "Action": [
+        "ecs:RegisterTaskDefinition",
+        "ecs:DeregisterTaskDefinition"
+      ],
+      "Resource": "*",
+      "Condition": {
+        "StringEquals": { "aws:RequestedRegion": "us-east-1" }
+      }
+    },
+    {
+      "Sid": "NetworkInUsEast1",
+      "Effect": "Allow",
+      "Action": [
+        "ec2:CreateVpc",
+        "ec2:DeleteVpc",
+        "ec2:ModifyVpcAttribute",
+        "ec2:CreateSubnet",
+        "ec2:DeleteSubnet",
+        "ec2:ModifySubnetAttribute",
+        "ec2:CreateRouteTable",
+        "ec2:DeleteRouteTable",
+        "ec2:CreateRoute",
+        "ec2:DeleteRoute",
+        "ec2:ReplaceRoute",
+        "ec2:AssociateRouteTable",
+        "ec2:DisassociateRouteTable",
+        "ec2:CreateInternetGateway",
+        "ec2:DeleteInternetGateway",
+        "ec2:AttachInternetGateway",
+        "ec2:DetachInternetGateway",
+        "ec2:CreateNatGateway",
+        "ec2:DeleteNatGateway",
+        "ec2:AllocateAddress",
+        "ec2:ReleaseAddress",
+        "ec2:CreateSecurityGroup",
+        "ec2:DeleteSecurityGroup",
+        "ec2:AuthorizeSecurityGroupIngress",
+        "ec2:AuthorizeSecurityGroupEgress",
+        "ec2:RevokeSecurityGroupIngress",
+        "ec2:RevokeSecurityGroupEgress",
+        "ec2:ModifySecurityGroupRules",
+        "ec2:UpdateSecurityGroupRuleDescriptionsIngress",
+        "ec2:UpdateSecurityGroupRuleDescriptionsEgress",
+        "ec2:CreateTags",
+        "ec2:DeleteTags"
+      ],
+      "Resource": "*",
+      "Condition": {
+        "StringEquals": { "aws:RequestedRegion": "us-east-1" }
+      }
+    },
+    {
+      "Sid": "ProjectNamedResources",
+      "Effect": "Allow",
+      "Action": [
+        "ecs:*",
+        "ecr:*",
+        "elasticloadbalancing:*",
+        "rds:*",
+        "logs:*",
+        "secretsmanager:*",
+        "s3:*",
+        "cloudwatch:PutMetricAlarm",
+        "cloudwatch:DeleteAlarms",
+        "cloudwatch:PutDashboard",
+        "cloudwatch:DeleteDashboards",
+        "cloudwatch:TagResource"
+      ],
+      "Resource": [
+        "arn:aws:ecs:us-east-1:*:cluster/ucp-dev-*",
+        "arn:aws:ecs:us-east-1:*:service/ucp-dev-*/*",
+        "arn:aws:ecs:us-east-1:*:task/ucp-dev-*/*",
+        "arn:aws:ecs:us-east-1:*:task-definition/ucp-dev-*:*",
+        "arn:aws:ecr:us-east-1:*:repository/ucp-dev-*",
+        "arn:aws:elasticloadbalancing:us-east-1:*:loadbalancer/app/ucp-dev-*/*",
+        "arn:aws:elasticloadbalancing:us-east-1:*:targetgroup/ucp-dev-*/*",
+        "arn:aws:elasticloadbalancing:us-east-1:*:listener/app/ucp-dev-*/*/*",
+        "arn:aws:elasticloadbalancing:us-east-1:*:listener-rule/app/ucp-dev-*/*/*/*",
+        "arn:aws:rds:us-east-1:*:db:ucp-dev-*",
+        "arn:aws:rds:us-east-1:*:subgrp:ucp-dev-*",
+        "arn:aws:rds:us-east-1:*:pg:ucp-dev-*",
+        "arn:aws:rds:us-east-1:*:pg:default*",
+        "arn:aws:rds:us-east-1:*:og:default*",
+        "arn:aws:rds:us-east-1:*:snapshot:ucp-dev-*",
+        "arn:aws:logs:us-east-1:*:log-group:/ucp-dev/*",
+        "arn:aws:secretsmanager:us-east-1:*:secret:ucp-dev/*",
+        "arn:aws:s3:::ucp-dev-*",
+        "arn:aws:cloudwatch:us-east-1:*:alarm:ucp-dev-*",
+        "arn:aws:cloudwatch::*:dashboard/ucp-dev-*"
+      ]
+    },
+    {
+      "Sid": "ContentDelivery",
+      "Effect": "Allow",
+      "Action": "cloudfront:*",
+      "Resource": "*"
+    },
+    {
+      "Sid": "ProjectRolesReadAndTidy",
+      "Effect": "Allow",
+      "Action": [
+        "iam:GetRole",
+        "iam:GetRolePolicy",
+        "iam:ListRolePolicies",
+        "iam:ListAttachedRolePolicies",
+        "iam:ListInstanceProfilesForRole",
+        "iam:TagRole",
+        "iam:UntagRole",
+        "iam:UpdateRole",
+        "iam:UpdateAssumeRolePolicy",
+        "iam:DeleteRole"
+      ],
+      "Resource": "arn:aws:iam::*:role/ucp-dev-*"
+    },
+    {
+      "Sid": "ProjectRolesMustCarryBoundary",
+      "Effect": "Allow",
+      "Action": [
+        "iam:CreateRole",
+        "iam:PutRolePolicy",
+        "iam:DeleteRolePolicy",
+        "iam:PutRolePermissionsBoundary"
+      ],
+      "Resource": "arn:aws:iam::*:role/ucp-dev-*",
+      "Condition": {
+        "ArnLike": { "iam:PermissionsBoundary": "arn:aws:iam::*:policy/ucp-dev-boundary" }
+      }
+    },
+    {
+      "Sid": "PassProjectRolesToEcsTasks",
+      "Effect": "Allow",
+      "Action": "iam:PassRole",
+      "Resource": "arn:aws:iam::*:role/ucp-dev-*",
+      "Condition": {
+        "StringEquals": { "iam:PassedToService": "ecs-tasks.amazonaws.com" }
+      }
+    },
+    {
+      "Sid": "ServiceLinkedRoles",
+      "Effect": "Allow",
+      "Action": "iam:CreateServiceLinkedRole",
+      "Resource": "arn:aws:iam::*:role/aws-service-role/*",
+      "Condition": {
+        "StringEquals": {
+          "iam:AWSServiceName": [
+            "ecs.amazonaws.com",
+            "elasticloadbalancing.amazonaws.com",
+            "rds.amazonaws.com"
+          ]
+        }
+      }
+    },
+    {
+      "Sid": "GitHubSignIn",
+      "Effect": "Allow",
+      "Action": [
+        "iam:CreateOpenIDConnectProvider",
+        "iam:GetOpenIDConnectProvider",
+        "iam:TagOpenIDConnectProvider"
+      ],
+      "Resource": "arn:aws:iam::*:oidc-provider/token.actions.githubusercontent.com"
+    },
+    {
+      "Sid": "InspectOwnAccess",
+      "Effect": "Allow",
+      "Action": [
+        "iam:GetUser",
+        "iam:ListAttachedUserPolicies",
+        "iam:ListUserPolicies",
+        "iam:SimulatePrincipalPolicy"
+      ],
+      "Resource": "arn:aws:iam::*:user/service-commandline-user"
+    },
+    {
+      "Sid": "ReadProjectPolicies",
+      "Effect": "Allow",
+      "Action": [
+        "iam:GetPolicy",
+        "iam:GetPolicyVersion",
+        "iam:ListPolicyVersions"
+      ],
+      "Resource": "arn:aws:iam::*:policy/ucp-dev-*"
+    }
+  ]
+}

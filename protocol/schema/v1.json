@@ -1,0 +1,640 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$defs": {
+    "ApiError": {
+      "additionalProperties": false,
+      "description": "The body of every error response, and the payload of `message.failed`.",
+      "properties": {
+        "code": {
+          "enum": [
+            "invalid_request",
+            "session_expired",
+            "forbidden",
+            "site_not_allowed",
+            "not_found",
+            "turn_in_progress",
+            "rate_limited",
+            "assistant_unavailable",
+            "internal_error"
+          ],
+          "type": "string"
+        },
+        "message": {
+          "description": "Our own wording. Never text from PF.",
+          "type": "string"
+        },
+        "retryable": {
+          "type": "boolean"
+        },
+        "retry_after": {
+          "anyOf": [
+            {
+              "minimum": 0,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "Seconds to wait before retrying."
+        },
+        "reference": {
+          "$ref": "#/$defs/Id",
+          "description": "The correlation ID, shown to the user so support can find the request."
+        }
+      },
+      "required": [
+        "code",
+        "message",
+        "retryable",
+        "retry_after",
+        "reference"
+      ],
+      "title": "ApiError",
+      "type": "object"
+    },
+    "Block": {
+      "oneOf": [
+        {
+          "$ref": "#/$defs/TextBlock"
+        },
+        {
+          "$ref": "#/$defs/MarkdownBlock"
+        },
+        {
+          "$ref": "#/$defs/UnknownBlock"
+        }
+      ]
+    },
+    "ContentBlockCompleted": {
+      "additionalProperties": false,
+      "description": "The whole block. It replaces what the deltas built, so a missed delta is repaired.",
+      "properties": {
+        "v": {
+          "const": 1,
+          "type": "integer"
+        },
+        "seq": {
+          "$ref": "#/$defs/Index",
+          "description": "Starts at 0 for each message and rises by one per event."
+        },
+        "type": {
+          "const": "content_block.completed",
+          "type": "string"
+        },
+        "conversation_id": {
+          "$ref": "#/$defs/Id"
+        },
+        "message_id": {
+          "$ref": "#/$defs/Id"
+        },
+        "correlation_id": {
+          "$ref": "#/$defs/Id"
+        },
+        "index": {
+          "$ref": "#/$defs/Index"
+        },
+        "block": {
+          "$ref": "#/$defs/Block"
+        }
+      },
+      "required": [
+        "v",
+        "seq",
+        "type",
+        "conversation_id",
+        "message_id",
+        "correlation_id",
+        "index",
+        "block"
+      ],
+      "title": "ContentBlockCompleted",
+      "type": "object"
+    },
+    "ContentBlockDelta": {
+      "additionalProperties": false,
+      "description": "Text to append to the open block.",
+      "properties": {
+        "v": {
+          "const": 1,
+          "type": "integer"
+        },
+        "seq": {
+          "$ref": "#/$defs/Index",
+          "description": "Starts at 0 for each message and rises by one per event."
+        },
+        "type": {
+          "const": "content_block.delta",
+          "type": "string"
+        },
+        "conversation_id": {
+          "$ref": "#/$defs/Id"
+        },
+        "message_id": {
+          "$ref": "#/$defs/Id"
+        },
+        "correlation_id": {
+          "$ref": "#/$defs/Id"
+        },
+        "index": {
+          "$ref": "#/$defs/Index"
+        },
+        "text": {
+          "minLength": 1,
+          "type": "string"
+        }
+      },
+      "required": [
+        "v",
+        "seq",
+        "type",
+        "conversation_id",
+        "message_id",
+        "correlation_id",
+        "index",
+        "text"
+      ],
+      "title": "ContentBlockDelta",
+      "type": "object"
+    },
+    "ContentBlockStarted": {
+      "additionalProperties": false,
+      "description": "A block opens, with whatever it holds so far (for Markdown, empty text).",
+      "properties": {
+        "v": {
+          "const": 1,
+          "type": "integer"
+        },
+        "seq": {
+          "$ref": "#/$defs/Index",
+          "description": "Starts at 0 for each message and rises by one per event."
+        },
+        "type": {
+          "const": "content_block.started",
+          "type": "string"
+        },
+        "conversation_id": {
+          "$ref": "#/$defs/Id"
+        },
+        "message_id": {
+          "$ref": "#/$defs/Id"
+        },
+        "correlation_id": {
+          "$ref": "#/$defs/Id"
+        },
+        "index": {
+          "$ref": "#/$defs/Index"
+        },
+        "block": {
+          "$ref": "#/$defs/Block"
+        }
+      },
+      "required": [
+        "v",
+        "seq",
+        "type",
+        "conversation_id",
+        "message_id",
+        "correlation_id",
+        "index",
+        "block"
+      ],
+      "title": "ContentBlockStarted",
+      "type": "object"
+    },
+    "Conversation": {
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/Id"
+        },
+        "title": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "created_at": {
+          "format": "date-time",
+          "type": "string"
+        },
+        "updated_at": {
+          "format": "date-time",
+          "type": "string"
+        }
+      },
+      "required": [
+        "id",
+        "title",
+        "created_at",
+        "updated_at"
+      ],
+      "title": "Conversation",
+      "type": "object"
+    },
+    "Id": {
+      "description": "Our opaque ID. Never a PF ID.",
+      "pattern": "^[A-Za-z0-9_-]{1,64}$",
+      "type": "string"
+    },
+    "Index": {
+      "minimum": 0,
+      "type": "integer"
+    },
+    "MarkdownBlock": {
+      "additionalProperties": false,
+      "description": "Markdown. Tables, code and fenced diagram blocks travel inside it (D9).",
+      "properties": {
+        "type": {
+          "const": "markdown",
+          "type": "string"
+        },
+        "text": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "type",
+        "text"
+      ],
+      "title": "MarkdownBlock",
+      "type": "object"
+    },
+    "Message": {
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/Id"
+        },
+        "role": {
+          "enum": [
+            "user",
+            "assistant"
+          ],
+          "type": "string"
+        },
+        "status": {
+          "enum": [
+            "in_progress",
+            "complete",
+            "failed",
+            "stopped"
+          ],
+          "type": "string"
+        },
+        "blocks": {
+          "items": {
+            "$ref": "#/$defs/Block"
+          },
+          "type": "array"
+        },
+        "error": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/ApiError"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "created_at": {
+          "format": "date-time",
+          "type": "string"
+        }
+      },
+      "required": [
+        "id",
+        "role",
+        "status",
+        "blocks",
+        "error",
+        "created_at"
+      ],
+      "title": "Message",
+      "type": "object"
+    },
+    "MessageCompleted": {
+      "additionalProperties": false,
+      "properties": {
+        "v": {
+          "const": 1,
+          "type": "integer"
+        },
+        "seq": {
+          "$ref": "#/$defs/Index",
+          "description": "Starts at 0 for each message and rises by one per event."
+        },
+        "type": {
+          "const": "message.completed",
+          "type": "string"
+        },
+        "conversation_id": {
+          "$ref": "#/$defs/Id"
+        },
+        "message_id": {
+          "$ref": "#/$defs/Id"
+        },
+        "correlation_id": {
+          "$ref": "#/$defs/Id"
+        }
+      },
+      "required": [
+        "v",
+        "seq",
+        "type",
+        "conversation_id",
+        "message_id",
+        "correlation_id"
+      ],
+      "title": "MessageCompleted",
+      "type": "object"
+    },
+    "MessageFailed": {
+      "additionalProperties": false,
+      "description": "The turn failed. Blocks already streamed stay on screen.",
+      "properties": {
+        "v": {
+          "const": 1,
+          "type": "integer"
+        },
+        "seq": {
+          "$ref": "#/$defs/Index",
+          "description": "Starts at 0 for each message and rises by one per event."
+        },
+        "type": {
+          "const": "message.failed",
+          "type": "string"
+        },
+        "conversation_id": {
+          "$ref": "#/$defs/Id"
+        },
+        "message_id": {
+          "$ref": "#/$defs/Id"
+        },
+        "correlation_id": {
+          "$ref": "#/$defs/Id"
+        },
+        "error": {
+          "$ref": "#/$defs/ApiError"
+        }
+      },
+      "required": [
+        "v",
+        "seq",
+        "type",
+        "conversation_id",
+        "message_id",
+        "correlation_id",
+        "error"
+      ],
+      "title": "MessageFailed",
+      "type": "object"
+    },
+    "MessageStarted": {
+      "additionalProperties": false,
+      "description": "The assistant message exists. The widget shows its working state.",
+      "properties": {
+        "v": {
+          "const": 1,
+          "type": "integer"
+        },
+        "seq": {
+          "$ref": "#/$defs/Index",
+          "description": "Starts at 0 for each message and rises by one per event."
+        },
+        "type": {
+          "const": "message.started",
+          "type": "string"
+        },
+        "conversation_id": {
+          "$ref": "#/$defs/Id"
+        },
+        "message_id": {
+          "$ref": "#/$defs/Id"
+        },
+        "correlation_id": {
+          "$ref": "#/$defs/Id"
+        }
+      },
+      "required": [
+        "v",
+        "seq",
+        "type",
+        "conversation_id",
+        "message_id",
+        "correlation_id"
+      ],
+      "title": "MessageStarted",
+      "type": "object"
+    },
+    "StreamEvent": {
+      "discriminator": {
+        "mapping": {
+          "content_block.completed": "#/$defs/ContentBlockCompleted",
+          "content_block.delta": "#/$defs/ContentBlockDelta",
+          "content_block.started": "#/$defs/ContentBlockStarted",
+          "message.completed": "#/$defs/MessageCompleted",
+          "message.failed": "#/$defs/MessageFailed",
+          "message.started": "#/$defs/MessageStarted"
+        },
+        "propertyName": "type"
+      },
+      "oneOf": [
+        {
+          "$ref": "#/$defs/MessageStarted"
+        },
+        {
+          "$ref": "#/$defs/ContentBlockStarted"
+        },
+        {
+          "$ref": "#/$defs/ContentBlockDelta"
+        },
+        {
+          "$ref": "#/$defs/ContentBlockCompleted"
+        },
+        {
+          "$ref": "#/$defs/MessageCompleted"
+        },
+        {
+          "$ref": "#/$defs/MessageFailed"
+        }
+      ]
+    },
+    "TextBlock": {
+      "additionalProperties": false,
+      "description": "Plain text, shown exactly as written and never interpreted. Used for what the user typed.",
+      "properties": {
+        "type": {
+          "const": "text",
+          "type": "string"
+        },
+        "text": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "type",
+        "text"
+      ],
+      "title": "TextBlock",
+      "type": "object"
+    },
+    "UnknownBlock": {
+      "additionalProperties": true,
+      "description": "A block type this version does not know, sent by a newer gateway. Shown as its `text`, if it has one.",
+      "properties": {
+        "type": {
+          "not": {
+            "enum": [
+              "text",
+              "markdown"
+            ]
+          },
+          "type": "string"
+        },
+        "text": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        }
+      },
+      "required": [
+        "type"
+      ],
+      "title": "UnknownBlock",
+      "type": "object"
+    },
+    "WidgetConfig": {
+      "additionalProperties": false,
+      "properties": {
+        "v": {
+          "const": 1,
+          "type": "integer"
+        },
+        "widget_id": {
+          "$ref": "#/$defs/Id"
+        },
+        "title": {
+          "maxLength": 80,
+          "minLength": 1,
+          "type": "string"
+        },
+        "welcome_message": {
+          "anyOf": [
+            {
+              "maxLength": 1000,
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "suggested_prompts": {
+          "items": {
+            "maxLength": 200,
+            "minLength": 1,
+            "type": "string"
+          },
+          "maxItems": 4,
+          "type": "array"
+        },
+        "ai_notice": {
+          "anyOf": [
+            {
+              "maxLength": 500,
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "Null means the widget's own wording."
+        },
+        "brand_color": {
+          "pattern": "^#[0-9A-Fa-f]{6}$",
+          "type": "string"
+        },
+        "logo_url": {
+          "anyOf": [
+            {
+              "maxLength": 2048,
+              "pattern": "^https://[!-~]+$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "color_scheme": {
+          "enum": [
+            "light",
+            "dark",
+            "auto"
+          ],
+          "type": "string"
+        },
+        "launcher_position": {
+          "enum": [
+            "bottom-right",
+            "bottom-left"
+          ],
+          "type": "string"
+        },
+        "history_enabled": {
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "v",
+        "widget_id",
+        "title",
+        "welcome_message",
+        "suggested_prompts",
+        "ai_notice",
+        "brand_color",
+        "logo_url",
+        "color_scheme",
+        "launcher_position",
+        "history_enabled"
+      ],
+      "title": "WidgetConfig",
+      "type": "object"
+    }
+  },
+  "title": "Protocol",
+  "anyOf": [
+    {
+      "$ref": "#/$defs/Block"
+    },
+    {
+      "$ref": "#/$defs/StreamEvent"
+    },
+    {
+      "$ref": "#/$defs/ApiError"
+    },
+    {
+      "$ref": "#/$defs/Conversation"
+    },
+    {
+      "$ref": "#/$defs/Message"
+    },
+    {
+      "$ref": "#/$defs/WidgetConfig"
+    }
+  ]
+}

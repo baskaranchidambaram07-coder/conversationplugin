@@ -1,0 +1,18 @@
+{
+  "v": 1,
+  "widget_id": "w_college_demo",
+  "title": "Ask the College",
+  "welcome_message": "Hello. Ask me about accommodation, events or the library.",
+  "suggested_prompts": [
+    "One",
+    "Two",
+    "Three",
+    "Four"
+  ],
+  "ai_notice": "You are chatting with an AI assistant. It can make mistakes.",
+  "brand_color": "#5B2A86",
+  "logo_url": "https://example.org/logo.svg",
+  "color_scheme": "auto",
+  "launcher_position": "bottom-right",
+  "history_enabled": true
+}

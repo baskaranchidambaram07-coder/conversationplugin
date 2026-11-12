@@ -1,0 +1,30 @@
+: conversation_id="00000000000000000000a001"
+: message_id="00000000000000000000a002"
+: message_content_id="00000000000000000000a003"
+: asset_version_id="00000000-0000-4000-8000-00000000a005"
+: workspace_id="00000000-0000-4000-8000-00000000a004"
+: query="Reply with the single word READY."
+
+: at_ms=30
+data: {"content":"Stream connection established successfully"}
+
+: at_ms=30
+data: {"content":"Agent Execution InProgress"}
+
+: at_ms=952
+data: {"asset_version_id":"00000000-0000-4000-8000-00000000a005","conversation_id":"00000000000000000000a001","message_id":"00000000000000000000a002","message_content_id":"00000000000000000000a003","event":"MESSAGE_DETAILS","content":{"message_id":"00000000000000000000a002","conversation_id":"00000000000000000000a001","created_date":"2026-11-12T10:43:03.324Z","modified_date":"2026-11-12T10:43:03.324Z","workspace_id":"00000000-0000-4000-8000-00000000a004","schema_version":"v2","content_type":"QUERY","message_content":[{"message_content_id":"00000000000000000000a003","query":"Reply with the single word READY.","ref_file_ids":[],"generated_images":[],"debug_logs":[],"traces":[],"selected_tools":[],"status":"IN_PROGRESS","_id":"00000000000000000000b001","sources":[],"citation":[],"notification_steps":[],"notification_timeline":[]}],"_id":"00000000000000000000b002","file_content":[],"additional_task":[],"__v":0},"status":"SUCCESS"}
+
+: at_ms=4122
+data: {"asset_version_id": "00000000-0000-4000-8000-00000000a005", "conversation_id": "00000000000000000000a001", "message_id": "00000000000000000000a003", "event": "LLM_RESPONSE_STREAM", "content": "", "status": "START"}
+
+: at_ms=4954
+data: {"asset_version_id": "00000000-0000-4000-8000-00000000a005", "conversation_id": "00000000000000000000a001", "message_id": "00000000000000000000a003", "event": "LLM_RESPONSE_STREAM", "content": "READY", "status": "IN_PROGRESS"}
+
+: at_ms=5484
+data: {"asset_version_id": "00000000-0000-4000-8000-00000000a005", "conversation_id": "00000000000000000000a001", "message_id": "00000000000000000000a003", "event": "LLM_RESPONSE_STREAM", "content": "", "status": "END"}
+
+: at_ms=5748
+data: {"asset_version_id": "00000000-0000-4000-8000-00000000a005", "conversation_id": "00000000000000000000a001", "message_id": "00000000000000000000a003", "event": "FINAL_RESPONSE", "content": {"asset_version_id": "00000000-0000-4000-8000-00000000a005", "conversation_id": "00000000000000000000a001", "message_id": "00000000000000000000a003", "query": "Reply with the single word READY.", "response": "READY", "additional_model_output": {"logprobs": {"raw_response": {"content": []}}}, "metrics": {"total_tokens": 40, "total_cost": 6.16e-05, "prompt_tokens": 36, "completion_tokens": 4, "total_llm_time": 0.8289670944213867, "successful_requests": 1, "total_time": 4.728}, "sources": [], "citation": [], "llm_citation": null, "traces": [], "debug_trace_ids": [], "add_ons": {}, "evals": {}, "artifacts": [], "message_status": "SUCCESS", "artifacts_generated": {"files": []}, "context_usage": {"context_window": 922000, "context_usage_pct": 0.0, "overhead_tokens": 30, "tokens_until_compaction": -1, "compaction_count": 0, "compaction_available": false, "overhead_bound": false}}, "status": "SUCCESS"}
+
+: at_ms=5748
+data: {"asset_version_id": "00000000-0000-4000-8000-00000000a005", "conversation_id": "00000000000000000000a001", "message_id": "00000000000000000000a003", "event": "STREAM_END", "content": "", "status": "SUCCESS"}

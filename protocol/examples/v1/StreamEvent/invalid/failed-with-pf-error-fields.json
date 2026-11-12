@@ -1,0 +1,17 @@
+{
+  "v": 1,
+  "seq": 4,
+  "type": "message.failed",
+  "conversation_id": "c_8Jw2Lr5Q",
+  "message_id": "m_3Tq9Xz1B",
+  "correlation_id": "r_7Hn4Kp2D",
+  "error": {
+    "code": "assistant_unavailable",
+    "message": "The assistant is not available right now. Please try again.",
+    "retryable": true,
+    "retry_after": null,
+    "reference": "r_7Hn4Kp2D",
+    "error_description": "Conversation not found",
+    "status_code": 404
+  }
+}

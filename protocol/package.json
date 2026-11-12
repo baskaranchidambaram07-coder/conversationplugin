@@ -1,0 +1,16 @@
+{
+  "name": "@ucp/protocol",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "generate": "node generate.mjs",
+    "typecheck": "tsc --noEmit",
+    "test": "node generate.mjs --check && vitest run"
+  },
+  "devDependencies": {
+    "ajv": "^8.20.0",
+    "ajv-formats": "^3.0.1",
+    "json-schema-to-typescript": "^16.0.0"
+  }
+}

@@ -1,0 +1,12 @@
+{
+  "v": 1,
+  "seq": 1,
+  "type": "content_block.started",
+  "conversation_id": "c_8Jw2Lr5Q",
+  "message_id": "m_3Tq9Xz1B",
+  "correlation_id": "r_7Hn4Kp2D",
+  "index": 1,
+  "block": {
+    "type": "chart"
+  }
+}
