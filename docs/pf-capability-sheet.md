@@ -123,7 +123,7 @@ Still open:
 
 ## 11. Recorded samples
 
-The raw streams and results are in `spikes/pf_capture_out/`, which is excluded from version control because the files contain staging identifiers. Cleaned copies will become the test data for the fake PF and the connector tests.
+The raw streams and results are in `spikes/pf_capture_out/`, which is excluded from version control because the files contain staging identifiers. Cleaned copies, with every identifier replaced, are in `backend/fakepf/recordings/`, made by `spikes/clean_pf_recordings.py`. They are the test data for the fake PF and the connector tests.
 
 The long answers are the main samples for the fake PF and the renderer tests. One of them contains headings, an eleven-row table, a code block and a diagram block, all of which came through unchanged.
 

@@ -1,0 +1,101 @@
+{
+  "conversation": {
+    "conversation_id": "00000000000000000000b001",
+    "conversation_name": "ucp-capture-20261112-104302",
+    "ondemand_kb_id": "00000000-0000-4000-8000-00000000b002",
+    "asset_version_id": "00000000-0000-4000-8000-00000000a005",
+    "created_by": "00000000-0000-4000-8000-00000000b003",
+    "created_date": "2026-11-12T10:43:03.042Z",
+    "modified_date": "2026-11-12T10:43:03.042Z",
+    "workspace_id": "00000000-0000-4000-8000-00000000a004",
+    "schema_version": "v5",
+    "mode": "Live",
+    "asset_type": "Conversation",
+    "deleted_at": null,
+    "_id": "00000000000000000000b004",
+    "__v": 0
+  },
+  "accepted": {
+    "message_id": "00000000000000000000b005",
+    "conversation_id": "00000000000000000000a001",
+    "created_date": "2026-11-12T07:39:51.870Z",
+    "modified_date": "2026-11-12T07:39:51.870Z",
+    "workspace_id": "00000000-0000-4000-8000-00000000a004",
+    "schema_version": "v2",
+    "content_type": "QUERY",
+    "message_content": [
+      {
+        "message_content_id": "00000000000000000000b006",
+        "query": "Reply with the single word OK.",
+        "ref_file_ids": [],
+        "generated_images": [],
+        "debug_logs": [],
+        "traces": [],
+        "selected_tools": [],
+        "status": "IN_PROGRESS",
+        "_id": "00000000000000000000b007",
+        "sources": [],
+        "citation": [],
+        "notification_steps": [],
+        "notification_timeline": []
+      }
+    ],
+    "_id": "00000000000000000000b008",
+    "file_content": [],
+    "additional_task": [],
+    "__v": 0
+  },
+  "completed": {
+    "_id": "00000000000000000000b009",
+    "message_id": "00000000000000000000a002",
+    "conversation_id": "00000000000000000000a001",
+    "created_date": "2026-11-12T07:39:18.264Z",
+    "modified_date": "2026-11-12T07:39:21.257Z",
+    "workspace_id": "00000000-0000-4000-8000-00000000a004",
+    "schema_version": "v2",
+    "content_type": "QUERY",
+    "message_content": [
+      {
+        "message_content_id": "00000000000000000000a003",
+        "query": "Draw a three-node flowchart as a mermaid diagram in a fenced code block, then add one sentence.",
+        "ref_file_ids": [],
+        "response": "```mermaid\nflowchart LR\n    A[Start] --> B[Process] --> C[End]\n```\n\nThe flow moves from start to process to end.",
+        "sources": [],
+        "citation": [],
+        "generated_images": [],
+        "metrics": {
+          "total_tokens": 112,
+          "total_cost": 0.0003916,
+          "prompt_tokens": 51,
+          "completion_tokens": 61,
+          "total_llm_time": 1.1382441520690918,
+          "successful_requests": 1,
+          "total_time": 2.888
+        },
+        "debug_logs": [],
+        "traces": [],
+        "selected_tools": [],
+        "notification_steps": [],
+        "notification_timeline": [],
+        "status": "COMPLETED",
+        "artifacts": [],
+        "artifacts_generated": {
+          "files": []
+        },
+        "context_usage": {
+          "context_window": 922000,
+          "context_usage_pct": 0.01,
+          "overhead_tokens": 30,
+          "tokens_until_compaction": -1,
+          "compaction_count": 0,
+          "compaction_available": false,
+          "overhead_bound": false
+        },
+        "_id": "00000000000000000000b00a"
+      }
+    ],
+    "file_content": [],
+    "additional_task": [],
+    "__v": 0
+  }
+}
