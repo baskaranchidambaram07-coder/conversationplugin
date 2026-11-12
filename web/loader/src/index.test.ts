@@ -292,6 +292,15 @@ test.each(["#nowhere", "[[["])("a target %j that matches nothing draws nothing, 
   expect(console.info).toHaveBeenCalledWith(`UCP: ✗ no element on the page matches "${target}"`);
 });
 
+/** jsdom gives an iframe inside a Shadow DOM no window, so lend it a real one from the light DOM. */
+function lendWindow(iframe: HTMLIFrameElement) {
+  const donor = document.createElement("iframe");
+  document.body.appendChild(donor);
+  const chat = donor.contentWindow as Window;
+  Object.defineProperty(iframe, "contentWindow", { get: () => chat });
+  return chat;
+}
+
 test.each([
   ["our own chat, from our origin", true, ORIGIN, { ucp: 1, type: "close" }, "false"],
   ["another origin", true, "https://evil.example", { ucp: 1, type: "close" }, "true"],
@@ -302,8 +311,8 @@ test.each([
   start(script({ "data-widget-id": "w_1" }), host);
   await settle();
   launcher().click();
-  const source = fromOurFrame ? (frame() as HTMLIFrameElement).contentWindow : window;
-  window.dispatchEvent(new MessageEvent("message", { data, origin, source }));
+  const chat = lendWindow(frame() as HTMLIFrameElement);
+  window.dispatchEvent(new MessageEvent("message", { data, origin, source: fromOurFrame ? chat : window }));
 
   expect(launcher().getAttribute("aria-expanded")).toBe(expanded);
 });
@@ -316,4 +325,97 @@ test("unmount removes the listener it added to the page's window", async () => {
   api()("unmount");
 
   expect(removed.mock.calls.some(([type]) => type === "message")).toBe(true);
+});
+
+async function openWithBridge(options: object = {}) {
+  serve();
+  start(script(), host);
+  api()("mount", { widgetId: "w_1", ...options });
+  await settle();
+  api()("open");
+  const chat = lendWindow(frame() as HTMLIFrameElement);
+  const sent = vi.spyOn(chat, "postMessage");
+  const fromChat = (data: unknown, origin = ORIGIN) => window.dispatchEvent(new MessageEvent("message", { data, origin, source: chat }));
+  return { sent, fromChat };
+}
+
+test("when the chat says ready, the loader tells it the mode and sign-in state, pinned to our origin", async () => {
+  const { sent, fromChat } = await openWithBridge({ debug: true });
+  fromChat({ ucp: 1, type: "ready", addedInALaterRelease: true });
+
+  expect(sent.mock.calls).toEqual([
+    [{ ucp: 1, type: "init", mode: "floating", signedIn: false }, ORIGIN],
+    [{ ucp: 1, type: "shown" }, ORIGIN],
+  ]);
+  expect(console.info).toHaveBeenCalledWith("UCP: ✓ chat connected");
+});
+
+test("a ready from another origin is ignored", async () => {
+  const { sent, fromChat } = await openWithBridge();
+  fromChat({ ucp: 1, type: "ready" }, "https://evil.example");
+
+  expect(sent).not.toHaveBeenCalled();
+});
+
+test("each later opening tells a connected chat it is shown, so it can take focus", async () => {
+  const { sent, fromChat } = await openWithBridge();
+  fromChat({ ucp: 1, type: "ready" });
+  api()("close");
+  sent.mockClear();
+  api()("open");
+
+  expect(sent.mock.calls).toEqual([[{ ucp: 1, type: "shown" }, ORIGIN]]);
+});
+
+test.each([
+  ["a string", () => "signed-by-host", "signed-by-host", "UCP: ✓ token supplied"],
+  ["a promise of a string", async () => "signed-by-host", "signed-by-host", "UCP: ✓ token supplied"],
+  ["a number", () => 42, null, "UCP: ✗ getToken gave no token"],
+  ["an empty string", () => "", null, "UCP: ✗ getToken gave no token"],
+  ["a throw", () => { throw new Error("no session"); }, null, "UCP: ✗ getToken failed (no session)"],
+  ["a rejection", () => Promise.reject(new Error("offline")), null, "UCP: ✗ getToken failed (offline)"],
+])("when getToken gives %s, the chat receives a string or null and nothing is thrown", async (_, getToken, token, line) => {
+  const { sent, fromChat } = await openWithBridge({ getToken, debug: true });
+  fromChat({ ucp: 1, type: "ready" });
+  expect(sent.mock.calls[0]?.[0]).toMatchObject({ type: "init", signedIn: true });
+  fromChat({ ucp: 1, type: "get-token", id: 7 });
+  await settle();
+
+  expect(sent.mock.lastCall).toEqual([{ ucp: 1, type: "token", id: 7, token }, ORIGIN]);
+  expect(console.info).toHaveBeenCalledWith(line);
+});
+
+test("an anonymous widget answers a token request with null and never calls anything", async () => {
+  const { sent, fromChat } = await openWithBridge();
+  fromChat({ ucp: 1, type: "get-token", id: 2 });
+
+  expect(sent.mock.calls).toEqual([[{ ucp: 1, type: "token", id: 2, token: null }, ORIGIN]]);
+});
+
+test("a chat that never says ready is reported after 10 seconds in debug mode, and not before", async () => {
+  serve();
+  start(script({ "data-widget-id": "w_1", "data-debug": "" }), host);
+  await settle();
+  vi.useFakeTimers();
+  try {
+    api()("open");
+    vi.advanceTimersByTime(9_999);
+    expect(vi.mocked(console.info).mock.lastCall?.[0]).toBe("UCP: ✓ configuration loaded");
+    vi.advanceTimersByTime(1);
+    expect(vi.mocked(console.info).mock.lastCall?.[0]).toContain("UCP: ✗ chat did not connect within 10 s");
+  } finally {
+    vi.useRealTimers();
+  }
+});
+
+test("inline placement tells the chat it is inline", async () => {
+  serve();
+  document.body.innerHTML = '<section id="help"></section>';
+  start(script({ "data-widget-id": "w_1", "data-target": "#help" }), host);
+  await settle();
+  const chat = lendWindow(frame() as HTMLIFrameElement);
+  const sent = vi.spyOn(chat, "postMessage");
+  window.dispatchEvent(new MessageEvent("message", { data: { ucp: 1, type: "ready" }, origin: ORIGIN, source: chat }));
+
+  expect(sent.mock.calls[0]?.[0]).toEqual({ ucp: 1, type: "init", mode: "inline", signedIn: false });
 });

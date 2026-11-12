@@ -1,6 +1,6 @@
 // The embed loader. It runs on the customer's page, so it must stay tiny and must never throw into that page.
 // It stores nothing on the visitor's device and adds exactly one global, `UCP`.
-import { fromChat } from "@ucp/protocol/bridge";
+import { fromChat, type LoaderMessage } from "@ucp/protocol/bridge";
 import type { WidgetConfig } from "@ucp/protocol/v1";
 
 export const VERSION = "0.1.0";
@@ -110,7 +110,8 @@ function mount(origin: string, options: MountOptions, win: Window): Widget | und
   let open = inline;
   let draw: (() => void) | undefined;
   let overflow: string | undefined; // the host page's own scroll setting while a full-screen chat locks it
-  let stop = () => {}; // removes the listener render() adds to the host page's window
+  let stop = () => {}; // removes the listener render() adds to the host page's window, and its timer
+  const getToken = typeof options.getToken === "function" ? options.getToken : undefined;
   const release = () => {
     if (overflow !== undefined) doc.documentElement.style.overflow = overflow;
     overflow = undefined;
@@ -140,6 +141,10 @@ function mount(origin: string, options: MountOptions, win: Window): Widget | und
     const button = root.querySelector("button");
     button?.setAttribute("aria-label", title);
     let iframe: HTMLIFrameElement | undefined;
+    let connected = false;
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    // Messages go only to our own origin, so a token can never be read by another site.
+    const post = (message: LoaderMessage) => iframe?.contentWindow?.postMessage(message, origin);
     draw = () => {
       if (open && !iframe) {
         iframe = doc.createElement("iframe");
@@ -148,6 +153,14 @@ function mount(origin: string, options: MountOptions, win: Window): Widget | und
         iframe.allow = "clipboard-write";
         iframe.addEventListener("load", () => panel.classList.add("ready"));
         panel.appendChild(iframe);
+        timer = setTimeout(
+          () =>
+            say(
+              `✗ chat did not connect within 10 s: check that this site is on the widget's allowed domains, ` +
+                `and that the page's content policy allows ${origin} in frame-src`,
+            ),
+          10_000,
+        );
       }
       frame.classList.toggle("open", open);
       button?.setAttribute("aria-expanded", String(open));
@@ -158,6 +171,7 @@ function mount(origin: string, options: MountOptions, win: Window): Widget | und
         doc.documentElement.style.overflow = "hidden";
       }
       if (!open) release();
+      if (open && connected) post({ ucp: 1, type: "shown" });
       if (open && !inline) iframe?.focus();
       // Focus goes back to the launcher only if it was inside the chat, never taken from elsewhere on the page.
       else if (!open && doc.activeElement === host) button?.focus();
@@ -166,14 +180,43 @@ function mount(origin: string, options: MountOptions, win: Window): Widget | und
     root.addEventListener("keydown", (event) => {
       if ((event as KeyboardEvent).key === "Escape" && open && !inline) show(false);
     });
-    // The chat asks to close (its close button, or Escape inside it). Only our own iframe, from our origin, is heard.
+    // The bridge. Only our own iframe, from our origin, is heard; anything else on the page is ignored.
     const listen = (event: MessageEvent) => {
-      if (event.source === iframe?.contentWindow && event.origin === origin && fromChat(event.data)?.type === "close") {
-        show(false);
+      const chat = iframe?.contentWindow;
+      if (!chat || event.source !== chat || event.origin !== origin) return;
+      const message = fromChat(event.data);
+      if (message?.type === "ready") {
+        clearTimeout(timer);
+        connected = true;
+        post({ ucp: 1, type: "init", mode: inline ? "inline" : "floating", signedIn: Boolean(getToken) });
+        if (open) post({ ucp: 1, type: "shown" });
+        say("✓ chat connected");
+      }
+      if (message?.type === "close") show(false);
+      if (message?.type === "get-token") {
+        const reply = (token: string | null) => post({ ucp: 1, type: "token", id: message.id, token });
+        if (!getToken) return reply(null);
+        // The host's function may throw, reject or return anything: the chat gets a string or null, never an error.
+        Promise.resolve()
+          .then(getToken)
+          .then(
+            (token) => {
+              const ok = typeof token === "string" && token !== "";
+              say(ok ? "✓ token supplied" : "✗ getToken gave no token");
+              reply(ok ? token : null);
+            },
+            (error: unknown) => {
+              say(`✗ getToken failed (${error instanceof Error ? error.message : String(error)})`);
+              reply(null);
+            },
+          );
       }
     };
     win.addEventListener("message", listen);
-    stop = () => win.removeEventListener("message", listen);
+    stop = () => {
+      win.removeEventListener("message", listen);
+      clearTimeout(timer);
+    };
     place.appendChild(host);
     if (open) draw();
     say("✓ configuration loaded");
