@@ -778,6 +778,8 @@ For each new cloud the work is two small adapters, one Terraform stack, and a re
 | AWS accounts | Development in a US account; production in London accounts. |
 | The College | Its site has both public visitors and logged-in users, so the base version supports both. Branding is set per widget. |
 | Target | A base version in the development environment by 22 November 2026 (section 14). |
+| Repository visibility | Public, under the Apache 2.0 licence. Confirmed. |
+| Base version scope | Section 14 confirmed. The admin console follows after 22 November. |
 | PF hosting | Staging runs in the US; production runs in the UK (London). UK customers are served only through production, and staging carries test data only. |
 | Certifications | Intellect holds the certificates UK buyers ask for (Cyber Essentials, ISO 27001). |
 | Hosting | We host on AWS. A government customer that requires a particular provider gets a dedicated deployment on AWS, Azure or GCP. Private data centres are out of scope (D16). |
@@ -789,12 +791,11 @@ For each new cloud the work is two small adapters, one Terraform stack, and a re
 
 ### Still open
 
-1. **Repository visibility.** The repository is public with an Apache 2.0 licence. Nothing beyond branch names has been pushed. Decide whether it stays public before any document or code goes up (section 13).
-2. **Base version scope.** Confirm section 14, including that the admin console follows after 22 November.
-3. **AWS spending.** Approval to create the development resources in the US account.
-4. **Purge policy.** With your team. Until it is decided, nothing is hidden or deleted.
-5. **Web addresses for production.** A name under a domain Intellect owns, for the loader, the chat and the API. Not needed for the development sandbox.
-6. **Remaining PF questions.** Section 10 of `pf-capability-sheet.md`.
+1. **AWS access for development.** The AWS identity configured on the build machine can read S3 and Lambda only. Creating the development environment needs an identity allowed to manage containers, the database, networking, the load balancer, content delivery, secrets, logs and service roles. Needed by 18 November.
+2. **Tools on the build machine.** It has no Docker, so container images are built in GitHub Actions. PostgreSQL and Terraform need installing, with your permission.
+3. **Purge policy.** With your team. Until it is decided, nothing is hidden or deleted.
+4. **Web addresses for production.** A name under a domain Intellect owns, for the loader, the chat and the API. Not needed for the development sandbox.
+5. **Remaining PF questions.** Section 10 of `pf-capability-sheet.md`.
 
 Proceeding with the recommended default unless you object: Terraform (D13); automatic loader updates with a pinned option; a device cloud for real-device testing; a bot challenge on public widgets only if limits prove insufficient.
 
@@ -805,7 +806,8 @@ Proceeding with the recommended default unless you object: Terraform (D13); auto
 | Conversations are not deleted for now, and PF cannot cancel a reply | A request to erase someone's data has to be handled by your team by hand; a stopped answer still runs and is remembered | Agree the purge policy before production; a stopped answer is stored and marked as stopped |
 | A long answer has not been seen streaming, because the staging agent answers briefly | The streaming display is untested against a real long answer | Show a working state from PF's first notice; test with an agent that answers at length before the customer sandbox opens |
 | Ten days to the base version | The full test lists in section 8 cannot all be run by 22 November | The base version carries the core suites (section 14); the rest are completed before production |
-| The repository is public | Anything pushed is published and licensed for reuse | Nothing beyond the licence and branch names is on GitHub; awaiting your decision (section 13) |
+| The repository is public | Anything committed is published and licensed for reuse | Confirmed as intended. Credentials, staging identifiers and internal source documents are excluded; secret scanning runs on every push from M0 onward |
+| The build machine has no Docker, and its AWS identity cannot create the development environment | Images cannot be built locally; the 19 November deployment cannot happen | Build images in GitHub Actions; AWS access needed by 18 November (section 12) |
 | PF staging runs in the US | UK personal data would leave the UK if it were used in staging | Test data only in staging; UK customers use PF production in London. Confirm that the language model behind PF production also runs in the UK. |
 | Scripted abuse of public widgets | PF cost and capacity | Layered limits and quotas from the first release (M12-T4) |
 | iPhone, WebView and foldable quirks | Broken layout or hidden input on real devices | Real-device pass each release (M2) |
@@ -834,7 +836,7 @@ Repository: `https://github.com/baskaranchidambaram07-coder/conversationplugin`
 
 The flow is feature branch, then module branch, then `develop`, then `main`. A module branch is brought up to date with `develop` before work on it starts, so that it sees the shared message format and the modules it depends on.
 
-State on 12 November 2026: `develop` and the sixteen module branches exist on GitHub, all at the licence commit. The planning documents and the capture script are committed locally on `feature/m00-planning-and-discovery` and have not been pushed. The repository is public and carries an Apache 2.0 licence, so pushing would publish the plan, the customer's name and the description of the PF conversation API, and the licence would let anyone reuse the code. That needs your decision first.
+State on 12 November 2026: `develop` and the sixteen module branches exist on GitHub. You confirmed that the repository stays public under its Apache 2.0 licence. The planning documents and the capture script are therefore pushed on `feature/m00-planning-and-discovery`, with a pull request into `module/m00-foundations`. Credentials, staging identifiers and the internal source documents are excluded by `.gitignore` and are never committed.
 
 ## 14. Base version for 22 November 2026
 
