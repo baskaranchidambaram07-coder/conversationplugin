@@ -1,5 +1,6 @@
 """Conversation gateway: the public runtime API (M4)."""
 
+import asyncio
 import json
 from contextlib import AsyncExitStack, asynccontextmanager
 
@@ -14,6 +15,7 @@ from ucp.pf import PfConnector, PfProfile
 from ucp.sessions import Keys, Limiter
 from ucp.settings import Settings
 from ucp.store import Store
+from ucp.turns import Turns
 from ucp.widgets import Widgets
 
 
@@ -28,6 +30,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
                 stack.push_async_callback(engine.dispose)
                 app.state.store = Store(engine)
                 app.state.widgets = Widgets(app.state.store)
+                app.state.turns = Turns(app.state.store)
             # One client for every PF call. PF stays quiet for seconds before the first word, so reads wait 60 s.
             client = await stack.enter_async_context(
                 httpx2.AsyncClient(timeout=httpx2.Timeout(10, read=60), limits=httpx2.Limits(max_connections=500))
@@ -35,6 +38,10 @@ def create_app(settings: Settings | None = None) -> FastAPI:
             profiles = json.loads(settings.agent_profiles or "{}")
             app.state.connectors = {name: PfConnector(PfProfile(**value), client) for name, value in profiles.items()}
             yield
+            # Answers still being written finish and are stored before the connections they need close.
+            running = getattr(app.state, "turns", None) and app.state.turns.tasks
+            if running:
+                await asyncio.wait(running, timeout=100)
 
     # The API description is exported to protocol/openapi.json (ucp.gateway.openapi), never served: the gateway is
     # public and describes nothing about itself.

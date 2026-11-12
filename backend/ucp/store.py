@@ -6,7 +6,7 @@ from someone else simply is not found. PF's own IDs are kept here and never leav
 
 import secrets
 from dataclasses import dataclass
-from datetime import datetime
+from datetime import datetime, timedelta
 
 from pydantic import TypeAdapter
 from sqlalchemy import (
@@ -84,6 +84,17 @@ messages = Table(
     UniqueConstraint("conversation_id", "seq"),
     UniqueConstraint("conversation_id", "client_message_id"),
 )
+
+
+# A turn takes at most 5 minutes (ucp.turns), so an answer still in progress after 6 was abandoned.
+STALE = timedelta(minutes=6)
+STALE_ERROR = {
+    "code": "assistant_unavailable",
+    "message": "The assistant is not available just now. Try again shortly.",
+    "retryable": True,
+    "retry_after": None,
+    "reference": "r_abandoned",
+}
 
 
 def new_id(prefix: str) -> str:
@@ -227,13 +238,18 @@ class Store:
             if asked:
                 answer = (await db.execute(select(messages.c.id).where(messages.c.reply_to == asked.id))).one()
                 return Turn(conversation_id, asked.id, answer.id, conversation.agent_conversation_id, repeat=True)
-            busy = await db.execute(
-                select(messages.c.id).where(
-                    (messages.c.conversation_id == conversation_id) & (messages.c.status == "in_progress")
+            busy = (
+                await db.execute(
+                    select(messages.c.id, (messages.c.updated_at > func.now() - STALE).label("fresh")).where(
+                        (messages.c.conversation_id == conversation_id) & (messages.c.status == "in_progress")
+                    )
                 )
-            )
-            if busy.first():
+            ).first()
+            if busy and busy.fresh:
                 raise TurnInProgress
+            if busy:  # left in progress by a gateway that stopped mid-turn: give up on it, or the chat is stuck
+                stale = {"status": "failed", "error": STALE_ERROR, "updated_at": func.now()}
+                await db.execute(update(messages).where(messages.c.id == busy.id).values(stale))
             seq = (
                 await db.execute(
                     select(func.coalesce(func.max(messages.c.seq), -1)).where(

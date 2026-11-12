@@ -236,6 +236,40 @@
       "title": "Conversation",
       "type": "object"
     },
+    "ConversationPage": {
+      "additionalProperties": false,
+      "description": "Reply to GET /v1/conversations: the visitor's conversations, most recently active first.",
+      "properties": {
+        "conversations": {
+          "items": {
+            "$ref": "#/$defs/Conversation"
+          },
+          "type": "array"
+        },
+        "next": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Cursor"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "Null when there are no older conversations."
+        }
+      },
+      "required": [
+        "conversations",
+        "next"
+      ],
+      "title": "ConversationPage",
+      "type": "object"
+    },
+    "Cursor": {
+      "description": "Opaque. Pass it as `before` for the next page.",
+      "pattern": "^[A-Za-z0-9_.:+-]{1,64}$",
+      "type": "string"
+    },
     "Id": {
       "description": "Our opaque ID. Never a PF ID.",
       "pattern": "^[A-Za-z0-9_-]{1,64}$",
@@ -393,6 +427,35 @@
         "error"
       ],
       "title": "MessageFailed",
+      "type": "object"
+    },
+    "MessagePage": {
+      "additionalProperties": false,
+      "description": "Reply to GET /v1/conversations/{id}/messages: a page of messages, oldest first, and the page before it.",
+      "properties": {
+        "messages": {
+          "items": {
+            "$ref": "#/$defs/Message"
+          },
+          "type": "array"
+        },
+        "next": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Cursor"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "Null when this page starts the conversation."
+        }
+      },
+      "required": [
+        "messages",
+        "next"
+      ],
+      "title": "MessagePage",
       "type": "object"
     },
     "MessageStarted": {
@@ -704,6 +767,12 @@
     },
     {
       "$ref": "#/$defs/Message"
+    },
+    {
+      "$ref": "#/$defs/ConversationPage"
+    },
+    {
+      "$ref": "#/$defs/MessagePage"
     },
     {
       "$ref": "#/$defs/WidgetConfig"

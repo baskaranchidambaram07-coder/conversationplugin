@@ -7,13 +7,14 @@ import pytest
 from alembic.autogenerate import compare_metadata
 from alembic.migration import MigrationContext
 from fastapi.testclient import TestClient
+from sqlalchemy import func, update
 from sqlalchemy.ext.asyncio import create_async_engine
 
 from ucp import migrate
 from ucp.gateway.app import create_app
 from ucp.protocol import ApiError
 from ucp.settings import Settings
-from ucp.store import Owner, Store, TurnInProgress, metadata
+from ucp.store import STALE, Owner, Store, TurnInProgress, messages, metadata
 
 pytestmark = pytest.mark.anyio
 
@@ -141,3 +142,17 @@ def test_ready_only_when_the_database_answers(database_url):
     with TestClient(create_app(Settings())) as client:
         response = client.get("/readyz")
         assert response.status_code == 503 and response.json()["code"] == "assistant_unavailable"
+
+
+async def test_an_answer_left_in_progress_by_a_stopped_gateway_does_not_block_the_conversation_for_ever(store: Store):
+    mine = owner()
+    conversation = await store.create_conversation(mine)
+    abandoned = await store.start_turn(mine, conversation.id, "k1", "Hi", 1)
+    async with store.engine.begin() as db:
+        await db.execute(
+            update(messages).where(messages.c.id == abandoned.answer_id).values(updated_at=func.now() - STALE)
+        )
+
+    assert not (await store.start_turn(mine, conversation.id, "k2", "Hello?", 1)).repeat
+    left = await store.message(mine, conversation.id, abandoned.answer_id)
+    assert (left.status, left.error.code, left.error.retryable) == ("failed", "assistant_unavailable", True)
