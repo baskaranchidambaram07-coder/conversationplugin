@@ -37,7 +37,7 @@ jobs:
         working-directory: backend
     steps:
       - uses: actions/checkout@v7
-      - uses: astral-sh/setup-uv@v10
+      - uses: astral-sh/setup-uv@v10.3.3
         with:
           version: "0.9.24"
       - run: uv sync --frozen
@@ -70,7 +70,7 @@ jobs:
       - run: docker build --tag ucp-gateway:ci backend
       - run: |
           docker run --detach --name gateway --publish 8000:8000 ucp-gateway:ci
-          curl --fail --silent --retry 20 --retry-delay 1 --retry-connrefused http://127.0.0.1:8000/healthz
+          curl --fail --silent --retry 20 --retry-delay 1 --retry-all-errors http://127.0.0.1:8000/healthz
 
   secrets:
     name: Secret scan
