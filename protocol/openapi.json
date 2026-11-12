@@ -95,6 +95,266 @@
         }
       }
     },
+    "/v1/conversations": {
+      "post": {
+        "summary": "Start a conversation",
+        "operationId": "create_conversation_v1_conversations_post",
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Conversation"
+                }
+              }
+            }
+          },
+          "4XX": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            },
+            "description": "Client Error"
+          }
+        }
+      },
+      "get": {
+        "summary": "The visitor's conversations, most recently active first",
+        "operationId": "list_conversations_v1_conversations_get",
+        "parameters": [
+          {
+            "name": "before",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "$ref": "#/components/schemas/Cursor"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Before"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 50,
+              "minimum": 1,
+              "default": 20,
+              "title": "Limit"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ConversationPage"
+                }
+              }
+            }
+          },
+          "4XX": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            },
+            "description": "Client Error"
+          }
+        }
+      }
+    },
+    "/v1/conversations/{conversation_id}/messages": {
+      "get": {
+        "summary": "A page of a conversation, oldest first",
+        "operationId": "read_messages_v1_conversations__conversation_id__messages_get",
+        "parameters": [
+          {
+            "name": "conversation_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^[A-Za-z0-9_-]{1,64}$",
+              "description": "Our opaque ID. Never a PF ID.",
+              "title": "Conversation Id"
+            },
+            "description": "Our opaque ID. Never a PF ID."
+          },
+          {
+            "name": "before",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "pattern": "^[0-9]{1,9}$"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Before"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 50,
+              "minimum": 1,
+              "default": 20,
+              "title": "Limit"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MessagePage"
+                }
+              }
+            }
+          },
+          "4XX": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            },
+            "description": "Client Error"
+          }
+        }
+      },
+      "post": {
+        "summary": "Ask a question. The answer streams as StreamEvent lines, or arrives whole as a Message for `Accept: application/json`.",
+        "operationId": "send_message_v1_conversations__conversation_id__messages_post",
+        "parameters": [
+          {
+            "name": "conversation_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^[A-Za-z0-9_-]{1,64}$",
+              "description": "Our opaque ID. Never a PF ID.",
+              "title": "Conversation Id"
+            },
+            "description": "Our opaque ID. Never a PF ID."
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SendMessage"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Message"
+                }
+              },
+              "text/event-stream": {}
+            }
+          },
+          "4XX": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            },
+            "description": "Client Error"
+          }
+        }
+      }
+    },
+    "/v1/conversations/{conversation_id}/messages/{message_id}": {
+      "get": {
+        "summary": "One message, as stored now",
+        "operationId": "read_message_v1_conversations__conversation_id__messages__message_id__get",
+        "parameters": [
+          {
+            "name": "conversation_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^[A-Za-z0-9_-]{1,64}$",
+              "description": "Our opaque ID. Never a PF ID.",
+              "title": "Conversation Id"
+            },
+            "description": "Our opaque ID. Never a PF ID."
+          },
+          {
+            "name": "message_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^[A-Za-z0-9_-]{1,64}$",
+              "description": "Our opaque ID. Never a PF ID.",
+              "title": "Message Id"
+            },
+            "description": "Our opaque ID. Never a PF ID."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Message"
+                }
+              }
+            }
+          },
+          "4XX": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            },
+            "description": "Client Error"
+          }
+        }
+      }
+    },
     "/healthz": {
       "get": {
         "summary": "Healthz",
@@ -200,6 +460,91 @@
         "title": "ApiError",
         "description": "The body of every error response, and the payload of `message.failed`."
       },
+      "Block": {
+        "oneOf": [
+          {
+            "$ref": "#/components/schemas/TextBlock"
+          },
+          {
+            "$ref": "#/components/schemas/MarkdownBlock"
+          },
+          {
+            "$ref": "#/components/schemas/UnknownBlock"
+          }
+        ]
+      },
+      "Conversation": {
+        "properties": {
+          "id": {
+            "$ref": "#/components/schemas/Id"
+          },
+          "title": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Title"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Updated At"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "id",
+          "title",
+          "created_at",
+          "updated_at"
+        ],
+        "title": "Conversation"
+      },
+      "ConversationPage": {
+        "properties": {
+          "conversations": {
+            "items": {
+              "$ref": "#/components/schemas/Conversation"
+            },
+            "type": "array",
+            "title": "Conversations"
+          },
+          "next": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Cursor"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Null when there are no older conversations."
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "conversations",
+          "next"
+        ],
+        "title": "ConversationPage",
+        "description": "Reply to GET /v1/conversations: the visitor's conversations, most recently active first."
+      },
+      "Cursor": {
+        "type": "string",
+        "pattern": "^[A-Za-z0-9_.:+-]{1,64}$",
+        "description": "Opaque. Pass it as `before` for the next page."
+      },
       "HTTPValidationError": {
         "properties": {
           "detail": {
@@ -217,6 +562,139 @@
         "type": "string",
         "pattern": "^[A-Za-z0-9_-]{1,64}$",
         "description": "Our opaque ID. Never a PF ID."
+      },
+      "MarkdownBlock": {
+        "properties": {
+          "type": {
+            "type": "string",
+            "const": "markdown",
+            "title": "Type"
+          },
+          "text": {
+            "type": "string",
+            "title": "Text"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "type",
+          "text"
+        ],
+        "title": "MarkdownBlock",
+        "description": "Markdown. Tables, code and fenced diagram blocks travel inside it (D9)."
+      },
+      "Message": {
+        "properties": {
+          "id": {
+            "$ref": "#/components/schemas/Id"
+          },
+          "role": {
+            "type": "string",
+            "enum": [
+              "user",
+              "assistant"
+            ],
+            "title": "Role"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "in_progress",
+              "complete",
+              "failed",
+              "stopped"
+            ],
+            "title": "Status"
+          },
+          "blocks": {
+            "items": {
+              "$ref": "#/components/schemas/Block"
+            },
+            "type": "array",
+            "title": "Blocks"
+          },
+          "error": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ApiError"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "id",
+          "role",
+          "status",
+          "blocks",
+          "error",
+          "created_at"
+        ],
+        "title": "Message"
+      },
+      "MessagePage": {
+        "properties": {
+          "messages": {
+            "items": {
+              "$ref": "#/components/schemas/Message"
+            },
+            "type": "array",
+            "title": "Messages"
+          },
+          "next": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Cursor"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Null when this page starts the conversation."
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "messages",
+          "next"
+        ],
+        "title": "MessagePage",
+        "description": "Reply to GET /v1/conversations/{id}/messages: a page of messages, oldest first, and the page before it."
+      },
+      "SendMessage": {
+        "properties": {
+          "text": {
+            "type": "string",
+            "maxLength": 4000,
+            "minLength": 1,
+            "pattern": "\\S",
+            "title": "Text",
+            "description": "What the visitor typed: 1 to 4,000 characters, not only spaces."
+          },
+          "client_message_id": {
+            "$ref": "#/components/schemas/Id",
+            "description": "Chosen by the chat. Sending again with the same ID returns the same reply."
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "text",
+          "client_message_id"
+        ],
+        "title": "SendMessage",
+        "description": "Body of POST /v1/conversations/{id}/messages. The reply streams StreamEvent lines, with `: ping` heartbeats."
       },
       "Session": {
         "properties": {
@@ -269,6 +747,59 @@
         ],
         "title": "SessionRequest",
         "description": "Body of POST /v1/sessions. A signed-in visitor brings the token the host signed for them; anyone else, null."
+      },
+      "TextBlock": {
+        "properties": {
+          "type": {
+            "type": "string",
+            "const": "text",
+            "title": "Type"
+          },
+          "text": {
+            "type": "string",
+            "title": "Text"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "type",
+          "text"
+        ],
+        "title": "TextBlock",
+        "description": "Plain text, shown exactly as written and never interpreted. Used for what the user typed."
+      },
+      "UnknownBlock": {
+        "properties": {
+          "type": {
+            "not": {
+              "enum": [
+                "text",
+                "markdown"
+              ]
+            },
+            "type": "string",
+            "title": "Type"
+          },
+          "text": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Text"
+          }
+        },
+        "additionalProperties": true,
+        "type": "object",
+        "required": [
+          "type"
+        ],
+        "title": "UnknownBlock",
+        "description": "A block type this version does not know, sent by a newer gateway. Shown as its `text`, if it has one."
       },
       "ValidationError": {
         "properties": {
