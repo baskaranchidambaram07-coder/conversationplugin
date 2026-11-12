@@ -40,11 +40,14 @@ FAKE_PF = {
 }
 
 
+def _widgets_file() -> dict:
+    return json.loads((ROOT / "e2e" / "widgets.json").read_text(encoding="utf-8"))
+
+
 async def _publish(url: str) -> None:
     engine = create_async_engine(url)
     try:
-        widgets = json.loads((ROOT / "e2e" / "widgets.json").read_text(encoding="utf-8"))["widgets"]
-        await seed(Store(engine), widgets)
+        await seed(Store(engine), _widgets_file()["widgets"])
     finally:
         await engine.dispose()
 
@@ -79,6 +82,8 @@ def main() -> None:
         web_dir=ROOT / "web",
         session_keys=f"dev:{secrets.token_urlsafe(32)}",
         agent_profiles=json.dumps({"fake-pf": FAKE_PF}),
+        host_secrets=json.dumps(_widgets_file()["test_host_secrets"]),
+        signed_in_seconds=int(os.environ.get("UCP_SIGNED_IN_SECONDS", "900")),
     )
     try:
         uvicorn.run(create_app(settings), host="127.0.0.1", port=8200, log_level="warning")

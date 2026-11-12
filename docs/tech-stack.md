@@ -32,7 +32,8 @@ Status: 12 November 2026. Everything marked "verified" was run on that date, on 
 | Lint, format, security rules | Ruff | 0.17 | One tool; includes the Bandit security checks |
 
 | Database migrations | Alembic | 1.20 | Each change to the tables, tested down and up (`python -m ucp.migrate`) |
-| Session tokens | PyJWT | 2.15 | Signs and checks the gateway's short-lived session tokens; M5 uses it for host tokens too |
+| Tokens | PyJWT with its cryptography extra | 2.15 | Signs and checks session tokens; checks host tokens, HMAC from a customer's backend or RSA and EC from an identity provider |
+| Identity-provider test | Keycloak (pipeline only, in a container) | 26.0.5 | A real OpenID Connect provider for the sign-in tests |
 | HTTP client for PF | httpx2 | 2.16 | Streams PF's replies; also FastAPI's test client |
 
 Added when first used: OpenTelemetry for traces and metrics.
@@ -41,6 +42,8 @@ The gateway reads its settings from the environment when it starts:
 - `UCP_DATABASE_URL`: the PostgreSQL address.
 - `UCP_SESSION_KEYS`: the token-signing keys, as `id:secret,…`; the first one signs.
 - `UCP_AGENT_PROFILES`: the PF connection profiles, as JSON.
+- `UCP_HOST_SECRETS`: the widgets' shared secrets for host tokens, as JSON `{"name": "id:secret,…"}`.
+- `UCP_SIGNED_IN_SECONDS`: how long a signed-in session lasts before the chat renews it; 900 unless set.
 - `UCP_WEB_DIR`: where the built loader and chat are. The image sets this one.
 
 ## 3. Web
@@ -70,13 +73,15 @@ Size budgets:
 
 ## 4. Build pipeline
 
-GitHub Actions runs five jobs on every pull request and on every push to `main`, `develop` and the module branches:
+GitHub Actions runs seven jobs on every pull request and on every push to `main`, `develop` and the module branches:
 
 | Job | What it does |
 |---|---|
 | Backend lint and tests | Installs from the lock file, runs Ruff and pytest against a PostgreSQL 17 container |
 | Web checks, builds and browser tests | Type checks, unit tests, both builds, the loader size limit, then Playwright on all four targets |
-| Gateway journeys and load | Runs the real chat against the real gateway, with PostgreSQL and the fake PF, on three browser engines. Then runs the API journey script and the load test, which checks the gateway adds at most 150 ms to the first word at the 95th percentile |
+| Gateway journeys and load | Runs the real chat against the real gateway, with PostgreSQL and the fake PF, on three browser engines. Then runs the API journey script and the load test, which checks the gateway adds at most 150 ms to the first word at the 95th percentile. Shared runners stall now and then, so the load test gets a second try; a real slowdown fails both |
+| Sign-in through a real identity provider | Starts Keycloak in a container and signs users in through the gateway with its tokens, including a signing-key rotation (`backend/tests/test_keycloak.py`) |
+| Token-signing snippets | Installs Java, .NET, Go and PHP beside Python and Node, runs all six snippets, and checks every token with the gateway's own code |
 | Container image builds and starts | Builds the gateway image from the repository root (a Node stage builds the loader and chat into it), checks that it answers, sends no server header and serves the loader |
 | Secret scan | Runs gitleaks over the whole history |
 
@@ -151,6 +156,7 @@ After `npm install` on this Windows machine, check `package-lock.json` before co
 | Bring a database's tables up to date | `cd backend && UCP_DATABASE_URL=... uv run python -m ucp.migrate` |
 | Publish widgets from a file | `cd backend && UCP_DATABASE_URL=... uv run python -m ucp.widgets seed path/to/widgets.json` |
 | Regenerate the API description after changing a route | `cd backend && uv run python -m ucp.gateway.openapi` |
+| Check the token-signing snippets this machine can run (the pipeline runs all six) | `cd backend && uv run python ../examples/token-signing/check.py` |
 | Regenerate the message format after changing `backend/ucp/protocol.py` | `cd backend && uv run python -m ucp.protocol && cd .. && npm run generate --workspace @ucp/protocol` |
 | Run the fake PF on port 8100 (behaviours are listed in `backend/fakepf/app.py`) | `cd backend && uv run uvicorn fakepf.app:app --port 8100` |
 | Rebuild the fake PF's recordings from new captures (only where `spikes/pf_capture_out/` exists) | `python spikes/clean_pf_recordings.py` |
