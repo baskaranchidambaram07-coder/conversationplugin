@@ -12,7 +12,7 @@ from fastapi.responses import JSONResponse, Response, StreamingResponse
 from ucp import protocol
 from ucp.gateway.pipeline import Problem
 from ucp.gateway.public import widgets_of
-from ucp.identity import expiry, verify_shared_secret
+from ucp.identity import Identity, expiry, verify_provider_token, verify_shared_secret
 from ucp.sessions import ANONYMOUS_SECONDS, Keys, Limiter, Session, anonymous_user
 from ucp.store import Owner, Store, TurnInProgress
 from ucp.turns import Turns
@@ -50,6 +50,18 @@ def owner(session: Session) -> Owner:
     return Owner(session.tenant_id, session.widget_id, session.user_id)
 
 
+async def _shared_secret(request: Request, widget_id: str, identity: Identity, token: str) -> str:
+    secret = request.app.state.host_secrets.get(identity.secret)
+    if not secret:
+        log.error("widget %s names host secret %s, which is not configured", widget_id, identity.secret)
+        raise Problem("assistant_unavailable", retryable=True)
+    subject, token_hash, expires = verify_shared_secret(token, identity, widget_id, secret)
+    if not await _store(request).use_host_token(widget_id, token_hash, expiry(expires)):
+        log.info("host token refused: used before")
+        raise Problem("forbidden")
+    return subject
+
+
 @router.post("/sessions", summary="Start a session for a visitor of a widget")
 async def start_session(body: protocol.SessionRequest, request: Request) -> protocol.Session:
     limiter: Limiter = request.app.state.limiter
@@ -68,14 +80,12 @@ async def start_session(body: protocol.SessionRequest, request: Request) -> prot
         raise Problem("forbidden")  # a token sent to a widget that takes none is a mistake on the host's side
     identity = document.identity
     try:
-        secret = request.app.state.host_secrets.get(identity.secret)
-        if not secret:
-            log.error("widget %s names host secret %s, which is not configured", widget.widget_id, identity.secret)
-            raise Problem("assistant_unavailable", retryable=True)
-        subject, token_hash, expires = verify_shared_secret(body.host_token, identity, widget.widget_id, secret)
-        if not await _store(request).use_host_token(widget.widget_id, token_hash, expiry(expires)):
-            log.info("host token refused: used before")
-            raise Problem("forbidden")
+        if identity.secret:
+            subject = await _shared_secret(request, widget.widget_id, identity, body.host_token)
+        else:
+            subject = await verify_provider_token(
+                body.host_token, identity, widget.widget_id, request.app.state.provider_keys
+            )
     except Problem as refused:
         if refused.code == "forbidden":  # repeated failures from one address are slowed down
             limiter.check(f"refused-host-tokens:{address}", REFUSALS_PER_MINUTE)
