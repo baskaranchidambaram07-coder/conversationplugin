@@ -1,0 +1,7 @@
+{
+  "code": "assistant_unavailable",
+  "message": "The assistant is not available right now. Please try again.",
+  "retryable": true,
+  "retry_after": null,
+  "reference": "r_7Hn4Kp2D"
+}

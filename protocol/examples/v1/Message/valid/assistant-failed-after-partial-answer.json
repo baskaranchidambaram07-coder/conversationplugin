@@ -1,0 +1,19 @@
+{
+  "id": "m_3Tq9Xz1B",
+  "role": "assistant",
+  "status": "failed",
+  "blocks": [
+    {
+      "type": "markdown",
+      "text": "## TLS 1.2 and "
+    }
+  ],
+  "error": {
+    "code": "assistant_unavailable",
+    "message": "The assistant is not available right now. Please try again.",
+    "retryable": true,
+    "retry_after": null,
+    "reference": "r_7Hn4Kp2D"
+  },
+  "created_at": "2026-11-12T10:43:05Z"
+}
