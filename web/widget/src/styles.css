@@ -360,7 +360,13 @@ h1 {
   height: 18px;
 }
 
-/* The composer */
+/* The composer, the jump back and the credit: one landmark at the foot */
+
+.foot {
+  display: flex;
+  flex-direction: column;
+}
+
 
 .compose {
   display: flex;

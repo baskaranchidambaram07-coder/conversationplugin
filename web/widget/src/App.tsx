@@ -265,58 +265,60 @@ export function App({ widgetId, win = window }: { widgetId: string; win?: Window
         {ended && <ProblemNote problem={ended} action={ended.kind === "expired" ? t.newChat : undefined} onAction={startOver} />}
       </main>
 
-      {away && (
-        <button
-          type="button"
-          className="latest"
-          onClick={() => log.current?.scrollTo({ top: log.current.scrollHeight })}
-        >
-          <Icon path="M12 5v14M6 13l6 6 6-6" />
-          {t.latest}
-        </button>
-      )}
+      <footer className="foot">
+        {away && (
+          <button
+            type="button"
+            className="latest"
+            onClick={() => log.current?.scrollTo({ top: log.current.scrollHeight })}
+          >
+            <Icon path="M12 5v14M6 13l6 6 6-6" />
+            {t.latest}
+          </button>
+        )}
 
-      <form
-        className="compose"
-        onSubmit={(event) => {
-          event.preventDefault();
-          if (busy) live.current?.stop?.abort();
-          else send();
-        }}
-      >
-        <label className="hidden" htmlFor="question">
-          {t.input}
-        </label>
-        <textarea
-          id="question"
-          ref={input}
-          rows={1}
-          value={draft}
-          maxLength={LIMIT}
-          placeholder={t.placeholder}
-          aria-describedby={left <= LIMIT - WARN_AT ? "left" : undefined}
-          disabled={Boolean(ended)}
-          onChange={(event) => setDraft(event.target.value)}
-          onKeyDown={enter}
-        />
-        <button
-          type="submit"
-          className="send"
-          aria-label={busy ? t.stop : t.send}
-          disabled={!busy && (!draft.trim() || Boolean(ended))}
+        <form
+          className="compose"
+          onSubmit={(event) => {
+            event.preventDefault();
+            if (busy) live.current?.stop?.abort();
+            else send();
+          }}
         >
-          {busy ? <Icon path="M7 7h10v10H7z" filled /> : <Icon path="M12 19V5M5 12l7-7 7 7" />}
-        </button>
-      </form>
-      {left <= LIMIT - WARN_AT && (
-        <p id="left" className="count">
-          {t.remaining(left)}
-        </p>
-      )}
-      <p className="credit">{t.credit}</p>
-      <div className="hidden" role="status" aria-live="polite">
-        {heard}
-      </div>
+          <label className="hidden" htmlFor="question">
+            {t.input}
+          </label>
+          <textarea
+            id="question"
+            ref={input}
+            rows={1}
+            value={draft}
+            maxLength={LIMIT}
+            placeholder={t.placeholder}
+            aria-describedby={left <= LIMIT - WARN_AT ? "left" : undefined}
+            disabled={Boolean(ended)}
+            onChange={(event) => setDraft(event.target.value)}
+            onKeyDown={enter}
+          />
+          <button
+            type="submit"
+            className="send"
+            aria-label={busy ? t.stop : t.send}
+            disabled={!busy && (!draft.trim() || Boolean(ended))}
+          >
+            {busy ? <Icon path="M7 7h10v10H7z" filled /> : <Icon path="M12 19V5M5 12l7-7 7 7" />}
+          </button>
+        </form>
+        {left <= LIMIT - WARN_AT && (
+          <p id="left" className="count">
+            {t.remaining(left)}
+          </p>
+        )}
+        <p className="credit">{t.credit}</p>
+        <div className="hidden" role="status" aria-live="polite">
+          {heard}
+        </div>
+      </footer>
     </div>
   );
 }

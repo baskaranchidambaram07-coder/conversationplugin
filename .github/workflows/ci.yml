@@ -62,6 +62,7 @@ jobs:
       - run: npm test
       - run: npm run build
       - run: npm run size --workspace @ucp/loader
+      - run: npm run size --workspace @ucp/widget
       - run: npx playwright install --with-deps
       - run: npm run e2e
 
