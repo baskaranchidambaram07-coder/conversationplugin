@@ -110,6 +110,43 @@ jobs:
           uv run python journey.py http://localhost:8200 w_gateway
           uv run python loadtest.py --visitors 25 --turns 5
 
+  identity:
+    name: Sign-in through a real identity provider
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_USER: ucp
+          POSTGRES_PASSWORD: ci-only
+          POSTGRES_DB: ucp_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U ucp -d ucp_test"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      TEST_DATABASE_URL: postgresql+asyncpg://ucp:ci-only@127.0.0.1:5432/ucp_test
+      KEYCLOAK_URL: http://localhost:8080
+    defaults:
+      run:
+        working-directory: backend
+    steps:
+      - uses: actions/checkout@v7
+      - uses: astral-sh/setup-uv@v10.3.3
+        with:
+          version: "0.9.24"
+      - run: uv sync --frozen
+      # A throwaway Keycloak with a throwaway administrator, alive only for this job.
+      - run: >-
+          docker run --detach --name keycloak --publish 8080:8080
+          --env KC_BOOTSTRAP_ADMIN_USERNAME=admin --env KC_BOOTSTRAP_ADMIN_PASSWORD=admin
+          quay.io/keycloak/keycloak:26.0.5 start-dev
+      - run: curl --fail --silent --retry 90 --retry-delay 2 --retry-all-errors http://localhost:8080/realms/master > /dev/null
+      - run: uv run pytest tests/test_keycloak.py -v
+
   image:
     name: Container image builds and starts
     runs-on: ubuntu-latest
