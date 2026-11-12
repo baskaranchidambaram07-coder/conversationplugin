@@ -1,0 +1,13 @@
+{
+  "v": 1,
+  "widget_id": "w_college_demo",
+  "title": "Ask the College",
+  "welcome_message": null,
+  "suggested_prompts": [],
+  "ai_notice": null,
+  "brand_color": "#5B2A86",
+  "logo_url": null,
+  "color_scheme": "light",
+  "launcher_position": "bottom-left",
+  "history_enabled": false
+}

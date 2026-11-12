@@ -1,0 +1,7 @@
+{
+  "code": "session_expired",
+  "message": "Your session has ended.",
+  "retryable": true,
+  "retry_after": null,
+  "reference": "r_7Hn4Kp2D"
+}

@@ -1,0 +1,7 @@
+{
+  "code": "rate_limited",
+  "message": "Too many messages. Try again in a minute.",
+  "retryable": "true",
+  "retry_after": 60,
+  "reference": "r_7Hn4Kp2D"
+}

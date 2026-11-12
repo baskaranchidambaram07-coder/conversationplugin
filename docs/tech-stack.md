@@ -45,6 +45,7 @@ Added when first used: Alembic for database migrations, PyJWT for tokens, OpenTe
 | Unit tests | Vitest with Testing Library and jsdom | 5.1 / 16.3 / 29.1 | Component tests without a browser |
 | Browser tests | Playwright | 1.65 | Chromium 158, Firefox 159, WebKit 27.2, plus phone emulation |
 | Message format types | json-schema-to-typescript | 16.0 | Turns the schema the backend exports into TypeScript types (`protocol/src/v1.ts`) |
+| Schema checks in tests | Ajv with ajv-formats | 8.20 / 3.0 | Checks the shared example files against the schema, so the TypeScript side reaches the same verdict as the Python models |
 
 Added when first used: react-markdown with a sanitiser, Recharts, Mermaid, Radix primitives, axe-core for accessibility checks.
 
@@ -111,6 +112,8 @@ The local database listens on `127.0.0.1` only, requires a password, and the app
 ## 7. Commands
 
 Run from the repository root in Git Bash.
+
+After `npm install` on this Windows machine, check `package-lock.json` before committing: npm here drops the optional entries `node_modules/@emnapi/core` and `node_modules/@emnapi/runtime`, and `npm ci` in the pipeline then fails. Put the two entries back from the previous lock file.
 
 | Task | Command |
 |---|---|
