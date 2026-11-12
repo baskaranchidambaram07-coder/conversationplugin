@@ -350,6 +350,14 @@ State on 12 November 2026 (pull requests 17 to 20 into `module/m02-conversation-
 
 Later: Draw.io and Excalidraw previews (second release, after licensing and embedding checks); customer-specific blocks such as rich cards with a review process (third release).
 
+State on 12 November 2026 (pull requests 22 to 24 into `module/m03-rendering-engine`):
+
+- Built for the base version: T1 (by block type and by fence language; each block behind its own boundary; unknown types as plain text, without a download yet), T2 (stricter on images than planned: none is ever fetched, each becomes a link the visitor can follow; GFM task boxes are drawn as named marks, not controls), T3 (no fence language has its own renderer yet, so every fence is code and no placeholder is needed), T4 without highlighting or download, and T5 without a caption (Markdown tables have none, so each table's scroll region is named from its header row).
+- Bounds: an answer over 20,000 characters, with over 2,000 emphasis marks, or opening 32 containers on one line is shown as plain text (`tooHeavy` in `web/widget/src/render/registry.tsx`). Past those the parser takes seconds, or overflows its stack. Just under them, the slowest shapes found, a 1,000-row table and a 50-block answer each draw in under 2 s in the unit tests.
+- The example gallery is `web/widget/src/render/gallery/` (formatting, code, tables, and the injection corpus) together with the recorded PF answers. The unit tests draw every example whole and at every streamed prefix that ends beside Markdown syntax; the browser tests ask the fake gateway for each (`[gallery:name]`, `[injection]`) on all four targets, and the accessibility scan covers them.
+- Deferred: T6 charts, T7 diagrams and T9 viewer (if time allows before 22 November), T8 media and files, highlighting, downloads, screenshot comparison across themes and widths, the layout-jump check while streaming, and comparing an answer reloaded from history with its streamed version (needs M7).
+- For M4: serve the embed page with the content policy the test server uses, `default-src 'none'; script-src 'self'; style-src 'self'; font-src 'self'; connect-src 'self'; img-src 'self' <the widget's logo origin>; base-uri 'none'; form-action 'none'`, plus `frame-ancestors`. The gallery and the injection corpus cause no violation under it. This replaces the `https:` images noted under M2.
+
 **Tests**
 
 - Unit: validation per block type (valid, invalid, malformed, oversized); registry lookup including unknown type and version; link and image address rules; fence detection across chunk boundaries; chart data preparation.

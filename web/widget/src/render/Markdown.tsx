@@ -5,6 +5,7 @@ import type { ReactNode } from "react";
 import ReactMarkdown, { type Components } from "react-markdown";
 import remarkGfm from "remark-gfm";
 
+import { Icon } from "../Icon";
 import { strings as t } from "../strings";
 import { safeHref } from "./links";
 import { fenceRenderer } from "./registry";
@@ -36,6 +37,12 @@ const components: Components = {
   h5: shifted(6),
   h6: shifted(6),
   table: Table,
+  // A task list's box is a mark, not a control, so it is drawn as one and named.
+  input: ({ checked }) => (
+    <span className="task" role="img" aria-label={checked ? t.taskDone : t.taskOpen}>
+      <Icon path={checked ? "M5 5h14v14H5zM8.5 12l2.5 2.5 4.5-5" : "M5 5h14v14H5z"} />
+    </span>
+  ),
   // A fenced block goes to the renderer registered for its language, or to the code renderer.
   pre: ({ node }) => {
     const code = node?.children.find((child) => child.type === "element" && child.tagName === "code");
@@ -50,7 +57,8 @@ const components: Components = {
 export default function Markdown({ text }: { text: string }) {
   return (
     <div className="md">
-      <ReactMarkdown remarkPlugins={[remarkGfm]} components={components} skipHtml>
+      {/* Every address is judged once, by safeHref in the components above; the library's own filter would drop tel: */}
+      <ReactMarkdown remarkPlugins={[remarkGfm]} components={components} urlTransform={(url) => url} skipHtml>
         {text}
       </ReactMarkdown>
     </div>

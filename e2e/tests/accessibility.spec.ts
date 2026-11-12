@@ -60,6 +60,26 @@ test("the chat after an anonymous session has ended", async ({ page }) => {
   expect(await serious(page)).toEqual([]);
 });
 
+// Rendered answers (M3), from the example gallery the unit tests draw.
+for (const example of ["formatting", "code", "tables"]) {
+  test(`an answer drawn from the ${example} example`, async ({ page }) => {
+    await page.goto(CHAT);
+    await ask(page, `[gallery:${example}]`);
+    await expect(page.getByRole("button", { name: "Copy answer" })).toBeVisible();
+
+    expect(await serious(page)).toEqual([]);
+  });
+}
+
+test("a long table, unfolded and scrolled", async ({ page }) => {
+  await page.goto(CHAT);
+  await ask(page, "[gallery:tables]");
+  await page.getByRole("button", { name: "Show all 14 rows" }).click();
+  await page.getByRole("region", { name: /^Table: House/ }).evaluate((region) => region.scrollBy(80, 120));
+
+  expect(await serious(page)).toEqual([]);
+});
+
 test("the launcher, closed and open, on a customer's page", async ({ page }) => {
   await page.goto(`${HOST}/chat.html`);
   const launcher = page.getByRole("button", { name: "Ask the College" });

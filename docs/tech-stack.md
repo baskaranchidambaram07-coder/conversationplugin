@@ -49,12 +49,14 @@ Added when first used: Alembic for database migrations, PyJWT for tokens, OpenTe
 | Message format types | json-schema-to-typescript | 16.0 | Turns the schema the backend exports into TypeScript types (`protocol/src/v1.ts`) |
 | Schema checks in tests | Ajv with ajv-formats | 8.20 / 3.0 | Checks the shared example files against the schema, so the TypeScript side reaches the same verdict as the Python models |
 
-Added when first used: react-markdown with a sanitiser, Recharts, Mermaid, Radix primitives.
+| Answer Markdown | react-markdown with remark-gfm | 10.1 / 4.0 | Raw HTML is skipped rather than sanitised, so nothing in an answer is ever parsed as HTML; loaded only when the first answer arrives |
+
+Added when first used: Recharts, Mermaid, Radix primitives.
 
 Size budgets:
 
 - The loader's 6 KB limit is enforced in the pipeline now (`npm run size`).
-- React itself is 69 KB compressed, which leaves about 30 KB of the 100 KB first-load budget for the chat shell. Markdown and other renderers load separately. This needs watching from the first day of module M2.
+- React itself is 69 KB compressed, which leaves about 30 KB of the 100 KB first-load budget for the chat shell (about 78 KB used today). Markdown and other renderers load separately, each held under 60 KB compressed (Markdown is about 50 KB); `npm run size` checks both.
 
 ## 4. Build pipeline
 
@@ -115,7 +117,7 @@ The local database listens on `127.0.0.1` only, requires a password, and the app
 
 `e2e/server.mjs` serves the loader tests on port 4174. Host pages in `e2e/hosts/` open on `http://127.0.0.1:4174`; our side (the built loader, sample widget configurations and a stand-in chat page, `e2e/chat-stub.html`, that speaks the chat's half of the bridge) is served from `http://localhost:4174`. The two names are different origins, as a customer's site and ours always are. The host pages cover a plain site, a signed-in portal, inline placement, the left corner, a right-to-left site, a strict content policy with Trusted Types, hostile global CSS, and a page that already defines `UCP`.
 
-The same server serves the built chat at `/embed/{id}` (the widgets `w_test` and `w_left` get the stand-in instead) and a fake gateway that speaks the API in `backend/ucp/protocol.py`. Words in a test question pick its behaviour: `[long]` (the recorded long answer), `[slow]` (5 s before the first word), `[busy]` (too many messages), `[fail]` (an error part-way), `[drop]` (the stream is cut but the answer can still be fetched) and `[expire]` (the session ends once). M4 replaces it with the real gateway.
+The same server serves the built chat at `/embed/{id}` (the widgets `w_test` and `w_left` get the stand-in instead) and a fake gateway that speaks the API in `backend/ucp/protocol.py`. Words in a test question pick its behaviour: `[long]` (the recorded long answer), `[slow]` (5 s before the first word), `[busy]` (too many messages), `[fail]` (an error part-way), `[drop]` (the stream is cut but the answer can still be fetched), `[expire]` (the session ends once), `[gallery:name]` (an example from `web/widget/src/render/gallery/`) and `[injection]` (the whole security corpus in one answer). The chat page is served with the strict content policy M4 must carry. M4 replaces it with the real gateway.
 
 ## 8. Commands
 

