@@ -14,7 +14,7 @@ Status: 12 November 2026. Everything marked "verified" was run on that date, on 
 | Container image | Verified in the pipeline: it builds and its health endpoint answers | Nothing |
 | Local database | PostgreSQL 17 runs while a test command runs, then stops | Your decision on running it as a Windows service |
 | Infrastructure tool | Terraform installed, checksum verified | The configuration itself is module M14 |
-| AWS access for development | Blocked | Create the two managed policies in `infra/aws/iam/` and attach the deployer one |
+| AWS access for development | Verified: 13 needed actions allowed, 8 forbidden ones refused | Nothing |
 | Purple Fabric staging | Verified by live capture | Remaining questions in `pf-capability-sheet.md` |
 | Production in London | Not started | Account access and web addresses |
 

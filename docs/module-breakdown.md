@@ -782,6 +782,7 @@ For each new cloud the work is two small adapters, one Terraform stack, and a re
 | Base version scope | Section 14 confirmed. The admin console follows after 22 November. |
 | Toolchain | Chosen, installed and verified on the build machine. Versions and commands are in `tech-stack.md`. |
 | Pull requests | Feature branches are merged into module branches without review. Merges into `develop` and `main` wait for your word. |
+| AWS access for development | Both policies exist as managed policies and the deployer is attached. Verified by script on 12 November 2026. The region held only its default network, with no clusters, databases or load balancers. |
 | PF hosting | Staging runs in the US; production runs in the UK (London). UK customers are served only through production, and staging carries test data only. |
 | Certifications | Intellect holds the certificates UK buyers ask for (Cyber Essentials, ISO 27001). |
 | Hosting | We host on AWS. A government customer that requires a particular provider gets a dedicated deployment on AWS, Azure or GCP. Private data centres are out of scope (D16). |
@@ -793,11 +794,10 @@ For each new cloud the work is two small adapters, one Terraform stack, and a re
 
 ### Still open
 
-1. **AWS access for development.** The two policies in `infra/aws/iam/` need creating, and the deployer policy attaching to `service-commandline-user`. The steps are in the README in that folder. Needed by 18 November.
-2. **Local database as a service.** PostgreSQL runs on the build machine only while a test command runs. Registering it as a Windows service would keep it running between commands; that needs your approval.
-3. **Purge policy.** With your team. Until it is decided, nothing is hidden or deleted.
-4. **Web addresses for production.** A name under a domain Intellect owns, for the loader, the chat and the API. Not needed for the development sandbox.
-5. **Remaining PF questions.** Section 10 of `pf-capability-sheet.md`.
+1. **Local database as a service.** PostgreSQL runs on the build machine only while a test command runs. Registering it as a Windows service would keep it running between commands; that needs your approval.
+2. **Purge policy.** With your team. Until it is decided, nothing is hidden or deleted.
+3. **Web addresses for production.** A name under a domain Intellect owns, for the loader, the chat and the API. Not needed for the development sandbox.
+4. **Remaining PF questions.** Section 10 of `pf-capability-sheet.md`.
 
 Proceeding with the recommended default unless you object: Terraform (D13); automatic loader updates with a pinned option; a device cloud for real-device testing; a bot challenge on public widgets only if limits prove insufficient.
 
@@ -809,7 +809,7 @@ Proceeding with the recommended default unless you object: Terraform (D13); auto
 | A long answer has not been seen streaming, because the staging agent answers briefly | The streaming display is untested against a real long answer | Show a working state from PF's first notice; test with an agent that answers at length before the customer sandbox opens |
 | Ten days to the base version | The full test lists in section 8 cannot all be run by 22 November | The base version carries the core suites (section 14); the rest are completed before production |
 | The repository is public | Anything committed is published and licensed for reuse | Confirmed as intended. Credentials, staging identifiers and internal source documents are excluded; secret scanning runs on every push from M0 onward |
-| The build machine has no Docker, and its AWS identity cannot create the development environment | Images cannot be built locally; the 19 November deployment cannot happen | Build images in GitHub Actions; AWS access needed by 18 November (section 12) |
+| The build machine has no Docker | Images cannot be built or run locally | The GitHub pipeline builds and starts the image on every pull request |
 | PF staging runs in the US | UK personal data would leave the UK if it were used in staging | Test data only in staging; UK customers use PF production in London. Confirm that the language model behind PF production also runs in the UK. |
 | Scripted abuse of public widgets | PF cost and capacity | Layered limits and quotas from the first release (M12-T4) |
 | iPhone, WebView and foldable quirks | Broken layout or hidden input on real devices | Real-device pass each release (M2) |
