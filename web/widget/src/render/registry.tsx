@@ -5,6 +5,7 @@ import type { Block } from "@ucp/protocol/v1";
 import { Component, type ComponentType, lazy, type ReactNode, Suspense } from "react";
 
 import { strings as t } from "../strings";
+import { Code } from "./Code";
 
 export type FenceProps = { code: string; language: string };
 
@@ -15,19 +16,6 @@ const FENCES: Record<string, ComponentType<FenceProps>> = {};
 
 export function fenceRenderer(language: string): ComponentType<FenceProps> {
   return FENCES[language] ?? Code;
-}
-
-/** Until M3's next pull request styles it: a fenced block, labelled, scrollable, and never interpreted. */
-function Code({ code, language }: FenceProps) {
-  const label = language === "mermaid" ? t.diagramSource : language;
-  return (
-    <figure className="code">
-      {label && <figcaption>{label}</figcaption>}
-      <pre tabIndex={0}>
-        <code>{code}</code>
-      </pre>
-    </figure>
-  );
 }
 
 class Isolated extends Component<{ fallback: ReactNode; children: ReactNode }, { failed: boolean }> {
