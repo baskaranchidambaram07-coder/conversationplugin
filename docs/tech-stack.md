@@ -44,6 +44,7 @@ Added when first used: Alembic for database migrations, PyJWT for tokens, OpenTe
 | Loader build | esbuild | 0.28 | Produces one small file with no dependencies |
 | Unit tests | Vitest with Testing Library and jsdom | 5.1 / 16.3 / 29.1 | Component tests without a browser |
 | Browser tests | Playwright | 1.65 | Chromium 158, Firefox 159, WebKit 27.2, plus phone emulation |
+| Message format types | json-schema-to-typescript | 16.0 | Turns the schema the backend exports into TypeScript types (`protocol/src/v1.ts`) |
 
 Added when first used: react-markdown with a sanitiser, Recharts, Mermaid, Radix primitives, axe-core for accessibility checks.
 
@@ -62,6 +63,8 @@ GitHub Actions runs four jobs on every pull request and on every push to `main`,
 | Web checks, builds and browser tests | Type checks, unit tests, both builds, the loader size limit, then Playwright on all four targets |
 | Container image builds and starts | Builds the gateway image and checks that its health endpoint answers |
 | Secret scan | Runs gitleaks over the whole history |
+
+The backend tests and the web tests each include a check that the generated message-format files (`protocol/schema/v1.json` and `protocol/src/v1.ts`) match their source, so a forgotten regeneration fails the pipeline.
 
 The repository is public, so the pipeline minutes are free.
 
@@ -116,6 +119,7 @@ Run from the repository root in Git Bash.
 | Web type checks, unit tests, builds | `npm run typecheck && npm test && npm run build` |
 | Loader size limit | `npm run size --workspace @ucp/loader` |
 | Browser tests | `npm run build && npm run e2e` |
+| Regenerate the message format after changing `backend/ucp/protocol.py` | `cd backend && uv run python -m ucp.protocol && cd .. && npm run generate --workspace @ucp/protocol` |
 | Install or update the test browsers | `PLAYWRIGHT_BROWSERS_PATH="$PWD/.tools/ms-playwright" npx playwright install` |
 | Terraform | `.tools/terraform/terraform.exe` |
 | Check AWS access | `bash infra/aws/iam/verify-access.sh` |
