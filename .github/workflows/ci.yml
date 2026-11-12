@@ -71,12 +71,14 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
-      - run: docker build --tag ucp-gateway:ci backend
+      - run: docker build --file backend/Dockerfile --tag ucp-gateway:ci .
       - run: |
           docker run --detach --name gateway --publish 8000:8000 ucp-gateway:ci
           curl --fail --silent --retry 20 --retry-delay 1 --retry-all-errors http://127.0.0.1:8000/healthz
           # The gateway names no server software.
           ! curl --silent --head http://127.0.0.1:8000/healthz | grep -i '^server:'
+          # The built loader and chat are inside, and served.
+          curl --fail --silent http://127.0.0.1:8000/loader.js > /dev/null
 
   secrets:
     name: Secret scan
