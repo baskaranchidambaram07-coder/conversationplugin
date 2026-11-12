@@ -215,71 +215,70 @@ class Store:
 
         The same client_message_id again returns the turn it started (repeat). A new question while an answer
         is still in progress raises TurnInProgress. The conversation row is locked, so two questions sent at once
-        cannot both start.
+        cannot both start. One read gathers everything, so a turn starts in four statements.
         """
-        async with self.engine.begin() as db:
-            conversation = (
-                await db.execute(
-                    select(conversations)
-                    .where(self._owned(owner) & (conversations.c.id == conversation_id))
-                    .with_for_update()
-                )
-            ).first()
-            if not conversation:
-                return None
-            asked = (
-                await db.execute(
-                    select(messages.c.id).where(
-                        (messages.c.conversation_id == conversation_id)
-                        & (messages.c.client_message_id == client_message_id)
-                    )
-                )
-            ).first()
-            if asked:
-                answer = (await db.execute(select(messages.c.id).where(messages.c.reply_to == asked.id))).one()
-                return Turn(conversation_id, asked.id, answer.id, conversation.agent_conversation_id, repeat=True)
-            busy = (
-                await db.execute(
-                    select(messages.c.id, (messages.c.updated_at > func.now() - STALE).label("fresh")).where(
-                        (messages.c.conversation_id == conversation_id) & (messages.c.status == "in_progress")
-                    )
-                )
-            ).first()
-            if busy and busy.fresh:
-                raise TurnInProgress
-            if busy:  # left in progress by a gateway that stopped mid-turn: give up on it, or the chat is stuck
-                stale = {"status": "failed", "error": STALE_ERROR, "updated_at": func.now()}
-                await db.execute(update(messages).where(messages.c.id == busy.id).values(stale))
-            seq = (
-                await db.execute(
-                    select(func.coalesce(func.max(messages.c.seq), -1)).where(
-                        messages.c.conversation_id == conversation_id
-                    )
-                )
-            ).scalar_one()
-            question_id, answer_id = new_id("m"), new_id("m")
-            both = {"conversation_id": conversation_id}
-            await db.execute(
-                insert(messages).values(
-                    **both,
-                    id=question_id,
-                    seq=seq + 1,
-                    role="user",
-                    status="complete",
-                    blocks=[{"type": "text", "text": text}],
-                    client_message_id=client_message_id,
-                )
+        here = messages.c.conversation_id == conversations.c.id
+        # Tied to the conversation read below, even where it sits two levels down.
+        asked = (
+            select(messages.c.id)
+            .where(here & (messages.c.client_message_id == client_message_id))
+            .correlate(conversations)
+        )
+        busy = select(messages.c.id).where(here & (messages.c.status == "in_progress")).limit(1)
+        fresh = select(messages.c.updated_at > func.now() - STALE).where(here & (messages.c.status == "in_progress"))
+        answers = messages.alias("answers")  # its own name, so the question looked up inside is not tied to it
+        state = (
+            select(
+                conversations.c.agent_conversation_id,
+                asked.scalar_subquery().label("asked"),
+                select(answers.c.id)
+                .where(answers.c.reply_to == asked.scalar_subquery())
+                .scalar_subquery()
+                .label("answer"),
+                busy.scalar_subquery().label("busy"),
+                fresh.limit(1).scalar_subquery().label("fresh"),
+                select(func.coalesce(func.max(messages.c.seq), -1)).where(here).scalar_subquery().label("seq"),
             )
+            .where(self._owned(owner) & (conversations.c.id == conversation_id))
+            .with_for_update(of=conversations)
+        )
+        async with self.engine.begin() as db:
+            found = (await db.execute(state)).first()
+            if not found:
+                return None
+            if found.asked:
+                return Turn(conversation_id, found.asked, found.answer, found.agent_conversation_id, repeat=True)
+            if found.busy and found.fresh:
+                raise TurnInProgress
+            if found.busy:  # left in progress by a gateway that stopped mid-turn: give up on it, or the chat is stuck
+                stale = {"status": "failed", "error": STALE_ERROR, "updated_at": func.now()}
+                await db.execute(update(messages).where(messages.c.id == found.busy).values(stale))
+            question_id, answer_id = new_id("m"), new_id("m")
+            shared = {"conversation_id": conversation_id, "client_message_id": None, "reply_to": None}
             await db.execute(
                 insert(messages).values(
-                    **both,
-                    id=answer_id,
-                    seq=seq + 2,
-                    role="assistant",
-                    status="in_progress",
-                    blocks=[],
-                    reply_to=question_id,
-                    config_version=config_version,
+                    [
+                        {
+                            **shared,
+                            "id": question_id,
+                            "seq": found.seq + 1,
+                            "role": "user",
+                            "status": "complete",
+                            "blocks": [{"type": "text", "text": text}],
+                            "client_message_id": client_message_id,
+                            "config_version": None,
+                        },
+                        {
+                            **shared,
+                            "id": answer_id,
+                            "seq": found.seq + 2,
+                            "role": "assistant",
+                            "status": "in_progress",
+                            "blocks": [],
+                            "reply_to": question_id,
+                            "config_version": config_version,
+                        },
+                    ]
                 )
             )
             await db.execute(
@@ -287,19 +286,23 @@ class Store:
                 .where(conversations.c.id == conversation_id)
                 .values(updated_at=func.now(), title=func.coalesce(conversations.c.title, text[:80]))
             )
-        return Turn(conversation_id, question_id, answer_id, conversation.agent_conversation_id, repeat=False)
+        return Turn(conversation_id, question_id, answer_id, found.agent_conversation_id, repeat=False)
 
-    async def set_agent_message(self, answer_id: str, agent_message_id: str) -> None:
-        async with self.engine.begin() as db:
-            await db.execute(
-                update(messages).where(messages.c.id == answer_id).values(agent_message_id=agent_message_id)
-            )
-
-    async def finish(self, answer_id: str, status: str, blocks: list[dict], error: ApiError | None) -> None:
+    async def finish(
+        self,
+        answer_id: str,
+        status: str,
+        blocks: list[dict],
+        error: ApiError | None,
+        agent_message_id: str | None = None,
+    ) -> None:
+        """Stores the answer as it ended, with PF's ID for it (shortcut: kept only at the end, so an answer whose
+        gateway stopped mid-turn cannot be fetched from PF; store it as soon as PF sends it when that is built)."""
         values = {
             "status": status,
             "blocks": blocks,
             "error": error.model_dump(mode="json") if error else None,
+            "agent_message_id": agent_message_id,
             "updated_at": func.now(),
         }
         async with self.engine.begin() as db:

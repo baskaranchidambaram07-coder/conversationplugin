@@ -26,7 +26,10 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     async def lifespan(app: FastAPI):
         async with AsyncExitStack() as stack:
             if settings.database_url:
-                engine = create_async_engine(settings.database_url, pool_size=10, max_overflow=10, pool_pre_ping=True)
+                # A steady pool: a connection opened under a burst and closed after costs PostgreSQL a new process.
+                engine = create_async_engine(
+                    settings.database_url, pool_size=30, max_overflow=20, pool_pre_ping=True, pool_recycle=1800
+                )
                 stack.push_async_callback(engine.dispose)
                 app.state.store = Store(engine)
                 app.state.widgets = Widgets(app.state.store)

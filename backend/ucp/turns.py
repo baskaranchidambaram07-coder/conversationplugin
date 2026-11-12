@@ -157,7 +157,7 @@ class Turns:
             send("content_block.delta", index=0, text=text)
 
         outcome: Final | Failed
-        writes: list[asyncio.Task] = []  # saved alongside the answer, not in its way
+        ids: list[str] = []  # PF's ID for the answer, stored with it at the end
         send("message.started")
         try:
             async with asyncio.timeout(self.whole):
@@ -166,7 +166,7 @@ class Turns:
                     agent_conversation = await connector.create_conversation(turn.conversation_id)
                     await self.store.set_agent_conversation(turn.conversation_id, agent_conversation)
                 for attempt in (1, 2):
-                    outcome, accepted = await self._ask(connector, agent_conversation, question, turn, piece, writes)
+                    outcome, accepted = await self._ask(connector, agent_conversation, question, piece, ids)
                     if isinstance(outcome, Final) or accepted or not outcome.retryable or attempt == 2:
                         break
                     await asyncio.sleep(self.retry_wait)  # the agent never had the question, so asking again is safe
@@ -180,13 +180,13 @@ class Turns:
         finally:
             self.active[tenant_id] -= 1
 
+        agent_message_id = ids[-1] if ids else None
         try:
-            await asyncio.gather(*writes)
             if isinstance(outcome, Final):
                 block = {"type": "markdown", "text": outcome.text}
                 if not opened:
                     send("content_block.started", index=0, block={"type": "markdown", "text": ""})
-                await self.store.finish(turn.answer_id, "complete", [block], None)
+                await self.store.finish(turn.answer_id, "complete", [block], None, agent_message_id)
                 send("content_block.completed", index=0, block=block)
                 send("message.completed")
                 log.info("turn %s answered, usage %s", turn.answer_id, json.dumps(outcome.usage))
@@ -195,7 +195,7 @@ class Turns:
                 if outcome:
                     log.warning("turn %s failed: %s", turn.answer_id, outcome.detail)
                 blocks = [{"type": "markdown", "text": "".join(answer)}] if answer else []
-                await self.store.finish(turn.answer_id, "failed", blocks, error)
+                await self.store.finish(turn.answer_id, "failed", blocks, error, agent_message_id)
                 send("message.failed", error=error.model_dump(mode="json"))
             down = isinstance(outcome, Failed) and outcome.code == "assistant_unavailable" and outcome.retryable
             self.breakers.setdefault(profile, Breaker(*self.breaker)).record(not down)
@@ -205,7 +205,7 @@ class Turns:
         finally:
             queue.put_nowait(None)
 
-    async def _ask(self, connector, agent_conversation: str, question: str, turn: Turn, piece, writes: list) -> tuple:
+    async def _ask(self, connector, agent_conversation: str, question: str, piece, ids: list[str]) -> tuple:
         """One attempt: the outcome, and whether the agent got the question."""
         accepted, answering = False, False
         events = connector.send(agent_conversation, question)
@@ -225,9 +225,7 @@ class Turns:
                     return Failed("assistant_unavailable", True, "the agent ended without an answer"), accepted
                 if isinstance(event, Accepted):
                     accepted = True
-                    writes.append(
-                        asyncio.create_task(self.store.set_agent_message(turn.answer_id, event.agent_message_id))
-                    )
+                    ids.append(event.agent_message_id)
                 elif isinstance(event, Text):
                     answering = True
                     piece(event.text)
