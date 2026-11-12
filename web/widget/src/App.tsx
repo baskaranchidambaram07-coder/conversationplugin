@@ -9,6 +9,8 @@ import { type Bridge, connect, type Mode } from "./chat/bridge";
 import { type Problem, problemOf } from "./chat/problem";
 import { type Answer, pending } from "./chat/state";
 import { runTurn } from "./chat/turn";
+import { CopyButton, Icon } from "./Icon";
+import { BlockView } from "./render/registry";
 import { strings as t } from "./strings";
 
 const LIMIT = 4000;
@@ -58,7 +60,6 @@ export function App({ widgetId, win = window }: { widgetId: string; win?: Window
   const [draft, setDraft] = useState("");
   const [ended, setEnded] = useState<Problem | null>(null);
   const [heard, setHeard] = useState("");
-  const [copied, setCopied] = useState<string | null>(null);
   const [away, setAway] = useState(false); // the visitor has scrolled up from the newest message
   const follow = useRef(true); // a new question always brings the view down
   const followed = useRef(0); // the content height the view last kept up with
@@ -190,12 +191,6 @@ export function App({ widgetId, win = window }: { widgetId: string; win?: Window
     input.current?.focus();
   }
 
-  async function copy(turn: Turn) {
-    await navigator.clipboard?.writeText(plain(turn.answer.blocks)).catch(() => {});
-    setCopied(turn.key);
-    setTimeout(() => setCopied((current) => (current === turn.key ? null : current)), 2000);
-  }
-
   if (!settings) {
     return (
       <div className="chat waiting">
@@ -257,8 +252,6 @@ export function App({ widgetId, win = window }: { widgetId: string; win?: Window
           <TurnView
             key={turn.key}
             turn={turn}
-            copied={copied === turn.key}
-            onCopy={() => void copy(turn)}
             onRetry={ended ? undefined : () => void ask(turn.question, turn.key)}
           />
         ))}
@@ -325,13 +318,9 @@ export function App({ widgetId, win = window }: { widgetId: string; win?: Window
 
 function TurnView({
   turn,
-  copied,
-  onCopy,
   onRetry,
 }: {
   turn: Turn;
-  copied: boolean;
-  onCopy: () => void;
   onRetry?: () => void;
 }) {
   const { answer, problem } = turn;
@@ -359,21 +348,11 @@ function TurnView({
           <ProblemNote problem={problem} action={onRetry && problem.retryable ? t.retry : undefined} onAction={onRetry} />
         )}
         {answer.status === "complete" && (
-          <button type="button" className="quiet" onClick={onCopy}>
-            <Icon path={copied ? "M5 12l5 5L19 8" : "M8 8h11v11H8zM5 16V5h11"} />
-            {copied ? t.copied : t.copy}
-          </button>
+          <CopyButton text={plain(answer.blocks)} label={t.copy} />
         )}
       </article>
     </div>
   );
-}
-
-function BlockView({ block }: { block: Block }) {
-  const content = typeof block.text === "string" ? block.text : "";
-  // Markdown shows as plain text until the rendering engine (M3) draws it.
-  if (block.type === "text" || block.type === "markdown") return content ? <p className="text">{content}</p> : null;
-  return <p className="text unknown">{content || t.unknownBlock}</p>;
 }
 
 function ProblemNote({ problem, action, onAction }: { problem: Problem; action?: string; onAction?: () => void }) {
@@ -387,20 +366,5 @@ function ProblemNote({ problem, action, onAction }: { problem: Problem; action?:
         </button>
       )}
     </div>
-  );
-}
-
-function Icon({ path, filled = false }: { path: string; filled?: boolean }) {
-  return (
-    <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false" className="glyph">
-      <path
-        d={path}
-        fill={filled ? "currentColor" : "none"}
-        stroke="currentColor"
-        strokeWidth="2"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-    </svg>
   );
 }

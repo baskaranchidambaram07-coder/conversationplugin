@@ -29,6 +29,25 @@ const long = (await readFile(new URL("backend/fakepf/recordings/long.sse", root)
   .map((line) => JSON.parse(line.slice(6)).content.response)[0];
 const SHORT = "The library is open from 10:00 to 18:00 on Sundays. In exam weeks it stays open until 22:00.";
 
+// [gallery:name] answers with an example from web/widget/src/render/gallery, and [injection] with every attempt in
+// its security corpus, so the browser tests draw exactly what the unit tests do.
+const GALLERY = new URL("web/widget/src/render/gallery/", root);
+async function answerFor(question) {
+  const example = question.match(/\[gallery:([a-z]+)\]/);
+  if (example) return readFile(new URL(`${example[1]}.md`, GALLERY), "utf8");
+  if (question.includes("[injection]")) {
+    return JSON.parse(await readFile(new URL("injection.json", GALLERY), "utf8")).join("\n\n");
+  }
+  return question.includes("[long]") ? long : SHORT;
+}
+
+// The strict content policy the embed page will carry in production (M4-T3 adds the per-widget frame-ancestors).
+// The chat needs only its own origin, plus the host of the widget's logo; anything an answer tried to load or run
+// is refused.
+const policyFor = (widget) =>
+  "default-src 'none'; script-src 'self'; style-src 'self'; font-src 'self'; connect-src 'self'; " +
+  `img-src 'self' ${new URL(configs[widget].logo_url).origin}; base-uri 'none'; form-action 'none'`;
+
 async function file(path) {
   if (path === "/loader.js") return [200, types.js, await readFile(new URL("web/loader/dist/loader.js", root))];
   const config = path.match(/^\/v1\/widgets\/([\w-]+)\/config$/);
@@ -38,7 +57,10 @@ async function file(path) {
   }
   const embed = path.match(/^\/embed\/([\w-]+)$/);
   if (embed && STAND_IN.has(embed[1])) return [200, types.html, await readFile(new URL("e2e/chat-stub.html", root))];
-  if (embed) return [200, types.html, await readFile(new URL("web/widget/dist/index.html", root))];
+  if (embed) {
+    const chat = await readFile(new URL("web/widget/dist/index.html", root));
+    return [200, types.html, chat, { "content-security-policy": policyFor(embed[1]) }];
+  }
   const asset = path.match(/^\/assets\/([\w.-]+)\.(js|css|woff2)$/);
   if (asset) return [200, types[asset[2]], await readFile(new URL(`web/widget/dist/assets/${asset[1]}.${asset[2]}`, root))];
   const page = path.match(/^\/hosts\/([a-z-]+)\.html$/);
@@ -46,9 +68,9 @@ async function file(path) {
   return [404, "text/plain", "not found"];
 }
 
-// The fake gateway. Words in a message pick a behaviour, as the fake PF does: [long], [slow], [busy], [fail],
-// [drop] (the stream is cut, but the answer still finishes and can be fetched) and [expire] (the session ends
-// once per question).
+// The fake gateway. Words in a message pick a behaviour, as the fake PF does: [long], [gallery:name], [injection],
+// [slow], [busy], [fail], [drop] (the stream is cut, but the answer still finishes and can be fetched) and [expire]
+// (the session ends once per question).
 let next = 0;
 const id = (prefix) => `${prefix}_${(++next).toString(36)}`;
 const sessions = new Set();
@@ -73,7 +95,7 @@ async function readBody(request) {
 
 async function stream(response, conversationId, body) {
   const envelope = { v: 1, conversation_id: conversationId, message_id: id("m"), correlation_id: id("r") };
-  const text = body.text.includes("[long]") ? long : SHORT;
+  const text = await answerFor(body.text);
   const record = { id: envelope.message_id, role: "assistant", status: "in_progress", blocks: [], error: null };
   messages.set(envelope.message_id, { ...record, created_at: new Date().toISOString().replace(/\.\d+Z$/, "Z") });
   response.writeHead(200, { "content-type": "text/event-stream", "cache-control": "no-store" });
@@ -143,8 +165,13 @@ async function gateway(request, response, path) {
 createServer(async (request, response) => {
   const path = new URL(request.url, "http://x").pathname;
   if (path.startsWith("/v1/") && !path.endsWith("/config")) return gateway(request, response, path);
-  const [status, type, body] = await file(path).catch(() => [404, "text/plain", "not found"]);
+  const [status, type, body, headers] = await file(path).catch(() => [404, "text/plain", "not found"]);
   // The configuration is public and read from the customer's page, so any origin may read it, without cookies.
-  response.writeHead(status, { "content-type": type, "access-control-allow-origin": "*", "cache-control": "no-store" });
+  response.writeHead(status, {
+    "content-type": type,
+    "access-control-allow-origin": "*",
+    "cache-control": "no-store",
+    ...headers,
+  });
   response.end(body);
 }).listen(4174);
