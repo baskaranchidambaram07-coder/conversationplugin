@@ -94,7 +94,16 @@ def sleep() -> None:
 def status() -> None:
     outputs = json.loads(terraform(DEV, "output", "-json", capture=True) or "{}")
     services = json.loads(
-        aws("ecs", "describe-services", "--cluster", "ucp-dev-cluster", "--services", "ucp-dev-gateway", "--output", "json")
+        aws(
+            "ecs",
+            "describe-services",
+            "--cluster",
+            "ucp-dev-cluster",
+            "--services",
+            "ucp-dev-gateway",
+            "--output",
+            "json",
+        )
     )["services"]
     running = next((s["runningCount"] for s in services if s["status"] == "ACTIVE"), 0)
     print(f"address:  {outputs.get('url', {}).get('value', 'not built')}")
