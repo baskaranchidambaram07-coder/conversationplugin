@@ -917,6 +917,63 @@ Second release: usage view, audit-log viewer, storage and single sign-on set-up,
 
 **Done when** a new region can be created from the code alone and passes the smoke suite.
 
+State on 13 November 2026 (pull requests 56 to 62 into `module/m14-cloud-deployment`). By your decisions: you saw the plan first; the environment runs on demand, not always on; the gateway uses a public subnet with no NAT; the PF staging credentials are held in AWS Secrets Manager.
+
+- Built, in the US development account, `us-east-1` (`infra/aws`; the runbook is `infra/aws/README.md`):
+  - **Way in:** CloudFront on its own HTTPS address. It stays while the environment sleeps, answering "This test environment is asleep", so a customer's script tag keeps working.
+  - **Load balancer:** only CloudFront's addresses carrying its secret header can reach it.
+  - **Gateway:** one Fargate task with 1 vCPU and 2 GB, in a public subnet, reachable only from the load balancer.
+  - **Database:** PostgreSQL 17, private, encrypted, with 7 days of point-in-time backups.
+  - **Secrets** under `ucp-dev/`, kept out of Terraform's state and the repository.
+  - **Image registry:** scans images, and commit tags can't be overwritten.
+  - **Roles:** under `ucp-dev-boundary`.
+  - **Terraform's state:** in an encrypted, versioned bucket.
+  - **On demand:** `dev.py wake` (about 10 minutes) and `sleep`, plus `build`, `teardown` and `status`. Roughly US$0.11 an hour awake and US$5 a month asleep, from list prices as remembered.
+- T1: the gateway imports no cloud library (`backend/tests/test_portable.py`). Secrets reach it as environment settings, filled by the container service.
+- T2: the image runs as a non-root user with a read-only root filesystem, applies Debian's security fixes when built, and is scanned on every release. It is not yet signed.
+- T5, the pipeline (`.github/workflows/deploy-dev.yml`):
+  - **Sign-in:** GitHub signs in to AWS without stored keys, with the trust limited to `develop` and this module branch (and GitHub's immutable repository identity).
+  - **Each push:** build, scan (fixable high or critical flaws stop it), store, then `deploy.py`: migrations, the widget file, a rolling update that rolls itself back if unhealthy, and the PF check, then the smoke test. While asleep it only stores the image.
+  - **On every pull request:** CI's new "Infrastructure code checks" job checks the Terraform's format and validity and runs a misconfiguration scan. Accepted findings carry their reason inline.
+- T8: backups, and a restore rehearsed (below).
+- Two gateway fixes the deployment needed:
+  - the same-origin check behind CloudFront (`UCP_PUBLIC_ORIGIN`);
+  - per-visitor limits behind CloudFront (`UCP_VISITOR_ADDRESS_HEADER`).
+- Found and fixed on the deployed stack:
+  - **Logging (from M4):** the gateway's own log lines never reached the logs, so no access log and no turn lines. Python drops them unless logging is configured.
+  - **Image flaws:** two fixable zlib flaws in the base image, caught by the scan.
+  - **Pipeline sign-in:** GitHub's newer identity format.
+  - **Permissions:** one missing read permission for creating the load balancer, which an administrator added (policy version 2).
+- Proven on the deployed stack, against PF staging:
+  - the smoke suite, 15 steps: health, the database, the loader, the configuration, an anonymous turn, a signed-in turn. It passes from this machine and in the pipeline;
+  - the R13 browser leak search, with nothing of PF anywhere in the browser (`npm run e2e:deployed`);
+  - the edge: the load balancer refuses direct connections, plain HTTP is redirected to HTTPS, and the security headers are present;
+  - **M4's latency budget at 25 visitors at once** (the M7 decision):
+    - three runs on 1 vCPU gave 139, 113 and 111 ms at the 95th percentile (median 113, within 150), all 225 answers delivered;
+    - on half a vCPU the opening burst queued it to 304–319 ms, hence the sizing;
+    - each answer logs the gateway's own share, so PF's time is left out (`infra/aws/latency.py`).
+  - **A release while answers stream:** 21 answers asked during a forced rollout, all completed (`rollout_check.py`).
+  - **A rollback and a roll forward:** both passed the smoke test, with the log showing which code served.
+  - **The restore rehearsal:** the database restored to a moment 08:17:10 UTC into a new instance in 14 minutes. Every table matched the live database at that moment (80 conversations, 462 messages), and the copy was then removed (`restore_rehearsal.py`). This completes M7's done condition too.
+- The done condition:
+  - built from the code today, from nothing to awake to smoke-tested, with the fixes found along the way now in the code;
+  - a timed teardown and rebuild, `dev.py teardown` then `build`, is ready, but waits for your word because it deletes the database and changes the CloudFront address.
+- Deferred:
+  - **Production in London:** private subnets and NAT, a database across two zones, our own domain names and certificates (HTTPS to the load balancer too), and a web application firewall.
+  - **Needs an AWS administrator:** budget alerts and autoscaling, which the deploying user may not create.
+  - **Not chosen for dev:** container insights, flow and CloudFront logs, and encryption with our own keys.
+  - **Also deferred:**
+    - image signing;
+    - pinned loader releases (T6);
+    - a nightly run of the staging suite from AWS (M6);
+    - zone-loss and failover tests;
+    - timing a brand-new account's build.
+- For M15:
+  - the address the College uses comes from `python infra/aws/deploy.py --url`;
+  - a widget's shared secret comes from `secret_store.py host-secret NAME`;
+  - the sandbox's widgets go in `backend/deploy/widgets.dev.json`.
+- For M12: the leak search runs against the deployed stack (`npm run e2e:deployed`); running it on every build comes with M12.
+
 ---
 
 ### M15 — Developer experience and onboarding
