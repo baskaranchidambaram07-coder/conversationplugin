@@ -1,6 +1,6 @@
 # Purple Fabric Capability Sheet
 
-Status: first version, 12 November 2026. This is the output of plan task M0-T1.
+Status: first version, 12 November 2026. This is the output of plan task M0-T1. Checked against staging again on 13 November 2026 by `backend/tests/test_pf_staging.py`: every claim it tests still holds.
 
 Everything below was observed against Purple Fabric (PF) staging with the capture script `spikes/pf_capture.py`, except section 9, which lists what still has to be asked. Staging runs in the US. Production runs in London and may differ in limits and timings. Addresses, identifiers and credentials are deliberately left out of this document.
 
@@ -100,6 +100,7 @@ There are four, and only one of them uses the HTTP status in the normal way.
 | Send-then-poll exists | It is the fallback transport. | D2 |
 | Answers are Markdown and fenced blocks survive | The fenced-block convention for charts and diagrams works without any change to PF. | D9 |
 | The record has fields for file references, generated images and files, sources and citations | The message format reserves image, file and sources blocks. Attachments look feasible. | M0-T3, M10 |
+| A failed login arrives with HTTP 200; whether PF locks the account after repeated failures is untested, on purpose | After a refusal, the connector waits five minutes before trying the same credentials again | M6-T2 |
 | The model version moves on PF's schedule | Each stored message records the agent version. The nightly check against staging catches format changes. | M7-T5, M6 tests |
 
 ## 10. Questions for the PF team
@@ -123,7 +124,7 @@ Still open:
 
 ## 11. Recorded samples
 
-The raw streams and results are in `spikes/pf_capture_out/`, which is excluded from version control because the files contain staging identifiers. Cleaned copies, with every identifier replaced, are in `backend/fakepf/recordings/`, made by `spikes/clean_pf_recordings.py`. They are the test data for the fake PF and the connector tests.
+The raw streams and results are in `spikes/pf_capture_out/`, which is excluded from version control because the files contain staging identifiers. Cleaned copies, with every identifier replaced, are in `backend/fakepf/recordings/`, made by `spikes/clean_pf_recordings.py`. They are the test data for the fake PF and the connector tests. `backend/tests/test_pf_staging.py` compares their event order and fields with what staging sends, so a change in PF shows up as a failing test rather than as a fake that no longer matches.
 
 The long answers are the main samples for the fake PF and the renderer tests. One of them contains headings, an eleven-row table, a code block and a diagram block, all of which came through unchanged.
 
