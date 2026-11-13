@@ -1,6 +1,7 @@
 """The request pipeline (M4-T1, M4-T2 middleware tests): one error format, security headers, size limit, access log."""
 
 import logging
+import re
 
 from fastapi.testclient import TestClient
 from pydantic import BaseModel
@@ -43,6 +44,18 @@ def test_unknown_routes_and_methods_answer_not_found_in_our_format():
     for response in (client().get("/nothing/here"), client().delete("/healthz")):
         assert response.status_code == 404
         assert error_of(response).code == "not_found"
+
+
+def test_the_gateways_own_lines_reach_standard_output_where_the_container_service_collects_them(capsys):
+    # Without this, Python dropped every informational line in production: the access log, each turn, each refusal.
+    ours = logging.getLogger("ucp")
+    ours.handlers.clear()  # so the gateway writes to this test's captured output
+    try:
+        client().get("/test/echo")
+        written = capsys.readouterr().out
+    finally:
+        ours.handlers.clear()  # the next gateway built writes to the real output again
+    assert re.search(r"^INFO ucp\.access GET /test/echo \d{3} \d+ms r_[\w-]+$", written, re.M)
 
 
 def test_an_invalid_body_is_refused_without_echoing_any_of_it():

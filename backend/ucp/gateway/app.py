@@ -22,6 +22,7 @@ from ucp.widgets import Widgets
 
 def create_app(settings: Settings | None = None) -> FastAPI:
     settings = settings or Settings.from_env()
+    pipeline.install_logging(settings.log_level)
 
     @asynccontextmanager
     async def lifespan(app: FastAPI):
