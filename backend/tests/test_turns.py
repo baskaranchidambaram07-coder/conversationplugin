@@ -146,6 +146,24 @@ def test_a_failure_part_way_is_reported_and_stored_with_the_part_already_streame
     )
 
 
+def test_internal_details_pf_adds_and_its_raw_errors_never_reach_the_visitor(gateway, widgets):
+    # R13 and M6-T5: whatever PF puts in its events, the visitor gets our format with the answer text and no more.
+    visitor = Visitor(gateway, widgets["open"])
+    conversation = visitor.conversation()
+
+    answered = visitor.ask(conversation, "Hello [seeded]")
+    stream = events(answered)
+    wait_for(visitor, conversation, stream[0].message_id)
+    failed = visitor.ask(conversation, "Hello [error]")
+    wait_for(visitor, conversation, events(failed)[0].message_id)
+    later = visitor.get(f"/v1/conversations/{conversation}/messages").text + visitor.get("/v1/conversations").text
+
+    assert stream[-2].block.text == FINAL["short"]["response"]
+    for seen in (answered.text, failed.text, later):
+        assert not re.search(r"SEEDED|10\.20\.30\.40|pf-internal|Unable to process|status_code", seen)
+        assert not PF_ID.search(seen)
+
+
 def test_the_same_question_sent_again_gets_the_same_answer_not_a_second_one(gateway, widgets):
     visitor = Visitor(gateway, widgets["open"])
     conversation = visitor.conversation()
