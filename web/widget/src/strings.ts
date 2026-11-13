@@ -3,6 +3,8 @@
 export const strings = {
   loading: "Loading the chat",
   close: "Close chat",
+  expand: "Open full screen",
+  shrink: "Exit full screen",
   notice: "You are chatting with an AI assistant. It can make mistakes.",
   you: "You:",
   answer: "Answer:",

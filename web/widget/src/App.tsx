@@ -35,6 +35,8 @@ const WIDE = "(min-width: 720px)"; // room for the list of chats beside the conv
 const LIST = "M9 6h11M9 12h11M9 18h11M4.5 6h.01M4.5 12h.01M4.5 18h.01";
 const PLUS = "M12 5v14M5 12h14";
 const BACK = "M15 18l-6-6 6-6";
+const GROW = "M14 4h6v6M10 20H4v-6M20 4l-7 7M4 20l7-7";
+const SHRINK = "M20 10h-6V4M4 14h6v6M14 10l7-7M10 14l-7 7";
 
 const text = (value: unknown, max: number) => (typeof value === "string" ? value.trim().slice(0, max) : "");
 
@@ -86,6 +88,8 @@ export function App({ widgetId, win = window }: { widgetId: string; win?: Window
   const log = useRef<HTMLElement>(null);
   const live = useRef<Live>(null);
   const [signedIn, setSignedIn] = useState(false);
+  const [expandable, setExpandable] = useState(false); // the loader can fill the window with this chat
+  const [expanded, setExpanded] = useState(false);
   const [wide, setWide] = useState(() => Boolean(win.matchMedia?.(WIDE).matches));
   const [browsing, setBrowsing] = useState(false); // the list of chats covers the conversation (narrow frames)
   const [chats, setChats] = useState<Chats>(NO_CHATS);
@@ -125,6 +129,10 @@ export function App({ widgetId, win = window }: { widgetId: string; win?: Window
         setShown((count) => count + 1);
       },
       hidden: () => setPaused(true),
+      layout(canExpand, isExpanded) {
+        setExpandable(canExpand);
+        setExpanded(isExpanded);
+      },
     });
     state.api = gateway(widgetId, () => (state.signedIn ? state.bridge.token() : Promise.resolve(null)));
     live.current = state;
@@ -383,7 +391,24 @@ export function App({ widgetId, win = window }: { widgetId: string; win?: Window
       onRetry={() => void loadChats()}
     />
   );
-  const classes = ["chat", side && "split", paused && "paused"].filter(Boolean).join(" ");
+  // A wide frame (the chat filling a page, or the window) is laid out as a conversation app; an empty chat there
+  // holds its welcome, composer and suggested questions in the middle of the screen.
+  const empty = turns.length === 0 && !opening && !openFailed && !browsing;
+  const classes = ["chat", side && "split", wide && "page", wide && empty && "empty", paused && "paused"]
+    .filter(Boolean)
+    .join(" ");
+  const notice = <p className="notice">{settings.notice}</p>;
+  const prompts = turns.length === 0 && settings.prompts.length > 0 && (
+    <ul className="prompts">
+      {settings.prompts.map((prompt) => (
+        <li key={prompt}>
+          <button type="button" onClick={() => void ask(prompt)} disabled={Boolean(ended)}>
+            {prompt}
+          </button>
+        </li>
+      ))}
+    </ul>
+  );
   return (
     <div className={classes} style={theme}>
       <header className="head">
@@ -414,6 +439,16 @@ export function App({ widgetId, win = window }: { widgetId: string; win?: Window
               {browsing ? <Icon path={BACK} flip /> : <Icon path={LIST} />}
             </button>
           )}
+          {mode === "floating" && expandable && (
+            <button
+              type="button"
+              className="icon"
+              aria-label={expanded ? t.shrink : t.expand}
+              onClick={() => live.current?.bridge.expand(!expanded)}
+            >
+              <Icon path={expanded ? SHRINK : GROW} />
+            </button>
+          )}
           {mode === "floating" && (
             <button type="button" className="icon" aria-label={t.close} onClick={() => live.current?.bridge.close()}>
               <Icon path="M6 6l12 12M18 6 6 18" />
@@ -435,23 +470,13 @@ export function App({ widgetId, win = window }: { widgetId: string; win?: Window
           setAway(box.scrollHeight - box.scrollTop - box.clientHeight >= 48);
         }}
       >
-        <p className="notice">{settings.notice}</p>
+        {!wide && notice}
         {settings.welcome && (
-          <p className="card" dir="auto">
+          <p className="card welcome" dir="auto">
             {settings.welcome}
           </p>
         )}
-        {turns.length === 0 && settings.prompts.length > 0 && (
-          <ul className="prompts">
-            {settings.prompts.map((prompt) => (
-              <li key={prompt}>
-                <button type="button" onClick={() => void ask(prompt)} disabled={Boolean(ended)}>
-                  {prompt}
-                </button>
-              </li>
-            ))}
-          </ul>
-        )}
+        {!(wide && empty) && prompts}
         {opening && turns.length === 0 && <div className="ring" role="status" aria-label={t.opening} />}
         {openFailed && lastOpened.current && (
           <ProblemNote problem={openFailed} action={t.retry} onAction={() => void openChat(lastOpened.current!)} />
@@ -526,6 +551,8 @@ export function App({ widgetId, win = window }: { widgetId: string; win?: Window
             {t.remaining(left)}
           </p>
         )}
+        {wide && empty && prompts}
+        {wide && notice}
         <p className="credit">{t.credit}</p>
         <div className="hidden" role="status" aria-live="polite">
           {heard}

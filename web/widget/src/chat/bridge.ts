@@ -7,6 +7,8 @@ export type Bridge = {
   /** A token signed by the host for its signed-in visitor, or null (anonymous, refused, or no answer in 10 s). */
   token(): Promise<string | null>;
   close(): void;
+  /** Asks the loader to fill the window with the chat (on), or to go back to the panel. */
+  expand(on: boolean): void;
 };
 
 export type Events = {
@@ -14,12 +16,14 @@ export type Events = {
   init(mode: Mode, signedIn: boolean): void;
   shown(): void;
   hidden(): void;
+  /** Whether the panel can fill the window here, and whether it does. */
+  layout?(expandable: boolean, expanded: boolean): void;
 };
 
 export function connect(win: Window, on: Events): Bridge {
   if (win.parent === win) {
     on.init("page", false);
-    return { token: async () => null, close: () => {} };
+    return { token: async () => null, close: () => {}, expand: () => {} };
   }
   let origin: string | undefined;
   let next = 1;
@@ -38,6 +42,7 @@ export function connect(win: Window, on: Events): Bridge {
     }
     if (message.type === "shown") on.shown();
     if (message.type === "hidden") on.hidden();
+    if (message.type === "layout") on.layout?.(message.expandable, message.expanded);
   });
   win.parent.postMessage({ ucp: 1, type: "ready" } satisfies ChatMessage, "*"); // carries nothing
   return {
@@ -50,5 +55,6 @@ export function connect(win: Window, on: Events): Bridge {
         setTimeout(() => waiting.delete(id) && resolve(null), 10_000);
       }),
     close: () => post({ ucp: 1, type: "close" }),
+    expand: (on) => post({ ucp: 1, type: "expand", on }),
   };
 }

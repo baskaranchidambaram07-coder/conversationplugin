@@ -54,6 +54,8 @@ border-radius:50%;border:3px solid #e7dacb;border-top-color:#6f625a}
 .ready::before{display:none}
 @keyframes spin{to{transform:rotate(1turn)}}
 .left .launcher,.left .panel{right:auto;left:${SIDE("left")}}
+.expanded .panel{inset:0;width:100%;height:100%;border:0;border-radius:0}
+.open.expanded .launcher{display:none}
 iframe{display:block;width:100%;height:100%;border:0;color-scheme:normal}
 .inline{height:100%}
 .inline .panel{position:relative;inset:auto;width:100%;height:100%;min-height:480px;
@@ -116,10 +118,13 @@ function mount(origin: string, options: MountOptions, win: Window): Widget | und
   let host: HTMLElement | undefined;
   let gone = false;
   let open = inline;
+  let expanded = false; // the visitor has asked the floating panel to fill the window
   let draw: (() => void) | undefined;
   let overflow: string | undefined; // the host page's own scroll setting while a full-screen chat locks it
   let stop = () => {}; // removes the listener render() adds to the host page's window, and its timer
   const getToken = typeof options.getToken === "function" ? options.getToken : undefined;
+  // A phone's window is already filled by the open chat, and an inline chat sits where the page put it.
+  const expandable = () => !inline && !fullScreen(win.innerWidth, win.innerHeight);
   const release = () => {
     if (overflow !== undefined) doc.documentElement.style.overflow = overflow;
     overflow = undefined;
@@ -168,6 +173,7 @@ function mount(origin: string, options: MountOptions, win: Window): Widget | und
     let timer: ReturnType<typeof setTimeout> | undefined;
     // Messages go only to our own origin, so a token can never be read by another site.
     const post = (message: LoaderMessage) => iframe?.contentWindow?.postMessage(message, origin);
+    const layout = () => post({ ucp: 1, type: "layout", expandable: expandable(), expanded });
     draw = () => {
       if (open && !iframe) {
         iframe = doc.createElement("iframe");
@@ -186,15 +192,20 @@ function mount(origin: string, options: MountOptions, win: Window): Widget | und
         );
       }
       frame.classList.toggle("open", open);
+      frame.classList.toggle("expanded", expanded);
       button?.setAttribute("aria-expanded", String(open));
       // shortcut: the scroll lock is decided on opening, so a window resized narrow while open stays unlocked;
       // add a resize listener if real devices show page scroll behind the full-screen chat.
-      if (open && !inline && fullScreen(win.innerWidth, win.innerHeight) && overflow === undefined) {
+      const covers = expanded || fullScreen(win.innerWidth, win.innerHeight);
+      if (open && !inline && covers && overflow === undefined) {
         overflow = doc.documentElement.style.overflow;
         doc.documentElement.style.overflow = "hidden";
       }
-      if (!open) release();
-      if (connected) post({ ucp: 1, type: open ? "shown" : "hidden" });
+      if (!open || !covers) release();
+      if (connected) {
+        post({ ucp: 1, type: open ? "shown" : "hidden" });
+        layout();
+      }
       if (open && !inline) iframe?.focus();
       // Focus goes back to the launcher only if it was inside the chat, never taken from elsewhere on the page.
       else if (!open && doc.activeElement === host) button?.focus();
@@ -213,9 +224,14 @@ function mount(origin: string, options: MountOptions, win: Window): Widget | und
         connected = true;
         post({ ucp: 1, type: "init", mode: inline ? "inline" : "floating", signedIn: Boolean(getToken) });
         if (open) post({ ucp: 1, type: "shown" });
+        layout();
         say("✓ chat connected");
       }
       if (message?.type === "close") show(false);
+      if (message?.type === "expand" && open) {
+        expanded = message.on && expandable();
+        draw?.();
+      }
       if (message?.type === "get-token") {
         const reply = (token: string | null) => post({ ucp: 1, type: "token", id: message.id, token });
         if (!getToken) return reply(null);
@@ -235,9 +251,19 @@ function mount(origin: string, options: MountOptions, win: Window): Widget | und
           );
       }
     };
+    // A window resized across the phone size changes whether the panel can fill it.
+    let could = expandable();
+    const resized = () => {
+      if (could === expandable()) return;
+      could = !could;
+      expanded &&= could;
+      draw?.();
+    };
     win.addEventListener("message", listen);
+    win.addEventListener("resize", resized);
     stop = () => {
       win.removeEventListener("message", listen);
+      win.removeEventListener("resize", resized);
       clearTimeout(timer);
     };
     place.appendChild(host);
@@ -248,6 +274,7 @@ function mount(origin: string, options: MountOptions, win: Window): Widget | und
   function show(next = !open) {
     if (inline || next === open) return;
     open = next;
+    expanded &&= open; // closing leaves full screen too, so the chat opens as a panel next time
     draw?.();
   }
 

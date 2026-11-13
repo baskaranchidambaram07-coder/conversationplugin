@@ -349,6 +349,7 @@ test("when the chat says ready, the loader tells it the mode and sign-in state, 
   expect(sent.mock.calls).toEqual([
     [{ ucp: 1, type: "init", mode: "floating", signedIn: false }, ORIGIN],
     [{ ucp: 1, type: "shown" }, ORIGIN],
+    [{ ucp: 1, type: "layout", expandable: true, expanded: false }, ORIGIN], // the panel can fill this window, and does not yet
   ]);
   expect(console.info).toHaveBeenCalledWith("UCP: ✓ chat connected");
 });
@@ -367,7 +368,7 @@ test("each later opening tells a connected chat it is shown, so it can take focu
   sent.mockClear();
   api()("open");
 
-  expect(sent.mock.calls).toEqual([[{ ucp: 1, type: "shown" }, ORIGIN]]);
+  expect(sent.mock.calls).toEqual([[{ ucp: 1, type: "shown" }, ORIGIN], [{ ucp: 1, type: "layout", expandable: true, expanded: false }, ORIGIN]]);
 });
 
 test("closing a connected chat tells it it is hidden, so it can stop animating", async () => {
@@ -376,7 +377,7 @@ test("closing a connected chat tells it it is hidden, so it can stop animating",
   sent.mockClear();
   api()("close");
 
-  expect(sent.mock.calls).toEqual([[{ ucp: 1, type: "hidden" }, ORIGIN]]);
+  expect(sent.mock.calls).toEqual([[{ ucp: 1, type: "hidden" }, ORIGIN], [{ ucp: 1, type: "layout", expandable: true, expanded: false }, ORIGIN]]);
 });
 
 test.each([
@@ -430,4 +431,55 @@ test("inline placement tells the chat it is inline", async () => {
   window.dispatchEvent(new MessageEvent("message", { data: { ucp: 1, type: "ready" }, origin: ORIGIN, source: chat }));
 
   expect(sent.mock.calls[0]?.[0]).toEqual({ ucp: 1, type: "init", mode: "inline", signedIn: false });
+});
+
+const filled = () => document.querySelector("[data-ucp]")?.shadowRoot?.querySelector(".w")?.classList.contains("expanded");
+
+test("on request the open panel fills the window and locks the page's scroll; going back or closing undoes both", async () => {
+  document.documentElement.style.overflow = "scroll";
+  const { sent, fromChat } = await openWithBridge();
+  fromChat({ ucp: 1, type: "ready" });
+  sent.mockClear();
+
+  fromChat({ ucp: 1, type: "expand", on: true });
+  expect(filled()).toBe(true);
+  expect(document.documentElement.style.overflow).toBe("hidden");
+  expect(sent).toHaveBeenLastCalledWith({ ucp: 1, type: "layout", expandable: true, expanded: true }, ORIGIN);
+
+  fromChat({ ucp: 1, type: "expand", on: false });
+  expect(filled()).toBe(false);
+  expect(document.documentElement.style.overflow).toBe("scroll");
+
+  fromChat({ ucp: 1, type: "expand", on: true });
+  api()("close");
+  expect(filled()).toBe(false);
+  expect(document.documentElement.style.overflow).toBe("scroll");
+  api()("open"); // the next opening is a panel again
+  expect(filled()).toBe(false);
+  document.documentElement.style.overflow = "";
+});
+
+test("on a phone-sized window nothing can expand, and a window shrunk to one leaves full screen and says so", async () => {
+  const { sent, fromChat } = await openWithBridge();
+  fromChat({ ucp: 1, type: "ready" });
+  fromChat({ ucp: 1, type: "expand", on: true });
+  sent.mockClear();
+
+  vi.spyOn(window, "innerWidth", "get").mockReturnValue(390);
+  window.dispatchEvent(new Event("resize"));
+  expect(filled()).toBe(false);
+  expect(sent).toHaveBeenLastCalledWith({ ucp: 1, type: "layout", expandable: false, expanded: false }, ORIGIN);
+
+  fromChat({ ucp: 1, type: "expand", on: true });
+  expect(filled()).toBe(false);
+});
+
+test("an expand request from another origin, or for a closed panel, changes nothing", async () => {
+  const { fromChat } = await openWithBridge();
+  fromChat({ ucp: 1, type: "ready" });
+  fromChat({ ucp: 1, type: "expand", on: true }, "https://evil.example");
+  expect(filled()).toBe(false);
+  api()("close");
+  fromChat({ ucp: 1, type: "expand", on: true });
+  expect(filled()).toBe(false);
 });
