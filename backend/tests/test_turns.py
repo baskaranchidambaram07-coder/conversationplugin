@@ -2,6 +2,7 @@
 
 import asyncio
 import json
+import logging
 import re
 import secrets
 import time
@@ -147,6 +148,27 @@ def test_an_answer_streams_in_our_format_only_and_is_stored_as_it_was_sent(gatew
     assert stored.status == "complete" and stored.blocks[0].text == FINAL["long"]["response"]
     assert "fake-agent-version" not in json.dumps([event.model_dump(mode="json") for event in stream])
     assert stored_versions(stream[0].message_id) == (1, "fake-agent-version")  # kept for tracing, never sent
+
+
+def test_each_answer_logs_the_gateways_own_share_of_the_wait_for_its_first_word(gateway, widgets, caplog):
+    # M4's latency budget, measured where the gateway runs: the agent's own time is left out.
+    visitor = Visitor(gateway, widgets["open"])
+    conversation = visitor.conversation()
+
+    with caplog.at_level(logging.INFO, logger="ucp.turns"):
+        # The first also creates the conversation on the agent's side; the second keeps the agent silent for 650 ms.
+        for question in ("First", "Then slowly [slow]"):
+            events(visitor.ask(conversation, question))
+
+    found = [
+        re.search(r"first word: the gateway added (\d+) ms \((\d+) before .* (\d+) passing", r.getMessage())
+        for r in caplog.records
+    ]
+    shares = [tuple(int(n) for n in match.groups()) for match in found if match]
+    assert len(shares) == 2
+    for total, before, passing in shares:
+        assert abs(before + passing - total) <= 1  # each part rounded on its own
+        assert total < 300  # the agent's own time (setting up, then 650 ms of silence) is left out
 
 
 def test_a_failure_part_way_is_reported_and_stored_with_the_part_already_streamed(gateway, widgets):
