@@ -13,7 +13,8 @@ const backend = path.resolve(import.meta.dirname, "../backend");
 const read = "import json, os; print(json.dumps({k: v for k, v in os.environ.items() if k.startswith('PF_')}))";
 const settings = execFileSync("uv", ["run", "--env-file", "../.env", "python", "-c", read], { cwd: backend });
 Object.assign(process.env, JSON.parse(settings.toString()));
-process.env.UCP_GATEWAY_URL ??= "https://d3d7zj6fwckxcg.cloudfront.net";
+// The address browsers use, as the newest release tells the gateway: it changes only when the environment is rebuilt.
+process.env.UCP_GATEWAY_URL ??= execFileSync("python", ["../infra/aws/deploy.py", "--url"], { cwd: backend }).toString().trim();
 process.env.UCP_WIDGET ??= "w_smoke";
 process.env.UCP_WIDGET_TITLE ??= "UCP smoke test";
 

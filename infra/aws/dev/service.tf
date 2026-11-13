@@ -92,8 +92,8 @@ resource "aws_ecs_task_definition" "gateway" {
   family                   = "ucp-dev-gateway"
   requires_compatibilities = ["FARGATE"]
   network_mode             = "awsvpc"
-  cpu                      = 512
-  memory                   = 1024
+  cpu                      = var.gateway_cpu
+  memory                   = var.gateway_memory
   execution_role_arn       = aws_iam_role.execution.arn
   task_role_arn            = aws_iam_role.task.arn
   runtime_platform {
