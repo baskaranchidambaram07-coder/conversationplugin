@@ -76,6 +76,7 @@ class PfConnector:
         self, profile: PfProfile, client: httpx2.AsyncClient, *, recover_seconds: float = 120, poll_seconds: float = 2
     ):
         self.profile, self.client = profile, client
+        self.version = profile.agent_version_id
         self.recover_seconds, self.poll_seconds = recover_seconds, poll_seconds
         self._token: str | None = None
         self._expires = 0.0
