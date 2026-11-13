@@ -32,12 +32,12 @@ A plain `terraform apply` without `-var=awake=true` puts the environment to slee
 
 ## Releasing
 
-Every push to `develop` runs `.github/workflows/deploy-dev.yml`. It builds the image, scans it (fixable high and critical flaws stop it), and stores it under its commit's tag. Then it runs `deploy.py`:
+Every push to `develop`, and to the module branch being built while it needs this environment (M15's now), runs `.github/workflows/deploy-dev.yml`. The widget file travels inside the image, so a changed widget file goes out with the next pipeline release, not with a wake. It builds the image, scans it (fixable high and critical flaws stop it), and stores it under its commit's tag. Then it runs `deploy.py`:
 
 1. a new release of that image;
 2. the database migrations;
 3. the widget file `backend/deploy/widgets.dev.json`, published with the run's actor in the audit log;
-4. the service rolled over (if the new release never becomes healthy, the container service goes back to the one before by itself);
+4. the service rolled over, always afresh, so changed secrets are read too (if the new release never becomes healthy, the container service goes back to the one before by itself);
 5. the PF connection check;
 6. the smoke test.
 
