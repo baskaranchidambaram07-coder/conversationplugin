@@ -170,6 +170,30 @@ def test_the_limiter_counts_a_rolling_minute_per_key():
     limiter.check("a", 3)
 
 
+def gateway(database_url, **settings) -> TestClient:
+    return TestClient(create_app(Settings(database_url=database_url, session_keys=KEYS, **settings)))
+
+
+def test_behind_the_content_network_each_visitor_has_their_own_allowance_from_the_address_it_saw(database_url, widgets):
+    def three(client, seen: list[str]) -> list[int]:
+        return [start(client, widgets["strict"], **{"cloudfront-viewer-address": s}).status_code for s in seen]
+
+    with gateway(database_url, visitor_address_header="cloudfront-viewer-address") as behind:
+        for address in ("198.51.100.7", "198.51.100.8", "2001:db8::1"):
+            # Each address its own two, whatever port it came from.
+            assert three(behind, [f"{address}:{port}" for port in (50123, 50999, 443)]) == [200, 200, 429]
+    with gateway(database_url) as direct:
+        # Where the gateway is reached directly, a visitor writing the header gains nothing.
+        assert three(direct, [f"10.0.0.{n}:1" for n in range(3)]) == [200, 200, 429]
+
+
+def test_behind_the_content_network_only_pages_from_the_public_origin_may_call(database_url, widgets):
+    with gateway(database_url, public_origin="https://d1.cloudfront.net") as behind:
+        assert start(behind, widgets["open"], origin="https://d1.cloudfront.net").status_code == 200
+        for other in ("http://testserver", "http://d1.cloudfront.net", "https://evil.example"):
+            assert start(behind, widgets["open"], origin=other).status_code == 403, other
+
+
 def test_one_widgets_sessions_do_not_use_up_anothers_limit(client, widgets):
     for _ in range(2):
         assert start(client, widgets["open"]).status_code == 200
