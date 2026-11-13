@@ -66,7 +66,8 @@ async def visitor(http: httpx2.AsyncClient, pf_token: str, turns: int, added: li
         added.append((through - direct) * 1000)
 
 
-async def main(visitors: int, turns: int) -> int:
+async def measure(visitors: int, turns: int) -> tuple[float, int]:
+    """One run: every visitor at once. Returns the 95th percentile added, and how many visitors failed."""
     async with httpx2.AsyncClient(
         timeout=httpx2.Timeout(10, read=120), limits=httpx2.Limits(max_connections=1000)
     ) as http:
@@ -84,15 +85,24 @@ async def main(visitors: int, turns: int) -> int:
     failures = [result for result in results if isinstance(result, BaseException)]
     if not added:
         print(f"every visitor failed, for example: {failures[0]!r}")
-        return 1
+        return float("inf"), len(failures)
     added.sort()
     p50, p95 = statistics.median(added), added[max(0, int(len(added) * 0.95) - 1)]
     print(f"{visitors} visitors, {len(added)} turns in {took:.1f} s, {len(failures)} visitors failed")
     print(f"added to the first word: median {p50:.0f} ms, 95th percentile {p95:.0f} ms, worst {added[-1]:.0f} ms")
     for failure in failures[:3]:
         print(f"  failure: {failure!r}")
-    ok = not failures and p95 <= BUDGET_MS
-    print(f"{'within' if ok else 'OVER'} the budget of {BUDGET_MS} ms")
+    return p95, len(failures)
+
+
+async def main(visitors: int, turns: int, runs: int) -> int:
+    """Judges the median of the runs' 95th percentiles: one stalled run on a shared machine neither fails the
+    budget nor, as a retry would, lets a real slowdown pass on a lucky second try."""
+    measured = [await measure(visitors, turns) for _ in range(runs)]
+    p95 = statistics.median(p95 for p95, _ in measured)
+    ok = not any(failed for _, failed in measured) and p95 <= BUDGET_MS
+    verdict = "within" if ok else "OVER"
+    print(f"median of {runs} runs' 95th percentiles: {p95:.0f} ms, {verdict} the budget of {BUDGET_MS} ms")
     return 0 if ok else 1
 
 
@@ -100,5 +110,6 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     parser.add_argument("--visitors", type=int, default=50)
     parser.add_argument("--turns", type=int, default=5)
+    parser.add_argument("--runs", type=int, default=3)
     arguments = parser.parse_args()
-    sys.exit(asyncio.run(main(arguments.visitors, arguments.turns)))
+    sys.exit(asyncio.run(main(arguments.visitors, arguments.turns, arguments.runs)))
