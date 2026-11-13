@@ -20,6 +20,7 @@ class Settings:
     # The request header holding the visitor's address, set by the content delivery network, when the load balancer
     # admits only that network. Never set where visitors can reach the gateway directly: they could write it.
     visitor_address_header: str | None = None
+    log_level: str = "INFO"  # the gateway's own log lines; DEBUG, INFO, WARNING or ERROR
 
     @classmethod
     def from_env(cls) -> "Settings":
@@ -33,4 +34,5 @@ class Settings:
             signed_in_seconds=int(os.environ.get("UCP_SIGNED_IN_SECONDS", "900")),
             public_origin=os.environ.get("UCP_PUBLIC_ORIGIN"),
             visitor_address_header=os.environ.get("UCP_VISITOR_ADDRESS_HEADER"),
+            log_level=os.environ.get("UCP_LOG_LEVEL", "INFO"),
         )
