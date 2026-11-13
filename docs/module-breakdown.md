@@ -1001,6 +1001,37 @@ State on 13 November 2026 (pull requests 56 to 62 into `module/m14-cloud-deploym
 
 **Done when** both timed runs finish inside the hour.
 
+State on 13 November 2026 (pull requests 66 to 70 into `module/m15-developer-experience`). By your decisions, the base version gives the College sample pages and a guide for its own sandbox, plus copies hosted on our side. The College's details are mocked: sample branding, no College logo, and every page marked as a sample.
+
+- Built:
+  - **T3, partly:** the College's samples in `examples/college`, a public page and a portal page with `portal.js`. They have no inline scripts, and their content policy names the assistant only in `script-src`, `frame-src` and `connect-src`. The token-signing code in six languages came with M5.
+  - **T1 and T2, partly:** `docs/college-sandbox-guide.md`. It covers what we send and what we need, the public page, the portal page, the content policy, and what each of the loader's debug lines means.
+  - **The hosted copies** (`infra/aws/dev/samples.tf`):
+    - a private bucket behind a CloudFront address of its own, `https://dtnn7ijr4mkda.cloudfront.net`, with the pages filled in by Terraform;
+    - the portal signs in under any name through a CloudFront function (`functions/demo-token.js`), which signs for the demo widget only;
+    - the College's widget (`both`) and the demo widget (`signed_in`) are in `widgets.dev.json`, allowed on the samples' site through `UCP_SAMPLES_ORIGIN`. A widget file may now name `${UCP_…}` settings.
+  - **T6:** the procedure, `docs/onboarding-test.md`.
+- Tests:
+  - `backend/tests/test_guides.py`: every HTML and JavaScript snippet in the guide is in a tested sample, and every relative link in the guides reaches a file;
+  - `e2e/gateway/samples.spec.ts`, 12 runs: the samples, filled in as the deployment fills them, against the real gateway on three engines. The sign-in function runs as CloudFront runs it, and no page breaks its content policy;
+  - `test_portable.py`: the dev widget file publishes once it is filled in;
+  - on the deployed stack against PF staging (`npm run e2e:deployed`, 4 passed): the hosted public page is answered; on the hosted portal, a name signs in and finds its chat again after signing out and in; a bad name is refused; and the R13 leak search passes. The pipeline's smoke test passed on the release with the College's widgets.
+- Found and fixed:
+  - **Secrets not reloaded:** releasing again after a secret change did not restart the gateway, because an unchanged release starts no deployment. `deploy.py` now always forces a fresh one.
+  - **Widget file not deployed:** the widget file travels inside the image, so the pipeline now deploys from this module branch, as it did for M14.
+- Still to do:
+  - **The College's shared secret:** run `secret_store.py host-secret college`, then `deploy.py`. It prints the secret once, to send with the widget ID and the two addresses.
+  - **The College's sandbox addresses:** add them to its widget's `allowed_domains`.
+  - **The first timed run:** it needs an engineer new to the product.
+- Deferred:
+  - framework samples (React, Next.js, Angular, Vue);
+  - the loader API reference generated from the types (T4);
+  - the versioning policy (T5);
+  - the console's documentation, with M9;
+  - running the guide's snippets in the pipeline, beyond comparing them with the tested samples.
+
+The done condition, both timed runs inside the hour, waits for that first run.
+
 ---
 
 ## 9. System-level test suites

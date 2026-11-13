@@ -179,6 +179,7 @@ After `npm install` on this Windows machine, check `package-lock.json` before co
 | The dev environment: wake, sleep, status; build or tear down from code | `python infra/aws/dev.py wake` (`sleep`, `status`, `build`, `teardown`, `plan`) |
 | Release to dev by hand, or roll back to an earlier commit's image | `python infra/aws/deploy.py --image <commit> --by <name>` |
 | The dev environment's address | `python infra/aws/deploy.py --url` |
+| The College's samples, as we host them | `python infra/aws/deploy.py --samples-url` |
 | Smoke-test the dev environment | `cd backend && uv run python smoke.py "$(python ../infra/aws/deploy.py --url)" w_smoke` |
 | Set the PF profile, rotate session keys, or make a customer's shared secret | `cd backend && uv run --env-file ../.env python ../infra/aws/secret_store.py agent-profiles` (`session-keys`, `host-secret NAME [--rotate]`) |
 | Proofs on the deployed stack | `uv run python ../infra/aws/latency.py`, `rollout_check.py`, `python infra/aws/restore_rehearsal.py`, `npm run e2e:deployed` |
