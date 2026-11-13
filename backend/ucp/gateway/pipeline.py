@@ -103,6 +103,7 @@ class Pipeline:
             return await self.app(scope, receive, send)
         token = correlation.set(f"r_{secrets.token_urlsafe(12)}")
         started, status, received = time.perf_counter(), 500, 0
+        scope.setdefault("state", {})["received"] = started  # for the gateway's own share of a first word (ucp.turns)
         response_started = False
 
         async def limited_receive():

@@ -19,6 +19,7 @@ import logging
 import time
 from collections import Counter
 from collections.abc import AsyncIterator
+from dataclasses import dataclass
 from math import ceil
 
 from ucp.connector import Accepted, AgentConnector, AgentError, Failed, Final, Text
@@ -54,6 +55,18 @@ class Breaker:
             self.opened = time.monotonic()
 
 
+@dataclass
+class FirstWord:
+    """When an answer's first word was on its way, to log the gateway's own share of the wait: M4's budget of 150 ms
+    at the 95th percentile, measured where it runs. The agent's own time (setting up its conversation, thinking)
+    is left out, so the figure holds whatever the agent's speed."""
+
+    received: float  # the request arrived (time.perf_counter)
+    agent_setup: float = 0.0  # seconds spent creating the conversation on the agent's side
+    asked: float | None = None  # the question went to the agent
+    answered: float | None = None  # the agent's first word arrived
+
+
 class Turns:
     def __init__(
         self,
@@ -81,17 +94,25 @@ class Turns:
             raise Problem("rate_limited", retryable=True, retry_after=5)
 
     def start(
-        self, turn: Turn, tenant_id: str, profile: str, connector: AgentConnector, question: str
-    ) -> tuple[asyncio.Queue, asyncio.Task]:
+        self,
+        turn: Turn,
+        tenant_id: str,
+        profile: str,
+        connector: AgentConnector,
+        question: str,
+        received: float | None = None,
+    ) -> tuple[asyncio.Queue, asyncio.Task, FirstWord]:
         queue: asyncio.Queue[str | None] = asyncio.Queue()
+        timing = FirstWord(received if received is not None else time.perf_counter())
         self.active[tenant_id] += 1
-        task = asyncio.create_task(self._run(turn, tenant_id, profile, connector, question, queue))
+        task = asyncio.create_task(self._run(turn, tenant_id, profile, connector, question, queue, timing))
         self.tasks.add(task)
         task.add_done_callback(self.tasks.discard)
-        return queue, task
+        return queue, task, timing
 
-    async def watch(self, queue: asyncio.Queue) -> AsyncIterator[str]:
-        """The live events of a turn, as server-sent event lines, with a heartbeat in every quiet spell."""
+    async def watch(self, queue: asyncio.Queue, timing: FirstWord | None = None) -> AsyncIterator[str]:
+        """The live events of a turn, as server-sent event lines, with a heartbeat in every quiet spell. Logs the
+        gateway's own share of the first word's wait as that word leaves."""
         yield PING
         while True:
             try:
@@ -101,6 +122,18 @@ class Turns:
                 continue
             if item is None:
                 return
+            if timing and timing.answered and timing.asked and "content_block.delta" in item:
+                before = (timing.asked - timing.received - timing.agent_setup) * 1000
+                passing = (time.perf_counter() - timing.answered) * 1000
+                log.info(
+                    "first word: the gateway added %.0f ms (%.0f before asking the agent, %.0f passing it on), "
+                    "reference %s",
+                    before + passing,
+                    before,
+                    passing,
+                    correlation.get(),
+                )
+                timing = None
             yield f"data: {item}\n\n"
 
     async def settled(self, owner: Owner, turn: Turn) -> Message:
@@ -139,7 +172,14 @@ class Turns:
             yield f"data: {line}\n\n"
 
     async def _run(
-        self, turn: Turn, tenant_id: str, profile: str, connector: AgentConnector, question: str, queue: asyncio.Queue
+        self,
+        turn: Turn,
+        tenant_id: str,
+        profile: str,
+        connector: AgentConnector,
+        question: str,
+        queue: asyncio.Queue,
+        timing: FirstWord,
     ) -> None:
         emit = _emitter(turn)
         answer: list[str] = []
@@ -151,6 +191,7 @@ class Turns:
         def piece(text: str) -> None:
             nonlocal opened
             if not opened:
+                timing.answered = time.perf_counter()
                 send("content_block.started", index=0, block={"type": "markdown", "text": ""})
                 opened = True
             answer.append(text)
@@ -163,9 +204,12 @@ class Turns:
             async with asyncio.timeout(self.whole):
                 agent_conversation = turn.agent_conversation_id
                 if not agent_conversation:
+                    setting_up = time.perf_counter()
                     agent_conversation = await connector.create_conversation(turn.conversation_id)
+                    timing.agent_setup = time.perf_counter() - setting_up
                     await self.store.set_agent_conversation(turn.conversation_id, agent_conversation)
                 for attempt in (1, 2):
+                    timing.asked = time.perf_counter()
                     outcome, accepted = await self._ask(connector, agent_conversation, question, piece, ids)
                     if isinstance(outcome, Final) or accepted or not outcome.retryable or attempt == 2:
                         break

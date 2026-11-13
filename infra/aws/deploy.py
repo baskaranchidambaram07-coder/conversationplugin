@@ -60,8 +60,9 @@ def release(image_tag: str | None) -> str:
     ]
 
 
-def once(definition: str, network: dict, command: list[str], what: str) -> None:
-    """Runs one command in a task of its own with the release's image, shows its output, and stops on failure."""
+def once(definition: str, network: dict, command: list[str], what: str) -> list[str]:
+    """Runs one command in a task of its own with the release's image, shows its output, and stops on failure.
+    Returns the lines it wrote."""
     print(f"{what} ...", flush=True)
     overrides = {"containerOverrides": [{"name": "gateway", "command": command}]}
     task = aws(
@@ -81,15 +82,17 @@ def once(definition: str, network: dict, command: list[str], what: str) -> None:
     wait("tasks-stopped", "--tasks", task["taskArn"])
     stopped = aws("ecs", "describe-tasks", "--cluster", CLUSTER, "--tasks", task["taskArn"])["tasks"][0]
     stream = f"gateway/gateway/{task['taskArn'].rsplit('/', 1)[1]}"
+    lines = []
     try:
         events = aws("logs", "get-log-events", "--log-group-name", LOGS, "--log-stream-name", stream, "--limit", "40")
-        for event in events.get("events", []):
-            print(f"  {event['message']}")
+        lines = [event["message"] for event in events.get("events", [])]
     except subprocess.CalledProcessError:
-        print("  (no output)")
+        pass
+    print("\n".join(f"  {line}" for line in lines) or "  (no output)")
     code = stopped["containers"][0].get("exitCode")
     if code != 0:
         sys.exit(f"{what} failed (exit {code}): {stopped.get('stoppedReason', '')}")
+    return lines
 
 
 def main(image_tag: str | None, by: str) -> None:

@@ -222,11 +222,12 @@ async def send_message(
             return JSONResponse((await turns.settled(mine, turn)).model_dump(mode="json"))
         stream = turns.replay(mine, turn)
     else:
-        queue, task = turns.start(turn, widget.document.tenant_id, profile, connector, body.text)
+        received = getattr(request.state, "received", None)
+        queue, task, timing = turns.start(turn, widget.document.tenant_id, profile, connector, body.text, received)
         if whole:
             await asyncio.shield(task)  # a caller who leaves does not cancel the answer
             return JSONResponse((await turns.settled(mine, turn)).model_dump(mode="json"))
-        stream = turns.watch(queue)
+        stream = turns.watch(queue, timing)
     # No buffering on the way, so each piece reaches the visitor as it is written.
     headers = {"cache-control": "no-store", "x-accel-buffering": "no"}
     return StreamingResponse(stream, media_type="text/event-stream", headers=headers)
