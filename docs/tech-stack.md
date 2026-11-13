@@ -79,7 +79,7 @@ GitHub Actions runs seven jobs on every pull request and on every push to `main`
 |---|---|
 | Backend lint and tests | Installs from the lock file, runs Ruff and pytest against a PostgreSQL 17 container |
 | Web checks, builds and browser tests | Type checks, unit tests, both builds, the loader size limit, then Playwright on all four targets |
-| Gateway journeys and load | Runs the real chat against the real gateway, with PostgreSQL and the fake PF, on three browser engines. Then runs the API journey script and the load test, which checks the gateway adds at most 150 ms to the first word at the 95th percentile. Shared runners stall now and then, so the load test gets a second try; a real slowdown fails both |
+| Gateway journeys and load | Runs the real chat against the real gateway, with PostgreSQL and the fake PF, on three browser engines. Then runs the API journey script and the load test, which checks the gateway adds at most 150 ms to the first word at the 95th percentile. Shared runners stall now and then, so the budget is judged on the median of three runs' 95th percentiles |
 | Sign-in through a real identity provider | Starts Keycloak in a container and signs users in through the gateway with its tokens, including a signing-key rotation (`backend/tests/test_keycloak.py`) |
 | Token-signing snippets | Installs Java, .NET, Go and PHP beside Python and Node, runs all six snippets, and checks every token with the gateway's own code |
 | Container image builds and starts | Builds the gateway image from the repository root (a Node stage builds the loader and chat into it), checks that it answers, sends no server header and serves the loader |
