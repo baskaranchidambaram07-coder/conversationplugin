@@ -1,4 +1,5 @@
 import os
+import re
 import threading
 import time
 
@@ -11,6 +12,24 @@ from ucp import migrate
 from ucp.store import Store
 
 TEST_DATABASE_URL = os.environ.get("TEST_DATABASE_URL")
+PF_SETTINGS = ("PF_BASE_URL", "PF_TENANT", "PF_API_KEY", "PF_USERNAME", "PF_PASSWORD", "PF_WORKSPACE_ID", "PF_AGENT_ID")
+PF_SHAPED = re.compile(r"eyJ[\w-]+\.[\w-]+\.[\w-]*|\b[0-9a-f]{24}\b|\b[0-9a-f]{8}(?:-[0-9a-f]{4}){3}-[0-9a-f]{12}\b")
+
+
+def redact(text: str) -> str:
+    """PF's address, credentials, IDs and tokens blanked, so a report from a run against PF can be shared (R13)."""
+    for name in PF_SETTINGS:
+        if value := os.environ.get(name):
+            text = text.replace(value, f"<{name}>")
+    return PF_SHAPED.sub("<id>", text)
+
+
+@pytest.hookimpl(hookwrapper=True)
+def pytest_runtest_makereport(item, call):
+    report = (yield).get_result()
+    if report.failed and os.environ.get("UCP_PF_STAGING") == "1":
+        report.longrepr = redact(str(report.longrepr))
+        report.sections = [(title, redact(text)) for title, text in report.sections]
 
 
 @pytest.fixture
