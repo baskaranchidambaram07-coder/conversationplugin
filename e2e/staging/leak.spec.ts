@@ -3,7 +3,11 @@ import { expect, test } from "@playwright/test";
 // R13 with the real PF (M6; the core of M12-T11). A visitor holds a real conversation answered by PF staging, and
 // everything the browser received is searched for PF: network traffic both ways, the console, every frame's page and
 // storage, cookies, and inside any token. Failures name the setting and where it was found, never the value.
-const PAGE = "http://127.0.0.1:4174/hosts/gateway.html";
+// The local stack (staging.config.ts), or a deployed one (deployed.config.ts sets UCP_GATEWAY_URL and the widget).
+const GATEWAY = process.env.UCP_GATEWAY_URL ?? "http://localhost:8200";
+const WIDGET = process.env.UCP_WIDGET ?? "w_gateway";
+const TITLE = process.env.UCP_WIDGET_TITLE ?? "Ask the College";
+const PAGE = `http://127.0.0.1:4174/hosts/gateway-any.html?gateway=${encodeURIComponent(GATEWAY)}&widget=${WIDGET}`;
 const SETTINGS = ["PF_BASE_URL", "PF_TENANT", "PF_WORKSPACE_ID", "PF_AGENT_ID", "PF_API_KEY", "PF_USERNAME", "PF_PASSWORD"];
 const QUESTIONS = ["Reply with the single word READY.", "Thank you. Now reply with the single word DONE."];
 const PF_ID = /\b[0-9a-f]{24}\b/; // PF's conversation and message IDs; ours are never this shape
@@ -53,7 +57,7 @@ test("a real conversation on PF staging leaves nothing of PF anywhere in the bro
   page.on("pageerror", (error) => seen.push({ where: "a page error", text: String(error) }));
 
   await page.goto(PAGE);
-  await page.getByRole("button", { name: "Ask the College" }).click();
+  await page.getByRole("button", { name: TITLE }).click();
   const chat = page.frameLocator("[data-ucp] iframe");
   const field = chat.getByRole("textbox", { name: "Your question" });
   for (const [asked, question] of QUESTIONS.entries()) {

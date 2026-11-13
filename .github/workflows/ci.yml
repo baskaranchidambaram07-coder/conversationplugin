@@ -43,6 +43,7 @@ jobs:
       - run: uv sync --frozen
       - run: uv run ruff check .
       - run: uv run ruff format --check .
+      - run: uv run ruff check ../infra && uv run ruff format --check ../infra
       - run: uv run pytest
 
   web:
@@ -191,6 +192,25 @@ jobs:
           ! curl --silent --head http://127.0.0.1:8000/healthz | grep -i '^server:'
           # The built loader and chat are inside, and served.
           curl --fail --silent http://127.0.0.1:8000/loader.js > /dev/null
+
+  infrastructure:
+    name: Infrastructure code checks
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - name: Terraform is formatted and valid
+        run: |
+          terraform="docker run --rm --volume $PWD:/work --workdir /work hashicorp/terraform:1.17.2"
+          $terraform fmt -check -recursive infra/aws
+          for folder in infra/aws/bootstrap infra/aws/dev; do
+            $terraform -chdir=$folder init -backend=false -input=false > /dev/null
+            $terraform -chdir=$folder validate
+          done
+      - name: No high or critical misconfiguration, asleep or awake (accepted ones carry their reason inline)
+        run: |
+          trivy="docker run --rm --volume $PWD:/work --workdir /work aquasec/trivy:0.76.2 config --quiet"
+          $trivy --severity HIGH,CRITICAL --exit-code 1 infra/aws
+          $trivy --severity HIGH,CRITICAL --exit-code 1 --tf-vars infra/aws/dev/awake.tfvars infra/aws/dev
 
   secrets:
     name: Secret scan

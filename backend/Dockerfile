@@ -18,11 +18,16 @@ RUN uv sync --frozen --no-dev
 COPY backend/ucp ./ucp
 
 FROM python:3.12-slim
+# Debian's security fixes, applied when the image is built rather than waiting for a new base image (the release's
+# scan stops on any fixable high or critical flaw).
+RUN apt-get update && apt-get upgrade --yes --no-install-recommends && rm -rf /var/lib/apt/lists/*
 RUN useradd --system --uid 10001 --no-create-home app
 WORKDIR /app
 COPY --from=build /app /app
 COPY --from=web /src/web/loader/dist ./web/loader/dist
 COPY --from=web /src/web/widget/dist ./web/widget/dist
+# The widget files the release publishes in each environment (infra/aws/deploy.py).
+COPY backend/deploy ./deploy
 ENV PATH="/app/.venv/bin:$PATH" PYTHONUNBUFFERED=1 UCP_WEB_DIR=/app/web
 USER 10001
 EXPOSE 8000

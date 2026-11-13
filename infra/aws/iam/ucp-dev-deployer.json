@@ -71,7 +71,8 @@
         "ec2:UpdateSecurityGroupRuleDescriptionsIngress",
         "ec2:UpdateSecurityGroupRuleDescriptionsEgress",
         "ec2:CreateTags",
-        "ec2:DeleteTags"
+        "ec2:DeleteTags",
+        "ec2:GetSecurityGroupsForVpc"
       ],
       "Resource": "*",
       "Condition": {

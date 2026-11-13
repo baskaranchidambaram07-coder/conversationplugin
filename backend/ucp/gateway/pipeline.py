@@ -4,6 +4,7 @@ nothing from PF, the framework or a stack trace reaches the browser (R13)."""
 
 import logging
 import secrets
+import sys
 import time
 from contextvars import ContextVar
 from typing import Literal
@@ -103,6 +104,7 @@ class Pipeline:
             return await self.app(scope, receive, send)
         token = correlation.set(f"r_{secrets.token_urlsafe(12)}")
         started, status, received = time.perf_counter(), 500, 0
+        scope.setdefault("state", {})["received"] = started  # for the gateway's own share of a first word (ucp.turns)
         response_started = False
 
         async def limited_receive():
@@ -144,6 +146,18 @@ class Pipeline:
 
 class _TooLarge(Exception):
     pass
+
+
+def install_logging(level: str) -> None:
+    """The gateway's own lines (the access log, each turn, sign-in refusals) to standard output, where the container
+    service collects them. Unless something is configured Python drops informational lines, and the web server
+    configures only its own loggers."""
+    ours = logging.getLogger("ucp")
+    if not ours.handlers:
+        handler = logging.StreamHandler(sys.stdout)
+        handler.setFormatter(logging.Formatter("%(levelname)s %(name)s %(message)s"))
+        ours.addHandler(handler)
+    ours.setLevel(level)
 
 
 def install(app: FastAPI) -> None:

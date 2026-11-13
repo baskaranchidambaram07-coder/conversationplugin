@@ -24,8 +24,18 @@ REFUSALS_PER_MINUTE = 10  # host tokens refused from one address before it must 
 
 def same_origin(request: Request) -> None:
     origin = request.headers.get("origin")
-    if origin is not None and origin != f"{request.url.scheme}://{request.url.netloc}":
+    ours = request.app.state.public_origin or f"{request.url.scheme}://{request.url.netloc}"
+    if origin is not None and origin != ours:
         raise Problem("forbidden")
+
+
+def visitor_address(request: Request) -> str:
+    """The visitor's address, for the limits per address. Behind the content delivery network every request comes
+    from the load balancer, so the address the network saw is taken from its header ("address:port")."""
+    header = request.app.state.visitor_address_header
+    if header and (seen := request.headers.get(header)):
+        return seen.rsplit(":", 1)[0]
+    return request.client.host if request.client else "unknown"
 
 
 router = APIRouter(prefix="/v1", dependencies=[Depends(same_origin)], responses={"4XX": {"model": protocol.ApiError}})
@@ -68,7 +78,7 @@ async def start_session(body: protocol.SessionRequest, request: Request) -> prot
     widget = await widgets_of(request).get(body.widget_id)
     if not widget:
         raise Problem("not_found")
-    address = request.client.host if request.client else "unknown"
+    address = visitor_address(request)
     # Counted per widget, as each widget sets its own limit.
     limiter.check(f"sessions:{widget.widget_id}:{address}", widget.document.limits.sessions_per_minute_per_address)
     document, keys = widget.document, _keys(request)
@@ -212,11 +222,12 @@ async def send_message(
             return JSONResponse((await turns.settled(mine, turn)).model_dump(mode="json"))
         stream = turns.replay(mine, turn)
     else:
-        queue, task = turns.start(turn, widget.document.tenant_id, profile, connector, body.text)
+        received = getattr(request.state, "received", None)
+        queue, task, timing = turns.start(turn, widget.document.tenant_id, profile, connector, body.text, received)
         if whole:
             await asyncio.shield(task)  # a caller who leaves does not cancel the answer
             return JSONResponse((await turns.settled(mine, turn)).model_dump(mode="json"))
-        stream = turns.watch(queue)
+        stream = turns.watch(queue, timing)
     # No buffering on the way, so each piece reaches the visitor as it is written.
     headers = {"cache-control": "no-store", "x-accel-buffering": "no"}
     return StreamingResponse(stream, media_type="text/event-stream", headers=headers)
