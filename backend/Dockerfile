@@ -23,6 +23,8 @@ WORKDIR /app
 COPY --from=build /app /app
 COPY --from=web /src/web/loader/dist ./web/loader/dist
 COPY --from=web /src/web/widget/dist ./web/widget/dist
+# The widget files the release publishes in each environment (infra/aws/deploy.py).
+COPY backend/deploy ./deploy
 ENV PATH="/app/.venv/bin:$PATH" PYTHONUNBUFFERED=1 UCP_WEB_DIR=/app/web
 USER 10001
 EXPOSE 8000

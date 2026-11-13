@@ -9,6 +9,7 @@
 !backend/pyproject.toml
 !backend/uv.lock
 !backend/ucp
+!backend/deploy
 **/node_modules
 **/dist
 **/__pycache__
