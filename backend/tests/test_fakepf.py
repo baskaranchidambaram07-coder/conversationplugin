@@ -121,6 +121,15 @@ def test_slow_reply_is_silent_for_over_a_minute_before_the_first_word():
     assert stream[-2]["content"]["response"] == "READY"
 
 
+def test_a_seeded_reply_carries_internal_details_on_every_event_and_the_answer_unchanged():
+    plain = events(chat("Hello")(TestClient(create_app(time_scale=0)))[-1])
+    seeded = events(chat("[seeded] Hello")(TestClient(create_app(time_scale=0)))[-1])
+
+    assert outline(seeded) == outline(plain) and words(seeded) == words(plain)
+    assert all("SEEDED" in json.dumps(event) for event in seeded)
+    assert "10.20.30.40" in json.dumps(seeded[-2]["content"]["sources"])
+
+
 def test_error_arrives_inside_a_201_stream_after_some_words():
     sent = chat("[error] Hello")(TestClient(create_app(time_scale=0)))[-1]
     stream = events(sent)
