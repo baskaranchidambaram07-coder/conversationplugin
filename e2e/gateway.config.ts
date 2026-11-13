@@ -21,7 +21,8 @@ export default defineConfig({
       command: stack,
       cwd: "../backend",
       url: "http://127.0.0.1:8200/readyz",
-      env: { FAKE_PF_SPEED: "0.2" },
+      // Signed-in sessions last 5 seconds here, so a journey can outlive one and see it renewed.
+      env: { FAKE_PF_SPEED: "0.2", UCP_SIGNED_IN_SECONDS: "5" },
       reuseExistingServer: !process.env.CI,
       timeout: 120_000,
     },

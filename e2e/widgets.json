@@ -20,7 +20,10 @@
         "http://127.0.0.1:4174"
       ],
       "sign_in": "anonymous",
-      "agent_profile": "fake-pf"
+      "agent_profile": "fake-pf",
+      "limits": {
+        "sessions_per_minute_per_address": 1000
+      }
     },
     "w_load": {
       "tenant_id": "t_load",
@@ -48,6 +51,39 @@
         "messages_per_minute_per_session": 1000,
         "concurrent_turns": 1000
       }
+    },
+    "w_portal": {
+      "tenant_id": "t_portal",
+      "public": {
+        "title": "Ask the College",
+        "welcome_message": "Hello. Ask me about accommodation, events or the library.",
+        "suggested_prompts": [
+          "When does the library open?",
+          "How do I book a guest room?"
+        ],
+        "ai_notice": "You are chatting with an AI assistant. It can make mistakes.",
+        "brand_color": "#5B2A86",
+        "logo_url": null,
+        "color_scheme": "auto",
+        "launcher_position": "bottom-right",
+        "history_enabled": true
+      },
+      "allowed_domains": [
+        "http://127.0.0.1:4174"
+      ],
+      "sign_in": "signed_in",
+      "agent_profile": "fake-pf",
+      "identity": {
+        "provider": "college-portal",
+        "issuer": "https://portal.example.ac.uk",
+        "secret": "portal-test"
+      },
+      "limits": {
+        "sessions_per_minute_per_address": 1000
+      }
     }
+  },
+  "test_host_secrets": {
+    "portal-test": "k1:portal-test-secret-for-browser-tests-only-0123"
   }
 }

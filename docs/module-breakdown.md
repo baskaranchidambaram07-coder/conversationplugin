@@ -462,6 +462,39 @@ State on 12 November 2026 (pull requests 26 to 31 into `module/m04-conversation-
 
 Later: PF-level delegated identity, if PF supports it; console screens for single sign-on set-up.
 
+State on 12 November 2026 (pull requests 33 to 36 into `module/m05-identity-session`):
+
+- Built for the base version:
+  - T1: signed-in sessions last 15 minutes and are renewed through `getToken`; anonymous sessions last 60 minutes and cannot be renewed. The session token's clock tolerance is now 5 s, since gateway instances share a synced clock.
+  - T2: each anonymous session is a new visitor, so their history lasts the session.
+  - T3: host tokens signed with the widget's shared secret: a 10-minute maximum lifetime, a one-time `jti` kept in PostgreSQL, and both secrets accepted during a rotation.
+  - T4: identity-provider tokens, by OpenID Connect discovery over https. Keys are kept an hour and fetched again at most once a minute for an unknown key. They stay usable for a day while the provider is down; after that, its visitors are refused as unavailable.
+  - T5: the `identities` table.
+  - T6: renewal through `getToken`.
+  - T7: snippets in six languages, with a guide (`examples/token-signing`).
+- Proven end to end:
+  - the shared-secret path, in browser journeys on three engines. The stand-in portal backend signs with the Node snippet; a session that expires mid-conversation is renewed unseen; signing out removes the chat.
+  - the identity-provider path, against a real Keycloak in the pipeline, including a signing-key rotation.
+  - every snippet, run in the pipeline and checked by the gateway's own code.
+- Deferred:
+  - the deny-list to end a session early, which needs M8's admin action;
+  - separate, tighter limits for anonymous visitors;
+  - the single-sign-on setup screens (M9);
+  - PF-level delegated identity;
+  - showing history in the chat: the history panel (M2-T8) is not built, so "history is shown to its owner only" is proven through the API, not in the chat;
+  - the key-rotation runbook (M14);
+  - anonymous history across page loads (best effort, not built).
+- For M8: a widget's `identity` settings hold:
+  - `provider`;
+  - `issuer`;
+  - `audience`, optional, defaulting to the widget ID;
+  - `secret`, a name in `UCP_HOST_SECRETS`, or none for an identity provider;
+  - `user_claim`, defaulting to `sub`.
+
+  Secrets go to the secret store, never into the widget document. A widget for signed-in visitors cannot be published without these settings.
+- For M14: `UCP_HOST_SECRETS` (JSON, `{name: "id:secret,…"}`) and `UCP_SIGNED_IN_SECONDS` come from the environment. The gateway must be able to reach customers' identity providers over https.
+- For M15: the integration guide for signed-in sites is `examples/token-signing/README.md`.
+
 **Tests**
 
 - Unit: expired; not yet valid; wrong audience; wrong issuer; bad signature; unsigned token; algorithm-substitution attack; missing claims; oversized token; unknown key ID; key rotation; replayed token; clock-tolerance boundaries.

@@ -12,12 +12,14 @@ from fastapi.responses import JSONResponse, Response, StreamingResponse
 from ucp import protocol
 from ucp.gateway.pipeline import Problem
 from ucp.gateway.public import widgets_of
+from ucp.identity import Identity, expiry, verify_provider_token, verify_shared_secret
 from ucp.sessions import ANONYMOUS_SECONDS, Keys, Limiter, Session, anonymous_user
 from ucp.store import Owner, Store, TurnInProgress
 from ucp.turns import Turns
 from ucp.widgets import Widget
 
 log = logging.getLogger("ucp.gateway")
+REFUSALS_PER_MINUTE = 10  # host tokens refused from one address before it must wait
 
 
 def same_origin(request: Request) -> None:
@@ -48,6 +50,18 @@ def owner(session: Session) -> Owner:
     return Owner(session.tenant_id, session.widget_id, session.user_id)
 
 
+async def _shared_secret(request: Request, widget_id: str, identity: Identity, token: str) -> str:
+    secret = request.app.state.host_secrets.get(identity.secret)
+    if not secret:
+        log.error("widget %s names host secret %s, which is not configured", widget_id, identity.secret)
+        raise Problem("assistant_unavailable", retryable=True)
+    subject, token_hash, expires = verify_shared_secret(token, identity, widget_id, secret)
+    if not await _store(request).use_host_token(widget_id, token_hash, expiry(expires)):
+        log.info("host token refused: used before")
+        raise Problem("forbidden")
+    return subject
+
+
 @router.post("/sessions", summary="Start a session for a visitor of a widget")
 async def start_session(body: protocol.SessionRequest, request: Request) -> protocol.Session:
     limiter: Limiter = request.app.state.limiter
@@ -55,12 +69,32 @@ async def start_session(body: protocol.SessionRequest, request: Request) -> prot
     if not widget:
         raise Problem("not_found")
     address = request.client.host if request.client else "unknown"
-    limiter.check(f"sessions:{address}", widget.document.limits.sessions_per_minute_per_address)
-    # Signed-in visitors arrive with M5; until then only widgets open to anonymous visitors start sessions.
-    if body.host_token is not None or widget.document.sign_in == "signed_in":
-        raise Problem("forbidden")
-    session = Session(anonymous_user(), widget.document.tenant_id, widget.widget_id, widget.version, "anonymous")
-    return protocol.Session(token=_keys(request).issue(session), expires_in=ANONYMOUS_SECONDS)
+    # Counted per widget, as each widget sets its own limit.
+    limiter.check(f"sessions:{widget.widget_id}:{address}", widget.document.limits.sessions_per_minute_per_address)
+    document, keys = widget.document, _keys(request)
+    if body.host_token is None:
+        if document.sign_in == "signed_in":
+            raise Problem("forbidden")  # this widget is for signed-in visitors only
+        session = Session(anonymous_user(), document.tenant_id, widget.widget_id, widget.version, "anonymous")
+        return protocol.Session(token=keys.issue(session), expires_in=ANONYMOUS_SECONDS)
+    if document.sign_in == "anonymous" or not document.identity:
+        raise Problem("forbidden")  # a token sent to a widget that takes none is a mistake on the host's side
+    identity = document.identity
+    try:
+        if identity.secret:
+            subject = await _shared_secret(request, widget.widget_id, identity, body.host_token)
+        else:
+            subject = await verify_provider_token(
+                body.host_token, identity, widget.widget_id, request.app.state.provider_keys
+            )
+    except Problem as refused:
+        if refused.code == "forbidden":  # repeated failures from one address are slowed down
+            limiter.check(f"refused-host-tokens:{address}", REFUSALS_PER_MINUTE)
+        raise
+    user = await _store(request).user_for(document.tenant_id, identity.provider, subject)
+    seconds = request.app.state.signed_in_seconds
+    session = Session(user, document.tenant_id, widget.widget_id, widget.version, "signed_in")
+    return protocol.Session(token=keys.issue(session, seconds=seconds), expires_in=seconds)
 
 
 # Conversations and messages (M4-T5, M4-T6)

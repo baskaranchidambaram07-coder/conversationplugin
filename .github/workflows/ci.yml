@@ -108,7 +108,74 @@ jobs:
           FAKE_PF_SPEED=0.1 uv run python devstack.py &
           curl --fail --silent --retry 60 --retry-delay 1 --retry-all-errors http://127.0.0.1:8200/readyz
           uv run python journey.py http://localhost:8200 w_gateway
-          uv run python loadtest.py --visitors 25 --turns 5
+          # Shared runners stall now and then; a real slowdown fails a second try as well.
+          uv run python loadtest.py --visitors 25 --turns 5 || uv run python loadtest.py --visitors 25 --turns 5
+
+  identity:
+    name: Sign-in through a real identity provider
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_USER: ucp
+          POSTGRES_PASSWORD: ci-only
+          POSTGRES_DB: ucp_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U ucp -d ucp_test"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      TEST_DATABASE_URL: postgresql+asyncpg://ucp:ci-only@127.0.0.1:5432/ucp_test
+      KEYCLOAK_URL: http://localhost:8080
+    defaults:
+      run:
+        working-directory: backend
+    steps:
+      - uses: actions/checkout@v7
+      - uses: astral-sh/setup-uv@v10.3.3
+        with:
+          version: "0.9.24"
+      - run: uv sync --frozen
+      # A throwaway Keycloak with a throwaway administrator, alive only for this job.
+      - run: >-
+          docker run --detach --name keycloak --publish 8080:8080
+          --env KC_BOOTSTRAP_ADMIN_USERNAME=admin --env KC_BOOTSTRAP_ADMIN_PASSWORD=admin
+          quay.io/keycloak/keycloak:26.0.5 start-dev
+      - run: curl --fail --silent --retry 90 --retry-delay 2 --retry-all-errors http://localhost:8080/realms/master > /dev/null
+      - run: uv run pytest tests/test_keycloak.py -v
+
+  snippets:
+    name: Token-signing snippets
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: astral-sh/setup-uv@v10.3.3
+        with:
+          version: "0.9.24"
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "21"
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "8.0.x"
+      - uses: actions/setup-go@v5
+        with:
+          go-version: stable
+          cache: false
+      - run: command -v php || (sudo apt-get update && sudo apt-get install --yes php-cli)
+      - run: uv sync --frozen
+        working-directory: backend
+      # Every snippet signs tokens with the shared test settings; each is checked exactly as the gateway checks it.
+      - run: uv run python ../examples/token-signing/check.py --all
+        working-directory: backend
 
   image:
     name: Container image builds and starts

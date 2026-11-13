@@ -11,6 +11,7 @@ from sqlalchemy.ext.asyncio import create_async_engine
 
 from ucp.gateway import api, pipeline, public
 from ucp.gateway.pipeline import Problem
+from ucp.identity import ProviderKeys
 from ucp.pf import PfConnector, PfProfile
 from ucp.sessions import Keys, Limiter
 from ucp.settings import Settings
@@ -40,6 +41,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
             )
             profiles = json.loads(settings.agent_profiles or "{}")
             app.state.connectors = {name: PfConnector(PfProfile(**value), client) for name, value in profiles.items()}
+            app.state.provider_keys = ProviderKeys(client)
             yield
             # Answers still being written finish and are stored before the connections they need close.
             running = getattr(app.state, "turns", None) and app.state.turns.tasks
@@ -59,6 +61,10 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     pipeline.install(app)
     app.state.keys = Keys(settings.session_keys) if settings.session_keys else None
     app.state.limiter = Limiter()
+    app.state.host_secrets = {
+        name: Keys(value).keys for name, value in json.loads(settings.host_secrets or "{}").items()
+    }
+    app.state.signed_in_seconds = settings.signed_in_seconds
     app.include_router(public.router)
     app.include_router(api.router)
     if settings.web_dir:

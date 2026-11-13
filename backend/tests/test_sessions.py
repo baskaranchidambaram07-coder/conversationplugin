@@ -20,6 +20,8 @@ from ucp.settings import Settings
 from ucp.store import Store
 from ucp.widgets import seed
 
+IDENTITY = {"provider": "college-portal", "issuer": "https://portal.example.ac.uk", "secret": "portal"}
+
 KEYS = "k2:" + "b" * 32 + ",k1:" + "a" * 32
 SESSION = Session("u_1", "t_college", "w_1", 1, "anonymous")
 
@@ -29,7 +31,7 @@ def widgets(database_url):
     ids = {name: f"w_{secrets.token_hex(4)}" for name in ("open", "members", "strict")}
     documents = {
         ids["open"]: document(),
-        ids["members"]: document(sign_in="signed_in"),
+        ids["members"]: document(sign_in="signed_in", identity=IDENTITY),
         ids["strict"]: document(limits={"sessions_per_minute_per_address": 2}),
     }
 
@@ -81,7 +83,7 @@ def test_each_session_is_a_new_anonymous_visitor(client, widgets):
     assert len({jwt.decode(t, options={"verify_signature": False})["sub"] for t in tokens}) == 2
 
 
-def test_signed_in_sessions_wait_for_m5_and_a_members_only_widget_refuses_anonymous_visitors(client, widgets):
+def test_a_token_sent_to_an_anonymous_widget_and_no_token_sent_to_a_members_widget_are_refused(client, widgets):
     assert start(client, widgets["open"], host_token="a.b.c").json()["code"] == "forbidden"
     assert start(client, widgets["members"]).json()["code"] == "forbidden"
 
@@ -166,3 +168,10 @@ def test_the_limiter_counts_a_rolling_minute_per_key():
     assert refused.value.code == "rate_limited" and 0 < refused.value.retry_after <= 60
     limiter.hits["a"] = type(limiter.hits["a"])(t - 61 for t in limiter.hits["a"])
     limiter.check("a", 3)
+
+
+def test_one_widgets_sessions_do_not_use_up_anothers_limit(client, widgets):
+    for _ in range(2):
+        assert start(client, widgets["open"]).status_code == 200
+
+    assert start(client, widgets["strict"]).status_code == 200  # its own allowance of two is untouched

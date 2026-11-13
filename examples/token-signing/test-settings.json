@@ -1,0 +1,7 @@
+{
+  "secret": "test-secret-for-the-snippets-only-0123456789",
+  "secret_id": "k1",
+  "issuer": "https://portal.example.ac.uk",
+  "widget_id": "w_snippets",
+  "user_id": "resident \"42\" from Zürich"
+}

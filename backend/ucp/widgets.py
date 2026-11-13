@@ -17,9 +17,10 @@ from dataclasses import dataclass
 from typing import Annotated, Literal
 from urllib.parse import urlsplit
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, model_validator
 from sqlalchemy.ext.asyncio import create_async_engine
 
+from ucp.identity import Identity
 from ucp.protocol import Id, WidgetConfig
 from ucp.store import Store
 
@@ -46,7 +47,14 @@ class WidgetDocument(BaseModel):
     allowed_domains: Annotated[list[Origin], Field(min_length=1)]
     sign_in: Literal["anonymous", "signed_in", "both"]
     agent_profile: Id = Field(description="The name of a connection profile held in the secret store.")
+    identity: Identity | None = Field(default=None, description="How signed-in visitors prove who they are.")
     limits: Limits = Limits()
+
+    @model_validator(mode="after")
+    def _signed_in_needs_identity(self) -> "WidgetDocument":
+        if self.sign_in != "anonymous" and not self.identity:
+            raise ValueError("a widget for signed-in visitors needs its identity settings")
+        return self
 
 
 @dataclass(frozen=True)

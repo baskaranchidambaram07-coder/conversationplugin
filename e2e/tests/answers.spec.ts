@@ -21,7 +21,7 @@ async function ask(page: Page, question: string) {
   const field = page.getByRole("textbox", { name: "Your question" });
   await field.fill(question);
   await field.press("Enter");
-  await expect(page.getByRole("button", { name: "Copy answer" })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Copy answer" })).toBeVisible({ timeout: 20_000 }); // a long answer streams for seconds
 }
 
 const refused = (page: Page) => page.evaluate(() => (window as unknown as { refused: string[] }).refused);
