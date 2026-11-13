@@ -85,3 +85,37 @@ test("the hosted sign-in signs only names it accepts, and only for the demo widg
   expect(claims).toMatchObject({ aud: "ucp-demo", sub: "ana", iss: "https://demo.ucp.invalid" });
   expect(claims.exp - claims.iat).toBe(300);
 });
+
+async function askInline(page: Page, question: string): Promise<FrameLocator> {
+  const chat = page.frameLocator("#assistant iframe");
+  const field = chat.getByRole("textbox", { name: "Your question" });
+  await field.fill(question);
+  await field.press("Enter");
+  await expect(chat.getByRole("button", { name: "Send" })).toBeVisible({ timeout: 20_000 });
+  await expect(chat.getByRole("article").getByText("READY", { exact: true }).last()).toBeVisible();
+  return chat;
+}
+
+test("the full-page sample is the assistant itself, signed in through the portal, with its chats beside it", async ({
+  page,
+  context,
+}) => {
+  await context.addCookies([{ name: "resident", value: someone("resident"), url: SITE }]);
+  await page.goto(`${SITE}/college/assistant.html`);
+  await expect(page.getByRole("button", { name: "Ask the College" })).toHaveCount(0); // no launcher: the page is the chat
+  await askInline(page, "When does the library open?");
+
+  await page.reload();
+  const list = page.frameLocator("#assistant iframe").getByRole("navigation", { name: "Your chats" });
+  await expect(list.getByRole("listitem")).toHaveCount(1);
+});
+
+test("the hosted full page asks for a name first, then is the assistant", async ({ page }) => {
+  await page.goto(`${SITE}/hosted/assistant.html`);
+  await expect(page.locator("#assistant iframe")).toHaveCount(0);
+
+  await page.getByRole("textbox", { name: "Sign in as" }).fill(someone("page"));
+  await page.getByRole("button", { name: "Sign in" }).click();
+  await expect(page.getByRole("textbox", { name: "Sign in as" })).toBeHidden();
+  await askInline(page, "How do I book a guest room?");
+});

@@ -1,0 +1,21 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="default-src 'self'; script-src 'self' {{GATEWAY}}; frame-src {{GATEWAY}}; connect-src 'self' {{GATEWAY}}"
+    />
+    <title>Ask the College</title>
+    <link rel="stylesheet" href="assistant.css" />
+  </head>
+  <body>
+    <p class="sample"><strong>Sample page.</strong> A page that is the assistant. It is not a College website.</p>
+    <!-- The assistant fills this element. On a wide screen it is laid out as a conversation app: your chats down the
+         side, the conversation in the middle. -->
+    <main id="assistant"></main>
+    <script src="assistant.js"></script>
+    <script async src="{{GATEWAY}}/loader.js"></script>
+  </body>
+</html>
