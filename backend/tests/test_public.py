@@ -5,7 +5,6 @@ import secrets
 
 import pytest
 from fastapi.testclient import TestClient
-from pydantic import ValidationError
 
 from ucp.gateway.app import create_app
 from ucp.protocol import SCHEMA_FILE, WidgetConfig
@@ -116,7 +115,7 @@ async def test_the_loader_and_chat_files_are_served_with_caching_that_fits_their
 async def test_seeding_refuses_a_bad_widget_and_publishes_none_of_the_file(store, change):
     good, bad = f"w_{secrets.token_hex(4)}", f"w_{secrets.token_hex(4)}"
 
-    with pytest.raises(ValidationError):
+    with pytest.raises(ValueError, match=f"^{bad}: "):  # every fault, each naming the widget and the field
         await seed(store, {good: document(), bad: document(**change)})
     assert await store.widget(good) is None
 
