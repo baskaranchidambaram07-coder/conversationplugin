@@ -12,7 +12,8 @@
     "test": "npm run test --workspaces --if-present",
     "build": "npm run build --workspaces --if-present",
     "e2e": "npm run e2e --workspace @ucp/e2e",
-    "e2e:gateway": "npm run e2e:gateway --workspace @ucp/e2e"
+    "e2e:gateway": "npm run e2e:gateway --workspace @ucp/e2e",
+    "e2e:staging": "npm run e2e:staging --workspace @ucp/e2e"
   },
   "engines": {
     "node": ">=24"
