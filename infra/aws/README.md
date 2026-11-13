@@ -8,7 +8,7 @@ Run every command from the repository root, in Git Bash, with the AWS command li
 
 | Part | Awake | Asleep |
 |---|---|---|
-| CloudFront: HTTPS on its own `*.cloudfront.net` address, which the customer's script tag uses | Serves the loader, the chat and the API; caches the chat's files | Stays, so the address never changes; answers with an error |
+| CloudFront: HTTPS on its own `*.cloudfront.net` address, which the customer's script tag uses | Serves the loader, the chat and the API; caches the chat's files | Stays, so the address never changes; answers every request with "This test environment is asleep" (503), so a customer's page simply shows no chat |
 | Load balancer: reachable only from CloudFront, which proves itself with a secret header | Runs | Removed |
 | Gateway: one container on Fargate, in a public subnet with no inbound except from the load balancer | Runs | Removed (the cluster, the release and the images stay) |
 | PostgreSQL 17: private, encrypted, seven days of point-in-time backups | Runs | Stopped (AWS starts it again after seven days; `sleep` stops it again) |

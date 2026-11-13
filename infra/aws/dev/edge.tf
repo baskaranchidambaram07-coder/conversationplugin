@@ -80,6 +80,29 @@ data "aws_cloudfront_origin_request_policy" "all_viewer" {
   name = "Managed-AllViewerAndCloudFrontHeaders-2022-06" # includes CloudFront-Viewer-Address, for per-visitor limits
 }
 
+# While the environment sleeps, CloudFront answers every request itself with a short notice, rather than an error
+# about its origin. Nothing reaches the origin then, and the loader on a customer's page simply draws nothing.
+resource "aws_cloudfront_function" "asleep" {
+  name    = "ucp-dev-asleep"
+  runtime = "cloudfront-js-2.0"
+  comment = "Answers while the dev environment sleeps"
+  publish = true
+  code    = <<-EOT
+    function handler(event) {
+      return {
+        statusCode: 503,
+        statusDescription: "Service Unavailable",
+        headers: {
+          "content-type": { value: "text/plain; charset=utf-8" },
+          "cache-control": { value: "no-store" },
+          "retry-after": { value: "3600" }
+        },
+        body: { encoding: "text", data: "This test environment is asleep. Please try again later." }
+      };
+    }
+  EOT
+}
+
 #trivy:ignore:AWS-0011 A web firewall is outside the base version (docs/tech-stack.md section 5); it comes with production
 resource "aws_cloudfront_distribution" "edge" {
   enabled             = true
@@ -114,6 +137,14 @@ resource "aws_cloudfront_distribution" "edge" {
     cache_policy_id          = data.aws_cloudfront_cache_policy.disabled.id
     origin_request_policy_id = data.aws_cloudfront_origin_request_policy.all_viewer.id
     compress                 = true
+
+    dynamic "function_association" {
+      for_each = var.awake ? [] : [aws_cloudfront_function.asleep.arn]
+      content {
+        event_type   = "viewer-request"
+        function_arn = function_association.value
+      }
+    }
   }
 
   ordered_cache_behavior {
@@ -124,6 +155,14 @@ resource "aws_cloudfront_distribution" "edge" {
     cached_methods         = ["GET", "HEAD"]
     cache_policy_id        = data.aws_cloudfront_cache_policy.optimized.id
     compress               = true
+
+    dynamic "function_association" {
+      for_each = var.awake ? [] : [aws_cloudfront_function.asleep.arn]
+      content {
+        event_type   = "viewer-request"
+        function_arn = function_association.value
+      }
+    }
   }
 
   restrictions {
