@@ -396,6 +396,11 @@ export function App({ widgetId, win = window }: { widgetId: string; win?: Window
         </span>
         <h1>{settings.title}</h1>
         <div className="actions">
+          {!side && !browsing && (turns.length > 0 || current) && (
+            <button type="button" className="icon new" aria-label={t.startChat} onClick={newChat}>
+              <Icon path={PLUS} />
+            </button>
+          )}
           {history && !side && (
             <button
               type="button"
@@ -407,11 +412,6 @@ export function App({ widgetId, win = window }: { widgetId: string; win?: Window
               onClick={browsing ? hideChats : showChats}
             >
               {browsing ? <Icon path={BACK} flip /> : <Icon path={LIST} />}
-            </button>
-          )}
-          {!side && !browsing && (turns.length > 0 || current) && (
-            <button type="button" className="icon" aria-label={t.startChat} onClick={newChat}>
-              <Icon path={PLUS} />
             </button>
           )}
           {mode === "floating" && (

@@ -120,3 +120,17 @@ test.describe("on a phone", () => {
     await expect(chat.getByRole("button", { name: "Your chats" })).toBeFocused();
   });
 });
+
+test.describe("at 280px, the narrowest frame", () => {
+  test.use({ viewport: { width: 280, height: 600 } });
+
+  test("the header keeps room for the title: New chat moves into the list", async ({ page }) => {
+    const chat = await open(page, resident("narrowest"));
+    await ask(chat, "Asked in a narrow frame");
+
+    await expect(chat.getByRole("banner").getByRole("button", { name: "New chat" })).toBeHidden();
+    await chat.getByRole("button", { name: "Your chats" }).click();
+    await chat.getByRole("navigation", { name: "Your chats" }).getByRole("button", { name: "New chat" }).click();
+    await expect(chat.getByRole("article")).toHaveCount(0);
+  });
+});

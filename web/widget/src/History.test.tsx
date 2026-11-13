@@ -144,6 +144,13 @@ test("an earlier chat opens where it left off, and the next question carries on 
   fireEvent.keyDown(screen.getByRole("textbox", { name: t.input }), { key: "Enter" });
 
   await waitFor(() => expect(texts()).toHaveLength(2));
+  const header = screen.getByRole("banner");
+  // "Your chats" and "Back to the chat" share the place beside Close; New chat never takes it.
+  expect(within(header).getAllByRole("button").map((button) => button.getAttribute("aria-label"))).toEqual([
+    t.startChat,
+    t.chats,
+    t.close,
+  ]);
   const sent = fetcher.mock.calls.filter(([, init]) => init?.method === "POST").map(([path]) => path);
   expect(sent).toEqual(["/v1/sessions", "/v1/conversations/c_old/messages"]); // no new chat was started
   fireEvent.click(screen.getByRole("button", { name: t.chats }));

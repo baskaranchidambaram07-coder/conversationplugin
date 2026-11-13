@@ -1,6 +1,6 @@
 {
   "schemaVersion": 2,
-  "generatedAt": "2026-11-12T18:00:00Z",
+  "generatedAt": "2026-11-13T12:00:00Z",
   "title": "Design System: Conversation Plugin",
   "extensions": {
     "colorMeta": {
@@ -133,6 +133,14 @@
         "displayName": "Table header",
         "purpose": "Header cells on Soft Sand, kept on one line."
       },
+      "list-heading": {
+        "displayName": "List heading",
+        "purpose": "'Your chats', the heading of the list of chats."
+      },
+      "list-title": {
+        "displayName": "List title",
+        "purpose": "A chat's title in its row, two lines at most, wrapping anywhere."
+      },
       "code": {
         "displayName": "Code",
         "purpose": "Code panel body, platform monospace."
@@ -171,7 +179,7 @@
       {
         "name": "sand-edge",
         "value": "0 0 0 1px #e7dacb",
-        "purpose": "Cards and the logo tile: keeps white distinct from the ground."
+        "purpose": "Cards, the list of chats and the logo tile: keeps white distinct from the ground."
       },
       {
         "name": "focus-ring",
@@ -191,7 +199,7 @@
       {
         "name": "focus-inset",
         "value": "outline: 3px solid #2b241f; outline-offset: -3px",
-        "purpose": "Focus on a code body or table scroll area, drawn inside the clipped frame."
+        "purpose": "Focus on a code body, a table scroll area or a row in the list of chats, drawn inside the clipped frame."
       }
     ],
     "motion": [
@@ -234,6 +242,11 @@
         "name": "conversation-fade",
         "value": "mask-image: linear-gradient(transparent, var(--ink) 14px, var(--ink) calc(100% - 14px), transparent)",
         "purpose": "The conversation fades out over its top and bottom 14px, under the header and into the composer."
+      },
+      {
+        "name": "sketch-breathe",
+        "value": "opacity .25 to 1 at 40%, 1.2s ease-in-out infinite, second bar delayed .15s",
+        "purpose": "Sand bars of the list of chats while it loads, on the working dots' keyframes. Reduced motion holds them at .6 opacity. Opening and closing the list is an immediate swap, never animated."
       }
     ],
     "breakpoints": [
@@ -248,6 +261,10 @@
       {
         "name": "chat-narrow",
         "value": "max-width: 340px"
+      },
+      {
+        "name": "chat-wide",
+        "value": "min-width: 720px"
       }
     ]
   },
@@ -280,9 +297,9 @@
       "name": "Chat header",
       "kind": "nav",
       "refersTo": "logo-tile",
-      "description": "Logo tile (initials fallback), title and round close button; no colour bar.",
-      "html": "<header class=\"ds-head\"><span class=\"ds-logo\" aria-hidden=\"true\">AC</span><h1 class=\"ds-title\">Ask the College</h1><button class=\"ds-icon\" type=\"button\" aria-label=\"Close chat\"><svg viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M6 6l12 12M18 6 6 18\"/></svg></button></header>",
-      "css": ".ds-head{font-family:'Nunito Variable',Nunito,system-ui,sans-serif;display:flex;align-items:center;gap:12px;padding:20px 14px 10px 20px;background:#fbf3ea;color:#2b241f}.ds-logo{display:grid;place-items:center;flex:none;width:40px;height:40px;border-radius:12px;background:#fff;box-shadow:0 0 0 1px #e7dacb;font-weight:800;font-size:15px;letter-spacing:.02em}.ds-title{flex:1;margin:0;font-size:20px;font-weight:600;line-height:1.25}.ds-icon{display:grid;place-items:center;width:44px;height:44px;border:0;border-radius:50%;background:transparent;color:inherit;cursor:pointer;transition:background-color .15s ease-out}.ds-icon svg{width:22px;height:22px}.ds-icon:hover{background:rgba(43,36,31,.07)}.ds-icon:focus-visible{outline:3px solid #2b241f;outline-offset:2px}"
+      "description": "Logo tile (initials fallback), title and a group of round icon buttons 2px apart (New chat, Your chats, Close); no colour bar.",
+      "html": "<header class=\"ds-head\"><span class=\"ds-logo\" aria-hidden=\"true\">AC</span><h1 class=\"ds-title\">Ask the College</h1><div class=\"ds-actions\"><button class=\"ds-icon\" type=\"button\" aria-label=\"New chat\"><svg viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M12 5v14M5 12h14\"/></svg></button><button class=\"ds-icon\" type=\"button\" aria-label=\"Your chats\" aria-expanded=\"false\"><svg viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M9 6h11M9 12h11M9 18h11M4.5 6h.01M4.5 12h.01M4.5 18h.01\"/></svg></button><button class=\"ds-icon\" type=\"button\" aria-label=\"Close chat\"><svg viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M6 6l12 12M18 6 6 18\"/></svg></button></div></header>",
+      "css": ".ds-head{font-family:'Nunito Variable',Nunito,system-ui,sans-serif;display:flex;align-items:center;gap:12px;padding:20px 14px 10px 20px;background:#fbf3ea;color:#2b241f}.ds-logo{display:grid;place-items:center;flex:none;width:40px;height:40px;border-radius:12px;background:#fff;box-shadow:0 0 0 1px #e7dacb;font-weight:800;font-size:15px;letter-spacing:.02em}.ds-title{flex:1;margin:0;font-size:20px;font-weight:600;line-height:1.25}.ds-icon{display:grid;place-items:center;width:44px;height:44px;border:0;border-radius:50%;background:transparent;color:inherit;cursor:pointer;transition:background-color .15s ease-out}.ds-icon svg{width:22px;height:22px}.ds-icon:hover{background:rgba(43,36,31,.07)}.ds-icon:focus-visible{outline:3px solid #2b241f;outline-offset:2px}.ds-actions{display:flex;flex:none;gap:2px}"
     },
     {
       "name": "Conversation",
@@ -315,6 +332,14 @@
       "description": "'Try again' / 'Start a new chat': ink outline on white, sand fill on hover.",
       "html": "<button class=\"ds-secondary\" type=\"button\">Try again</button>",
       "css": ".ds-secondary{font-family:'Nunito Variable',Nunito,system-ui,sans-serif;display:inline-flex;align-items:center;gap:6px;min-height:36px;padding:8px 16px;border:1.5px solid #2b241f;border-radius:999px;background:#fff;color:#2b241f;font-size:14px;font-weight:650;cursor:pointer;transition:background-color .15s ease-out}.ds-secondary:hover{background:#e7dacb}.ds-secondary:focus-visible{outline:3px solid #2b241f;outline-offset:2px}"
+    },
+    {
+      "name": "Your chats",
+      "kind": "nav",
+      "refersTo": "chat-list",
+      "description": "Earlier chats: heading with the secondary New chat, rows on one white sand-edged 18px card with sand hairlines; the open chat on Soft Sand with its date in ink; a sketch while loading.",
+      "html": "<nav class=\"ds-side\" aria-labelledby=\"ds-chats\"><div class=\"ds-side-head\"><h2 id=\"ds-chats\">Your chats</h2><button class=\"ds-secondary\" type=\"button\"><svg viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M12 5v14M5 12h14\"/></svg>New chat</button></div><ul class=\"ds-chats\"><li><button type=\"button\" aria-current=\"true\"><span class=\"ds-topic\">When does the library open on Sundays?</span><time>9:05</time></button></li><li><button type=\"button\"><span class=\"ds-topic\">How do I book a study room for a group of six?</span><time>Yesterday</time></button></li><li><button type=\"button\"><span class=\"ds-topic\">Council tax discount for students</span><time>2 Nov</time></button></li></ul><ul class=\"ds-chats ds-sketch\" aria-hidden=\"true\"><li><span></span><span></span></li><li><span></span><span></span></li><li><span></span><span></span></li></ul><button class=\"ds-quiet\" type=\"button\">Show older chats</button></nav>",
+      "css": ".ds-side{font-family:'Nunito Variable',Nunito,system-ui,sans-serif;display:flex;flex-direction:column;gap:12px;padding:16px;background:#fbf3ea;color:#2b241f;font-size:16px;max-width:320px}.ds-side-head{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:8px 12px;padding-inline-start:4px}.ds-side h2{margin:0;font-size:16px;font-weight:700;line-height:1.3}.ds-secondary{display:inline-flex;align-items:center;gap:6px;min-height:36px;padding:8px 16px;border:1.5px solid #2b241f;border-radius:999px;background:#fff;color:#2b241f;font:inherit;font-size:14px;font-weight:650;cursor:pointer;transition:background-color .15s ease-out}.ds-secondary svg{width:18px;height:18px;margin-inline-start:-4px}.ds-secondary:hover{background:#e7dacb}.ds-secondary:focus-visible{outline:3px solid #2b241f;outline-offset:2px}.ds-chats{margin:0;padding:0;list-style:none;overflow:hidden;border-radius:18px;background:#fff;box-shadow:0 0 0 1px #e7dacb}.ds-chats li+li{border-block-start:1px solid #e7dacb}.ds-chats button{display:flex;flex-direction:column;gap:2px;width:100%;min-height:60px;padding:10px 16px;border:0;background:transparent;color:inherit;font:inherit;text-align:start;cursor:pointer;transition:background-color .15s ease-out}.ds-chats button:hover{background:rgba(43,36,31,.05)}.ds-chats button[aria-current=true]{background:#e7dacb}.ds-chats button:focus-visible{outline:3px solid #2b241f;outline-offset:-3px}.ds-topic{display:-webkit-box;overflow:hidden;-webkit-box-orient:vertical;-webkit-line-clamp:2;line-clamp:2;font-weight:650;line-height:1.35;overflow-wrap:anywhere}.ds-chats time{font-size:14px;color:#6f625a}.ds-chats [aria-current=true] time{color:#2b241f}.ds-sketch li{display:grid;gap:10px;padding:16px}.ds-sketch span{height:12px;width:72%;border-radius:6px;background:#e7dacb;animation:ds-breathe 1.2s ease-in-out infinite}.ds-sketch span+span{width:32%;animation-delay:.15s}@keyframes ds-breathe{0%,100%{opacity:.25}40%{opacity:1}}.ds-quiet{align-self:center;display:inline-flex;align-items:center;min-height:36px;padding:6px 10px;border:0;border-radius:999px;background:transparent;color:#6f625a;font:inherit;font-size:14px;font-weight:650;cursor:pointer}.ds-quiet:hover{background:rgba(43,36,31,.06);color:#2b241f}.ds-quiet:focus-visible{outline:3px solid #2b241f;outline-offset:2px}@media (prefers-reduced-motion:reduce){.ds-sketch span{animation:none;opacity:.6}}@media (forced-colors:active){.ds-chats{border:1px solid CanvasText}.ds-chats button[aria-current=true]{outline:2px solid Highlight;outline-offset:-2px}}"
     },
     {
       "name": "Rendered answer",
@@ -351,7 +376,8 @@
       "Long, soft, ink-tinted shadows; surfaces inside the chat are separated by a 1px sand edge instead.",
       "A press spring on release, a short rise-and-fade on open, no entry bounce.",
       "Full screen on small windows; a floating panel anchored to the launcher's corner elsewhere.",
-      "Code and tables in their own 12px frames that scroll sideways, with a soft ink cue at an edge only while more lies that way."
+      "Code and tables in their own 12px frames that scroll sideways, with a soft ink cue at an edge only while more lies that way.",
+      "Earlier chats as rows on one white, sand-edged card: in place of the conversation on narrow frames, a 288px column beside it from 720px."
     ],
     "rules": [
       {

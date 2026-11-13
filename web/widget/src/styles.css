@@ -702,6 +702,10 @@ textarea::placeholder {
   padding-inline-start: 4px;
 }
 
+.log > .side {
+  padding-block-start: 10px; /* clears the conversation's 14px top fade, which would wash out the New chat pill */
+}
+
 .side h2 {
   margin: 0;
   font-size: 16px;
@@ -864,6 +868,11 @@ textarea::placeholder {
 
   .mine {
     max-width: 92%;
+  }
+
+  /* Three header buttons leave the title too little room: New chat stays in the list of chats instead. */
+  .actions:has(> :nth-child(3)) > .new {
+    display: none;
   }
 }
 

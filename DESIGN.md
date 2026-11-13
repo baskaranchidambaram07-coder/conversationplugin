@@ -70,6 +70,16 @@ typography:
     fontWeight: 700
     lineHeight: 1.45
     fontFeature: "tnum"
+  list-heading:
+    fontFamily: "Nunito Variable, Nunito, system-ui, sans-serif"
+    fontSize: "16px"
+    fontWeight: 700
+    lineHeight: 1.3
+  list-title:
+    fontFamily: "Nunito Variable, Nunito, system-ui, sans-serif"
+    fontSize: "16px"
+    fontWeight: 650
+    lineHeight: 1.35
   code:
     fontFamily: "ui-monospace, Cascadia Mono, SF Mono, Menlo, Consolas, monospace"
     fontSize: "13.5px"
@@ -187,6 +197,31 @@ components:
   table-cell:
     typography: "{typography.table}"
     padding: "8px 12px"
+  header-icon-button:
+    textColor: "{colors.ink}"
+    rounded: "{rounded.full}"
+    size: "44px"
+  chat-list:
+    backgroundColor: "{colors.paper-white}"
+    textColor: "{colors.ink}"
+    rounded: "{rounded.card}"
+  chat-list-column:
+    width: "288px"
+  chat-row:
+    textColor: "{colors.ink}"
+    typography: "{typography.list-title}"
+    padding: "10px 16px"
+    height: "60px"
+  chat-row-current:
+    backgroundColor: "{colors.soft-border}"
+    textColor: "{colors.ink}"
+  chat-row-date:
+    textColor: "{colors.secondary-ink}"
+    typography: "{typography.meta}"
+  chat-row-sketch:
+    backgroundColor: "{colors.soft-border}"
+    rounded: "{rounded.inline}"
+    height: "12px"
 ---
 
 # Design System: Conversation Plugin
@@ -199,7 +234,7 @@ The widget is a friendly consumer app sitting on someone else's page. It arrives
 
 Inside, the chat is a calm warm page: answers on white cards, the visitor's own words in quiet sand bubbles, and the customer's colour only on suggested questions and the send button. Type is a rounded humanist sans, self-hosted, set in plain short sentences. Rich answers (headings, lists, code and tables) are made from the same materials: code sits on the cream ground, tables on paper, both framed by a sand edge, and anything too wide scrolls inside its own frame rather than stretching the conversation.
 
-Depth is long, soft and low-contrast, tinted with the world's ink rather than grey. Motion is small and physical: a press that settles back with a slight overshoot, a panel that rises a short way and fades in without bouncing, three dots that breathe while an answer is on its way. Under reduced motion every movement goes; only the fade stays, and the dots hold still.
+Depth is long, soft and low-contrast, tinted with the world's ink rather than grey. Motion is small and physical: a press that settles back with a slight overshoot, a panel that rises a short way and fades in without bouncing, three dots that breathe while an answer is on its way, and sketch rows that breathe the same way while the list of chats loads. Under reduced motion every movement goes; only the fade stays, and the dots and sketch rows hold still.
 
 The world refuses the category default for chat widgets: no coloured header bar, no avatar, no brand-coloured message bubbles. The customer's colour appears only on things that can be pressed.
 
@@ -211,6 +246,7 @@ The world refuses the category default for chat widgets: no coloured header bar,
 - A press spring on release, a short rise-and-fade on open, no entry bounce.
 - Full screen on small windows; a floating panel anchored to the launcher's corner elsewhere.
 - Code and tables in their own 12px frames that scroll sideways, with a soft ink cue at an edge only while more lies that way.
+- Earlier chats as rows on one white, sand-edged card: in place of the conversation on narrow frames, a 288px column beside it from 720px.
 
 ## Colors
 
@@ -222,10 +258,10 @@ A warm, low-chroma neutral family built around one hue (around 55 to 70 degrees 
 
 ### Neutral
 - **Warm Cream Ground** (warm-ground): the panel's surface, and the ground of the whole chat. Inside an answer card it returns as the fill of code panels, blockquotes and inline code, so code reads as set into the page.
-- **Soft Sand Border** (soft-border): the panel's 1px edge; the 1px edge drawn around cards, the logo tile, the composer, inline code, code panels and table frames; the fill of the visitor's message bubbles, of a table's header row and of a secondary action under the pointer; the rule under a code caption and above a table's tools; table row hairlines and vertical cell rules; the answer's horizontal rule; the conversation's thin scrollbar; text selection; the resting track of the loading mark.
-- **Warm Ink** (ink): the world's text colour, links in answers included; the chat's focus outline and the composer's focus ring; the secondary action's outline; the outer band of the two-tone focus ring; the brand fallback; the tint of every shadow (as `rgba(43,36,31,…)`), of the scroll-edge cue (22%) and of hover washes on quiet controls (6 to 7%).
-- **Muted Umber** (secondary-ink): secondary ink: the AI notice, meta lines, the placeholder, the character count, the credit, the quiet action, the working dots and the moving arc of the loading mark; in answers, list markers, the minor headings (h4 to h6) and the code panel's language label; at 60% (`rgba(111,98,90,.6)`) the scrollbar thumb of code panels and tables, dark enough to notice.
-- **Paper White** (paper-white): answer and welcome cards, the composer, the logo tile, table frames, the secondary action at rest; the inner band of the two-tone focus ring and the light option for ink on brand.
+- **Soft Sand Border** (soft-border): the panel's 1px edge; the 1px edge drawn around cards, the logo tile, the composer, inline code, code panels and table frames; the fill of the visitor's message bubbles, of a table's header row and of a secondary action under the pointer; the rule under a code caption and above a table's tools; table row hairlines and vertical cell rules; the answer's horizontal rule; the conversation's thin scrollbar; text selection; the resting track of the loading mark. In the list of chats: the card's edge, the 1px hairlines between rows, the fill of the open chat's row, the bars of the loading sketch, and the chats column's 1px rule and thin scrollbar.
+- **Warm Ink** (ink): the world's text colour, links in answers included; the chat's focus outline and the composer's focus ring; the secondary action's outline; the outer band of the two-tone focus ring; the brand fallback; the tint of every shadow (as `rgba(43,36,31,…)`), of the scroll-edge cue (22%) and of hover washes on quiet controls and chat rows (5 to 7%); the date on the open chat's row.
+- **Muted Umber** (secondary-ink): secondary ink: the AI notice, meta lines (chat dates and the empty-list line among them), the placeholder, the character count, the credit, the quiet action, the working dots and the moving arc of the loading mark; in answers, list markers, the minor headings (h4 to h6) and the code panel's language label; at 60% (`rgba(111,98,90,.6)`) the scrollbar thumb of code panels and tables, dark enough to notice.
+- **Paper White** (paper-white): answer and welcome cards, the list of chats, the composer, the logo tile, table frames, the secondary action at rest; the inner band of the two-tone focus ring and the light option for ink on brand.
 
 ### Named Rules
 **The Pressable Colour Rule.** The customer's brand colour appears only on things that can be pressed. Never on a header bar, a background, a border or a message surface.
@@ -243,8 +279,10 @@ A warm, low-chroma neutral family built around one hue (around 55 to 70 degrees 
 - **Title** (600, 20px, 1.25): the widget title in the chat header. Wraps anywhere rather than overflowing.
 - **Body** (400, 16px, 1.55): answer text, welcome text, visitor messages and the composer field (1.5 in the field).
 - **Label** (650, 15px, 1.3): suggested-question pills.
+- **List heading** (700, 16px, 1.3): "Your chats", the heading of the list of chats.
+- **List title** (650, 16px, 1.35): a chat's title in its row, clamped to two lines and wrapping anywhere.
 - **Label small** (650, 14px): the secondary action, the quiet action and the jump-to-latest pill. The first line of a problem note uses 650 at body size.
-- **Meta** (400, 14px): the AI notice, "You stopped this answer", the reference line, unrenderable parts of an answer.
+- **Meta** (400, 14px): the AI notice, "You stopped this answer", the reference line, unrenderable parts of an answer; a chat's date in its row ("9:05", "Yesterday", a weekday, "2 Nov") and the empty-list line "Chats you start will appear here."
 - **Caption** (400, 13px): the character count, shown only near the limit.
 - **Credit** (400, 12px): the one "Powered by Purple Fabric" line, centred at the foot.
 
@@ -271,7 +309,12 @@ The widget has two layouts on the host page, chosen by window size.
 - **Full screen (under 600px wide or under 520px tall):** the panel fills the viewport with no border and no radius, the launcher steps aside, and the host page's scroll is locked while it is open. The chat's own header carries the close control.
 - **Inline (host-chosen target element):** the panel fills the target, at least 480px tall, with no launcher, no shadow and no motion. The chat shows no close button.
 
-Inside the panel the chat is one column, top to bottom: the header (logo tile, title, close), the scrolling conversation, the composer, then the credit. The side gutter is 16px, or 10px when the frame is under 340px wide, where visitor bubbles may also widen from 85% to 92%. The same order holds down to 280px wide. Items in the conversation stack 12px apart. The conversation fades out over its top and bottom 14px as it scrolls under the header and into the composer (a CSS mask, not an overlay), and its scrollbar is thin, in Soft Sand. When the visitor scrolls up, a "Go to the latest message" pill appears centred above the composer.
+Inside the panel the chat is one column, top to bottom: the header (logo tile, title, then its actions: New chat, Your chats and close, each only where it applies), the scrolling conversation, the composer, then the credit. The side gutter is 16px, or 10px when the frame is under 340px wide, where visitor bubbles may also widen from 85% to 92%. The same order holds down to 280px wide. Items in the conversation stack 12px apart. The conversation fades out over its top and bottom 14px as it scrolls under the header and into the composer (a CSS mask, not an overlay), and its scrollbar is thin, in Soft Sand. When the visitor scrolls up, a "Go to the latest message" pill appears centred above the composer.
+
+**Earlier chats.** On widgets with history on, signed-in visitors see their earlier chats.
+- **Narrow frames (under 720px):** "Your chats" in the header swaps the list in for the conversation and the composer, inside the same scrolling region, with 10px top padding so the 14px top fade clears the list. The credit stays. Opening and closing the list is an immediate swap, with no motion.
+- **Wide frames (720px and wider):** the chat becomes a grid. The header spans the top; a 288px "Your chats" column stands at the inline start with its own thin Soft Sand scrollbar and a 1px Soft Sand rule at its inline end; the conversation and the composer keep a measure of at most 760px, centred in the rest.
+- **A reopened chat:** a quiet "Show earlier messages", centred above the first turn, loads older messages above without moving the view.
 
 Inside an answer card, rendered Markdown stacks its blocks 10px apart; list items sit 4px apart with a 1.35em inline-start indent. Code panels and table frames stretch to the card's full width and never widen it.
 
@@ -289,7 +332,7 @@ The system is lifted, not flat: the launcher and the panel float above the host 
 - **Panel** (`box-shadow: 0 24px 60px -24px rgba(43,36,31,.45), 0 8px 20px -12px rgba(43,36,31,.25)`): the floating panel.
 - **Composer** (`box-shadow: 0 10px 24px -14px rgba(43,36,31,.4), 0 0 0 1px #e7dacb`): the composer at rest; the sand edge becomes a 2px Warm Ink ring while it holds focus.
 - **Jump pill** (`box-shadow: 0 10px 24px -12px rgba(43,36,31,.45), 0 0 0 1px #e7dacb`): the "Go to the latest message" pill floating over the conversation.
-- **Sand edge** (`box-shadow: 0 0 0 1px #e7dacb`): cards, the logo tile, inline code, code panels and table frames; keeps white distinct from the ground on a bright screen, and frames rich content inside a card without lifting it.
+- **Sand edge** (`box-shadow: 0 0 0 1px #e7dacb`): cards, the list of chats, the logo tile, inline code, code panels and table frames; keeps white distinct from the ground on a bright screen, and frames rich content inside a card without lifting it.
 - **Scroll-edge cue** (`radial-gradient(farthest-side at 0 50%, rgba(43,36,31,.22), transparent)`, 12px wide, mirrored at the other inline edge): inside a sideways-scrolling code panel or table, a soft ink shade at an inline edge only while more content lies that way. It is a fixed background covered at each end by a 28px gradient of the frame's own fill that scrolls with the content, so it disappears once the visitor reaches that end. It is a cue, not elevation.
 
 ### Named Rules
@@ -299,7 +342,7 @@ The system is lifted, not flat: the launcher and the panel float above the host 
 
 Generous, friendly corners. The panel is gently rounded (24px) and clips its content; the launcher is a full circle (56px). A single 1px Soft Sand border defines the panel edge. In full-screen mode the panel drops both radius and border so it reads as the screen itself.
 
-Inside the chat: the composer shares the panel's 24px; answer cards, the welcome card and visitor bubbles are 18px; the logo tile, code panels, table frames and blockquotes are 12px (code panels and table frames clip their content to it); inline code is 6px; pills and the secondary, quiet and jump actions are fully round (999px); send/stop and the close button are circles (44px). Glyphs are inline SVG on a 24 grid, 2px round-capped strokes in `currentColor`, drawn at 22px (18px inside small actions).
+Inside the chat: the composer shares the panel's 24px; answer cards, the welcome card and visitor bubbles are 18px; the list of chats is one 18px card that clips its rows; the logo tile, code panels, table frames and blockquotes are 12px (code panels and table frames clip their content to it); inline code and the bars of the list's loading sketch are 6px; pills and the secondary, quiet and jump actions are fully round (999px); send/stop and the header's icon buttons are circles (44px). Glyphs are inline SVG on a 24 grid, 2px round-capped strokes in `currentColor`, drawn at 22px (18px inside small actions).
 
 ## Components
 
@@ -327,7 +370,11 @@ A warm frame that holds the chat iframe.
 Who the visitor is talking to, and a way out; no colour bar.
 - **Logo tile:** 40px, Paper White, 12px radius, 1px Soft Sand edge; the customer's logo contained inside it, or the title's initials when there is no logo or it fails to load.
 - **Title:** the Title style, beside the tile.
-- **Close:** a 44px round icon button at the end, transparent, with a faint ink wash (7%) on hover. Shown only in the floating panel.
+- **Actions:** a group of 44px round icon buttons at the end, 2px apart, transparent, each with a faint ink wash (7%) on hover. In order:
+  - **New chat:** a plus glyph, shown once there is a conversation to leave, on narrow frames only.
+  - **Your chats / Back to the chat:** a list glyph that becomes a chevron (mirrored in right-to-left). Shown only to signed-in visitors on widgets with history on, on narrow frames only; the two states share one place beside Close.
+  - **Close:** shown only in the floating panel.
+- **Under 340px:** when all three would show, the header's New chat is hidden so the title keeps its room; New chat stays in the list.
 
 ### Cards and bubbles
 - **Answer and welcome cards:** Paper White, 18px, a 1px Soft Sand edge, 14px 16px padding, full width. Answers carry their actions inside the card.
@@ -335,11 +382,23 @@ Who the visitor is talking to, and a way out; no colour bar.
 - **Working state:** while an answer has no words yet, three 7px Muted Umber dots breathe on the empty card (opacity 0.25 to 1, 1.2s ease-in-out, staggered 0.15s). Under reduced motion they hold still at 60% opacity. Words then land in the same card.
 - **Problem note:** a short plain sentence (its first line at 650), an optional reference line in Meta, and an optional secondary action.
 
+### Your chats
+The visitor's earlier chats, on paper, ruled in sand.
+- **Heading row:** "Your chats" in the List heading style, with the secondary "New chat" (an 18px plus glyph) on the same row; it wraps when tight.
+- **List:** one Paper White card, 18px radius, the Sand edge, a 1px Soft Sand hairline between rows.
+- **Row:** a full-width button, at least 60px tall, 10px 16px padding: the title in the List title style above its date in Meta (Muted Umber).
+- **Hover:** a faint ink wash (5%).
+- **Open chat** (the current row): Soft Sand fill, its date in Warm Ink, because Muted Umber on Soft Sand is 4.2:1, short of AA for small text.
+- **Focus:** the chat's 3px Warm Ink outline drawn inset (offset -3px), since the card clips its rows.
+- **Loading:** three sketched rows of Soft Sand bars (72% and 32% wide, 12px tall, 6px radius), breathing like the working dots; under reduced motion they hold still at 60%.
+- **Empty:** a single Meta line, "Chats you start will appear here."
+- **More:** a quiet "Show older chats", centred under the list.
+
 ### Buttons
 - **Suggested-question pill (brand):** brand fill, `--on-brand` text in the Label style, fully round, at least 44px tall, 10px 16px padding; they wrap. Press: sinks to 96% over 80ms, springs back on the launcher's release curve.
 - **Send / stop (brand):** a 44px circle inside the composer, brand fill, 22px glyph in `--on-brand`: an up arrow, which becomes a filled square stop while an answer arrives. Press: sinks to 92%, springs back on release. Disabled (nothing to send) at 35% opacity.
-- **Secondary ("Try again", "Start a new chat"):** Paper White with a 1.5px Warm Ink outline, Label small, fully round, at least 36px tall, 8px 16px padding; fills with Soft Sand on hover.
-- **Quiet ("Copy answer", "Copy code", "Copy as CSV", "Show all N rows"):** text and an 18px glyph in Muted Umber, no fill, fully round, at least 36px; inside code and table frames the label never wraps. On hover a faint ink wash (6%) and Warm Ink text. A copy action says "Copied" with a check for 2 seconds only when the copy worked, and "Could not copy" (keeping the copy glyph) when the browser refuses.
+- **Secondary ("Try again", "Start a new chat", the list's "New chat"):** Paper White with a 1.5px Warm Ink outline, Label small, fully round, at least 36px tall, 8px 16px padding; fills with Soft Sand on hover.
+- **Quiet ("Copy answer", "Copy code", "Copy as CSV", "Show all N rows", "Show older chats", "Show earlier messages"):** text and an 18px glyph in Muted Umber, no fill, fully round, at least 36px; inside code and table frames the label never wraps. On hover a faint ink wash (6%) and Warm Ink text. A copy action says "Copied" with a check for 2 seconds only when the copy worked, and "Could not copy" (keeping the copy glyph) when the browser refuses.
 - **Jump to latest:** Paper White pill with a down-arrow glyph, Label small, the Jump pill shadow.
 - **Focus (everything inside the chat):** a 3px Warm Ink outline 2px off the element; the chat's ground is known, so one tone is enough.
 
@@ -378,7 +437,7 @@ Code bodies and table scroll areas take keyboard focus. Their focus ring is the 
 - **Disabled:** when the chat session has ended, the field and send are disabled.
 
 ### Forced colours (chat)
-The composer, cards, bubbles, pills, send, code panels and table frames each gain a 1px `CanvasText` border, since their sand edge is a box-shadow that this mode removes.
+The composer, cards, bubbles, pills, send, code panels, table frames and the list of chats each gain a 1px `CanvasText` border, since their sand edge is a box-shadow that this mode removes. The open chat's row gains a 2px `Highlight` outline drawn inset, since its Soft Sand fill goes too.
 
 ## Do's and Don'ts
 
