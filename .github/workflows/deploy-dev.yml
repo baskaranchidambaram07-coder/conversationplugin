@@ -1,13 +1,13 @@
 name: Deploy to dev
 
-# Each push to develop (and, while M14 is built, to its module branch) builds the gateway's image, scans it, stores
+# Each push to develop (and to the module branch being built, while it needs the dev environment) builds the gateway's image, scans it, stores
 # it, and releases it to the dev environment on AWS. While the environment sleeps the image is stored and goes out
 # on the next wake (infra/aws/dev.py). No AWS keys are stored: GitHub signs this run's identity, and AWS lets only
 # these branches of this repository take the deploy role (infra/aws/dev/github.tf).
 
 on:
   push:
-    branches: [develop, module/m14-cloud-deployment]
+    branches: [develop, module/m15-developer-experience]
 
 permissions:
   contents: read
