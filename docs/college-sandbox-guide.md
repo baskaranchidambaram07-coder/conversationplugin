@@ -9,11 +9,12 @@ The samples are in [examples/college](../examples/college). Each one is a whole 
 
 ## Try it before you change anything
 
-We host copies of both samples at a test address of our own, which we send you with your widget ID:
+We host copies of the samples at a test address of our own, which we send you with your widget ID:
 
 - `public.html`: the assistant as any visitor sees it;
 - `portal.html`: sign in under any name you choose, ask something, sign out, and sign in under the same name
   again to find your chat. Anyone can use any name there, so please do not type anything private.
+- `assistant.html`: the same, as a whole page that is the assistant.
 
 The assistant answers only while our test environment is awake. While it sleeps, the pages open but the chat button
 does not appear. Tell us when you plan to test and we will have it awake.
@@ -82,7 +83,26 @@ Your widget accepts both kinds of visitor. If your endpoint refuses someone, for
 session has ended, the assistant still answers them, as it would any public visitor, but without their earlier
 chats.
 
-## 3. Check that it works
+## 3. A page that is the assistant
+
+Instead of a button in the corner, a page of your portal can be the assistant itself, like a chat app: on a wide
+screen, the resident's chats run down the side and the conversation sits in the middle. It works on phones too.
+Copy [assistant.html](../examples/college/assistant.html), [assistant.css](../examples/college/assistant.css) and
+[assistant.js](../examples/college/assistant.js). The page names one element for the chat to fill:
+
+```html
+<main id="assistant"></main>
+<script src="assistant.js"></script>
+<script async src="{{GATEWAY}}/loader.js"></script>
+```
+
+`assistant.js` is `portal.js` with one more option, `target: "#assistant"`, and it uses the same `/widget-token`
+endpoint. Give the element the height you want the chat to have; the sample gives it the whole window.
+
+The floating chat on your other pages can also go full screen: on a computer, its header has an "Open full screen"
+button.
+
+## 4. Check that it works
 
 Add `data-debug` to the loader's script tag while you test. The browser's console then shows a line for each step,
 each starting `UCP:`:

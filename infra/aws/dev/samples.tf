@@ -9,10 +9,14 @@ locals {
   widgets = jsondecode(file("${path.module}/../../../backend/deploy/widgets.dev.json")).widgets
   signing = { for id, widget in local.widgets : widget.identity.secret => id if can(widget.identity.secret) }
   samples = { # the published name, and its source in examples/college: our hosted portal over the College's
-    "public.html" = "public.html"
-    "portal.html" = "hosted/portal.html"
-    "portal.js"   = "hosted/portal.js"
+    "public.html"    = "public.html"
+    "portal.html"    = "hosted/portal.html"
+    "portal.js"      = "hosted/portal.js"
+    "assistant.html" = "hosted/assistant.html"
+    "assistant.js"   = "hosted/assistant.js"
+    "assistant.css"  = "assistant.css"
   }
+  types = { html = "text/html; charset=utf-8", js = "text/javascript; charset=utf-8", css = "text/css; charset=utf-8" }
 }
 
 resource "random_id" "samples" {
@@ -72,7 +76,7 @@ resource "aws_s3_object" "samples" {
   for_each      = local.samples
   bucket        = aws_s3_bucket.samples.id
   key           = each.key
-  content_type  = endswith(each.key, ".js") ? "text/javascript; charset=utf-8" : "text/html; charset=utf-8"
+  content_type  = local.types[regex("[a-z]+$", each.key)]
   cache_control = "no-store"
   content = replace(replace(replace(
     file("${path.module}/../../../examples/college/${each.value}"),

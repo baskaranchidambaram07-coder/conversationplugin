@@ -65,7 +65,7 @@ async function file(path) {
   }
   const asset = path.match(/^\/assets\/([\w.-]+)\.(js|css|woff2)$/);
   if (asset) return [200, types[asset[2]], await readFile(new URL(`web/widget/dist/assets/${asset[1]}.${asset[2]}`, root))];
-  const sample = path.match(/^\/(college|hosted)\/([a-z]+)\.(html|js)$/);
+  const sample = path.match(/^\/(college|hosted)\/([a-z]+)\.(html|js|css)$/);
   if (sample) return [200, types[sample[3]], await samplePage(sample[1], `${sample[2]}.${sample[3]}`)];
   const page = path.match(/^\/hosts\/([a-z-]+)\.html$/);
   if (page) return [200, types.html, await readFile(new URL(`e2e/hosts/${page[1]}.html`, root))];
