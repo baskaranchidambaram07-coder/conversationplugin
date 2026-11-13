@@ -113,7 +113,7 @@
       }
     },
     "w_college_demo": {
-      "tenant_id": "t_college",
+      "tenant_id": "t_college_demo",
       "public": {
         "title": "Ask the College",
         "welcome_message": "Hello. Ask me about accommodation, events or the library.",

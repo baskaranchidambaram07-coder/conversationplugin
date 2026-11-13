@@ -41,9 +41,14 @@ resource "aws_secretsmanager_secret" "host_secrets" {
 }
 
 resource "aws_secretsmanager_secret_version" "host_secrets" {
-  secret_id                = aws_secretsmanager_secret.host_secrets.id
-  secret_string_wo         = jsonencode({ smoke = "k1:${ephemeral.random_password.smoke_secret.result}" })
-  secret_string_wo_version = 1 # a customer's secret is added later with infra/aws/secret_store.py, not here
+  secret_id = aws_secretsmanager_secret.host_secrets.id
+  secret_string_wo = jsonencode({
+    smoke = "k1:${ephemeral.random_password.smoke_secret.result}"
+    demo  = "k1:${random_password.demo.result}" # the hosted samples' sign-in (samples.tf)
+  })
+  # A customer's secret is added later with infra/aws/secret_store.py, not here. Raising this number writes the whole
+  # value again and drops those: add them again afterwards, and hand the customers their new secrets.
+  secret_string_wo_version = 2
 }
 
 resource "aws_secretsmanager_secret" "agent_profiles" {
