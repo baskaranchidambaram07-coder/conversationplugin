@@ -22,7 +22,7 @@ resource "aws_iam_role" "deploy" {
         StringEquals = {
           "token.actions.githubusercontent.com:aud" = "sts.amazonaws.com"
           "token.actions.githubusercontent.com:sub" = [
-            for branch in var.deploy_branches : "repo:${var.github_repository}:ref:refs/heads/${branch}"
+            for branch in var.deploy_branches : "${var.github_subject_prefix}:ref:refs/heads/${branch}"
           ]
         }
       }

@@ -13,10 +13,14 @@ variable "region" {
   default = "us-east-1"
 }
 
-variable "github_repository" {
-  description = "The repository whose pipeline may deploy, as owner/name."
+variable "github_subject_prefix" {
+  description = <<-EOT
+    How GitHub names this repository in a run's identity. The repository uses GitHub's immutable form, which adds the
+    owner's and the repository's public IDs, so a renamed or re-created repository cannot take over the deploy role.
+    Read it with: gh api repos/OWNER/REPO/actions/oidc/customization/sub (sub_claim_prefix).
+  EOT
   type        = string
-  default     = "baskaranchidambaram07-coder/conversationplugin"
+  default     = "repo:baskaranchidambaram07-coder@266725199/conversationplugin@1455037781"
 }
 
 variable "deploy_branches" {
