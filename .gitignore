@@ -17,3 +17,9 @@ playwright-report/
 # Internal source material. Remove these two lines to track the files.
 universal_conversation_platform_internal_discussion.docx
 Universal Conversational Embed SDK Architecture.png
+
+# Terraform: providers, state and the local backend settings stay on the machine (state lives in the S3 bucket).
+.terraform/
+*.tfstate
+*.tfstate.*
+infra/aws/dev/backend.hcl

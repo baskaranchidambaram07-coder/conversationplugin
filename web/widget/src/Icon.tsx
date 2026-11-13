@@ -3,9 +3,10 @@ import { useState } from "react";
 import { strings as t } from "./strings";
 
 /** Authored glyphs: one 2px round-capped stroke in the text colour. */
-export function Icon({ path, filled = false }: { path: string; filled?: boolean }) {
+export function Icon({ path, filled = false, flip = false }: { path: string; filled?: boolean; flip?: boolean }) {
+  // flip: a glyph that points along the reading direction, mirrored for right-to-left languages
   return (
-    <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false" className="glyph">
+    <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false" className={flip ? "glyph flip" : "glyph"}>
       <path
         d={path}
         fill={filled ? "currentColor" : "none"}

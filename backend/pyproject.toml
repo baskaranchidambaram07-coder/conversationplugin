@@ -9,12 +9,14 @@ dependencies = [
     "sqlalchemy[asyncio]>=2.0.36",
     "asyncpg>=0.30",
     "pydantic>=2.14",
+    "alembic>=1.16",
+    "httpx2>=2.16",
+    "pyjwt[crypto]>=2.10",
 ]
 
 [dependency-groups]
 dev = [
     "pytest>=8.3",
-    "httpx2>=2.0",
     "ruff>=0.8",
 ]
 
@@ -33,3 +35,5 @@ select = ["E", "F", "I", "B", "UP", "S"]
 [tool.ruff.lint.per-file-ignores]
 # Tests assert, and pass made-up passwords to the fake PF.
 "tests/*" = ["S101", "S106"]
+# The release's smoke suite calls the AWS command line with its own fixed arguments.
+"smoke.py" = ["S603", "S607"]

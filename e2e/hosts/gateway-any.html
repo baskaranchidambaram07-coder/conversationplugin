@@ -1,0 +1,20 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>A customer's page, with the widget named in the address</title>
+  </head>
+  <body>
+    <h1>A newly onboarded customer's page</h1>
+    <p>The one script tag a customer adds, for the widget (and gateway) named in this page's address.</p>
+    <script>
+      const tag = document.createElement("script");
+      tag.async = true;
+      const gateway = new URLSearchParams(location.search).get("gateway") || "http://localhost:8200";
+      tag.src = `${gateway}/loader.js`;
+      tag.dataset.widgetId = new URLSearchParams(location.search).get("widget");
+      document.body.append(tag);
+    </script>
+  </body>
+</html>

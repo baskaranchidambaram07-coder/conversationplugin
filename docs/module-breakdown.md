@@ -309,7 +309,8 @@ State on 12 November 2026 (pull requests 12 to 15 into `module/m01-embed-loader`
 State on 12 November 2026 (pull requests 17 to 20 into `module/m02-conversation-ui`):
 
 - Built for the base version: T1, T2 (light only), T3, T4, T5 (without feedback buttons), T6, the base part of T7 (follow the newest message unless the visitor scrolled up; a jump back), T9, T10, T11 (English), T12, the base part of T13 (the AI notice and the "Powered by Purple Fabric" note), and T14's size limit (first load about 76 KB compressed against 100 KB, checked in the pipeline). Markdown shows as plain text until M3 renders it.
-- Deferred: T8 history panel (needs M7's list endpoint; before 22 November); the five configurable scroll settings; feedback buttons; dark mode (`color_scheme` is ignored); the privacy and consent slot, the help link and transcript download; automated visual-regression baselines; real devices.
+- T8, the history panel, was built with M7 on 13 November 2026; see M7's state.
+- Deferred: the five configurable scroll settings; feedback buttons; dark mode (`color_scheme` is ignored); the privacy and consent slot, the help link and transcript download; automated visual-regression baselines; real devices.
 - The API the chat calls is part of the message format (`SessionRequest`, `Session`, `SendMessage` in `backend/ucp/protocol.py`). Until M4 exists, browser tests run against a fake gateway in `e2e/server.mjs`; the plan's "real gateway, fake PF" integration tests move to M4.
 - For M4: `POST /v1/sessions`, `POST /v1/conversations`, `POST /v1/conversations/{id}/messages` (a stream of `StreamEvent` lines with a `: ping` heartbeat at least every 15 s, since the chat treats 20 s of silence as a stalled stream; a repeated `client_message_id` returns the same reply), and `GET /v1/conversations/{id}/messages/{message_id}` (the chat polls it to recover a stalled or dropped stream). Every error is an `ApiError`; the chat shows its own wording, never the gateway's. Serve the built chat at `/embed/{id}` with `frame-ancestors` from the widget's allowed domains; it needs only its own origin for scripts, styles, fonts and calls, plus `https:` images for customer logos.
 - For M5: an anonymous session cannot be renewed (the chat offers a new chat instead); a signed-in one is renewed with a fresh host token and the call replayed once.
@@ -390,6 +391,47 @@ State on 12 November 2026 (pull requests 22 to 24 into `module/m03-rendering-eng
 - M4-T9 Resilience: time limits; retries only before the first word is streamed; a circuit breaker per PF connection; a cap on concurrent turns per tenant.
 - M4-T10 Feedback endpoint.
 
+State on 12 November 2026 (pull requests 26 to 31 into `module/m04-conversation-gateway`):
+
+- Built for the base version:
+  - T1: the API description is exported to `protocol/openapi.json` with a drift check, never served.
+  - T2: a correlation ID, a 64 KB body limit, security headers and an access log without secrets. API calls are accepted only from our own chat page. Limits per address, per session and per tenant are kept in memory.
+  - T3: the public settings, the chat page with its content policy and per-widget `frame-ancestors`, and the loader and chat files, all from one origin.
+  - T4 for anonymous visitors.
+  - T5 without delete.
+  - T6: streamed or as one JSON message; safe to repeat; one turn at a time; `: ping` every 15 s.
+  - T7, and T9.
+  - T8: widgets seeded from a file with `python -m ucp.widgets seed`, cached 30 s.
+- Built here from M6 and M7, as agreed:
+  - the agent-connector interface and the core of the PF connector (`ucp/connector.py`, `ucp/pf.py`);
+  - the PostgreSQL storage core with Alembic migrations (`ucp/store.py`, `ucp/migrations/`).
+- One command runs the whole stack locally: `backend/devstack.py` (gateway, fake PF and seeded widgets). It covers part of M0-T6.
+- Deferred:
+  - T10 feedback;
+  - an explicit stop: an answer the visitor stopped is stored as complete;
+  - daily quotas in PostgreSQL;
+  - generated-request fuzzing;
+  - the automated security scan (M12);
+  - deployment tests (M14);
+  - the one-hour soak, scale-out, rolling-deployment and failover tests;
+  - recovering an answer whose gateway stopped mid-turn: it is marked failed after 6 minutes.
+- Latency (`backend/loadtest.py`): with 10 visitors at once the gateway adds 36 ms at the median and 76 ms at the 95th percentile to the first word, within the 150 ms budget.
+  - Beyond about 15 visitors, the build machine saturates its four processors. It runs the load generator, the fake PF, PostgreSQL and other work at the same time, so the figure then measures the machine, not the gateway.
+  - On the pipeline's own runner, with 25 visitors at once, the gateway adds 20 to 33 ms at the median and 79 to 94 ms at the 95th percentile, over three runs on 12 November 2026. That meets the done condition's latency budget.
+  - Correction, 13 November 2026: those three runs were a lucky sample. The pipeline's history shows the same code at 79 to 199 ms with 25 visitors (once 251 ms), because the shared runner carries the gateway, PostgreSQL, the fake PF and the load together. With your agreement, the pipeline now checks 10 visitors on the median of three runs. The budget at 25 or more visitors is to be certified in M14, against the deployed stack, from a separate machine.
+  - An earlier version did not always meet it: one run reached 167 ms. A profile showed the gateway's code idle and waiting on the database, so a turn now starts in four statements instead of nine, and the connection pool is larger and steady.
+  - A test against a deployed instance from a separate machine belongs with M14.
+- For M5: sessions use `ucp.sessions.Keys` (HS256, rotating by `kid`) and `Session(user_id, tenant_id, widget_id, config_version, mode)`. `POST /v1/sessions` refuses a host token with `forbidden` until M5 verifies it. Each widget's `sign_in` is `anonymous`, `signed_in` or `both`.
+- For M6: keep the four connector events, and end each `send` with exactly one `Final` or `Failed`. Profiles come from `UCP_AGENT_PROFILES`.
+- For M7: the storage interface is `ucp.store.Store`, and every call takes an `Owner`.
+- For M8: a widget's published document is `ucp.widgets.WidgetDocument`. Publishing writes a new version row to `widgets`.
+- For M14:
+  - settings come from the environment: `UCP_DATABASE_URL`, `UCP_SESSION_KEYS`, `UCP_AGENT_PROFILES`, and `UCP_WEB_DIR`, which the image sets;
+  - run `python -m ucp.migrate` before each release;
+  - build the image from the repository root;
+  - health is at `/healthz` and readiness at `/readyz`;
+  - the load balancer's idle timeout must exceed the 15 s heartbeat.
+
 **Tests**
 
 - Unit: event conversion; turn handling at each failure point; repeat-request logic; the public configuration contains only fields on an explicit allow-list; error mapping.
@@ -421,6 +463,39 @@ State on 12 November 2026 (pull requests 22 to 24 into `module/m03-rendering-eng
 - M5-T7 Token-signing snippets for Python, Node, Java, .NET, PHP and Go, with shared test tokens.
 
 Later: PF-level delegated identity, if PF supports it; console screens for single sign-on set-up.
+
+State on 12 November 2026 (pull requests 33 to 37 into `module/m05-identity-session`, merged into `develop` with pull request 38; 37 fixed an M4 bug, the per-address session limit shared across widgets):
+
+- Built for the base version:
+  - T1: signed-in sessions last 15 minutes and are renewed through `getToken`; anonymous sessions last 60 minutes and cannot be renewed. The session token's clock tolerance is now 5 s, since gateway instances share a synced clock.
+  - T2: each anonymous session is a new visitor, so their history lasts the session.
+  - T3: host tokens signed with the widget's shared secret: a 10-minute maximum lifetime, a one-time `jti` kept in PostgreSQL, and both secrets accepted during a rotation.
+  - T4: identity-provider tokens, by OpenID Connect discovery over https. Keys are kept an hour and fetched again at most once a minute for an unknown key. They stay usable for a day while the provider is down; after that, its visitors are refused as unavailable.
+  - T5: the `identities` table.
+  - T6: renewal through `getToken`.
+  - T7: snippets in six languages, with a guide (`examples/token-signing`).
+- Proven end to end:
+  - the shared-secret path, in browser journeys on three engines. The stand-in portal backend signs with the Node snippet; a session that expires mid-conversation is renewed unseen; signing out removes the chat.
+  - the identity-provider path, against a real Keycloak in the pipeline, including a signing-key rotation.
+  - every snippet, run in the pipeline and checked by the gateway's own code.
+- Deferred:
+  - the deny-list to end a session early, which needs M8's admin action;
+  - separate, tighter limits for anonymous visitors;
+  - the single-sign-on setup screens (M9);
+  - PF-level delegated identity;
+  - showing history in the chat: the history panel (M2-T8) is not built, so "history is shown to its owner only" is proven through the API, not in the chat;
+  - the key-rotation runbook (M14);
+  - anonymous history across page loads (best effort, not built).
+- For M8: a widget's `identity` settings hold:
+  - `provider`;
+  - `issuer`;
+  - `audience`, optional, defaulting to the widget ID;
+  - `secret`, a name in `UCP_HOST_SECRETS`, or none for an identity provider;
+  - `user_claim`, defaulting to `sub`.
+
+  Secrets go to the secret store, never into the widget document. A widget for signed-in visitors cannot be published without these settings.
+- For M14: `UCP_HOST_SECRETS` (JSON, `{name: "id:secret,…"}`) and `UCP_SIGNED_IN_SECONDS` come from the environment. The gateway must be able to reach customers' identity providers over https.
+- For M15: the integration guide for signed-in sites is `examples/token-signing/README.md`.
 
 **Tests**
 
@@ -498,6 +573,43 @@ Later: file hand-off, voice endpoints, delegated identity.
 
 **Done when** the sandbox suite passes and the capability sheet matches observed behaviour.
 
+State on 13 November 2026 (pull requests 39 to 43 into `module/m06-pf-connector`):
+
+- Built with M4 and kept (`ucp/pf.py`):
+  - the connector interface;
+  - one login shared by concurrent callers, renewed five minutes before the expiry PF states;
+  - a PF conversation created on the first message, named with our ID;
+  - the stream adapter, and recovery of a broken stream by fetching the answer;
+  - error translation with a "can retry" flag, and one quiet login again when PF refuses a token.
+- Built here:
+  - T2: refused credentials are tried again only after five minutes. Repeated wrong passwords can lock the service account that every widget on it shares.
+  - T4: a damaged stream event is skipped, since the final event carries the whole answer. Before, it failed the turn.
+  - T5, proved: the fake PF's `[seeded]` reply adds internal addresses, sources, citations, model and tool details to every event. The visitor's stream, the stored messages and the conversation list hold the answer text and none of these, and no raw PF error.
+  - T8: the staging suite (`tests/test_pf_staging.py`) checks each claim in the capability sheet that is safe to test. It also compares the fake PF's recorded shapes with what PF sends today.
+  - `devstack.py --pf staging`, and a browser journey on staging (`npm run e2e:staging`). The journey searches everything the browser received for PF's address, tenant, workspace, agent, credentials and IDs, and checks no source maps are served. This is the core of M12-T11.
+  - Unit tests (`tests/test_pf_wire.py`):
+    - request mapping and the token's refresh point;
+    - a failed login, then a successful one;
+    - events split across network reads;
+    - damaged events and early ends;
+    - the error table, with no secret in any error detail.
+- Proven against PF staging on 13 November 2026:
+  - the staging suite, 12 tests;
+  - the API journey, 10 steps;
+  - the browser leak search: zero matches, and a PF value planted in a gateway header is caught in 12 responses.
+- Not built, as agreed:
+  - T1 cancel: PF has no cancel call, so stopping an answer stops the display only;
+  - sources and citations, left out of the chat until internal addresses can be removed; structured output as typed blocks;
+  - backing off until PF's rate-limit reset time (the production limit is a question for the PF team);
+  - T7 beyond `check()`, which only logs in; the screen belongs to M8 and M9;
+  - deployment tests (M14), PF's latency and concurrency per tenant, delegated identity, file hand-off and voice.
+- Not tried live: a wrong password, which could lock the shared service account, and the rate limit. The fake PF and the wire tests cover both.
+- Staging runs happen on this machine only; the pipeline has no PF credentials.
+  - Each staging-suite run leaves four conversations named `ucp-test-*` in the staging workspace, and each journey leaves one.
+  - On this machine, read `.env` with `uv`, never with Node's parser, which reads one PF value differently.
+- For M14: run the staging suite and the leak search every night from the AWS development account, with the PF credentials in Secrets Manager and the logs private.
+- For M12: the leak search runs on every build against the deployed stack (M12-T11).
+
 ---
 
 ### M7 — History and persistence
@@ -529,6 +641,57 @@ Later: DynamoDB adapter; certification of MySQL, SQL Server and Oracle; customer
 - Other, security: injection attempts; the cross-tenant suite; encryption verified; credential rotation.
 
 **Done when** the conformance and cross-tenant suites pass and restore has been rehearsed.
+
+State on 13 November 2026 (pull requests 45 to 49 into `module/m07-history-persistence`):
+
+- Built with M4 and kept (`ucp/store.py`): conversations and messages in PostgreSQL, every read through its owner; message and conversation pages; Alembic migrations.
+- Built here:
+  - T2:
+    - **Concurrent questions:** the conversation is now locked in a statement of its own before its state is read. Two questions arriving together could otherwise both start and collide on a message number. A turn now starts in five statements.
+    - **List cursor:** it carries the time and the ID, so conversations active at the same instant are neither skipped nor shown twice.
+  - T3: each migration is tested down and up on its own.
+  - T5, in part: each stored answer records the agent version that wrote it (migration `0003`), beside the widget version.
+  - T8: the conformance and cross-tenant suite (`backend/tests/test_store.py`). Another user, the same user on another widget, or another tenant gets nothing from any storage call and changes nothing. It also pages through 10,000 messages, handles ties in the list, survives a gateway restart and refuses malformed cursors.
+  - The history panel (M2-T8):
+    - **Who sees it:** signed-in visitors on widgets with history turned on.
+    - **The list:** their chats, titled and dated, older ones on demand.
+    - **Reopening:** a chat reopens drawn exactly as it streamed and carries on in place; earlier messages load above it on demand.
+    - **Layout:** on narrow frames the list replaces the conversation; from 720px it stands beside it.
+    - **Everyone:** a "New chat" action.
+    - **Anonymous visitors** see no list: their history lasts the session only.
+- Proven:
+  - the suites above on PostgreSQL;
+  - browser journeys through the real gateway on three engines (`e2e/gateway/history.spec.ts`):
+    - a resident's chat comes back on their next visit, reopens drawn the same as it streamed, and carries on;
+    - another resident never sees it;
+    - a new chat joins the list;
+    - the wide layout works;
+    - WCAG 2.2 AA scans pass on a phone, the floating panel and a wide frame.
+  - The scan found Muted Umber on Soft Sand at 4.2:1, so the open chat's date is set in Warm Ink.
+- The latency check, M4's budget, judged soundly:
+  - On 13 November the pipeline's load test swung between 84 and 199 ms at the 95th percentile on unchanged code, and once failed both tries on this module branch.
+  - A local A/B test showed the race fix adds nothing measurable: the medians were 40 to 54 ms either way. The same code's 95th percentile still ranged from 80 to 233 ms, so on a shared machine noise dominates one run's figure.
+  - The pipeline's history shows the same spread back to M4 (79 to 199 ms, once 251 ms), so M4's recorded 79 to 94 ms was a lucky sample (corrected under M4).
+  - Your decision on 13 November 2026: the pipeline checks 10 visitors at once, which the runner can carry without measuring itself. It judges the median of three runs' 95th percentiles against 150 ms. That replaces the M5 retry, which passed whenever either of two tries did and so could also let a real slowdown through.
+  - At 25 visitors the median of three runs measured 152 ms on the runner.
+- Deferred:
+  - **By decision:** delete, purge, the reopen window and the record period, until the purge policy is set.
+  - **With M14's AWS database:**
+    - T4's row-level security and T7's restricted database role, encryption at rest and encrypted connections;
+    - the restore rehearsal in the done condition;
+    - the failover and production-sized migration tests.
+  - **Also deferred:**
+    - export of a user's data;
+    - the feedback and audit tables (M4-T10, M8);
+    - performance at a million conversations;
+    - other databases.
+- For M8:
+  - a widget's `history_enabled` turns the list on for its signed-in visitors;
+  - answers record the widget version (`config_version`) and the agent version (`agent_version`).
+- For M14:
+  - run `python -m ucp.migrate` before each release (migration `0003` adds a column);
+  - create the database roles for row-level security there;
+  - certify the latency budget (at most 150 ms added to the first word at the 95th percentile) with 25 or more visitors at once, against the deployed stack, from a separate machine.
 
 ---
 
@@ -562,6 +725,45 @@ Later: storage profiles, self-service sign-up, usage and billing data.
 - Other, security: a tenant administrator cannot see or change another tenant; secret references cannot point outside the tenant's own area; the audit log cannot be edited; domain allow-list bypass attempts (look-alike domains, sub-domain tricks, internationalised names).
 
 **Done when** the onboarding journey passes end to end and the role matrix is green.
+
+State on 13 November 2026 (pull requests 51 to 54 into `module/m08-control-plane`). By your decision, M8 is configuration managed as code for the base version. The admin HTTP API comes with the console (M9) after 22 November.
+
+- Built:
+  - T2:
+    - **Allowed sites:** a mistake could have widened who may show a customer's chat, so these are now refused: plain `http` other than localhost; wildcards over a shared suffix (`*.com`, `*.ac.uk`, `*.github.io`); and capitals, non-ASCII names, trailing dots, bad labels, user names, paths, queries and bad ports.
+    - **Every fault at once:** a file of widgets reports every fault in one go, each naming the widget and the field, and publishes nothing.
+    - The shared-suffix list is short, marked as a shortcut until customers outside the UK arrive.
+  - T3, T7 and T9:
+    - **Publishing:** every publish records who did it. A rollback publishes an earlier version again as a new one; a version that breaks today's rules is refused rather than served broken.
+    - **Audit log:** it keeps who, what and when.
+    - **Nothing can be edited:** a database trigger refuses any change, removal or truncation of the log and of published versions, whoever asks (migration `0004`).
+  - T1, T4, T5 and T10, as commands:
+    - **`python -m ucp.widgets`:** `seed`, `versions`, `rollback`, `audit`, `export` (publishing it again changes nothing), `new-id` and `new-secret` (32 random bytes, named by date for rotation);
+    - **`python -m ucp.pf check`:** logs in with each connection profile and names the outcome, never an address or a credential. It was tried against PF staging.
+  - **The onboarding journey, automated** (`e2e/gateway/onboarding.spec.ts`), on three engines:
+    1. a new ID from the command;
+    2. a configuration file;
+    3. publish with the command;
+    4. one script tag on a customer's page, honouring the configured title, colour and corner;
+    5. a visitor's question answered;
+    6. the version and the audit entry, read back with the command.
+- Proven:
+  - a published change and a rollback both reach visitors through the gateway (`backend/tests/test_versions.py`);
+  - every refusal by the database, the command and the validation (`backend/tests/test_widgets.py`).
+- Deferred to the admin API, with M9:
+  - company sign-in, the three roles and the role-by-tenant matrix (so the done condition's role matrix moves with it);
+  - request-forgery protection and admin rate limits;
+  - drafts edited by two people, and version comparison;
+  - credentials written to the secret store through the API;
+  - tenants' administrators reading their audit entries through the API;
+  - self-service sign-up.
+- Known limits:
+  - **Two publishes of the same widget at the same instant:** one is refused (it collides on the version number).
+  - **Connection check:** it only logs in, so a wrong workspace or agent ID shows on the first question. PF has no cheap call to check them.
+- For M14:
+  - **Each release:** run `python -m ucp.migrate` (migration `0004`), publish the configuration file with `python -m ucp.widgets seed FILE --by <the pipeline>`, then check `python -m ucp.pf check`.
+  - **Backups:** `export` the configuration after each change.
+- For M15: the College's guide uses `new-id`, `new-secret` and `seed`.
 
 ---
 
@@ -714,6 +916,68 @@ Second release: usage view, audit-log viewer, storage and single sign-on set-up,
 - Other, portability: the full backend test suite passes with local adapters and no AWS credentials. This proves on every build that the core does not depend on AWS.
 
 **Done when** a new region can be created from the code alone and passes the smoke suite.
+
+State on 13 November 2026 (pull requests 56 to 62 into `module/m14-cloud-deployment`). By your decisions: you saw the plan first; the environment runs on demand, not always on; the gateway uses a public subnet with no NAT; the PF staging credentials are held in AWS Secrets Manager.
+
+- Built, in the US development account, `us-east-1` (`infra/aws`; the runbook is `infra/aws/README.md`):
+  - **Way in:** CloudFront on its own HTTPS address. It stays while the environment sleeps, answering "This test environment is asleep", so a customer's script tag keeps working.
+  - **Load balancer:** only CloudFront's addresses carrying its secret header can reach it.
+  - **Gateway:** one Fargate task with 1 vCPU and 2 GB, in a public subnet, reachable only from the load balancer.
+  - **Database:** PostgreSQL 17, private, encrypted, with 7 days of point-in-time backups.
+  - **Secrets** under `ucp-dev/`, kept out of Terraform's state and the repository.
+  - **Image registry:** scans images, and commit tags can't be overwritten.
+  - **Roles:** under `ucp-dev-boundary`.
+  - **Terraform's state:** in an encrypted, versioned bucket.
+  - **On demand:** `dev.py wake` (about 10 minutes) and `sleep`, plus `build`, `teardown` and `status`. Roughly US$0.11 an hour awake and US$5 a month asleep, from list prices as remembered.
+- T1: the gateway imports no cloud library (`backend/tests/test_portable.py`). Secrets reach it as environment settings, filled by the container service.
+- T2: the image runs as a non-root user with a read-only root filesystem, applies Debian's security fixes when built, and is scanned on every release. It is not yet signed.
+- T5, the pipeline (`.github/workflows/deploy-dev.yml`):
+  - **Sign-in:** GitHub signs in to AWS without stored keys, with the trust limited to `develop` and this module branch (and GitHub's immutable repository identity).
+  - **Each push:** build, scan (fixable high or critical flaws stop it), store, then `deploy.py`: migrations, the widget file, a rolling update that rolls itself back if unhealthy, and the PF check, then the smoke test. While asleep it only stores the image.
+  - **On every pull request:** CI's new "Infrastructure code checks" job checks the Terraform's format and validity and runs a misconfiguration scan. Accepted findings carry their reason inline.
+- T8: backups, and a restore rehearsed (below).
+- Two gateway fixes the deployment needed:
+  - the same-origin check behind CloudFront (`UCP_PUBLIC_ORIGIN`);
+  - per-visitor limits behind CloudFront (`UCP_VISITOR_ADDRESS_HEADER`).
+- Found and fixed on the deployed stack:
+  - **Logging (from M4):** the gateway's own log lines never reached the logs, so no access log and no turn lines. Python drops them unless logging is configured.
+  - **Image flaws:** two fixable zlib flaws in the base image, caught by the scan.
+  - **Pipeline sign-in:** GitHub's newer identity format.
+  - **Permissions:** one missing read permission for creating the load balancer, which an administrator added (policy version 2).
+- Proven on the deployed stack, against PF staging:
+  - the smoke suite, 15 steps: health, the database, the loader, the configuration, an anonymous turn, a signed-in turn. It passes from this machine and in the pipeline;
+  - the R13 browser leak search, with nothing of PF anywhere in the browser (`npm run e2e:deployed`);
+  - the edge: the load balancer refuses direct connections, plain HTTP is redirected to HTTPS, and the security headers are present;
+  - **M4's latency budget at 25 visitors at once** (the M7 decision):
+    - three runs on 1 vCPU gave 139, 113 and 111 ms at the 95th percentile (median 113, within 150), all 225 answers delivered;
+    - on half a vCPU the opening burst queued it to 304–319 ms, hence the sizing;
+    - each answer logs the gateway's own share, so PF's time is left out (`infra/aws/latency.py`).
+  - **A release while answers stream:** 21 answers asked during a forced rollout, all completed (`rollout_check.py`).
+  - **A rollback and a roll forward:** both passed the smoke test, with the log showing which code served.
+  - **The restore rehearsal:** the database restored to a moment 08:17:10 UTC into a new instance in 14 minutes. Every table matched the live database at that moment (80 conversations, 462 messages), and the copy was then removed (`restore_rehearsal.py`). This completes M7's done condition too.
+- **The done condition, met on 13 November 2026.** With your word, the environment was torn down and rebuilt from the code alone:
+  1. **Teardown:** `dev.py teardown` removed 40 resources in about 3 minutes, leaving only the state bucket and GitHub's sign-in.
+  2. **Rebuild:** `dev.py build` created 40 resources in 8 minutes 43 seconds, adopting GitHub's sign-in again.
+  3. **Secrets:** `secret_store.py agent-profiles` set the PF profile.
+  4. **Image:** the pipeline built, scanned and stored an image. The GitHub secrets needed no change.
+  5. **Wake:** `dev.py wake` ran the migrations, the widget file and the PF check.
+
+  From nothing to awake took 17 minutes 30 seconds of wall-clock time. The smoke suite passed all 15 steps, and the R13 leak search passed. The rebuild has a new address, `https://d17o90elbmlyrb.cloudfront.net`, which the scripts and the pipeline found from the release by themselves.
+- Deferred:
+  - **Production in London:** private subnets and NAT, a database across two zones, our own domain names and certificates (HTTPS to the load balancer too), and a web application firewall.
+  - **Needs an AWS administrator:** budget alerts and autoscaling, which the deploying user may not create.
+  - **Not chosen for dev:** container insights, flow and CloudFront logs, and encryption with our own keys.
+  - **Also deferred:**
+    - image signing;
+    - pinned loader releases (T6);
+    - a nightly run of the staging suite from AWS (M6);
+    - zone-loss and failover tests;
+    - timing a brand-new account's build.
+- For M15:
+  - the address the College uses comes from `python infra/aws/deploy.py --url`;
+  - a widget's shared secret comes from `secret_store.py host-secret NAME`;
+  - the sandbox's widgets go in `backend/deploy/widgets.dev.json`.
+- For M12: the leak search runs against the deployed stack (`npm run e2e:deployed`); running it on every build comes with M12.
 
 ---
 

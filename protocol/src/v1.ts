@@ -1,7 +1,17 @@
 // Generated from schema/v1.json by `npm run generate --workspace @ucp/protocol`. Do not edit.
 
 export type Protocol =
-  Block | StreamEvent | ApiError | Conversation | Message | WidgetConfig | SessionRequest | Session | SendMessage;
+  | Block
+  | StreamEvent
+  | ApiError
+  | Conversation
+  | Message
+  | ConversationPage
+  | MessagePage
+  | WidgetConfig
+  | SessionRequest
+  | Session
+  | SendMessage;
 export type Block = TextBlock | MarkdownBlock | UnknownBlock;
 export type StreamEvent =
   MessageStarted | ContentBlockStarted | ContentBlockDelta | ContentBlockCompleted | MessageCompleted | MessageFailed;
@@ -10,6 +20,10 @@ export type StreamEvent =
  */
 export type Id = string;
 export type Index = number;
+/**
+ * Opaque. Pass it as `before` for the next page.
+ */
+export type Cursor = string;
 
 /**
  * Plain text, shown exactly as written and never interpreted. Used for what the user typed.
@@ -162,6 +176,26 @@ export interface Message {
   blocks: Block[];
   error: ApiError | null;
   created_at: string;
+}
+/**
+ * Reply to GET /v1/conversations: the visitor's conversations, most recently active first.
+ */
+export interface ConversationPage {
+  conversations: Conversation[];
+  /**
+   * Null when there are no older conversations.
+   */
+  next: Cursor | null;
+}
+/**
+ * Reply to GET /v1/conversations/{id}/messages: a page of messages, oldest first, and the page before it.
+ */
+export interface MessagePage {
+  messages: Message[];
+  /**
+   * Null when this page starts the conversation.
+   */
+  next: Cursor | null;
 }
 export interface WidgetConfig {
   v: 1;

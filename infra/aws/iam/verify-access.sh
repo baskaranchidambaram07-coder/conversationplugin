@@ -33,6 +33,7 @@ check allowed ecs:CreateCluster "arn:aws:ecs:us-east-1:$account:cluster/ucp-dev-
 check allowed ecs:CreateService "arn:aws:ecs:us-east-1:$account:service/ucp-dev-main/ucp-dev-gateway"
 check allowed ecr:CreateRepository "arn:aws:ecr:us-east-1:$account:repository/ucp-dev-gateway"
 check allowed elasticloadbalancing:CreateLoadBalancer "arn:aws:elasticloadbalancing:us-east-1:$account:loadbalancer/app/ucp-dev-gateway/0"
+check allowed ec2:GetSecurityGroupsForVpc "arn:aws:ec2:us-east-1:$account:vpc/vpc-0"  # checked when a load balancer is created
 check allowed rds:CreateDBInstance "arn:aws:rds:us-east-1:$account:db:ucp-dev-main"
 check allowed secretsmanager:CreateSecret "arn:aws:secretsmanager:us-east-1:$account:secret:ucp-dev/pf-AbCdEf"
 check allowed s3:CreateBucket "arn:aws:s3:::ucp-dev-assets-$account"
