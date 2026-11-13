@@ -1,0 +1,6 @@
+# The operator's scripts: the backend's rules, except that calling the AWS command line and Terraform, with fixed
+# arguments of our own, is what they are for.
+extend = "../../backend/pyproject.toml"
+
+[lint.per-file-ignores]
+"*.py" = ["S603", "S607"]

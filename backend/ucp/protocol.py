@@ -166,6 +166,25 @@ class Message(_Model):
     created_at: AwareDatetime
 
 
+type Cursor = Annotated[
+    str, Field(pattern=r"^[A-Za-z0-9_.:+-]{1,64}$", description="Opaque. Pass it as `before` for the next page.")
+]
+
+
+class ConversationPage(_Model):
+    """Reply to GET /v1/conversations: the visitor's conversations, most recently active first."""
+
+    conversations: list[Conversation]
+    next: Cursor | None = Field(description="Null when there are no older conversations.")
+
+
+class MessagePage(_Model):
+    """Reply to GET /v1/conversations/{id}/messages: a page of messages, oldest first, and the page before it."""
+
+    messages: list[Message]
+    next: Cursor | None = Field(description="Null when this page starts the conversation.")
+
+
 # Public widget configuration: display settings only. Domains, identity, limits and PF details stay private (R13).
 
 
@@ -219,6 +238,8 @@ PUBLIC_TYPES = {
     "ApiError": ApiError,
     "Conversation": Conversation,
     "Message": Message,
+    "ConversationPage": ConversationPage,
+    "MessagePage": MessagePage,
     "WidgetConfig": WidgetConfig,
     "SessionRequest": SessionRequest,
     "Session": Session,

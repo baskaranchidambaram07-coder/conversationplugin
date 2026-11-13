@@ -1,0 +1,25 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>The College portal, with the real gateway</title>
+  </head>
+  <body>
+    <h1>A portal page for a signed-in resident</h1>
+    <p>The resident in the address is signed in; this site's backend signs their token (e2e/server.mjs).</p>
+    <button type="button" id="sign-out">Sign out</button>
+    <script>
+      window.UCP = window.UCP || function () { (UCP.q = UCP.q || []).push(arguments) };
+      // Exactly as the guide shows (examples/token-signing/README.md), for the resident named in the address.
+      window.signIn = (user) =>
+        UCP("mount", {
+          widgetId: "w_portal",
+          getToken: () => fetch(`/portal/token?user=${encodeURIComponent(user)}`).then((reply) => reply.text()),
+        });
+      signIn(new URLSearchParams(location.search).get("user"));
+      document.getElementById("sign-out").addEventListener("click", () => UCP("unmount"));
+    </script>
+    <script async src="http://localhost:8200/loader.js" data-debug></script>
+  </body>
+</html>

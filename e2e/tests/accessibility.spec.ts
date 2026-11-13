@@ -31,7 +31,7 @@ test("the chat's opening view", async ({ page }) => {
 test("the chat with a finished answer, and the copy action", async ({ page }) => {
   await page.goto(CHAT);
   await page.getByRole("button", { name: "When does the library open?" }).click();
-  await expect(page.getByRole("button", { name: "Copy answer" })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Copy answer" })).toBeVisible({ timeout: 20_000 }); // a long answer streams for seconds
 
   expect(await serious(page)).toEqual([]);
 });
@@ -56,6 +56,26 @@ test("the chat after an anonymous session has ended", async ({ page }) => {
   await page.goto(CHAT);
   await ask(page, "Hello [expire]");
   await expect(page.getByRole("button", { name: "Start a new chat" })).toBeVisible();
+
+  expect(await serious(page)).toEqual([]);
+});
+
+// Rendered answers (M3), from the example gallery the unit tests draw.
+for (const example of ["formatting", "code", "tables"]) {
+  test(`an answer drawn from the ${example} example`, async ({ page }) => {
+    await page.goto(CHAT);
+    await ask(page, `[gallery:${example}]`);
+    await expect(page.getByRole("button", { name: "Copy answer" })).toBeVisible({ timeout: 20_000 }); // a long answer streams for seconds
+
+    expect(await serious(page)).toEqual([]);
+  });
+}
+
+test("a long table, unfolded and scrolled", async ({ page }) => {
+  await page.goto(CHAT);
+  await ask(page, "[gallery:tables]");
+  await page.getByRole("button", { name: "Show all 14 rows" }).click();
+  await page.getByRole("region", { name: /^Table: House/ }).evaluate((region) => region.scrollBy(80, 120));
 
   expect(await serious(page)).toEqual([]);
 });

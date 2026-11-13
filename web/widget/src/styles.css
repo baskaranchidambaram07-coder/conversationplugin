@@ -8,6 +8,7 @@
   --brand: var(--ink);
   --on-brand: var(--paper);
   --gutter: 16px;
+  --mono: ui-monospace, "Cascadia Mono", "SF Mono", Menlo, Consolas, monospace;
   color-scheme: light;
 }
 
@@ -149,6 +150,16 @@ h1 {
   background: rgba(43, 36, 31, 0.07);
 }
 
+.actions {
+  display: flex;
+  flex: none;
+  gap: 2px;
+}
+
+.flip:dir(rtl) {
+  transform: scaleX(-1);
+}
+
 /* The conversation */
 
 .log {
@@ -251,6 +262,239 @@ h1 {
   40% {
     opacity: 1;
   }
+}
+
+/* Rendered answers (M3): Markdown, code and tables, in the world's own materials. */
+
+.md {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  align-self: stretch;
+  min-width: 0;
+  text-wrap: pretty;
+}
+
+.md > *,
+.md :is(ul, ol) {
+  margin: 0;
+}
+
+.md :is(h2, h3, h4, h5, h6) {
+  margin-block-start: 6px;
+  line-height: 1.3;
+  font-weight: 700;
+  text-wrap: balance;
+}
+
+.md > :first-child {
+  margin-block-start: 0;
+}
+
+.md h2 {
+  font-size: 18px;
+}
+
+.md h3 {
+  font-size: 16px; /* a step by weight alone, below the 18px h2 */
+}
+
+.md :is(h4, h5, h6) {
+  font-size: 15px;
+  color: var(--umber);
+}
+
+.md :is(ul, ol) {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding-inline-start: 1.35em;
+}
+
+.md li::marker {
+  color: var(--umber);
+}
+
+/* A task's box hangs where a bullet would, so its words line up with the rest of the list. */
+.md .task-list-item {
+  list-style: none;
+}
+
+.md .task {
+  display: inline-flex;
+  margin-inline: -1.35em calc(1.1em - 18px); /* the space after the box makes up the last 0.25em */
+  vertical-align: -3px;
+}
+
+.md .task .glyph {
+  width: 18px;
+  height: 18px;
+}
+
+.md blockquote {
+  padding: 10px 14px;
+  border-radius: 12px;
+  background: var(--ground);
+}
+
+.md a {
+  color: var(--ink);
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 3px;
+}
+
+.md a:hover {
+  text-decoration-thickness: 2px;
+}
+
+.md :not(pre) > code {
+  padding: 1px 6px;
+  border-radius: 6px;
+  background: var(--ground);
+  box-shadow: 0 0 0 1px var(--sand);
+  font: 0.9em var(--mono);
+}
+
+.md hr {
+  width: 100%;
+  border: 0;
+  border-block-start: 1px solid var(--sand);
+}
+
+.code,
+.table {
+  align-self: stretch;
+  min-width: 0;
+  margin: 0;
+  overflow: hidden;
+  border-radius: 12px;
+  box-shadow: 0 0 0 1px var(--sand);
+}
+
+.code {
+  background: var(--ground);
+}
+
+.code figcaption,
+.tools {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 6px;
+}
+
+.code figcaption {
+  justify-content: space-between;
+  white-space: nowrap;
+  padding-inline-start: 14px;
+  border-block-end: 1px solid var(--sand);
+  font-size: 13px;
+  font-weight: 650;
+  color: var(--umber);
+}
+
+.code pre {
+  margin: 0;
+  padding: 12px 14px;
+  overflow-x: auto;
+  font: 13.5px/1.6 var(--mono);
+  tab-size: 2;
+  scrollbar-width: thin;
+}
+
+.code .quiet,
+.tools .quiet {
+  flex-shrink: 0;
+  margin: 0;
+  white-space: nowrap;
+}
+
+.code figcaption > span {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Wide code and tables scroll sideways. A soft shadow shows at an edge only while there is more to see that way
+   (the backgrounds attached to the content cover it at the ends), and the scrollbar is dark enough to notice. */
+.code pre,
+.table .scroll {
+  --edge: var(--ground);
+  background:
+    linear-gradient(to right, var(--edge) 40%, transparent) left / 28px 100% no-repeat local,
+    linear-gradient(to left, var(--edge) 40%, transparent) right / 28px 100% no-repeat local,
+    radial-gradient(farthest-side at 0 50%, rgba(43, 36, 31, 0.22), transparent) left / 12px 100% no-repeat scroll,
+    radial-gradient(farthest-side at 100% 50%, rgba(43, 36, 31, 0.22), transparent) right / 12px 100% no-repeat scroll,
+    var(--edge);
+  scrollbar-color: rgba(111, 98, 90, 0.6) transparent;
+}
+
+.table .scroll {
+  --edge: var(--paper);
+}
+
+.code pre:focus-visible,
+.table .scroll:focus-visible {
+  outline-offset: -3px;
+}
+
+.table {
+  background: var(--paper);
+}
+
+.table .scroll {
+  overflow: auto;
+  scrollbar-width: thin;
+}
+
+/* Only a long table the visitor has expanded scrolls on its own, with its header held; a short one never traps a
+   thumb inside the conversation. */
+.table .expanded {
+  max-height: min(70vh, 560px);
+}
+
+.table table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  font-size: 14.5px;
+  font-variant-numeric: tabular-nums;
+  line-height: 1.45;
+}
+
+.table th {
+  position: sticky;
+  inset-block-start: 0;
+  padding: 8px 12px;
+  background: var(--sand);
+  font-weight: 700;
+  text-align: start;
+  white-space: nowrap;
+}
+
+.table :is(th, td) {
+  overflow-wrap: normal; /* cells wrap between words; a wide table scrolls sideways instead */
+}
+
+.table td {
+  min-width: 8ch;
+  padding: 8px 12px;
+  border-block-start: 1px solid var(--sand);
+  vertical-align: top;
+}
+
+.table :is(th, td) + :is(th, td) {
+  border-inline-start: 1px solid var(--sand);
+}
+
+.folded tbody tr:nth-child(n + 11) {
+  display: none;
+}
+
+.tools {
+  flex-wrap: wrap;
+  border-block-start: 1px solid var(--sand);
 }
 
 /* Suggested questions: pressable, so they carry the customer's colour (the Pressable Colour Rule). */
@@ -441,6 +685,257 @@ textarea::placeholder {
   color: var(--umber);
 }
 
+/* Earlier chats (M2-T8): in place of the conversation on narrow frames, beside it from 720px */
+
+.side {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.side-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px 12px;
+  padding-inline-start: 4px;
+}
+
+.log > .side {
+  padding-block-start: 10px; /* clears the conversation's 14px top fade, which would wash out the New chat pill */
+}
+
+.side h2 {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 700;
+  line-height: 1.3;
+}
+
+.side h2:focus {
+  outline: none; /* focus lands here only so the list is announced; the heading itself does nothing */
+}
+
+.secondary .glyph {
+  width: 18px;
+  height: 18px;
+  margin-inline-start: -4px;
+}
+
+.chats {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  overflow: hidden;
+  border-radius: 18px;
+  background: var(--paper);
+  box-shadow: 0 0 0 1px var(--sand);
+}
+
+.chats li + li {
+  border-block-start: 1px solid var(--sand);
+}
+
+.chats button {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  width: 100%;
+  min-height: 60px;
+  padding: 10px 16px;
+  border: 0;
+  background: transparent;
+  text-align: start;
+  transition: background-color 0.15s ease-out;
+}
+
+.chats button:hover {
+  background: rgba(43, 36, 31, 0.05);
+}
+
+.chats button[aria-current="true"] {
+  background: var(--sand);
+}
+
+.chats button:focus-visible {
+  outline-offset: -3px; /* the card clips its rows, so the ring is drawn inside */
+}
+
+.topic {
+  display: -webkit-box;
+  overflow: hidden;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  font-weight: 650;
+  line-height: 1.35;
+  overflow-wrap: anywhere;
+}
+
+.chats time {
+  font-size: 14px;
+  color: var(--umber);
+}
+
+[aria-current="true"] time {
+  color: var(--ink); /* Muted Umber on Soft Sand is 4.2:1, short of AA for small text */
+}
+
+/* While the list loads: rows sketched in sand, breathing like the working dots */
+.sketch li {
+  display: grid;
+  gap: 10px;
+  padding: 16px;
+}
+
+.sketch span {
+  height: 12px;
+  width: 72%;
+  border-radius: 6px;
+  background: var(--sand);
+  animation: breathe 1.2s ease-in-out infinite;
+}
+
+.sketch span + span {
+  width: 32%;
+  animation-delay: 0.15s;
+}
+
+.empty {
+  margin-inline: 4px;
+  text-wrap: pretty;
+}
+
+.more,
+.earlier {
+  align-self: center;
+  margin-inline-start: 0;
+}
+
+.log > .ring {
+  align-self: center;
+  margin-block: 24px;
+}
+
+/* Wide frames (the chat filling a page, or the window): a conversation app. The list of chats runs the full height
+   at the start; the conversation, the composer, the AI notice and the credit share one centred column; answers sit
+   on the page itself rather than on cards. */
+.chat.split {
+  display: grid;
+  grid-template:
+    "side head" auto
+    "side log" minmax(0, 1fr)
+    "side foot" auto
+    / 288px minmax(0, 1fr);
+}
+
+.split .head {
+  grid-area: head;
+}
+
+.split > .side {
+  grid-area: side;
+  overflow-y: auto;
+  padding-block: 22px 16px;
+  padding-inline: 12px;
+  border-inline-end: 1px solid var(--sand);
+  background: color-mix(in srgb, var(--sand) 35%, var(--ground));
+  scrollbar-width: thin;
+  scrollbar-color: var(--sand) transparent;
+}
+
+.split .log {
+  grid-area: log;
+}
+
+.split .foot {
+  grid-area: foot;
+}
+
+.page .log {
+  padding-inline: max(var(--gutter), (100% - 760px) / 2);
+}
+
+.page .compose,
+.page .count,
+.page .foot .prompts,
+.page .foot .notice {
+  margin-inline: max(var(--gutter), (100% - 760px) / 2);
+}
+
+.page .compose {
+  padding: 8px;
+  padding-inline-start: 20px;
+}
+
+.page .mine {
+  max-width: 75%;
+}
+
+/* An answer is the page's own text, as in a conversation app: no card, the same width as the column. */
+.page .answer,
+.page .welcome {
+  padding: 2px 4px;
+  border-radius: 0;
+  background: none;
+  box-shadow: none;
+}
+
+/* The AI notice stays in sight under the composer, beside the credit. */
+.page .foot .notice {
+  margin-block: 2px 0;
+  text-align: center;
+  font-size: 13px;
+}
+
+/* In the list beside the conversation, chats are rows on the column's own ground. */
+.split .chats {
+  overflow: visible;
+  border-radius: 0;
+  background: none;
+  box-shadow: none;
+}
+
+.split .chats li + li {
+  border: 0;
+}
+
+.split .chats button {
+  min-height: 52px;
+  padding: 8px 12px;
+  border-radius: 12px;
+}
+
+/* An empty chat: the welcome above the middle, the composer at it, the suggested questions under it. */
+.page.empty .log {
+  justify-content: flex-end;
+  mask-image: none;
+}
+
+.page.empty .welcome {
+  align-self: center;
+  max-width: 30ch;
+  font-size: 24px;
+  font-weight: 650;
+  line-height: 1.3;
+  text-align: center;
+  text-wrap: balance;
+}
+
+.page.empty .foot {
+  flex: 1;
+}
+
+.split.empty {
+  grid-template-rows: auto minmax(0, 1fr) minmax(0, 1fr);
+}
+
+.page .foot .prompts {
+  justify-content: center;
+  margin-block: 14px 18px;
+}
+
 /* Narrow frames: the same order, tighter */
 
 @media (max-width: 340px) {
@@ -455,6 +950,11 @@ textarea::placeholder {
   .mine {
     max-width: 92%;
   }
+
+  /* Three header buttons leave the title too little room: New chat stays in the list of chats instead. */
+  .actions:has(> :nth-child(3)) > .new {
+    display: none;
+  }
 }
 
 /* The loader has closed the panel: nothing may keep animating out of sight. */
@@ -465,11 +965,13 @@ textarea::placeholder {
 
 @media (prefers-reduced-motion: reduce) {
   .ring,
-  .dots span {
+  .dots span,
+  .sketch span {
     animation: none;
   }
 
-  .dots span {
+  .dots span,
+  .sketch span {
     opacity: 0.6;
   }
 
@@ -485,7 +987,15 @@ textarea::placeholder {
   .card,
   .mine,
   .prompts button,
-  .send {
+  .send,
+  .code,
+  .table,
+  .chats {
     border: 1px solid CanvasText;
+  }
+
+  .chats button[aria-current="true"] {
+    outline: 2px solid Highlight;
+    outline-offset: -2px;
   }
 }

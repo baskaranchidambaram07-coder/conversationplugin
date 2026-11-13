@@ -149,7 +149,7 @@ test("while a long answer streams, a visitor who scrolls up to read is not pulle
 }) => {
   await openChat(page);
   await ask(page, "How does HTTPS work? [long]");
-  await expect(chat(page).getByRole("article").getByText(/HTTPS/)).toBeVisible();
+  await expect(chat(page).getByRole("heading", { name: "How HTTPS Works" })).toBeVisible();
   const frame = chatFrame(page)!;
   const position = () => frame.evaluate(() => document.querySelector(".log")!.scrollTop);
   // Scroll up only once the answer is well past the bottom of the view, as a reader would.

@@ -7,6 +7,8 @@ test.each([
   { ucp: 1, type: "close" },
   { ucp: 1, type: "get-token", id: 3 },
   { ucp: 1, type: "ready", addedInALaterRelease: true },
+  { ucp: 1, type: "expand", on: true },
+  { ucp: 1, type: "expand", on: false },
 ])("the loader accepts %j", (message) => {
   expect(fromChat(message)).toBe(message);
 });
@@ -22,6 +24,8 @@ test.each([
   { ucp: 1, type: "get-token", id: "3" },
   { ucp: 1, type: "get-token", id: 1.5 },
   { ucp: 1, type: "init", mode: "floating", signedIn: false },
+  { ucp: 1, type: "expand" },
+  { ucp: 1, type: "expand", on: "yes" },
 ])("the loader drops %j", (message) => {
   expect(fromChat(message)).toBeNull();
 });
@@ -33,6 +37,7 @@ test.each([
   { ucp: 1, type: "token", id: 3, token: null },
   { ucp: 1, type: "shown" },
   { ucp: 1, type: "hidden" },
+  { ucp: 1, type: "layout", expandable: true, expanded: false },
 ])("the chat accepts %j", (message) => {
   expect(fromLoader(message)).toBe(message);
 });
@@ -44,6 +49,8 @@ test.each([
   { ucp: 1, type: "token", id: 3, token: 42 },
   { ucp: 1, type: "ready" },
   { ucp: 2, type: "shown" },
+  { ucp: 1, type: "layout", expandable: true },
+  { ucp: 1, type: "layout", expandable: 1, expanded: false },
 ])("the chat drops %j", (message) => {
   expect(fromLoader(message)).toBeNull();
 });

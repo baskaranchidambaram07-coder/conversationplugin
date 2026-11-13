@@ -1,0 +1,17 @@
+# Only what the image is built from. Everything else, above all .env, .tools and the PF captures, stays out.
+*
+!package.json
+!package-lock.json
+!tsconfig.base.json
+!protocol
+!web
+!e2e/package.json
+!backend/pyproject.toml
+!backend/uv.lock
+!backend/ucp
+!backend/deploy
+**/node_modules
+**/dist
+**/__pycache__
+**/*.test.ts
+**/*.test.tsx
