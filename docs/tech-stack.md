@@ -10,11 +10,12 @@ Status: 12 November 2026. Everything marked "verified" was run on that date, on 
 | Backend toolchain | Verified: lint and the backend tests pass | Nothing |
 | Web toolchain | Verified: type checks, unit tests and builds pass | Nothing |
 | Browser testing | Verified on Chromium, Firefox, WebKit and a phone profile | Real devices, before production |
-| Build pipeline | Verified: all four jobs pass on GitHub | Nothing |
+| Build pipeline | Verified: eight jobs on every change, and the deployment to dev | Nothing |
 | Container image | Verified in the pipeline: it builds, with the loader and chat inside, and answers | Nothing |
 | Local database | PostgreSQL 17 runs while a test command runs, then stops | Your decision on running it as a Windows service |
-| Infrastructure tool | Terraform installed, checksum verified | The configuration itself is module M14 |
-| AWS access for development | Verified: 13 needed actions allowed, 8 forbidden ones refused | Nothing |
+| Infrastructure tool | Terraform 1.17.2 builds the dev environment (`infra/aws`); Trivy 0.76.2 checks it | Nothing |
+| AWS access for development | Verified: 14 needed actions allowed, 8 forbidden ones refused (deployer policy version 2) | Nothing |
+| Dev environment on AWS | Built and proven on 13 November 2026, run on demand (`infra/aws/README.md`) | Production in London |
 | Purple Fabric staging | Verified by live capture | Remaining questions in `pf-capability-sheet.md` |
 | Production in London | Not started | Account access and web addresses |
 
@@ -73,7 +74,7 @@ Size budgets:
 
 ## 4. Build pipeline
 
-GitHub Actions runs seven jobs on every pull request and on every push to `main`, `develop` and the module branches:
+GitHub Actions runs eight jobs on every pull request and on every push to `main`, `develop` and the module branches:
 
 | Job | What it does |
 |---|---|
@@ -83,9 +84,12 @@ GitHub Actions runs seven jobs on every pull request and on every push to `main`
 | Sign-in through a real identity provider | Starts Keycloak in a container and signs users in through the gateway with its tokens, including a signing-key rotation (`backend/tests/test_keycloak.py`) |
 | Token-signing snippets | Installs Java, .NET, Go and PHP beside Python and Node, runs all six snippets, and checks every token with the gateway's own code |
 | Container image builds and starts | Builds the gateway image from the repository root (a Node stage builds the loader and chat into it), checks that it answers, sends no server header and serves the loader |
+| Infrastructure code checks | Terraform's format and validity, and a Trivy misconfiguration scan of the dev environment asleep and awake; accepted findings carry their reason inline |
 | Secret scan | Runs gitleaks over the whole history |
 
 The backend tests and the web tests each include a check that the generated message-format files (`protocol/schema/v1.json` and `protocol/src/v1.ts`) match their source, so a forgotten regeneration fails the pipeline.
+
+A second workflow, **Deploy to dev** (`.github/workflows/deploy-dev.yml`), runs on every push to `develop`. It signs in to AWS without stored keys, builds and scans the image (fixable high or critical flaws stop it), stores it, and releases it while the environment is awake: migrations, the widget file, a rolling update that rolls itself back if unhealthy, the PF check, and the smoke test.
 
 The repository is public, so the pipeline minutes are free.
 
@@ -95,18 +99,19 @@ Region `us-east-1`, built with Terraform 1.17.2. Every resource name starts with
 
 | Service | Purpose |
 |---|---|
-| VPC with subnets and security groups | A private network for the service and the database |
-| ECS on Fargate | Runs the gateway container |
-| Application load balancer | Spreads requests and holds long streamed replies open |
-| RDS for PostgreSQL 17 | Conversation history and configuration |
-| S3 and CloudFront | Serve the loader and the chat over HTTPS on an address AWS provides |
-| ECR | Stores the container image |
-| Secrets Manager | Holds the Purple Fabric and database credentials |
-| CloudWatch Logs | Service logs |
+| VPC across two zones, with public and private subnets and security groups | The gateway in a public subnet with no NAT (your choice for dev), reachable only from the load balancer; the database private, with no route out |
+| CloudFront | HTTPS on an address AWS provides; caches the chat's files; stays while asleep and answers that the environment is asleep |
+| Application load balancer | Only CloudFront's addresses with its secret header get in; holds long streamed replies open; removed while asleep |
+| ECS on Fargate | The gateway, one task of 1 vCPU and 2 GB; it serves the loader and the chat as well as the API; removed while asleep |
+| RDS for PostgreSQL 17 | Conversation history and configuration; encrypted, seven days of point-in-time backups; stopped while asleep |
+| ECR | The gateway's images, scanned on push, commit tags fixed |
+| Secrets Manager | The database connection, session keys, host secrets and the PF profile, under `ucp-dev/` |
+| CloudWatch Logs and two alarms | The gateway's logs; alarms for server errors and no healthy gateway |
 | IAM roles under a permissions boundary | What the running service and the pipeline may do |
 | GitHub sign-in to AWS | Lets the pipeline deploy without stored access keys |
+| S3 | Terraform's state only (the gateway serves the loader and chat itself) |
 
-My estimate of the running cost is about 60 US dollars a month. It is from memory of list prices and was not checked against the pricing pages.
+The environment runs on demand: `python infra/aws/dev.py wake` and `sleep`. My estimate is about US$0.11 an hour awake and about US$5 a month asleep, from memory of list prices and not checked against the pricing pages.
 
 Not part of the base version: a web application firewall, our own web addresses with certificates, scheduled jobs. Production in London is a second run of the same Terraform with different parameters.
 
@@ -171,3 +176,9 @@ After `npm install` on this Windows machine, check `package-lock.json` before co
 | Install or update the test browsers | `PLAYWRIGHT_BROWSERS_PATH="$PWD/.tools/ms-playwright" npx playwright install` |
 | Terraform | `.tools/terraform/terraform.exe` |
 | Check AWS access | `bash infra/aws/iam/verify-access.sh` |
+| The dev environment: wake, sleep, status; build or tear down from code | `python infra/aws/dev.py wake` (`sleep`, `status`, `build`, `teardown`, `plan`) |
+| Release to dev by hand, or roll back to an earlier commit's image | `python infra/aws/deploy.py --image <commit> --by <name>` |
+| The dev environment's address | `python infra/aws/deploy.py --url` |
+| Smoke-test the dev environment | `cd backend && uv run python smoke.py "$(python ../infra/aws/deploy.py --url)" w_smoke` |
+| Set the PF profile, rotate session keys, or make a customer's shared secret | `cd backend && uv run --env-file ../.env python ../infra/aws/secret_store.py agent-profiles` (`session-keys`, `host-secret NAME [--rotate]`) |
+| Proofs on the deployed stack | `uv run python ../infra/aws/latency.py`, `rollout_check.py`, `python infra/aws/restore_rehearsal.py`, `npm run e2e:deployed` |
