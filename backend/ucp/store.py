@@ -261,8 +261,9 @@ class Store:
         """Stores a question and an empty answer, in one transaction. None if the conversation is not the owner's.
 
         The same client_message_id again returns the turn it started (repeat). A new question while an answer
-        is still in progress raises TurnInProgress. The conversation row is locked, so two questions sent at once
-        cannot both start. One read gathers everything, so a turn starts in four statements.
+        is still in progress raises TurnInProgress. The conversation row is locked first, in a statement of its own:
+        a read that waited for the lock inside one statement would still see the conversation as it was before the
+        other question went in, and both would start. Then one read gathers everything: five statements a turn.
         """
         here = messages.c.conversation_id == conversations.c.id
         # Tied to the conversation read below, even where it sits two levels down.
@@ -274,25 +275,19 @@ class Store:
         busy = select(messages.c.id).where(here & (messages.c.status == "in_progress")).limit(1)
         fresh = select(messages.c.updated_at > func.now() - STALE).where(here & (messages.c.status == "in_progress"))
         answers = messages.alias("answers")  # its own name, so the question looked up inside is not tied to it
-        state = (
-            select(
-                conversations.c.agent_conversation_id,
-                asked.scalar_subquery().label("asked"),
-                select(answers.c.id)
-                .where(answers.c.reply_to == asked.scalar_subquery())
-                .scalar_subquery()
-                .label("answer"),
-                busy.scalar_subquery().label("busy"),
-                fresh.limit(1).scalar_subquery().label("fresh"),
-                select(func.coalesce(func.max(messages.c.seq), -1)).where(here).scalar_subquery().label("seq"),
-            )
-            .where(self._owned(owner) & (conversations.c.id == conversation_id))
-            .with_for_update(of=conversations)
-        )
+        state = select(
+            conversations.c.agent_conversation_id,
+            asked.scalar_subquery().label("asked"),
+            select(answers.c.id).where(answers.c.reply_to == asked.scalar_subquery()).scalar_subquery().label("answer"),
+            busy.scalar_subquery().label("busy"),
+            fresh.limit(1).scalar_subquery().label("fresh"),
+            select(func.coalesce(func.max(messages.c.seq), -1)).where(here).scalar_subquery().label("seq"),
+        ).where(conversations.c.id == conversation_id)
+        lock = select(conversations.c.id).where(self._owned(owner) & (conversations.c.id == conversation_id))
         async with self.engine.begin() as db:
-            found = (await db.execute(state)).first()
-            if not found:
+            if not (await db.execute(lock.with_for_update())).first():
                 return None
+            found = (await db.execute(state)).one()
             if found.asked:
                 return Turn(conversation_id, found.asked, found.answer, found.agent_conversation_id, repeat=True)
             if found.busy and found.fresh:
