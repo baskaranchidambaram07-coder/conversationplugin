@@ -24,6 +24,7 @@ from sqlalchemy import (
     func,
     insert,
     select,
+    tuple_,
     update,
 )
 from sqlalchemy.dialects.postgresql import JSONB
@@ -236,12 +237,13 @@ class Store:
             row = (await db.execute(query)).first()
         return _conversation(row) if row else None
 
-    async def conversations(self, owner: Owner, before: datetime | None, limit: int) -> list[Conversation]:
-        """Most recently active first; `before` is the `updated_at` of the last one already shown."""
+    async def conversations(self, owner: Owner, before: tuple[datetime, str] | None, limit: int) -> list[Conversation]:
+        """Most recently active first. `before` is the (updated_at, id) of the last one already shown: the ID breaks
+        ties, so two conversations active at the same instant are neither skipped nor shown twice."""
         query = select(conversations).where(self._owned(owner))
         if before:
-            query = query.where(conversations.c.updated_at < before)
-        query = query.order_by(conversations.c.updated_at.desc(), conversations.c.id).limit(limit)
+            query = query.where(tuple_(conversations.c.updated_at, conversations.c.id) < tuple_(*before))
+        query = query.order_by(conversations.c.updated_at.desc(), conversations.c.id.desc()).limit(limit)
         async with self.engine.connect() as db:
             return [_conversation(row) for row in await db.execute(query)]
 
