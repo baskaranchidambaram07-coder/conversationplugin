@@ -49,7 +49,7 @@ const components: Components = {
     const classes = code?.type === "element" ? code.properties.className : undefined;
     const language = (Array.isArray(classes) ? String(classes[0] ?? "") : "").replace(/^language-/, "");
     const text = code?.type === "element" ? code.children.map((child) => ("value" in child ? child.value : "")).join("") : "";
-    const Fence = fenceRenderer(language);
+    const Fence = fenceRenderer(language, text);
     return <Fence code={text.replace(/\n$/, "")} language={language} />;
   },
 };

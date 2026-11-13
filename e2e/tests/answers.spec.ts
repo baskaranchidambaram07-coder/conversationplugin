@@ -30,6 +30,7 @@ const EXAMPLES = [
   { name: "formatting", question: "[gallery:formatting]", parts: ":is(h2, h3, h4, h5, h6)", count: 6 },
   { name: "code", question: "[gallery:code]", parts: "figure.code", count: 6 },
   { name: "tables", question: "[gallery:tables]", parts: "figure.table", count: 2 },
+  { name: "diagrams", question: "[gallery:diagrams]", parts: "figure.diagram svg[role=img]", count: 2 },
   { name: "Purple Fabric's recorded long", question: "[long]", parts: "figure", count: 3 },
 ];
 
@@ -107,4 +108,24 @@ test("in a 280px panel a wide table scrolls inside its frame, the chat never scr
   await expect(page.getByRole("cell", { name: "House 14" })).toBeHidden();
   await page.getByRole("button", { name: "Show all 14 rows" }).click();
   await expect(page.getByRole("cell", { name: "House 14" })).toBeVisible();
+});
+
+test("in a 400px panel a wide diagram keeps its words readable, scrolls inside its frame, and shows its code", async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 400, height: 640 });
+  await ask(page, "[gallery:diagrams]");
+  const frame = page.getByRole("region", { name: "Diagram from draw.io" });
+  const drawing = frame.getByRole("img");
+
+  const [shown, natural] = await drawing.evaluate((svg) => [svg.getBoundingClientRect().width, (svg as SVGSVGElement).viewBox.baseVal.width]);
+  expect(shown / natural).toBeGreaterThanOrEqual(0.8); // its 11 to 12px labels stay at 10px or more
+  expect(await frame.evaluate((element) => element.scrollWidth > element.clientWidth)).toBe(true);
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+
+  await frame.focus();
+  await page.keyboard.press("ArrowRight");
+  await expect.poll(() => frame.evaluate((element) => element.scrollLeft)).toBeGreaterThan(0);
+  await page.getByRole("button", { name: "Show code" }).first().click();
+  await expect(page.getByRole("region", { name: "Diagram source" })).toContainText("<mxGraphModel");
 });

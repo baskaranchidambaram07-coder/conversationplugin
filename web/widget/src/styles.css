@@ -363,7 +363,8 @@ h1 {
 }
 
 .code,
-.table {
+.table,
+.diagram {
   align-self: stretch;
   min-width: 0;
   margin: 0;
@@ -394,7 +395,8 @@ h1 {
   color: var(--umber);
 }
 
-.code pre {
+.code pre,
+.diagram pre {
   margin: 0;
   padding: 12px 14px;
   overflow-x: auto;
@@ -419,7 +421,9 @@ h1 {
 /* Wide code and tables scroll sideways. A soft shadow shows at an edge only while there is more to see that way
    (the backgrounds attached to the content cover it at the ends), and the scrollbar is dark enough to notice. */
 .code pre,
-.table .scroll {
+.diagram pre,
+.table .scroll,
+.diagram .scroll {
   --edge: var(--ground);
   background:
     linear-gradient(to right, var(--edge) 40%, transparent) left / 28px 100% no-repeat local,
@@ -430,17 +434,37 @@ h1 {
   scrollbar-color: rgba(111, 98, 90, 0.6) transparent;
 }
 
-.table .scroll {
+.table .scroll,
+.diagram .scroll {
   --edge: var(--paper);
 }
 
 .code pre:focus-visible,
-.table .scroll:focus-visible {
+.diagram pre:focus-visible,
+.table .scroll:focus-visible,
+.diagram .scroll:focus-visible {
   outline-offset: -3px;
 }
 
-.table {
+.table,
+.diagram {
   background: var(--paper);
+}
+
+/* A diagram fills the card's width while its words stay readable, and scrolls sideways beyond that. Its code, when
+   shown, sits on the cream ground under it, as any code does. */
+.diagram .scroll {
+  overflow-x: auto;
+  scrollbar-width: thin;
+}
+
+.diagram svg {
+  display: block;
+  font-family: inherit;
+}
+
+.diagram pre {
+  border-block-start: 1px solid var(--sand);
 }
 
 .table .scroll {
@@ -909,6 +933,7 @@ textarea::placeholder {
   .send,
   .code,
   .table,
+  .diagram,
   .chats {
     border: 1px solid CanvasText;
   }

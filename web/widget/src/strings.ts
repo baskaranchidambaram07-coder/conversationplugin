@@ -31,6 +31,13 @@ export const strings = {
   yesterday: "Yesterday",
   unknownBlock: "This part of the answer cannot be shown here.",
   diagramSource: "Diagram source",
+  diagram: (tool: string) => `Diagram from ${tool}`,
+  diagramParts: (shapes: number, lines: number) => `Diagram: ${shapes} shapes and ${lines} lines`,
+  diagramLine: (from: string, to: string, label: string) =>
+    `${from || "A line"}${to ? ` to ${to}` : ""}${label ? `: ${label}` : ""}`,
+  copyFor: (tool: string) => `Copy for ${tool}`,
+  showCode: "Show code",
+  hideCode: "Hide code",
   code: "Code",
   copyCode: "Copy code",
   copyCsv: "Copy as CSV",
