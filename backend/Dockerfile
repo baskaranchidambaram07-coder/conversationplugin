@@ -18,6 +18,9 @@ RUN uv sync --frozen --no-dev
 COPY backend/ucp ./ucp
 
 FROM python:3.12-slim
+# Debian's security fixes, applied when the image is built rather than waiting for a new base image (the release's
+# scan stops on any fixable high or critical flaw).
+RUN apt-get update && apt-get upgrade --yes --no-install-recommends && rm -rf /var/lib/apt/lists/*
 RUN useradd --system --uid 10001 --no-create-home app
 WORKDIR /app
 COPY --from=build /app /app
