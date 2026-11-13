@@ -1,0 +1,20 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <!-- If your site sets a content policy, the assistant needs its address in three places, and nothing else:
+         script-src, frame-src and connect-src. -->
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="default-src 'self'; script-src 'self' {{GATEWAY}}; frame-src {{GATEWAY}}; connect-src 'self' {{GATEWAY}}"
+    />
+    <title>A public page with the assistant</title>
+  </head>
+  <body>
+    <p><strong>Sample page.</strong> It shows the assistant on a page anyone can visit. It is not a College website.</p>
+    <h1>A public page with the assistant</h1>
+    <p>The one script tag at the end of this page adds the chat.</p>
+    <script async src="{{GATEWAY}}/loader.js" data-widget-id="{{WIDGET}}"></script>
+  </body>
+</html>
