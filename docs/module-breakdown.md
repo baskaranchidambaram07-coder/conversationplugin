@@ -726,6 +726,45 @@ Later: storage profiles, self-service sign-up, usage and billing data.
 
 **Done when** the onboarding journey passes end to end and the role matrix is green.
 
+State on 13 November 2026 (pull requests 51 to 54 into `module/m08-control-plane`). By your decision, M8 is configuration managed as code for the base version. The admin HTTP API comes with the console (M9) after 22 November.
+
+- Built:
+  - T2:
+    - **Allowed sites:** a mistake could have widened who may show a customer's chat, so these are now refused: plain `http` other than localhost; wildcards over a shared suffix (`*.com`, `*.ac.uk`, `*.github.io`); and capitals, non-ASCII names, trailing dots, bad labels, user names, paths, queries and bad ports.
+    - **Every fault at once:** a file of widgets reports every fault in one go, each naming the widget and the field, and publishes nothing.
+    - The shared-suffix list is short, marked as a shortcut until customers outside the UK arrive.
+  - T3, T7 and T9:
+    - **Publishing:** every publish records who did it. A rollback publishes an earlier version again as a new one; a version that breaks today's rules is refused rather than served broken.
+    - **Audit log:** it keeps who, what and when.
+    - **Nothing can be edited:** a database trigger refuses any change, removal or truncation of the log and of published versions, whoever asks (migration `0004`).
+  - T1, T4, T5 and T10, as commands:
+    - **`python -m ucp.widgets`:** `seed`, `versions`, `rollback`, `audit`, `export` (publishing it again changes nothing), `new-id` and `new-secret` (32 random bytes, named by date for rotation);
+    - **`python -m ucp.pf check`:** logs in with each connection profile and names the outcome, never an address or a credential. It was tried against PF staging.
+  - **The onboarding journey, automated** (`e2e/gateway/onboarding.spec.ts`), on three engines:
+    1. a new ID from the command;
+    2. a configuration file;
+    3. publish with the command;
+    4. one script tag on a customer's page, honouring the configured title, colour and corner;
+    5. a visitor's question answered;
+    6. the version and the audit entry, read back with the command.
+- Proven:
+  - a published change and a rollback both reach visitors through the gateway (`backend/tests/test_versions.py`);
+  - every refusal by the database, the command and the validation (`backend/tests/test_widgets.py`).
+- Deferred to the admin API, with M9:
+  - company sign-in, the three roles and the role-by-tenant matrix (so the done condition's role matrix moves with it);
+  - request-forgery protection and admin rate limits;
+  - drafts edited by two people, and version comparison;
+  - credentials written to the secret store through the API;
+  - tenants' administrators reading their audit entries through the API;
+  - self-service sign-up.
+- Known limits:
+  - **Two publishes of the same widget at the same instant:** one is refused (it collides on the version number).
+  - **Connection check:** it only logs in, so a wrong workspace or agent ID shows on the first question. PF has no cheap call to check them.
+- For M14:
+  - **Each release:** run `python -m ucp.migrate` (migration `0004`), publish the configuration file with `python -m ucp.widgets seed FILE --by <the pipeline>`, then check `python -m ucp.pf check`.
+  - **Backups:** `export` the configuration after each change.
+- For M15: the College's guide uses `new-id`, `new-secret` and `seed`.
+
 ---
 
 ### M9 — Admin console

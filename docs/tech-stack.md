@@ -158,7 +158,11 @@ After `npm install` on this Windows machine, check `package-lock.json` before co
 | API journey against a running gateway (also the smoke test after a deployment) | `cd backend && uv run python journey.py http://localhost:8200 w_gateway` |
 | Load test against the running stack (start it with `FAKE_PF_SPEED=0.1`); the pipeline runs this, three runs judged on their median | `cd backend && uv run python loadtest.py --visitors 10 --turns 5 --runs 3` |
 | Bring a database's tables up to date | `cd backend && UCP_DATABASE_URL=... uv run python -m ucp.migrate` |
-| Publish widgets from a file | `cd backend && UCP_DATABASE_URL=... uv run python -m ucp.widgets seed path/to/widgets.json` |
+| Publish widgets from a file, as new versions where they changed, recording who | `cd backend && UCP_DATABASE_URL=... uv run python -m ucp.widgets seed path/to/widgets.json --by <name>` |
+| A widget's versions; roll back to one; read the audit log | `uv run python -m ucp.widgets versions w_…`, `rollback w_… 3 --by <name>`, `audit [--widget w_…]` (with `UCP_DATABASE_URL`) |
+| Export the live configuration as a file `seed` can publish again | `cd backend && UCP_DATABASE_URL=... uv run python -m ucp.widgets export --out widgets.json` |
+| A new widget ID; a new shared secret (`id:secret`) | `cd backend && uv run python -m ucp.widgets new-id`, `new-secret [--id k2]` |
+| Test the connection to PF with each profile in `UCP_AGENT_PROFILES` | `cd backend && UCP_AGENT_PROFILES=... uv run python -m ucp.pf check [profile …]` |
 | Regenerate the API description after changing a route | `cd backend && uv run python -m ucp.gateway.openapi` |
 | Check the token-signing snippets this machine can run (the pipeline runs all six) | `cd backend && uv run python ../examples/token-signing/check.py` |
 | Regenerate the message format after changing `backend/ucp/protocol.py` | `cd backend && uv run python -m ucp.protocol && cd .. && npm run generate --workspace @ucp/protocol` |

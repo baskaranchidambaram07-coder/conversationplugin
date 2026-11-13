@@ -10,6 +10,7 @@ from datetime import datetime, timedelta
 
 from pydantic import TypeAdapter
 from sqlalchemy import (
+    BigInteger,
     CheckConstraint,
     Column,
     DateTime,
@@ -27,7 +28,7 @@ from sqlalchemy import (
     tuple_,
     update,
 )
-from sqlalchemy.dialects.postgresql import JSONB
+from sqlalchemy.dialects.postgresql import JSONB, distinct_on
 from sqlalchemy.dialects.postgresql import insert as pg_insert
 from sqlalchemy.ext.asyncio import AsyncEngine
 
@@ -52,6 +53,22 @@ widgets = Table(
     Column("tenant_id", Text, nullable=False),
     Column("document", JSONB, nullable=False),
     Column("published_at", DateTime(timezone=True), nullable=False, server_default=func.now()),
+    Column("published_by", Text),  # who published it; a version, once written, never changes (a trigger, 0004)
+)
+
+# Who published or rolled back what, and when (M8-T9). Only grows: a trigger refuses changes and removals.
+audit = Table(
+    "audit",
+    metadata,
+    Column("id", BigInteger, primary_key=True, autoincrement=True),
+    Column("at", DateTime(timezone=True), nullable=False, server_default=func.now()),
+    Column("actor", Text, nullable=False),
+    Column("action", Text, nullable=False),
+    Column("tenant_id", Text, nullable=False),
+    Column("widget_id", Text, nullable=False),
+    Column("version", Integer, nullable=False),
+    Column("detail", JSONB),
+    Index("audit_by_widget", "widget_id", "at"),
 )
 
 conversations = Table(
@@ -165,21 +182,75 @@ class Store:
 
     # Widgets
 
-    async def publish_widget(self, widget_id: str, tenant_id: str, document: dict) -> int:
-        """Stores the document as the widget's next version, unless it is the same as the current one."""
+    async def publish_widget(self, widget_id: str, tenant_id: str, document: dict, actor: str = "system") -> int:
+        """Stores the document as the widget's next version, unless it is the same as the current one, and records
+        who did it in the audit log. Returns the version now in use."""
         async with self.engine.begin() as db:
-            current = await self._latest(db, widget_id)
-            if current and current.document == document and current.tenant_id == tenant_id:
-                return current.version
-            version = current.version + 1 if current else 1
-            values = {"widget_id": widget_id, "version": version, "tenant_id": tenant_id, "document": document}
-            await db.execute(insert(widgets).values(values))
-            return version
+            return await self._publish(db, widget_id, tenant_id, document, actor, "publish", None)
 
-    async def widget(self, widget_id: str):
-        """The current version of a widget: (version, tenant_id, document), or None."""
+    async def rollback_widget(self, widget_id: str, version: int, actor: str) -> int | None:
+        """Publishes an earlier version again, as a new version, so the record of what was live stays whole.
+        None if there is no such version."""
+        query = select(widgets.c.tenant_id, widgets.c.document).where(
+            (widgets.c.widget_id == widget_id) & (widgets.c.version == version)
+        )
+        async with self.engine.begin() as db:
+            earlier = (await db.execute(query)).first()
+            if not earlier:
+                return None
+            detail = {"to_version": version}
+            return await self._publish(db, widget_id, earlier.tenant_id, earlier.document, actor, "rollback", detail)
+
+    async def _publish(self, db, widget_id, tenant_id, document, actor, action, detail) -> int:
+        # shortcut: two people publishing the same widget at the same instant collide on the version number and
+        # one is refused; fine for an operator's command, revisit with the admin API (M8 with M9).
+        current = await self._latest(db, widget_id)
+        if current and current.document == document and current.tenant_id == tenant_id:
+            return current.version
+        version = current.version + 1 if current else 1
+        row = {"widget_id": widget_id, "version": version, "tenant_id": tenant_id, "document": document}
+        await db.execute(insert(widgets).values({**row, "published_by": actor}))
+        entry = {"actor": actor, "action": action, "tenant_id": tenant_id, "widget_id": widget_id, "detail": detail}
+        await db.execute(insert(audit).values({**entry, "version": version}))
+        return version
+
+    async def current_widgets(self) -> dict[str, dict]:
+        """Every widget's current document, by widget ID: the whole live configuration."""
+        query = (
+            select(widgets.c.widget_id, widgets.c.document)
+            .ext(distinct_on(widgets.c.widget_id))
+            .order_by(widgets.c.widget_id, widgets.c.version.desc())
+        )
         async with self.engine.connect() as db:
-            return await self._latest(db, widget_id)
+            return {row.widget_id: row.document for row in await db.execute(query)}
+
+    async def widget_versions(self, widget_id: str) -> list:
+        """Every published version of a widget, newest first: version, published_at, published_by, tenant_id."""
+        query = (
+            select(widgets.c.version, widgets.c.published_at, widgets.c.published_by, widgets.c.tenant_id)
+            .where(widgets.c.widget_id == widget_id)
+            .order_by(widgets.c.version.desc())
+        )
+        async with self.engine.connect() as db:
+            return list(await db.execute(query))
+
+    async def audit_entries(self, widget_id: str | None = None, limit: int = 50) -> list:
+        """The newest entries of the audit log, for one widget or all."""
+        query = select(audit).order_by(audit.c.at.desc(), audit.c.id.desc()).limit(limit)
+        if widget_id:
+            query = query.where(audit.c.widget_id == widget_id)
+        async with self.engine.connect() as db:
+            return list(await db.execute(query))
+
+    async def widget(self, widget_id: str, version: int | None = None):
+        """A widget's current version, or the one asked for: (version, tenant_id, document), or None."""
+        async with self.engine.connect() as db:
+            if version is None:
+                return await self._latest(db, widget_id)
+            query = select(widgets.c.version, widgets.c.tenant_id, widgets.c.document).where(
+                (widgets.c.widget_id == widget_id) & (widgets.c.version == version)
+            )
+            return (await db.execute(query)).first()
 
     @staticmethod
     async def _latest(db, widget_id: str):

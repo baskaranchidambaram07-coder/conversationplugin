@@ -203,3 +203,34 @@ class PfConnector:
             if content.get("status") == "FAILED":
                 return Failed("assistant_unavailable", True, f"{why}; PF reports the answer failed")
         return Failed("assistant_unavailable", True, f"{why}; no answer within {self.recover_seconds:.0f} s")
+
+
+async def check_profiles(profiles: dict[str, dict], names: list[str] | None = None) -> tuple[list[str], bool]:
+    """Logs in with each connection profile: the control plane's "test connection" (M8-T4), and the check after a
+    deployment. One line per profile, naming it and the outcome, never its address or credentials."""
+    lines, connected = [], True
+    async with httpx2.AsyncClient(timeout=httpx2.Timeout(10, read=30)) as client:
+        for name in names or list(profiles):
+            if name not in profiles:
+                lines.append(f"{name}: no such profile")
+                connected = False
+                continue
+            try:
+                await PfConnector(PfProfile(**profiles[name]), client).check()
+                lines.append(f"{name}: connected")
+            except AgentError as error:
+                connected = False
+                advice = "try again later" if error.retryable else "check the profile's credentials"
+                lines.append(f"{name}: not connected, {advice} ({error.detail})")
+    return lines, connected
+
+
+if __name__ == "__main__":
+    import os
+    import sys
+
+    if sys.argv[1:2] != ["check"]:
+        sys.exit("usage: python -m ucp.pf check [profile ...]   (profiles from UCP_AGENT_PROFILES)")
+    found, ok = asyncio.run(check_profiles(json.loads(os.environ.get("UCP_AGENT_PROFILES") or "{}"), sys.argv[2:]))
+    print("\n".join(found) or "no profiles in UCP_AGENT_PROFILES")
+    sys.exit(0 if ok and found else 1)
