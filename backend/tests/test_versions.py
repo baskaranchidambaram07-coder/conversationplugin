@@ -3,6 +3,8 @@
 import json
 import re
 import secrets
+import subprocess
+import sys
 
 import pytest
 from fastapi.testclient import TestClient
@@ -172,3 +174,17 @@ async def test_new_ids_and_secrets_are_fresh_each_time_and_in_the_form_the_gatew
     assert re.fullmatch(r"k20\d{6}", dated.split(":")[0])
     keys = Keys(",".join(entries))  # the format UCP_HOST_SECRETS and UCP_SESSION_KEYS take, at full length
     assert all(len(secret) >= 32 for secret in keys.keys.values())
+
+
+def test_new_ids_and_secrets_need_no_database(monkeypatch):
+    # An operator makes them before any environment exists, as the College's guide shows.
+    monkeypatch.delenv("UCP_DATABASE_URL", raising=False)
+
+    def make(command: str) -> str:
+        return subprocess.run(  # noqa: S603 - this test's own interpreter, running our own command
+            [sys.executable, "-m", "ucp.widgets", command], capture_output=True, text=True, check=True
+        ).stdout
+
+    made = [make("new-id"), make("new-secret")]
+
+    assert re.fullmatch(r"w_[A-Za-z0-9_-]{22}\n", made[0]) and re.fullmatch(r"k\d{8}:[A-Za-z0-9_-]{43}\n", made[1])

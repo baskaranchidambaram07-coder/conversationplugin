@@ -208,7 +208,7 @@ def _commands() -> argparse.ArgumentParser:
     return commands
 
 
-async def run(store: Store, argv: list[str]) -> list[str]:
+async def run(store: Store | None, argv: list[str]) -> list[str]:
     """The operator's commands. Returns the lines to print; raises SystemExit with the reason when refused."""
     args = _commands().parse_args(argv)
 
@@ -255,7 +255,10 @@ async def run(store: Store, argv: list[str]) -> list[str]:
 
 
 async def _main(argv: list[str]) -> None:
-    _commands().parse_args(argv)  # help and mistakes in the command answer before any database is needed
+    args = _commands().parse_args(argv)  # help and mistakes in the command answer before any database is needed
+    if args.command in ("new-id", "new-secret"):  # nothing stored: no database needed
+        print("\n".join(await run(None, argv)))
+        return
     engine = create_async_engine(os.environ["UCP_DATABASE_URL"])
     try:
         lines = await run(Store(engine), argv)
