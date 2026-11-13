@@ -11,22 +11,54 @@ database and keeps it for 30 seconds, so a newly published version is in use wit
 import asyncio
 import json
 import os
+import re
 import sys
 import time
 from dataclasses import dataclass
 from typing import Annotated, Literal
 from urllib.parse import urlsplit
 
-from pydantic import BaseModel, ConfigDict, Field, model_validator
+from pydantic import AfterValidator, BaseModel, ConfigDict, Field, ValidationError, model_validator
 from sqlalchemy.ext.asyncio import create_async_engine
 
 from ucp.identity import Identity
 from ucp.protocol import Id, WidgetConfig
 from ucp.store import Store
 
-# An origin a customer's pages are served from, as it appears in a content policy. Nothing else can get into the
-# policy: no spaces, semicolons or quotes. A leading "*." allows every subdomain.
-type Origin = Annotated[str, Field(pattern=r"^https?://(\*\.)?[a-z0-9-]+(\.[a-z0-9-]+)*(:[0-9]{1,5})?$")]
+# Domains shared by unrelated owners, so "*." over one of them would let strangers' sites show the chat.
+# shortcut: a short list (UK and common platforms), not the full public suffix list; adopt that list when
+# customers outside the UK arrive.
+SHARED_SUFFIXES = frozenset(
+    """ac.uk co.uk gov.uk org.uk ltd.uk plc.uk me.uk net.uk nhs.uk police.uk sch.uk com.au net.au org.au edu.au
+    gov.au co.nz org.nz co.in ac.in co.jp ac.jp com.br com.cn edu.cn co.za ac.za com.sg edu.sg com.hk co.kr
+    github.io gitlab.io herokuapp.com azurewebsites.net cloudfront.net amazonaws.com web.app firebaseapp.com
+    pages.dev workers.dev vercel.app netlify.app""".split()
+)
+LOCAL = {"localhost", "127.0.0.1"}
+_LABEL = r"[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?"  # a DNS label: no leading or trailing hyphen, at most 63
+_ORIGIN = re.compile(rf"(https?)://(\*\.)?((?:{_LABEL}\.)*{_LABEL})(?::([0-9]{{1,5}}))?")
+
+
+def _origin(value: str) -> str:
+    """A site allowed to show the chat. It goes into the chat page's frame-ancestors policy as written, so the
+    browser does the matching; this keeps out anything that would widen the policy beyond the customer's sites."""
+    match = _ORIGIN.fullmatch(value)
+    if not match:
+        raise ValueError(
+            "write a site as scheme, host and optional port, in lower case, such as https://www.example.ac.uk; "
+            "internationalised names in their xn-- form"
+        )
+    scheme, wildcard, host, port = match.groups()
+    if scheme == "http" and host not in LOCAL:
+        raise ValueError("only https sites may show the chat; http is for localhost and 127.0.0.1")
+    if port and not 0 < int(port) < 65536:
+        raise ValueError("a port is a number from 1 to 65535")
+    if wildcard and ("." not in host or host in SHARED_SUFFIXES or host in LOCAL):
+        raise ValueError(f"*.{host} would let other owners' sites show the chat; name the customer's own domain")
+    return value
+
+
+type Origin = Annotated[str, AfterValidator(_origin)]
 
 
 class Limits(BaseModel):
@@ -100,10 +132,26 @@ class Widgets:
         return widget
 
 
+def problems(widgets: dict[str, dict]) -> list[str]:
+    """Every reason a file of widgets cannot be published, one line each, naming the widget and the field."""
+    found = []
+    for widget_id, document in widgets.items():
+        public = document.get("public") if isinstance(document, dict) else None
+        checks = [(WidgetDocument, document, "")]
+        if isinstance(public, dict):  # the public part is checked on its own too, so both sets of faults show at once
+            checks.append((WidgetConfig, {"v": 1, "widget_id": widget_id, **public}, "public."))
+        for model, value, prefix in checks:
+            try:
+                model.model_validate(value)
+            except ValidationError as error:
+                found += [f"{widget_id}: {prefix}{'.'.join(map(str, e['loc']))}: {e['msg']}" for e in error.errors()]
+    return found
+
+
 async def seed(store: Store, widgets: dict[str, dict]) -> dict[str, int]:
     """Checks every widget first, then publishes each as a new version if it changed. Returns the versions."""
-    for widget_id, document in widgets.items():
-        parse(widget_id, 0, document)
+    if found := problems(widgets):
+        raise ValueError("\n".join(found))
     return {
         widget_id: await store.publish_widget(widget_id, document["tenant_id"], document)
         for widget_id, document in widgets.items()
@@ -115,6 +163,8 @@ async def _seed_file(path: str) -> None:
     try:
         with open(path, encoding="utf-8") as file:
             versions = await seed(Store(engine), json.load(file)["widgets"])
+    except ValueError as error:
+        sys.exit(f"nothing was published:\n{error}")
     finally:
         await engine.dispose()
     for widget_id, version in versions.items():
