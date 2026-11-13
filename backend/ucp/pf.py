@@ -21,6 +21,7 @@ from ucp.gateway.pipeline import correlation
 
 API = "/magicplatform/v1/genai/conversation"
 REFRESH_EARLY = 300  # log in again this many seconds before PF's stated expiry
+LOGIN_PAUSE = 300  # after PF refuses the credentials, try them again only this long after: repeats lock the account
 
 
 class PfProfile(BaseModel):
@@ -49,8 +50,15 @@ def _failure(status: object, where: str) -> Failed:
     return Failed("assistant_unavailable", isinstance(status, int) and status >= 500, f"{where}: PF status {status}")
 
 
-def _event(data: dict) -> AgentEvent | None:
-    """One PF stream event as ours, or None for the ones we do not use (notices, start and end markers, new kinds)."""
+def _event(line: str) -> AgentEvent | None:
+    """One line of PF's stream as our event, or None for the ones we do not use (notices, start and end markers, new
+    kinds) and for a damaged one: the final event carries the whole answer, so a lost piece costs nothing."""
+    try:
+        data = json.loads(line.removeprefix("data:"))
+    except ValueError:
+        return None
+    if not isinstance(data, dict):
+        return None
     kind, content = data.get("event"), data.get("content")
     if kind == "MESSAGE_DETAILS":
         return Accepted(str(data["message_id"]))
@@ -59,7 +67,7 @@ def _event(data: dict) -> AgentEvent | None:
     if kind == "FINAL_RESPONSE":
         return Final(str(content["response"]), _usage(content))
     if kind == "ERROR":
-        return _failure((content or {}).get("status_code"), "stream")
+        return _failure(content.get("status_code") if isinstance(content, dict) else None, "stream")
     return None
 
 
@@ -71,6 +79,7 @@ class PfConnector:
         self.recover_seconds, self.poll_seconds = recover_seconds, poll_seconds
         self._token: str | None = None
         self._expires = 0.0
+        self._refused_until = 0.0
         self._lock = asyncio.Lock()
 
     # Logging in
@@ -82,6 +91,8 @@ class PfConnector:
             fresh = self._token and self._token != stale and time.monotonic() < self._expires - REFRESH_EARLY
             if fresh:
                 return self._token
+            if time.monotonic() < self._refused_until:
+                raise AgentError("assistant_unavailable", False, "login refused recently, not tried again yet")
             profile = self.profile
             headers = {
                 "apikey": profile.api_key.get_secret_value(),
@@ -93,7 +104,8 @@ class PfConnector:
                 body = reply.json()
             except (httpx2.HTTPError, ValueError) as error:
                 raise AgentError("assistant_unavailable", True, f"login: {type(error).__name__}") from error
-            if body.get("result") != "RESULT_SUCCESS" or not body.get("access_token"):
+            if not isinstance(body, dict) or body.get("result") != "RESULT_SUCCESS" or not body.get("access_token"):
+                self._refused_until = time.monotonic() + LOGIN_PAUSE
                 raise AgentError("assistant_unavailable", False, f"login refused (HTTP {reply.status_code})")
             self._token = body["access_token"]
             self._expires = time.monotonic() + float(body.get("expires_in", 0))
@@ -171,7 +183,7 @@ class PfConnector:
                     yield _failure(reply.status_code, "stream")
                     return
                 async for line in reply.aiter_lines():
-                    if line.startswith("data:") and (event := _event(json.loads(line[5:]))):
+                    if line.startswith("data:") and (event := _event(line)):
                         yield event
                 return
 
