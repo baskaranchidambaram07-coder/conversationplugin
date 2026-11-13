@@ -309,7 +309,8 @@ State on 12 November 2026 (pull requests 12 to 15 into `module/m01-embed-loader`
 State on 12 November 2026 (pull requests 17 to 20 into `module/m02-conversation-ui`):
 
 - Built for the base version: T1, T2 (light only), T3, T4, T5 (without feedback buttons), T6, the base part of T7 (follow the newest message unless the visitor scrolled up; a jump back), T9, T10, T11 (English), T12, the base part of T13 (the AI notice and the "Powered by Purple Fabric" note), and T14's size limit (first load about 76 KB compressed against 100 KB, checked in the pipeline). Markdown shows as plain text until M3 renders it.
-- Deferred: T8 history panel (needs M7's list endpoint; before 22 November); the five configurable scroll settings; feedback buttons; dark mode (`color_scheme` is ignored); the privacy and consent slot, the help link and transcript download; automated visual-regression baselines; real devices.
+- T8, the history panel, was built with M7 on 13 November 2026; see M7's state.
+- Deferred: the five configurable scroll settings; feedback buttons; dark mode (`color_scheme` is ignored); the privacy and consent slot, the help link and transcript download; automated visual-regression baselines; real devices.
 - The API the chat calls is part of the message format (`SessionRequest`, `Session`, `SendMessage` in `backend/ucp/protocol.py`). Until M4 exists, browser tests run against a fake gateway in `e2e/server.mjs`; the plan's "real gateway, fake PF" integration tests move to M4.
 - For M4: `POST /v1/sessions`, `POST /v1/conversations`, `POST /v1/conversations/{id}/messages` (a stream of `StreamEvent` lines with a `: ping` heartbeat at least every 15 s, since the chat treats 20 s of silence as a stalled stream; a repeated `client_message_id` returns the same reply), and `GET /v1/conversations/{id}/messages/{message_id}` (the chat polls it to recover a stalled or dropped stream). Every error is an `ApiError`; the chat shows its own wording, never the gateway's. Serve the built chat at `/embed/{id}` with `frame-ancestors` from the widget's allowed domains; it needs only its own origin for scripts, styles, fonts and calls, plus `https:` images for customer logos.
 - For M5: an anonymous session cannot be renewed (the chat offers a new chat instead); a signed-in one is renewed with a fresh host token and the call replayed once.
@@ -417,6 +418,7 @@ State on 12 November 2026 (pull requests 26 to 31 into `module/m04-conversation-
 - Latency (`backend/loadtest.py`): with 10 visitors at once the gateway adds 36 ms at the median and 76 ms at the 95th percentile to the first word, within the 150 ms budget.
   - Beyond about 15 visitors, the build machine saturates its four processors. It runs the load generator, the fake PF, PostgreSQL and other work at the same time, so the figure then measures the machine, not the gateway.
   - On the pipeline's own runner, with 25 visitors at once, the gateway adds 20 to 33 ms at the median and 79 to 94 ms at the 95th percentile, over three runs on 12 November 2026. That meets the done condition's latency budget.
+  - Correction, 13 November 2026: those three runs were a lucky sample. The pipeline's history shows the same code at 79 to 199 ms with 25 visitors (once 251 ms), because the shared runner carries the gateway, PostgreSQL, the fake PF and the load together. With your agreement, the pipeline now checks 10 visitors on the median of three runs. The budget at 25 or more visitors is to be certified in M14, against the deployed stack, from a separate machine.
   - An earlier version did not always meet it: one run reached 167 ms. A profile showed the gateway's code idle and waiting on the database, so a turn now starts in four statements instead of nine, and the connection pool is larger and steady.
   - A test against a deployed instance from a separate machine belongs with M14.
 - For M5: sessions use `ucp.sessions.Keys` (HS256, rotating by `kid`) and `Session(user_id, tenant_id, widget_id, config_version, mode)`. `POST /v1/sessions` refuses a host token with `forbidden` until M5 verifies it. Each widget's `sign_in` is `anonymous`, `signed_in` or `both`.
@@ -639,6 +641,57 @@ Later: DynamoDB adapter; certification of MySQL, SQL Server and Oracle; customer
 - Other, security: injection attempts; the cross-tenant suite; encryption verified; credential rotation.
 
 **Done when** the conformance and cross-tenant suites pass and restore has been rehearsed.
+
+State on 13 November 2026 (pull requests 45 to 49 into `module/m07-history-persistence`):
+
+- Built with M4 and kept (`ucp/store.py`): conversations and messages in PostgreSQL, every read through its owner; message and conversation pages; Alembic migrations.
+- Built here:
+  - T2:
+    - **Concurrent questions:** the conversation is now locked in a statement of its own before its state is read. Two questions arriving together could otherwise both start and collide on a message number. A turn now starts in five statements.
+    - **List cursor:** it carries the time and the ID, so conversations active at the same instant are neither skipped nor shown twice.
+  - T3: each migration is tested down and up on its own.
+  - T5, in part: each stored answer records the agent version that wrote it (migration `0003`), beside the widget version.
+  - T8: the conformance and cross-tenant suite (`backend/tests/test_store.py`). Another user, the same user on another widget, or another tenant gets nothing from any storage call and changes nothing. It also pages through 10,000 messages, handles ties in the list, survives a gateway restart and refuses malformed cursors.
+  - The history panel (M2-T8):
+    - **Who sees it:** signed-in visitors on widgets with history turned on.
+    - **The list:** their chats, titled and dated, older ones on demand.
+    - **Reopening:** a chat reopens drawn exactly as it streamed and carries on in place; earlier messages load above it on demand.
+    - **Layout:** on narrow frames the list replaces the conversation; from 720px it stands beside it.
+    - **Everyone:** a "New chat" action.
+    - **Anonymous visitors** see no list: their history lasts the session only.
+- Proven:
+  - the suites above on PostgreSQL;
+  - browser journeys through the real gateway on three engines (`e2e/gateway/history.spec.ts`):
+    - a resident's chat comes back on their next visit, reopens drawn the same as it streamed, and carries on;
+    - another resident never sees it;
+    - a new chat joins the list;
+    - the wide layout works;
+    - WCAG 2.2 AA scans pass on a phone, the floating panel and a wide frame.
+  - The scan found Muted Umber on Soft Sand at 4.2:1, so the open chat's date is set in Warm Ink.
+- The latency check, M4's budget, judged soundly:
+  - On 13 November the pipeline's load test swung between 84 and 199 ms at the 95th percentile on unchanged code, and once failed both tries on this module branch.
+  - A local A/B test showed the race fix adds nothing measurable: the medians were 40 to 54 ms either way. The same code's 95th percentile still ranged from 80 to 233 ms, so on a shared machine noise dominates one run's figure.
+  - The pipeline's history shows the same spread back to M4 (79 to 199 ms, once 251 ms), so M4's recorded 79 to 94 ms was a lucky sample (corrected under M4).
+  - Your decision on 13 November 2026: the pipeline checks 10 visitors at once, which the runner can carry without measuring itself. It judges the median of three runs' 95th percentiles against 150 ms. That replaces the M5 retry, which passed whenever either of two tries did and so could also let a real slowdown through.
+  - At 25 visitors the median of three runs measured 152 ms on the runner.
+- Deferred:
+  - **By decision:** delete, purge, the reopen window and the record period, until the purge policy is set.
+  - **With M14's AWS database:**
+    - T4's row-level security and T7's restricted database role, encryption at rest and encrypted connections;
+    - the restore rehearsal in the done condition;
+    - the failover and production-sized migration tests.
+  - **Also deferred:**
+    - export of a user's data;
+    - the feedback and audit tables (M4-T10, M8);
+    - performance at a million conversations;
+    - other databases.
+- For M8:
+  - a widget's `history_enabled` turns the list on for its signed-in visitors;
+  - answers record the widget version (`config_version`) and the agent version (`agent_version`).
+- For M14:
+  - run `python -m ucp.migrate` before each release (migration `0003` adds a column);
+  - create the database roles for row-level security there;
+  - certify the latency budget (at most 150 ms added to the first word at the 95th percentile) with 25 or more visitors at once, against the deployed stack, from a separate machine.
 
 ---
 
