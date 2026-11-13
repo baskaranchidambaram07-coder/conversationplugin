@@ -7,6 +7,8 @@ The message text picks the behaviour, so a test at any level (connector, gateway
     [long]          long streamed reply: 205 word events over 12.8 s, with headings, a table, code and a diagram
     [slow]          the short reply after a 65 s silence, so the first word takes over a minute
     [error]         three words, then PF's ERROR event inside the HTTP 201 stream
+    [seeded]        the short reply with every event carrying what PF might add one day: internal addresses,
+                    sources, citations, model and tool details (all marked SEEDED), to prove the allow-list (R13)
 Wrong credentials get PF's failed login (HTTP 200, RESULT_FAILURE). POST /_fake/expire-tokens expires every token,
 so the next call gets PF's 401. An unknown conversation or an empty message gets PF's recorded ERROR events.
 The fetch call answers IN_PROGRESS until the recorded reply would have finished, even if the caller hung up.
@@ -31,6 +33,7 @@ RECORDINGS = Path(__file__).parent / "recordings"
 API = "/magicplatform/v1/genai/conversation"
 TENANT, API_KEY, USERNAME, PASSWORD = "fake-tenant", "fake-api-key", "fake-user", "fake-password"
 SLOW_MS = 65_000
+SEEDED = "http://10.20.30.40/pf-internal/SEEDED"
 
 NOTICES = ['{"content":"Stream connection established successfully"}', '{"content":"Agent Execution InProgress"}']
 UNAUTHORIZED = {"message": "Not Authorized.", "error": "Unauthorized", "statusCode": 401}
@@ -69,6 +72,21 @@ def _stream_error(text, status_code):
     return json.dumps({"event": "ERROR", "status": "FAILED", "content": content}, separators=(",", ":"))
 
 
+def _seed(data):
+    """An event with internal details added at the top and inside its content; answer text is left alone."""
+    event = json.loads(data)
+    event["seeded"] = SEEDED
+    if isinstance(event.get("content"), dict):
+        event["content"].update(
+            sources=[{"url": f"{SEEDED}/source", "title": "SEEDED source"}],
+            citation=[f"{SEEDED}/citation"],
+            model="SEEDED-model",
+            selected_tools=["SEEDED-tool"],
+            traces=[f"{SEEDED}/trace"],
+        )
+    return json.dumps(event, separators=(",", ":"))
+
+
 def _script(query):
     """Which recording a message replays, and its events with any scripted change."""
     if "[error]" in query:
@@ -80,6 +98,8 @@ def _script(query):
         first = next(i for i, (_, data) in enumerate(RECORDED["short"][1]) if '"LLM_RESPONSE_STREAM"' in data)
         events = RECORDED["short"][1]
         return "short", [*events[:first], *((at + SLOW_MS, data) for at, data in events[first:])]
+    if "[seeded]" in query:
+        return "short", [(at, _seed(data)) for at, data in RECORDED["short"][1]]
     name = "long" if "[long]" in query else "short"
     return name, RECORDED[name][1]
 

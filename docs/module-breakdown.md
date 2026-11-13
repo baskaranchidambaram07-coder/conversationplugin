@@ -462,7 +462,7 @@ State on 12 November 2026 (pull requests 26 to 31 into `module/m04-conversation-
 
 Later: PF-level delegated identity, if PF supports it; console screens for single sign-on set-up.
 
-State on 12 November 2026 (pull requests 33 to 36 into `module/m05-identity-session`):
+State on 12 November 2026 (pull requests 33 to 37 into `module/m05-identity-session`, merged into `develop` with pull request 38; 37 fixed an M4 bug, the per-address session limit shared across widgets):
 
 - Built for the base version:
   - T1: signed-in sessions last 15 minutes and are renewed through `getToken`; anonymous sessions last 60 minutes and cannot be renewed. The session token's clock tolerance is now 5 s, since gateway instances share a synced clock.
@@ -570,6 +570,43 @@ Later: file hand-off, voice endpoints, delegated identity.
 - Other, security: credentials read only from the secret store and absent from configuration, logs, traces and errors; certificate checking on; one tenant's profile cannot be used for another; a PF response seeded with extra fields and internal addresses reaches the browser with none of them.
 
 **Done when** the sandbox suite passes and the capability sheet matches observed behaviour.
+
+State on 13 November 2026 (pull requests 39 to 43 into `module/m06-pf-connector`):
+
+- Built with M4 and kept (`ucp/pf.py`):
+  - the connector interface;
+  - one login shared by concurrent callers, renewed five minutes before the expiry PF states;
+  - a PF conversation created on the first message, named with our ID;
+  - the stream adapter, and recovery of a broken stream by fetching the answer;
+  - error translation with a "can retry" flag, and one quiet login again when PF refuses a token.
+- Built here:
+  - T2: refused credentials are tried again only after five minutes. Repeated wrong passwords can lock the service account that every widget on it shares.
+  - T4: a damaged stream event is skipped, since the final event carries the whole answer. Before, it failed the turn.
+  - T5, proved: the fake PF's `[seeded]` reply adds internal addresses, sources, citations, model and tool details to every event. The visitor's stream, the stored messages and the conversation list hold the answer text and none of these, and no raw PF error.
+  - T8: the staging suite (`tests/test_pf_staging.py`) checks each claim in the capability sheet that is safe to test. It also compares the fake PF's recorded shapes with what PF sends today.
+  - `devstack.py --pf staging`, and a browser journey on staging (`npm run e2e:staging`). The journey searches everything the browser received for PF's address, tenant, workspace, agent, credentials and IDs, and checks no source maps are served. This is the core of M12-T11.
+  - Unit tests (`tests/test_pf_wire.py`):
+    - request mapping and the token's refresh point;
+    - a failed login, then a successful one;
+    - events split across network reads;
+    - damaged events and early ends;
+    - the error table, with no secret in any error detail.
+- Proven against PF staging on 13 November 2026:
+  - the staging suite, 12 tests;
+  - the API journey, 10 steps;
+  - the browser leak search: zero matches, and a PF value planted in a gateway header is caught in 12 responses.
+- Not built, as agreed:
+  - T1 cancel: PF has no cancel call, so stopping an answer stops the display only;
+  - sources and citations, left out of the chat until internal addresses can be removed; structured output as typed blocks;
+  - backing off until PF's rate-limit reset time (the production limit is a question for the PF team);
+  - T7 beyond `check()`, which only logs in; the screen belongs to M8 and M9;
+  - deployment tests (M14), PF's latency and concurrency per tenant, delegated identity, file hand-off and voice.
+- Not tried live: a wrong password, which could lock the shared service account, and the rate limit. The fake PF and the wire tests cover both.
+- Staging runs happen on this machine only; the pipeline has no PF credentials.
+  - Each staging-suite run leaves four conversations named `ucp-test-*` in the staging workspace, and each journey leaves one.
+  - On this machine, read `.env` with `uv`, never with Node's parser, which reads one PF value differently.
+- For M14: run the staging suite and the leak search every night from the AWS development account, with the PF credentials in Secrets Manager and the logs private.
+- For M12: the leak search runs on every build against the deployed stack (M12-T11).
 
 ---
 

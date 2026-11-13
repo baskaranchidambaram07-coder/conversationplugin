@@ -151,6 +151,10 @@ After `npm install` on this Windows machine, check `package-lock.json` before co
 | Browser tests | `npm run build && npm run e2e` |
 | The whole stack locally: gateway on port 8200, fake PF on 8100, widgets from `e2e/widgets.json` | `npm run build`, then `cd backend && bash ../scripts/with-localdb.sh uv run --env-file ../.env python devstack.py` |
 | Browser journeys through the real gateway (starts the stack itself) | `npm run build && npm run e2e:gateway` |
+| The whole stack answering from PF staging; each question costs a real answer | `npm run build`, then `cd backend && bash ../scripts/with-localdb.sh uv run --env-file ../.env python devstack.py --pf staging` |
+| Check the PF capability sheet and the fake PF against PF staging | `cd backend && UCP_PF_STAGING=1 uv run --env-file ../.env pytest tests/test_pf_staging.py` |
+| Browser leak search on PF staging (starts the stack itself) | `npm run build && npm run e2e:staging` |
+| After `e2e:gateway` or `e2e:staging`: stop the local database, which Playwright leaves running | `.tools/pgsql/bin/pg_ctl.exe -D .tools/pgdata -m fast -w stop` |
 | API journey against a running gateway (also the smoke test after a deployment) | `cd backend && uv run python journey.py http://localhost:8200 w_gateway` |
 | Load test against the running stack (start it with `FAKE_PF_SPEED=0.1`) | `cd backend && uv run python loadtest.py --visitors 25 --turns 5` |
 | Bring a database's tables up to date | `cd backend && UCP_DATABASE_URL=... uv run python -m ucp.migrate` |
