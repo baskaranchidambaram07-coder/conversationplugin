@@ -1,5 +1,6 @@
-"""Rehearses restoring the database (M14-T8, and M7's done condition): restores the dev database to a moment ten
-minutes ago into a new instance, checks it holds every row the live one held at that moment, then removes it.
+"""Rehearses restoring the database (M14-T8, and M7's done condition): restores the dev database to the newest moment
+AWS can restore to (less a minute) into a new instance, checks it holds every row the live one held at that moment,
+then removes it. It refuses to pass while the live database held no messages by then, as there is nothing to compare.
 
     python infra/aws/restore_rehearsal.py        (environment awake; about 20 minutes)
 
@@ -61,9 +62,13 @@ def main() -> None:
         sys.exit("wake the environment first: python infra/aws/dev.py wake")
     network, definition = service["networkConfiguration"]["awsvpcConfiguration"], release(None)
     live = aws("rds", "describe-db-instances", "--db-instance-identifier", LIVE)["DBInstances"][0]
-    moment = (datetime.now(UTC) - timedelta(minutes=10)).replace(microsecond=0)
+    # The newest moment AWS can restore to (its logs are shipped every few minutes), less a margin.
+    latest = datetime.fromisoformat(live["LatestRestorableTime"])
+    moment = (latest - timedelta(minutes=1)).astimezone(UTC).replace(microsecond=0)
 
     before = counts(definition, network, "live", moment, f"counting the live database's rows up to {moment:%H:%M:%S}")
+    if not before.get("messages"):
+        sys.exit("the live database held no messages by that moment: nothing to compare yet, try again later")
     print(f"restoring {LIVE} as it was at {moment:%Y-%m-%d %H:%M:%S} UTC into {RESTORED} ...", flush=True)
     began = time.monotonic()
     aws(

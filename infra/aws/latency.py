@@ -18,10 +18,14 @@ import statistics
 import subprocess
 import sys
 import time
+from pathlib import Path
 
 import httpx2
 
-URL = "https://d3d7zj6fwckxcg.cloudfront.net"
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from deploy import public_url  # noqa: E402
+
+URL = public_url()
 WIDGET = "w_load"
 BUDGET_MS = 150
 LINE = re.compile(r"first word: the gateway added (\d+) ms \((\d+) before asking the agent, (\d+) passing it on\)")

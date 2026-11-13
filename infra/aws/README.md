@@ -10,11 +10,11 @@ Run every command from the repository root, in Git Bash, with the AWS command li
 |---|---|---|
 | CloudFront: HTTPS on its own `*.cloudfront.net` address, which the customer's script tag uses | Serves the loader, the chat and the API; caches the chat's files | Stays, so the address never changes; answers every request with "This test environment is asleep" (503), so a customer's page simply shows no chat |
 | Load balancer: reachable only from CloudFront, which proves itself with a secret header | Runs | Removed |
-| Gateway: one container on Fargate, in a public subnet with no inbound except from the load balancer | Runs | Removed (the cluster, the release and the images stay) |
+| Gateway: one container on Fargate (1 vCPU, 2 GB), in a public subnet with no inbound except from the load balancer | Runs | Removed (the cluster, the release and the images stay) |
 | PostgreSQL 17: private, encrypted, seven days of point-in-time backups | Runs | Stopped (AWS starts it again after seven days; `sleep` stops it again) |
 | Secrets Manager `ucp-dev/*`, image registry, logs, network | Stay | Stay |
 
-Roughly, from list prices as remembered and not checked: about US$0.09 an hour awake, about US$5 a month asleep.
+Roughly, from list prices as remembered and not checked: about US$0.11 an hour awake, about US$5 a month asleep. The gateway needs a whole vCPU: on half of one, 25 visitors arriving in the same second queued past the 150 ms budget for its share of a first word (`latency.py`).
 
 ## Every day
 
@@ -71,23 +71,23 @@ Backups are taken every day and kept for seven days, with point-in-time restore.
 
 1. `aws rds restore-db-instance-to-point-in-time --source-db-instance-identifier ucp-dev-database --target-db-instance-identifier ucp-dev-restored --restore-time <UTC time> --db-subnet-group-name ucp-dev-database --vpc-security-group-ids <the ucp-dev-database group> --no-publicly-accessible`
 2. `aws rds wait db-instance-available --db-instance-identifier ucp-dev-restored`
-3. Check its data with a one-off task (see the rehearsal record in `docs/module-breakdown.md`, M14).
+3. Check its data with a one-off task. `python infra/aws/restore_rehearsal.py` does steps 1 to 4 and compares every table's rows with the live database at that moment (about 20 minutes).
 4. Either keep the restored database (rename the old one away and the restored one to `ucp-dev-database`, then release), or delete it: `aws rds delete-db-instance --db-instance-identifier ucp-dev-restored --skip-final-snapshot`.
 
 ## From nothing, and back to nothing
 
 Building the environment from nothing:
 
-1. `python infra/aws/dev.py bootstrap`: the encrypted, versioned bucket for Terraform's state, and Terraform's set-up. Its settings go to `dev/backend.hcl`, which git ignores.
-2. `python infra/aws/dev.py plan --asleep`, then build asleep: `.tools/terraform/terraform.exe -chdir=infra/aws/dev apply -var=awake=false`.
+1. `python infra/aws/dev.py bootstrap`, the first time only: the encrypted, versioned bucket for Terraform's state, and Terraform's set-up. Its settings go to `dev/backend.hcl`, which git ignores.
+2. `python infra/aws/dev.py build`: everything, in the sleeping shape. Check first with `python infra/aws/dev.py plan --asleep` if you like.
 3. `cd backend && uv run --env-file ../.env python ../infra/aws/secret_store.py agent-profiles`.
-4. GitHub, for the pipeline:
-   - secrets `AWS_DEPLOY_ROLE_ARN` (Terraform's output `deploy_role_arn`) and `AWS_ACCOUNT_ID` (only so the logs hide it);
-   - variable `DEV_URL` (output `url`).
-5. Push to `develop`: the pipeline stores the first image.
-6. `python infra/aws/dev.py wake`.
+4. GitHub, for the pipeline, the first time only: the secrets `AWS_DEPLOY_ROLE_ARN` (Terraform's output `deploy_role_arn`) and `AWS_ACCOUNT_ID` (only so the logs hide it). The role keeps its name across rebuilds, so the secrets stay right.
+5. Push to `develop` (or re-run the latest "Deploy to dev" run): the pipeline stores an image.
+6. `python infra/aws/dev.py wake`, then `cd backend && uv run python smoke.py "$(python ../infra/aws/deploy.py --url)" w_smoke`.
 
-Removing it all: `terraform -chdir=infra/aws/dev destroy -var=awake=false`. The deploying user may create GitHub's sign-in provider but not delete it, so first run `terraform -chdir=infra/aws/dev state rm aws_iam_openid_connect_provider.github` and ask an administrator to delete it (it costs nothing). The state bucket is removed last, from `bootstrap/`, once it has been emptied.
+A rebuild gets a **new CloudFront address**: a customer's script tag must change with it. The scripts and the pipeline read the address from the newest release (`python infra/aws/deploy.py --url`), so nothing else needs changing.
+
+Removing it all: `python infra/aws/dev.py teardown`. It leaves Terraform's state bucket, and GitHub's sign-in provider, which the deploying user may create but not delete; the next `build` adopts it again. To remove those too: an administrator deletes the provider, and the state bucket is removed from `bootstrap/` once it has been emptied.
 
 ## Not in dev, by design
 

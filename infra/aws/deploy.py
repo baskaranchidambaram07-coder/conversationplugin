@@ -47,6 +47,14 @@ def wait(*args: str) -> None:
     subprocess.run(["aws", "ecs", "wait", *args, "--cluster", CLUSTER, "--region", REGION], check=True)
 
 
+def public_url() -> str:
+    """The address browsers use, as the newest release tells the gateway (UCP_PUBLIC_ORIGIN): CloudFront's, which
+    changes only when the environment is rebuilt from nothing."""
+    containers = aws("ecs", "describe-task-definition", "--task-definition", FAMILY)["taskDefinition"]
+    environment = containers["containerDefinitions"][0]["environment"]
+    return next(item["value"] for item in environment if item["name"] == "UCP_PUBLIC_ORIGIN")
+
+
 def release(image_tag: str | None) -> str:
     current = aws("ecs", "describe-task-definition", "--task-definition", FAMILY)["taskDefinition"]
     if not image_tag:
@@ -100,7 +108,7 @@ def main(image_tag: str | None, by: str) -> None:
     service = next((s for s in services if s["status"] == "ACTIVE"), None)
     if output := os.environ.get("GITHUB_OUTPUT"):  # tells the pipeline whether there is anything to smoke-test
         with open(output, "a", encoding="utf-8") as file:
-            file.write(f"awake={'true' if service else 'false'}\n")
+            file.write(f"awake={'true' if service else 'false'}\nurl={public_url()}\n")
     if image_tag and not service:
         release(image_tag)  # recorded, so the next wake brings it out
     if not service:
@@ -129,5 +137,9 @@ if __name__ == "__main__":
     arguments = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     arguments.add_argument("--image", help="the image tag to release; the newest release when left out")
     arguments.add_argument("--by", default="deploy.py", help="who releases it, for the widget file's audit entry")
+    arguments.add_argument("--url", action="store_true", help="only print the address browsers use, and stop")
     args = arguments.parse_args()
-    main(args.image, args.by)
+    if args.url:
+        print(public_url())
+    else:
+        main(args.image, args.by)

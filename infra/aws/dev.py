@@ -5,6 +5,9 @@
     python infra/aws/dev.py wake        database on, load balancer and gateway up, newest release out (about 10 min)
     python infra/aws/dev.py sleep       gateway and load balancer removed, database stopped (about US$5 a month)
     python infra/aws/dev.py status      what is running, and the address
+    python infra/aws/dev.py build       from nothing (after bootstrap, or after teardown): everything, asleep
+    python infra/aws/dev.py teardown    everything removed but Terraform's state bucket and GitHub's sign-in, which
+                                        the deploying user may create but not delete; build adopts it again
 
 Run from the repository root with the AWS command line signed in as the deploying user. Terraform comes from
 .tools/terraform. Nothing here prints a secret. AWS starts a stopped database again after seven days; status shows
@@ -72,6 +75,31 @@ def apply(awake: bool) -> None:
     terraform(DEV, "apply", "-input=false", "-auto-approve", f"-var=awake={str(awake).lower()}")
 
 
+GITHUB = "aws_iam_openid_connect_provider.github"
+
+
+def build() -> None:
+    """The whole environment from the code, in its sleeping shape. Then: the PF profile (secret_store.py), an image
+    from the pipeline, and wake."""
+    if GITHUB not in terraform(DEV, "state", "list", capture=True).split():
+        account = aws("sts", "get-caller-identity", "--query", "Account", "--output", "text")
+        provider = f"arn:aws:iam::{account}:oidc-provider/token.actions.githubusercontent.com"
+        try:
+            aws("iam", "get-open-id-connect-provider", "--open-id-connect-provider-arn", provider)
+            terraform(DEV, "import", "-input=false", "-var=awake=false", GITHUB, provider)  # left by a teardown
+        except subprocess.CalledProcessError:
+            pass  # a first build: Terraform creates it
+    apply(awake=False)
+    print(f"built, asleep, at {terraform(DEV, 'output', '-raw', 'url', capture=True).strip()}")
+
+
+def teardown() -> None:
+    if GITHUB in terraform(DEV, "state", "list", capture=True).split():
+        terraform(DEV, "state", "rm", GITHUB)  # the deploying user may not delete it; build adopts it again
+    terraform(DEV, "destroy", "-input=false", "-auto-approve", "-var=awake=false")
+    print("torn down: only Terraform's state bucket and GitHub's sign-in remain")
+
+
 def wake() -> None:
     state = database_state()
     if state == "stopped":
@@ -113,10 +141,12 @@ def status() -> None:
 
 if __name__ == "__main__":
     commands = argparse.ArgumentParser(description="The dev environment on demand.")
-    commands.add_argument("command", choices=["bootstrap", "plan", "wake", "sleep", "status"])
+    commands.add_argument("command", choices=["bootstrap", "build", "plan", "wake", "sleep", "status", "teardown"])
     commands.add_argument("--asleep", action="store_true", help="plan the sleeping shape")
     args = commands.parse_args()
     if args.command == "plan":
         terraform(DEV, "plan", "-input=false", f"-var=awake={str(not args.asleep).lower()}")
     else:
-        {"bootstrap": bootstrap, "wake": wake, "sleep": sleep, "status": status}[args.command]()
+        run = {"bootstrap": bootstrap, "build": build, "wake": wake, "sleep": sleep, "status": status}
+        run["teardown"] = teardown
+        run[args.command]()

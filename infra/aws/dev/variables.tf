@@ -28,3 +28,17 @@ variable "deploy_branches" {
   type        = list(string)
   default     = ["develop", "module/m14-cloud-deployment"]
 }
+
+variable "gateway_cpu" {
+  description = <<-EOT
+    The gateway's processor share (1024 is one vCPU). Half a vCPU queued a burst of 25 visitors arriving in the same
+    second past M4's 150 ms budget for the gateway's share of a first word (infra/aws/latency.py).
+  EOT
+  type        = number
+  default     = 1024
+}
+
+variable "gateway_memory" {
+  type    = number
+  default = 2048
+}

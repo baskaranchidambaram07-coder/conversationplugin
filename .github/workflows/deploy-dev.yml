@@ -58,4 +58,4 @@ jobs:
         working-directory: backend
         run: |
           uv sync --frozen
-          uv run python smoke.py "${{ vars.DEV_URL }}" w_smoke
+          uv run python smoke.py "${{ steps.release.outputs.url }}" w_smoke
