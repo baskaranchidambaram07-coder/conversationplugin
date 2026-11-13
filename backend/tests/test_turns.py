@@ -60,11 +60,14 @@ def widgets(database_url):
     return ids
 
 
+def settings_for(database_url: str, fake_pf: str) -> Settings:
+    profiles = {"fake": pf_profile(fake_pf), "nowhere": pf_profile("http://127.0.0.1:9")}
+    return Settings(database_url=database_url, session_keys=KEYS, agent_profiles=json.dumps(profiles))
+
+
 @pytest.fixture
 def gateway(database_url, fake_pf):
-    profiles = {"fake": pf_profile(fake_pf), "nowhere": pf_profile("http://127.0.0.1:9")}
-    settings = Settings(database_url=database_url, session_keys=KEYS, agent_profiles=json.dumps(profiles))
-    with TestClient(create_app(settings), base_url="https://chat.example.net") as client:
+    with TestClient(create_app(settings_for(database_url, fake_pf)), base_url="https://chat.example.net") as client:
         yield client
 
 
@@ -285,7 +288,24 @@ def test_conversations_and_messages_come_in_pages(gateway, widgets):
     assert first["conversations"][0]["title"] == "Question 0" and rest["next"] is None
     assert [m["role"] for m in oldest["messages"] + newest["messages"]] == ["user", "assistant"] * 3
     assert oldest["next"] is None
-    assert visitor.get("/v1/conversations?before=not%20a%20date").status_code == 400
+    for cursor in ("not%20a%20date", "2026-11-13T09:00:00Z", "2026-11-13T09:00:00_c_x", "yesterday_c_x"):
+        assert visitor.get(f"/v1/conversations?before={cursor}").status_code == 400
+
+
+def test_history_survives_a_gateway_restart(database_url, fake_pf, widgets):
+    settings = settings_for(database_url, fake_pf)
+    with TestClient(create_app(settings), base_url="https://chat.example.net") as before:
+        visitor = Visitor(before, widgets["open"])
+        conversation = visitor.conversation()
+        wait_for(visitor, conversation, events(visitor.ask(conversation, "Hello"))[0].message_id)
+
+    with TestClient(create_app(settings), base_url="https://chat.example.net") as after:
+        listed = after.get("/v1/conversations", headers=visitor.headers).json()
+        page = after.get(f"/v1/conversations/{conversation}/messages", headers=visitor.headers).json()
+
+    assert [c["id"] for c in listed["conversations"]] == [conversation]
+    assert [(m["role"], m["status"]) for m in page["messages"]] == [("user", "complete"), ("assistant", "complete")]
+    assert page["messages"][1]["blocks"][0]["text"] == FINAL["short"]["response"]
 
 
 def test_no_first_word_within_the_limit_fails_the_answer(gateway, widgets):
