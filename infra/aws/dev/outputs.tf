@@ -36,6 +36,11 @@ output "url" {
   value       = "https://${aws_cloudfront_distribution.edge.domain_name}"
 }
 
+output "samples_url" {
+  description = "The College's samples, hosted for trying the assistant (docs/college-sandbox-guide.md)."
+  value       = "https://${aws_cloudfront_distribution.samples.domain_name}"
+}
+
 output "deploy_role_arn" {
   description = "For the pipeline's AWS_DEPLOY_ROLE_ARN secret (it contains the account number: never commit it)."
   value       = aws_iam_role.deploy.arn

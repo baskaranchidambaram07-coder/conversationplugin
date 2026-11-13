@@ -13,6 +13,7 @@ Run every command from the repository root, in Git Bash, with the AWS command li
 | Gateway: one container on Fargate (1 vCPU, 2 GB), in a public subnet with no inbound except from the load balancer | Runs | Removed (the cluster, the release and the images stay) |
 | PostgreSQL 17: private, encrypted, seven days of point-in-time backups | Runs | Stopped (AWS starts it again after seven days; `sleep` stops it again) |
 | Secrets Manager `ucp-dev/*`, image registry, logs, network | Stay | Stay |
+| The College's samples, hosted (`samples.tf`): a private bucket behind a CloudFront address of its own, whose portal signs in under any name for the demo widget only | Answered | The pages stay; the chat does not appear on them |
 
 Roughly, from list prices as remembered and not checked: about US$0.11 an hour awake, about US$5 a month asleep. The gateway needs a whole vCPU: on half of one, 25 visitors arriving in the same second queued past the 150 ms budget for its share of a first word (`latency.py`).
 
@@ -24,6 +25,8 @@ Roughly, from list prices as remembered and not checked: about US$0.11 an hour a
 | Wake it: database on, load balancer and gateway up, newest release out, migrations, the widget file, the PF check | `python infra/aws/dev.py wake` | about 10 minutes |
 | Put it to sleep | `python infra/aws/dev.py sleep` | about 5 minutes |
 | Check it from outside: health, configuration, an anonymous and a signed-in turn | `cd backend && uv run python smoke.py <address> w_smoke` | a minute |
+| Check it in a browser: the leak search, and the hosted samples | `npm run build && npm run e2e:deployed` | a few minutes |
+| The hosted samples' address, for the College (`docs/college-sandbox-guide.md`) | `python infra/aws/deploy.py --samples-url` | seconds |
 
 A plain `terraform apply` without `-var=awake=true` puts the environment to sleep: always go through `dev.py`.
 
@@ -54,7 +57,7 @@ The loader and the chat are in the image, so rolling back the application rolls 
 |---|---|---|
 | `ucp-dev/database-url` | The gateway's database connection | Terraform, once, write-only (never in the state) |
 | `ucp-dev/session-keys` | The keys that sign visitors' sessions | Terraform, once; `secret_store.py session-keys` to rotate |
-| `ucp-dev/host-secrets` | The shared secrets of signed-in sites (`smoke` for the smoke test) | Terraform for `smoke`; `secret_store.py host-secret NAME` for a customer |
+| `ucp-dev/host-secrets` | The shared secrets of signed-in sites (`smoke` for the smoke test, `demo` for the hosted samples) | Terraform for `smoke` and `demo`; `secret_store.py host-secret NAME` for a customer, such as `college` |
 | `ucp-dev/agent-profiles` | The PF staging connection profile `pf-staging` | `secret_store.py agent-profiles`, from the `PF_*` settings in `.env` |
 
 ```
@@ -63,7 +66,7 @@ cd backend && uv run python ../infra/aws/secret_store.py session-keys
 cd backend && uv run python ../infra/aws/secret_store.py host-secret college --rotate
 ```
 
-The gateway reads its secrets when it starts, so release again after a change: `python infra/aws/deploy.py`. Rotating keeps the previous key valid beside the new one until the next rotation. A customer can switch to a new shared secret without a gap, and visitors' sessions in progress don't break.
+The gateway reads its secrets when it starts, so release again after a change: `python infra/aws/deploy.py`. When Terraform writes `ucp-dev/host-secrets` again (its `secret_string_wo_version` goes up), the customers' secrets are dropped: add each one again, and hand the customer the new one. Rotating keeps the previous key valid beside the new one until the next rotation. A customer can switch to a new shared secret without a gap, and visitors' sessions in progress don't break.
 
 ## Restoring the database
 

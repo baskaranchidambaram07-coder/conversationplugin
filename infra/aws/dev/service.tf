@@ -110,6 +110,8 @@ resource "aws_ecs_task_definition" "gateway" {
     environment = [
       { name = "UCP_PUBLIC_ORIGIN", value = "https://${aws_cloudfront_distribution.edge.domain_name}" },
       { name = "UCP_VISITOR_ADDRESS_HEADER", value = "cloudfront-viewer-address" },
+      # The hosted samples' site, which the widget file names as an allowed site (backend/deploy/widgets.dev.json).
+      { name = "UCP_SAMPLES_ORIGIN", value = "https://${aws_cloudfront_distribution.samples.domain_name}" },
     ]
     secrets = [for name, arn in local.secrets : { name = name, valueFrom = arn }]
     logConfiguration = {

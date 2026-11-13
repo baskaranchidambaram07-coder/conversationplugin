@@ -1,7 +1,7 @@
 // The hosted samples' sign-in (examples/college/hosted/portal.js). "Signing in" there is choosing a name, and this
 // signs a five-minute token for it, as a portal's backend would (examples/token-signing). The secret signs for the
 // demo widget only, whose identity settings name this issuer and audience (backend/deploy/widgets.dev.json).
-// CloudFront runs it (cloudfront-js-2.0); Terraform fills in the secret, so the file has no JavaScript ${} of its own.
+// CloudFront runs it (cloudfront-js-2.0). Terraform fills in the secret, so it uses no JavaScript template strings.
 var crypto = require("crypto");
 
 var part = (value) => btoa(JSON.stringify(value)).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
