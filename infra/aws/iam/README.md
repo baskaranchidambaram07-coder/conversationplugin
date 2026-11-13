@@ -61,9 +61,9 @@ Then, as `service-commandline-user`, run `bash verify-access.sh` again.
 
 | Statement | In plain words |
 |---|---|
-| `ReadForPlanning` | Read-only listing and describing, so the infrastructure tool can compare what exists with what is wanted. It also includes reading a network's security groups, which AWS checks on the caller's behalf when a load balancer is created (added on 13 November 2026, version 2 of the policy). |
+| `ReadForPlanning` | Read-only listing and describing, so the infrastructure tool can compare what exists with what is wanted. |
 | `TaskDefinitions` | Register and retire container task definitions in `us-east-1`. |
-| `NetworkInUsEast1` | Create and change a network in `us-east-1`: the VPC, subnets, routes, gateways and security groups. |
+| `NetworkInUsEast1` | Create and change a network in `us-east-1`: the VPC, subnets, routes, gateways and security groups, and read a network's security groups, which AWS checks on the caller's behalf when a load balancer is created (added on 13 November 2026, version 2 of the policy). |
 | `ProjectNamedResources` | Full control of containers, the image registry, the load balancer, the database, logs, secrets, storage buckets, alarms and dashboards, but only those whose names start with `ucp-dev`. |
 | `ContentDelivery` | CloudFront, which serves the loader and the chat over HTTPS. |
 | `ProjectRolesReadAndTidy` | Read, tag and delete roles whose names start with `ucp-dev-`. |

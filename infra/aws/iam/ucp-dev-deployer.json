@@ -6,7 +6,6 @@
       "Effect": "Allow",
       "Action": [
         "ec2:Describe*",
-        "ec2:GetSecurityGroupsForVpc",
         "elasticloadbalancing:Describe*",
         "rds:Describe*",
         "rds:ListTagsForResource",
@@ -72,7 +71,8 @@
         "ec2:UpdateSecurityGroupRuleDescriptionsIngress",
         "ec2:UpdateSecurityGroupRuleDescriptionsEgress",
         "ec2:CreateTags",
-        "ec2:DeleteTags"
+        "ec2:DeleteTags",
+        "ec2:GetSecurityGroupsForVpc"
       ],
       "Resource": "*",
       "Condition": {
