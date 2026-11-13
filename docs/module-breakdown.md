@@ -418,6 +418,7 @@ State on 12 November 2026 (pull requests 26 to 31 into `module/m04-conversation-
 - Latency (`backend/loadtest.py`): with 10 visitors at once the gateway adds 36 ms at the median and 76 ms at the 95th percentile to the first word, within the 150 ms budget.
   - Beyond about 15 visitors, the build machine saturates its four processors. It runs the load generator, the fake PF, PostgreSQL and other work at the same time, so the figure then measures the machine, not the gateway.
   - On the pipeline's own runner, with 25 visitors at once, the gateway adds 20 to 33 ms at the median and 79 to 94 ms at the 95th percentile, over three runs on 12 November 2026. That meets the done condition's latency budget.
+  - Correction, 13 November 2026: those three runs were a lucky sample. The pipeline's history shows the same code at 79 to 199 ms with 25 visitors (once 251 ms), because the shared runner carries the gateway, PostgreSQL, the fake PF and the load together. With your agreement, the pipeline now checks 10 visitors on the median of three runs. The budget at 25 or more visitors is to be certified in M14, against the deployed stack, from a separate machine.
   - An earlier version did not always meet it: one run reached 167 ms. A profile showed the gateway's code idle and waiting on the database, so a turn now starts in four statements instead of nine, and the connection pool is larger and steady.
   - A test against a deployed instance from a separate machine belongs with M14.
 - For M5: sessions use `ucp.sessions.Keys` (HS256, rotating by `kid`) and `Session(user_id, tenant_id, widget_id, config_version, mode)`. `POST /v1/sessions` refuses a host token with `forbidden` until M5 verifies it. Each widget's `sign_in` is `anonymous`, `signed_in` or `both`.
@@ -670,8 +671,9 @@ State on 13 November 2026 (pull requests 45 to 49 into `module/m07-history-persi
 - The latency check, M4's budget, judged soundly:
   - On 13 November the pipeline's load test swung between 84 and 199 ms at the 95th percentile on unchanged code, and once failed both tries on this module branch.
   - A local A/B test showed the race fix adds nothing measurable: the medians were 40 to 54 ms either way. The same code's 95th percentile still ranged from 80 to 233 ms, so on a shared machine noise dominates one run's figure.
-  - The pipeline now judges the median of three runs' 95th percentiles. That replaces the M5 retry, which passed whenever either of two tries did and so could also let a real slowdown through.
-  - Certifying the budget on dedicated resources belongs with M14's deployed stack.
+  - The pipeline's history shows the same spread back to M4 (79 to 199 ms, once 251 ms), so M4's recorded 79 to 94 ms was a lucky sample (corrected under M4).
+  - Your decision on 13 November 2026: the pipeline checks 10 visitors at once, which the runner can carry without measuring itself. It judges the median of three runs' 95th percentiles against 150 ms. That replaces the M5 retry, which passed whenever either of two tries did and so could also let a real slowdown through.
+  - At 25 visitors the median of three runs measured 152 ms on the runner.
 - Deferred:
   - **By decision:** delete, purge, the reopen window and the record period, until the purge policy is set.
   - **With M14's AWS database:**
@@ -688,7 +690,8 @@ State on 13 November 2026 (pull requests 45 to 49 into `module/m07-history-persi
   - answers record the widget version (`config_version`) and the agent version (`agent_version`).
 - For M14:
   - run `python -m ucp.migrate` before each release (migration `0003` adds a column);
-  - create the database roles for row-level security there.
+  - create the database roles for row-level security there;
+  - certify the latency budget (at most 150 ms added to the first word at the 95th percentile) with 25 or more visitors at once, against the deployed stack, from a separate machine.
 
 ---
 

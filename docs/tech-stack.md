@@ -79,7 +79,7 @@ GitHub Actions runs seven jobs on every pull request and on every push to `main`
 |---|---|
 | Backend lint and tests | Installs from the lock file, runs Ruff and pytest against a PostgreSQL 17 container |
 | Web checks, builds and browser tests | Type checks, unit tests, both builds, the loader size limit, then Playwright on all four targets |
-| Gateway journeys and load | Runs the real chat against the real gateway, with PostgreSQL and the fake PF, on three browser engines. Then runs the API journey script and the load test, which checks the gateway adds at most 150 ms to the first word at the 95th percentile. Shared runners stall now and then, so the budget is judged on the median of three runs' 95th percentiles |
+| Gateway journeys and load | Runs the real chat against the real gateway, with PostgreSQL and the fake PF, on three browser engines. Then runs the API journey script and the load test, which checks the gateway adds at most 150 ms to the first word at the 95th percentile. It runs 10 visitors at once, since more would measure the shared runner rather than the gateway, and judges the median of three runs' 95th percentiles; 25 and more are certified on the deployed stack (M14) |
 | Sign-in through a real identity provider | Starts Keycloak in a container and signs users in through the gateway with its tokens, including a signing-key rotation (`backend/tests/test_keycloak.py`) |
 | Token-signing snippets | Installs Java, .NET, Go and PHP beside Python and Node, runs all six snippets, and checks every token with the gateway's own code |
 | Container image builds and starts | Builds the gateway image from the repository root (a Node stage builds the loader and chat into it), checks that it answers, sends no server header and serves the loader |
@@ -156,7 +156,7 @@ After `npm install` on this Windows machine, check `package-lock.json` before co
 | Browser leak search on PF staging (starts the stack itself) | `npm run build && npm run e2e:staging` |
 | After `e2e:gateway` or `e2e:staging`: stop the local database, which Playwright leaves running | `.tools/pgsql/bin/pg_ctl.exe -D .tools/pgdata -m fast -w stop` |
 | API journey against a running gateway (also the smoke test after a deployment) | `cd backend && uv run python journey.py http://localhost:8200 w_gateway` |
-| Load test against the running stack (start it with `FAKE_PF_SPEED=0.1`) | `cd backend && uv run python loadtest.py --visitors 25 --turns 5` |
+| Load test against the running stack (start it with `FAKE_PF_SPEED=0.1`); the pipeline runs this, three runs judged on their median | `cd backend && uv run python loadtest.py --visitors 10 --turns 5 --runs 3` |
 | Bring a database's tables up to date | `cd backend && UCP_DATABASE_URL=... uv run python -m ucp.migrate` |
 | Publish widgets from a file | `cd backend && UCP_DATABASE_URL=... uv run python -m ucp.widgets seed path/to/widgets.json` |
 | Regenerate the API description after changing a route | `cd backend && uv run python -m ucp.gateway.openapi` |
