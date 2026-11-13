@@ -52,6 +52,8 @@ class AgentError(Exception):
 
 
 class AgentConnector(Protocol):
+    version: str  # the agent version answers come from, stored with each answer and never sent to the browser
+
     async def create_conversation(self, name: str) -> str:
         """Starts a conversation on the agent's side, named with our opaque ID. Returns the agent's ID for it."""
         ...

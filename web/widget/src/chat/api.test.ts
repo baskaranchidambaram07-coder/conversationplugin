@@ -100,3 +100,28 @@ test("stopping a reply passes the abort through instead of reporting a failure",
     gateway("w_1", async () => null, fetcher).send("c_1", { text: "Hi", client_message_id: "cm_1" }, stop.signal),
   ).rejects.toMatchObject({ name: "AbortError" });
 });
+
+test("the list of chats and a chat's pages are read with the session, and a cursor goes in the address safely", async () => {
+  const page = { conversations: [conversation], next: null };
+  const { fetcher, calls } = scripted(
+    () => Response.json(page),
+    () => Response.json({ ...page, next: "2026-11-12T10:00:00Z_c_1" }),
+    () => Response.json({ messages: [], next: "12" }),
+    () => Response.json({ messages: [], next: null }),
+  );
+  const api = gateway("w_1", async () => null, fetcher);
+
+  expect(await api.conversations()).toEqual(page);
+  await api.conversations("2026-11-12T10:00:00+00:00_c_1");
+  expect((await api.messages("c_1")).next).toBe("12");
+  await api.messages("c_1", "12");
+
+  expect(calls().map(([path]) => path)).toEqual([
+    "/v1/sessions",
+    "/v1/conversations",
+    "/v1/conversations?before=2026-11-12T10%3A00%3A00%2B00%3A00_c_1",
+    "/v1/conversations/c_1/messages",
+    "/v1/conversations/c_1/messages?before=12",
+  ]);
+  expect(new Set(calls().slice(1).map(([, auth]) => auth))).toEqual(new Set(["Bearer s_1"]));
+});

@@ -46,11 +46,12 @@ def test_unknown_routes_and_methods_answer_not_found_in_our_format():
 
 
 def test_an_invalid_body_is_refused_without_echoing_any_of_it():
-    response = client().post("/test/echo", json={"text": 42, "extra": "<script>"})
+    # Values no random reference could contain by chance (a reference once held "42", failing this test).
+    response = client().post("/test/echo", json={"text": 987654321, "extra": "<script>"})
 
     assert response.status_code == 400
     assert error_of(response).code == "invalid_request"
-    assert "script" not in response.text and "42" not in response.text
+    assert "<script>" not in response.text and "987654321" not in response.text
 
 
 def test_a_problem_carries_its_retry_hint_in_the_body_and_the_header():

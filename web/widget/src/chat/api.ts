@@ -1,6 +1,15 @@
 // The chat's calls to the gateway, all on our own origin. The session token lives only in this closure:
 // never in storage, a URL or the page (D6).
-import type { ApiError, Conversation, Message, SendMessage, Session, SessionRequest } from "@ucp/protocol/v1";
+import type {
+  ApiError,
+  Conversation,
+  ConversationPage,
+  Message,
+  MessagePage,
+  SendMessage,
+  Session,
+  SessionRequest,
+} from "@ucp/protocol/v1";
 
 /** Any failed call: `status` 0 means the network failed; `error` is the gateway's body when it sent one. */
 export class Failure extends Error {
@@ -13,6 +22,7 @@ export class Failure extends Error {
 }
 
 const JSON_TYPE = { "content-type": "application/json" };
+const before = (cursor?: string | null) => (cursor ? `?before=${encodeURIComponent(cursor)}` : "");
 
 export type Api = ReturnType<typeof gateway>;
 
@@ -81,6 +91,14 @@ export function gateway(widgetId: string, hostToken: () => Promise<string | null
     },
     async message(conversationId: string, messageId: string): Promise<Message> {
       return (await authorised(`/v1/conversations/${conversationId}/messages/${messageId}`)).json();
+    },
+    /** The visitor's chats, most recently active first; `cursor` is the `next` of the page before. */
+    async conversations(cursor?: string | null): Promise<ConversationPage> {
+      return (await authorised(`/v1/conversations${before(cursor)}`)).json();
+    },
+    /** A page of a chat, oldest first, ending with its newest message; `cursor` reaches further back. */
+    async messages(conversationId: string, cursor?: string | null): Promise<MessagePage> {
+      return (await authorised(`/v1/conversations/${conversationId}/messages${before(cursor)}`)).json();
     },
   };
 }

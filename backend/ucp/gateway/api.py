@@ -115,8 +115,22 @@ async def _widget(request: Request, session: Session) -> Widget:
     return widget
 
 
-def _cursor(moment: datetime) -> str:
-    return moment.astimezone(UTC).isoformat().replace("+00:00", "Z")  # nothing a URL would change
+def _cursor(conversation: protocol.Conversation) -> str:
+    """Where a conversation list stopped: its last entry's time and ID, in nothing a URL would change."""
+    return f"{conversation.updated_at.astimezone(UTC).isoformat().replace('+00:00', 'Z')}_{conversation.id}"
+
+
+def _after(cursor: str | None) -> tuple[datetime, str] | None:
+    if not cursor:
+        return None
+    moment, _, last = cursor.partition("_")
+    try:
+        at = datetime.fromisoformat(moment)
+    except ValueError as error:
+        raise Problem("invalid_request") from error
+    if at.tzinfo is None or not last:
+        raise Problem("invalid_request")
+    return at, last
 
 
 type Visitor = Annotated[Session, Depends(visitor)]
@@ -133,15 +147,9 @@ async def create_conversation(request: Request, session: Visitor) -> protocol.Co
 async def list_conversations(
     request: Request, session: Visitor, before: protocol.Cursor | None = None, limit: Limit = 20
 ) -> protocol.ConversationPage:
-    try:
-        after = datetime.fromisoformat(before) if before else None
-    except ValueError as error:
-        raise Problem("invalid_request") from error
-    found = await _store(request).conversations(owner(session), after, limit + 1)
+    found = await _store(request).conversations(owner(session), _after(before), limit + 1)
     more = len(found) > limit
-    return protocol.ConversationPage(
-        conversations=found[:limit], next=_cursor(found[limit - 1].updated_at) if more else None
-    )
+    return protocol.ConversationPage(conversations=found[:limit], next=_cursor(found[limit - 1]) if more else None)
 
 
 @router.get("/conversations/{conversation_id}/messages", summary="A page of a conversation, oldest first")
@@ -190,7 +198,7 @@ async def send_message(
     mine = owner(session)
     try:
         turn = await _store(request).start_turn(
-            mine, conversation_id, body.client_message_id, body.text, widget.version
+            mine, conversation_id, body.client_message_id, body.text, widget.version, connector.version
         )
     except TurnInProgress as error:
         raise Problem("turn_in_progress", retryable=True, retry_after=5) from error

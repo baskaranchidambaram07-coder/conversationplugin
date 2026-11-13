@@ -24,6 +24,7 @@ from sqlalchemy import (
     func,
     insert,
     select,
+    tuple_,
     update,
 )
 from sqlalchemy.dialects.postgresql import JSONB
@@ -82,6 +83,7 @@ messages = Table(
     Column("reply_to", Text, ForeignKey("messages.id")),  # on an answer: the question it answers
     Column("agent_message_id", Text),  # PF's message ID, to fetch an answer whose stream broke
     Column("config_version", Integer),  # the widget version that produced an answer
+    Column("agent_version", Text),  # the agent version that wrote an answer; never sent to the browser
     *_times(),
     UniqueConstraint("conversation_id", "seq"),
     UniqueConstraint("conversation_id", "client_message_id"),
@@ -236,12 +238,13 @@ class Store:
             row = (await db.execute(query)).first()
         return _conversation(row) if row else None
 
-    async def conversations(self, owner: Owner, before: datetime | None, limit: int) -> list[Conversation]:
-        """Most recently active first; `before` is the `updated_at` of the last one already shown."""
+    async def conversations(self, owner: Owner, before: tuple[datetime, str] | None, limit: int) -> list[Conversation]:
+        """Most recently active first. `before` is the (updated_at, id) of the last one already shown: the ID breaks
+        ties, so two conversations active at the same instant are neither skipped nor shown twice."""
         query = select(conversations).where(self._owned(owner))
         if before:
-            query = query.where(conversations.c.updated_at < before)
-        query = query.order_by(conversations.c.updated_at.desc(), conversations.c.id).limit(limit)
+            query = query.where(tuple_(conversations.c.updated_at, conversations.c.id) < tuple_(*before))
+        query = query.order_by(conversations.c.updated_at.desc(), conversations.c.id.desc()).limit(limit)
         async with self.engine.connect() as db:
             return [_conversation(row) for row in await db.execute(query)]
 
@@ -256,13 +259,20 @@ class Store:
     # Messages
 
     async def start_turn(
-        self, owner: Owner, conversation_id: str, client_message_id: str, text: str, config_version: int
+        self,
+        owner: Owner,
+        conversation_id: str,
+        client_message_id: str,
+        text: str,
+        config_version: int,
+        agent_version: str | None = None,
     ) -> Turn | None:
         """Stores a question and an empty answer, in one transaction. None if the conversation is not the owner's.
 
         The same client_message_id again returns the turn it started (repeat). A new question while an answer
-        is still in progress raises TurnInProgress. The conversation row is locked, so two questions sent at once
-        cannot both start. One read gathers everything, so a turn starts in four statements.
+        is still in progress raises TurnInProgress. The conversation row is locked first, in a statement of its own:
+        a read that waited for the lock inside one statement would still see the conversation as it was before the
+        other question went in, and both would start. Then one read gathers everything: five statements a turn.
         """
         here = messages.c.conversation_id == conversations.c.id
         # Tied to the conversation read below, even where it sits two levels down.
@@ -274,25 +284,19 @@ class Store:
         busy = select(messages.c.id).where(here & (messages.c.status == "in_progress")).limit(1)
         fresh = select(messages.c.updated_at > func.now() - STALE).where(here & (messages.c.status == "in_progress"))
         answers = messages.alias("answers")  # its own name, so the question looked up inside is not tied to it
-        state = (
-            select(
-                conversations.c.agent_conversation_id,
-                asked.scalar_subquery().label("asked"),
-                select(answers.c.id)
-                .where(answers.c.reply_to == asked.scalar_subquery())
-                .scalar_subquery()
-                .label("answer"),
-                busy.scalar_subquery().label("busy"),
-                fresh.limit(1).scalar_subquery().label("fresh"),
-                select(func.coalesce(func.max(messages.c.seq), -1)).where(here).scalar_subquery().label("seq"),
-            )
-            .where(self._owned(owner) & (conversations.c.id == conversation_id))
-            .with_for_update(of=conversations)
-        )
+        state = select(
+            conversations.c.agent_conversation_id,
+            asked.scalar_subquery().label("asked"),
+            select(answers.c.id).where(answers.c.reply_to == asked.scalar_subquery()).scalar_subquery().label("answer"),
+            busy.scalar_subquery().label("busy"),
+            fresh.limit(1).scalar_subquery().label("fresh"),
+            select(func.coalesce(func.max(messages.c.seq), -1)).where(here).scalar_subquery().label("seq"),
+        ).where(conversations.c.id == conversation_id)
+        lock = select(conversations.c.id).where(self._owned(owner) & (conversations.c.id == conversation_id))
         async with self.engine.begin() as db:
-            found = (await db.execute(state)).first()
-            if not found:
+            if not (await db.execute(lock.with_for_update())).first():
                 return None
+            found = (await db.execute(state)).one()
             if found.asked:
                 return Turn(conversation_id, found.asked, found.answer, found.agent_conversation_id, repeat=True)
             if found.busy and found.fresh:
@@ -302,6 +306,7 @@ class Store:
                 await db.execute(update(messages).where(messages.c.id == found.busy).values(stale))
             question_id, answer_id = new_id("m"), new_id("m")
             shared = {"conversation_id": conversation_id, "client_message_id": None, "reply_to": None}
+            shared |= {"config_version": None, "agent_version": None}
             await db.execute(
                 insert(messages).values(
                     [
@@ -313,7 +318,6 @@ class Store:
                             "status": "complete",
                             "blocks": [{"type": "text", "text": text}],
                             "client_message_id": client_message_id,
-                            "config_version": None,
                         },
                         {
                             **shared,
@@ -324,6 +328,7 @@ class Store:
                             "blocks": [],
                             "reply_to": question_id,
                             "config_version": config_version,
+                            "agent_version": agent_version,
                         },
                     ]
                 )
