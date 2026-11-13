@@ -83,6 +83,7 @@ messages = Table(
     Column("reply_to", Text, ForeignKey("messages.id")),  # on an answer: the question it answers
     Column("agent_message_id", Text),  # PF's message ID, to fetch an answer whose stream broke
     Column("config_version", Integer),  # the widget version that produced an answer
+    Column("agent_version", Text),  # the agent version that wrote an answer; never sent to the browser
     *_times(),
     UniqueConstraint("conversation_id", "seq"),
     UniqueConstraint("conversation_id", "client_message_id"),
@@ -258,7 +259,13 @@ class Store:
     # Messages
 
     async def start_turn(
-        self, owner: Owner, conversation_id: str, client_message_id: str, text: str, config_version: int
+        self,
+        owner: Owner,
+        conversation_id: str,
+        client_message_id: str,
+        text: str,
+        config_version: int,
+        agent_version: str | None = None,
     ) -> Turn | None:
         """Stores a question and an empty answer, in one transaction. None if the conversation is not the owner's.
 
@@ -299,6 +306,7 @@ class Store:
                 await db.execute(update(messages).where(messages.c.id == found.busy).values(stale))
             question_id, answer_id = new_id("m"), new_id("m")
             shared = {"conversation_id": conversation_id, "client_message_id": None, "reply_to": None}
+            shared |= {"config_version": None, "agent_version": None}
             await db.execute(
                 insert(messages).values(
                     [
@@ -310,7 +318,6 @@ class Store:
                             "status": "complete",
                             "blocks": [{"type": "text", "text": text}],
                             "client_message_id": client_message_id,
-                            "config_version": None,
                         },
                         {
                             **shared,
@@ -321,6 +328,7 @@ class Store:
                             "blocks": [],
                             "reply_to": question_id,
                             "config_version": config_version,
+                            "agent_version": agent_version,
                         },
                     ]
                 )

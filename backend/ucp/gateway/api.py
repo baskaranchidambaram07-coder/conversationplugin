@@ -198,7 +198,7 @@ async def send_message(
     mine = owner(session)
     try:
         turn = await _store(request).start_turn(
-            mine, conversation_id, body.client_message_id, body.text, widget.version
+            mine, conversation_id, body.client_message_id, body.text, widget.version, connector.version
         )
     except TurnInProgress as error:
         raise Problem("turn_in_progress", retryable=True, retry_after=5) from error

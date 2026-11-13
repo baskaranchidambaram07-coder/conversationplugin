@@ -9,15 +9,17 @@ import time
 import httpx2
 import pytest
 from fastapi.testclient import TestClient
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import create_async_engine
 
 from fakepf.app import FINAL
+from tests.conftest import TEST_DATABASE_URL
 from tests.test_public import document
 from tests.test_sessions import KEYS
 from ucp.gateway.app import create_app
 from ucp.protocol import ADAPTERS, Message
 from ucp.settings import Settings
-from ucp.store import Store
+from ucp.store import Store, messages
 from ucp.turns import Breaker, Turns
 from ucp.widgets import seed
 
@@ -98,6 +100,20 @@ def events(response) -> list:
     return [EVENTS.validate_json(line.removeprefix("data: ")) for line in lines if line.startswith("data: ")]
 
 
+def stored_versions(message_id: str) -> tuple:
+    """The widget and agent versions stored with an answer, read straight from the database."""
+
+    async def read():
+        engine = create_async_engine(TEST_DATABASE_URL)
+        async with engine.connect() as db:
+            query = select(messages.c.config_version, messages.c.agent_version).where(messages.c.id == message_id)
+            row = (await db.execute(query)).one()
+        await engine.dispose()
+        return tuple(row)
+
+    return asyncio.run(read())
+
+
 def wait_for(visitor: Visitor, conversation: str, message_id: str) -> Message:
     deadline = time.monotonic() + 10
     while time.monotonic() < deadline:
@@ -129,6 +145,8 @@ def test_an_answer_streams_in_our_format_only_and_is_stored_as_it_was_sent(gatew
     assert response.text.startswith(": ping") and not PF_ID.search(response.text)
     stored = wait_for(visitor, conversation, stream[0].message_id)
     assert stored.status == "complete" and stored.blocks[0].text == FINAL["long"]["response"]
+    assert "fake-agent-version" not in json.dumps([event.model_dump(mode="json") for event in stream])
+    assert stored_versions(stream[0].message_id) == (1, "fake-agent-version")  # kept for tracing, never sent
 
 
 def test_a_failure_part_way_is_reported_and_stored_with_the_part_already_streamed(gateway, widgets):
