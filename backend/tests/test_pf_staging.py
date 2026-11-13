@@ -19,6 +19,7 @@ import time
 import httpx2
 import pytest
 
+from devstack import staging_profile
 from fakepf.app import FINAL, RECORDED, TEMPLATES
 from ucp.connector import Accepted, Final, Text
 from ucp.pf import API, PfConnector, PfProfile
@@ -33,16 +34,7 @@ pytestmark = pytest.mark.skipif(
 
 @pytest.fixture(scope="module")
 def pf() -> PfProfile:
-    env = os.environ
-    return PfProfile(
-        base_url=env["PF_BASE_URL"].rstrip("/"),
-        tenant=env["PF_TENANT"],
-        workspace_id=env["PF_WORKSPACE_ID"],
-        agent_version_id=env["PF_AGENT_ID"],
-        api_key=env["PF_API_KEY"],
-        username=env["PF_USERNAME"],
-        password=env["PF_PASSWORD"],
-    )
+    return PfProfile(**staging_profile())
 
 
 def login(pf: PfProfile) -> httpx2.Response:
