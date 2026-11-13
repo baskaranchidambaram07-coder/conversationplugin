@@ -84,7 +84,8 @@ export async function runTurn(
   return recover(api, conversationId, answer.id, signal, answer, show);
 }
 
-async function recover(
+/** Follows an answer the gateway is still writing until it settles, by fetching it. Also used for a reopened chat. */
+export async function recover(
   api: Api,
   conversationId: string,
   messageId: string,
