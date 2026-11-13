@@ -92,6 +92,28 @@ async def test_the_operators_command_publishes_lists_rolls_back_and_reads_the_lo
     assert log[0].endswith("(as version 1)")
 
 
+async def test_a_widget_file_may_name_the_environments_own_settings(store, widget_id, tmp_path, monkeypatch):
+    # One file serves an environment whose addresses change when it is rebuilt (infra/aws: the samples' origin).
+    path = tmp_path / "widgets.json"
+    named = document(allowed_domains=["${UCP_SAMPLES_ORIGIN}", "https://www.example.ac.uk"])
+    named["public"] = {**PUBLIC, "welcome_message": "Prices start at ${PRICE}"}  # not a UCP_ name: left as written
+    path.write_text(json.dumps({"widgets": {widget_id: named}}), encoding="utf-8")
+
+    with pytest.raises(SystemExit, match="names UCP_SAMPLES_ORIGIN, which is not set here"):
+        await run(store, ["seed", str(path)])
+    assert await store.widget(widget_id) is None
+
+    monkeypatch.setenv("UCP_SAMPLES_ORIGIN", "https://d123.cloudfront.net")
+    assert await run(store, ["seed", str(path), "--by", "ana"]) == [f"{widget_id}: version 1"]
+    published = (await store.widget(widget_id)).document
+    assert published["allowed_domains"] == ["https://d123.cloudfront.net", "https://www.example.ac.uk"]
+    assert published["public"]["welcome_message"] == "Prices start at ${PRICE}"
+
+    monkeypatch.setenv("UCP_SAMPLES_ORIGIN", "https://*.com")  # a filled value meets the same rules as a written one
+    with pytest.raises(SystemExit, match="other owners' sites"):
+        await run(store, ["seed", str(path)])
+
+
 async def test_the_command_refuses_what_it_cannot_do_and_says_why(store, widget_id, tmp_path):
     # A version published before today's rules (here, straight into storage) is not served again.
     await store.publish_widget(widget_id, "t_college", document(allowed_domains=["https://*.com"]), "old")

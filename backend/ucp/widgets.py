@@ -142,6 +142,24 @@ class Widgets:
         return widget
 
 
+_SETTING = re.compile(r"\$\{(UCP_[A-Z0-9_]+)\}")
+
+
+def filled(value, environ):
+    """A widget file may name the environment's own settings, such as ${UCP_SAMPLES_ORIGIN}, so one file serves an
+    environment whose addresses change when it is rebuilt. Only UCP_ names are filled, and only inside strings."""
+    if isinstance(value, dict):
+        return {key: filled(item, environ) for key, item in value.items()}
+    if isinstance(value, list):
+        return [filled(item, environ) for item in value]
+    if not isinstance(value, str):
+        return value
+    missing = sorted({name for name in _SETTING.findall(value) if not environ.get(name)})
+    if missing:
+        raise ValueError(f"the widget file names {', '.join(missing)}, which is not set here")
+    return _SETTING.sub(lambda found: environ[found.group(1)], value)
+
+
 def problems(widgets: dict[str, dict]) -> list[str]:
     """Every reason a file of widgets cannot be published, one line each, naming the widget and the field."""
     found = []
@@ -198,7 +216,7 @@ async def run(store: Store, argv: list[str]) -> list[str]:
         with open(args.file, encoding="utf-8") as file:
             widgets = json.load(file)["widgets"]
         try:
-            versions = await seed(store, widgets, args.by)
+            versions = await seed(store, filled(widgets, os.environ), args.by)
         except ValueError as error:
             raise SystemExit(f"nothing was published:\n{error}") from error
         return [f"{widget_id}: version {version}" for widget_id, version in versions.items()]
