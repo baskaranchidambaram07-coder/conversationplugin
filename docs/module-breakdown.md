@@ -955,9 +955,14 @@ State on 13 November 2026 (pull requests 56 to 62 into `module/m14-cloud-deploym
   - **A release while answers stream:** 21 answers asked during a forced rollout, all completed (`rollout_check.py`).
   - **A rollback and a roll forward:** both passed the smoke test, with the log showing which code served.
   - **The restore rehearsal:** the database restored to a moment 08:17:10 UTC into a new instance in 14 minutes. Every table matched the live database at that moment (80 conversations, 462 messages), and the copy was then removed (`restore_rehearsal.py`). This completes M7's done condition too.
-- The done condition:
-  - built from the code today, from nothing to awake to smoke-tested, with the fixes found along the way now in the code;
-  - a timed teardown and rebuild, `dev.py teardown` then `build`, is ready, but waits for your word because it deletes the database and changes the CloudFront address.
+- **The done condition, met on 13 November 2026.** With your word, the environment was torn down and rebuilt from the code alone:
+  1. **Teardown:** `dev.py teardown` removed 40 resources in about 3 minutes, leaving only the state bucket and GitHub's sign-in.
+  2. **Rebuild:** `dev.py build` created 40 resources in 8 minutes 43 seconds, adopting GitHub's sign-in again.
+  3. **Secrets:** `secret_store.py agent-profiles` set the PF profile.
+  4. **Image:** the pipeline built, scanned and stored an image. The GitHub secrets needed no change.
+  5. **Wake:** `dev.py wake` ran the migrations, the widget file and the PF check.
+
+  From nothing to awake took 17 minutes 30 seconds of wall-clock time. The smoke suite passed all 15 steps, and the R13 leak search passed. The rebuild has a new address, `https://d17o90elbmlyrb.cloudfront.net`, which the scripts and the pipeline found from the release by themselves.
 - Deferred:
   - **Production in London:** private subnets and NAT, a database across two zones, our own domain names and certificates (HTTPS to the load balancer too), and a web application firewall.
   - **Needs an AWS administrator:** budget alerts and autoscaling, which the deploying user may not create.
