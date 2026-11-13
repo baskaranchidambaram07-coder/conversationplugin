@@ -34,13 +34,34 @@ aws iam create-policy --policy-name ucp-dev-deployer --policy-document file://uc
 aws iam attach-user-policy --user-name service-commandline-user --policy-arn arn:aws:iam::<account-id>:policy/ucp-dev-deployer
 ```
 
-Then, as `service-commandline-user`, run `bash verify-access.sh`. It creates nothing. It asks IAM to evaluate thirteen actions that must be allowed and eight that must be refused.
+Then, as `service-commandline-user`, run `bash verify-access.sh`. It creates nothing. It asks IAM to evaluate fourteen actions that must be allowed and eight that must be refused.
+
+## Updating a policy after a change to its file
+
+The deploying user cannot change its own policy, by design. An administrator publishes the file as the policy's new default version.
+
+In the IAM console: **Policies**, open `ucp-dev-deployer`, choose **Edit**, then the **JSON** tab, paste the whole file, choose **Next**, then **Save changes**.
+
+Or, with administrator rights, from this folder:
+
+```
+aws iam create-policy-version --policy-arn arn:aws:iam::<account-id>:policy/ucp-dev-deployer --policy-document file://ucp-dev-deployer.json --set-as-default
+```
+
+A policy keeps at most five versions. If AWS refuses because five exist, first delete the oldest version that is not the default:
+
+```
+aws iam list-policy-versions --policy-arn arn:aws:iam::<account-id>:policy/ucp-dev-deployer
+aws iam delete-policy-version --policy-arn arn:aws:iam::<account-id>:policy/ucp-dev-deployer --version-id v1
+```
+
+Then, as `service-commandline-user`, run `bash verify-access.sh` again.
 
 ## What the deployer policy allows
 
 | Statement | In plain words |
 |---|---|
-| `ReadForPlanning` | Read-only listing and describing, so the infrastructure tool can compare what exists with what is wanted. |
+| `ReadForPlanning` | Read-only listing and describing, so the infrastructure tool can compare what exists with what is wanted. It also includes reading a network's security groups, which AWS checks on the caller's behalf when a load balancer is created (added on 13 November 2026, version 2 of the policy). |
 | `TaskDefinitions` | Register and retire container task definitions in `us-east-1`. |
 | `NetworkInUsEast1` | Create and change a network in `us-east-1`: the VPC, subnets, routes, gateways and security groups. |
 | `ProjectNamedResources` | Full control of containers, the image registry, the load balancer, the database, logs, secrets, storage buckets, alarms and dashboards, but only those whose names start with `ucp-dev`. |
