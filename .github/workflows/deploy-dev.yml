@@ -1,0 +1,61 @@
+name: Deploy to dev
+
+# Each push to develop (and, while M14 is built, to its module branch) builds the gateway's image, scans it, stores
+# it, and releases it to the dev environment on AWS. While the environment sleeps the image is stored and goes out
+# on the next wake (infra/aws/dev.py). No AWS keys are stored: GitHub signs this run's identity, and AWS lets only
+# these branches of this repository take the deploy role (infra/aws/dev/github.tf).
+
+on:
+  push:
+    branches: [develop, module/m14-cloud-deployment]
+
+permissions:
+  contents: read
+  id-token: write
+
+concurrency:
+  group: deploy-dev
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    name: Build, scan, release and smoke-test
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    env:
+      AWS_REGION: us-east-1
+      IMAGE: ucp-dev-gateway
+    steps:
+      - uses: actions/checkout@v7
+      - name: Keep the account number out of the logs
+        run: echo "::add-mask::${{ secrets.AWS_ACCOUNT_ID }}"
+      - uses: aws-actions/configure-aws-credentials@v6
+        with:
+          role-to-assume: ${{ secrets.AWS_DEPLOY_ROLE_ARN }}
+          aws-region: us-east-1
+          mask-aws-account-id: true
+      - name: Build the image
+        run: docker build --file backend/Dockerfile --tag "$IMAGE:${{ github.sha }}" .
+      - name: Scan the image (fixable high and critical flaws stop the release)
+        run: >
+          docker run --rm --volume /var/run/docker.sock:/var/run/docker.sock aquasec/trivy:0.76.2
+          image --quiet --scanners vuln --severity HIGH,CRITICAL --ignore-unfixed --exit-code 1 "$IMAGE:${{ github.sha }}"
+      - name: Store the image
+        run: |
+          registry="$(aws sts get-caller-identity --query Account --output text).dkr.ecr.$AWS_REGION.amazonaws.com"
+          aws ecr get-login-password | docker login --username AWS --password-stdin "$registry"
+          for tag in "${{ github.sha }}" latest; do
+            docker tag "$IMAGE:${{ github.sha }}" "$registry/$IMAGE:$tag"
+            docker push --quiet "$registry/$IMAGE:$tag"
+          done
+      - name: Release (migrations, the widget file, the service, the PF check)
+        id: release
+        run: python infra/aws/deploy.py --image "${{ github.sha }}" --by "github-actions (${{ github.actor }})"
+      - uses: astral-sh/setup-uv@v10.3.3
+        if: steps.release.outputs.awake == 'true'
+      - name: Smoke test (health, configuration, an anonymous and a signed-in turn, from PF staging)
+        if: steps.release.outputs.awake == 'true'
+        working-directory: backend
+        run: |
+          uv sync --frozen
+          uv run python smoke.py "${{ vars.DEV_URL }}" w_smoke

@@ -1,0 +1,22 @@
+{
+  "widgets": {
+    "w_smoke": {
+      "tenant_id": "t_ucp",
+      "public": {
+        "title": "UCP smoke test",
+        "welcome_message": "This widget checks the dev environment after each release. It answers from PF staging.",
+        "suggested_prompts": ["Reply with the single word READY."],
+        "ai_notice": null,
+        "brand_color": "#2B241F",
+        "logo_url": null,
+        "color_scheme": "light",
+        "launcher_position": "bottom-right",
+        "history_enabled": true
+      },
+      "allowed_domains": ["http://127.0.0.1:4174", "http://localhost:4174"],
+      "sign_in": "both",
+      "agent_profile": "pf-staging",
+      "identity": {"provider": "smoke", "issuer": "https://smoke.ucp.invalid", "secret": "smoke"}
+    }
+  }
+}
