@@ -6,9 +6,17 @@ agent connection profile it answers from, and its limits. The gateway reads the 
 database and keeps it for 30 seconds, so a newly published version is in use within half a minute.
 
     cd backend && uv run python -m ucp.widgets seed path/to/widgets.json      publishes every widget in the file
+    cd backend && uv run python -m ucp.widgets versions w_...                 lists a widget's published versions
+    cd backend && uv run python -m ucp.widgets rollback w_... 3              publishes version 3 again, as a new one
+    cd backend && uv run python -m ucp.widgets audit [--widget w_...]         who published or rolled back what, when
+
+Publishing and rolling back record who did it (--by, the signed-in user by default) in the audit log. Published
+versions and the log only grow: the database refuses to change or remove them.
 """
 
+import argparse
 import asyncio
+import getpass
 import json
 import os
 import re
@@ -148,30 +156,76 @@ def problems(widgets: dict[str, dict]) -> list[str]:
     return found
 
 
-async def seed(store: Store, widgets: dict[str, dict]) -> dict[str, int]:
+async def seed(store: Store, widgets: dict[str, dict], actor: str = "system") -> dict[str, int]:
     """Checks every widget first, then publishes each as a new version if it changed. Returns the versions."""
     if found := problems(widgets):
         raise ValueError("\n".join(found))
     return {
-        widget_id: await store.publish_widget(widget_id, document["tenant_id"], document)
+        widget_id: await store.publish_widget(widget_id, document["tenant_id"], document, actor)
         for widget_id, document in widgets.items()
     }
 
 
-async def _seed_file(path: str) -> None:
+def _commands() -> argparse.ArgumentParser:
+    commands = argparse.ArgumentParser(prog="python -m ucp.widgets", description="Widget configuration.")
+    each = commands.add_subparsers(dest="command", required=True)
+    publish = each.add_parser("seed", help="publish every widget in a file, as a new version where it changed")
+    publish.add_argument("file")
+    back = each.add_parser("rollback", help="publish an earlier version again, as a new version")
+    back.add_argument("widget_id")
+    back.add_argument("version", type=int)
+    for command in (publish, back):
+        command.add_argument("--by", default=getpass.getuser(), help="who is doing it, for the audit log")
+    each.add_parser("versions", help="a widget's published versions, newest first").add_argument("widget_id")
+    log = each.add_parser("audit", help="the newest entries of the audit log")
+    log.add_argument("--widget")
+    log.add_argument("--limit", type=int, default=50)
+    return commands
+
+
+async def run(store: Store, argv: list[str]) -> list[str]:
+    """The operator's commands. Returns the lines to print; raises SystemExit with the reason when refused."""
+    args = _commands().parse_args(argv)
+
+    if args.command == "seed":
+        with open(args.file, encoding="utf-8") as file:
+            widgets = json.load(file)["widgets"]
+        try:
+            versions = await seed(store, widgets, args.by)
+        except ValueError as error:
+            raise SystemExit(f"nothing was published:\n{error}") from error
+        return [f"{widget_id}: version {version}" for widget_id, version in versions.items()]
+    if args.command == "rollback":
+        earlier = await store.widget(args.widget_id, args.version)
+        if not earlier:
+            raise SystemExit(f"{args.widget_id} has no version {args.version}")
+        # A version published before today's rules may break them: it is refused rather than served broken.
+        if found := problems({args.widget_id: earlier.document}):
+            raise SystemExit("that version breaks today's rules, so it was not published again:\n" + "\n".join(found))
+        version = await store.rollback_widget(args.widget_id, args.version, args.by)
+        return [f"{args.widget_id}: version {version} is live, the same as version {args.version}"]
+    if args.command == "versions":
+        rows = await store.widget_versions(args.widget_id)
+        if not rows:
+            raise SystemExit(f"no widget {args.widget_id}")
+        return [f"{r.version}  {r.published_at:%Y-%m-%d %H:%M} UTC  {r.published_by or 'unknown'}" for r in rows]
+    entries = await store.audit_entries(args.widget, args.limit)
+    return [
+        f"{e.at:%Y-%m-%d %H:%M:%S} UTC  {e.actor}  {e.action}  {e.widget_id} version {e.version}"
+        + (f"  (as version {e.detail['to_version']})" if e.detail and "to_version" in e.detail else "")
+        for e in entries
+    ]
+
+
+async def _main(argv: list[str]) -> None:
+    _commands().parse_args(argv)  # help and mistakes in the command answer before any database is needed
     engine = create_async_engine(os.environ["UCP_DATABASE_URL"])
     try:
-        with open(path, encoding="utf-8") as file:
-            versions = await seed(Store(engine), json.load(file)["widgets"])
-    except ValueError as error:
-        sys.exit(f"nothing was published:\n{error}")
+        lines = await run(Store(engine), argv)
     finally:
         await engine.dispose()
-    for widget_id, version in versions.items():
-        print(f"{widget_id}: version {version}")
+    print("\n".join(lines))
 
 
 if __name__ == "__main__":
-    if sys.argv[1:2] != ["seed"] or len(sys.argv) != 3:
-        sys.exit("usage: python -m ucp.widgets seed path/to/widgets.json")
-    asyncio.run(_seed_file(sys.argv[2]))
+    asyncio.run(_main(sys.argv[1:]))
