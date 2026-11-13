@@ -20,9 +20,11 @@ import getpass
 import json
 import os
 import re
+import secrets
 import sys
 import time
 from dataclasses import dataclass
+from datetime import UTC, datetime
 from typing import Annotated, Literal
 from urllib.parse import urlsplit
 
@@ -31,7 +33,7 @@ from sqlalchemy.ext.asyncio import create_async_engine
 
 from ucp.identity import Identity
 from ucp.protocol import Id, WidgetConfig
-from ucp.store import Store
+from ucp.store import Store, new_id
 
 # Domains shared by unrelated owners, so "*." over one of them would let strangers' sites show the chat.
 # shortcut: a short list (UK and common platforms), not the full public suffix list; adopt that list when
@@ -180,6 +182,11 @@ def _commands() -> argparse.ArgumentParser:
     log = each.add_parser("audit", help="the newest entries of the audit log")
     log.add_argument("--widget")
     log.add_argument("--limit", type=int, default=50)
+    export = each.add_parser("export", help="every widget's current document, as a file seed can publish again")
+    export.add_argument("--out", help="a file to write; the screen when left out")
+    each.add_parser("new-id", help="a new public widget ID, for a new widget's entry in the file")
+    secret = each.add_parser("new-secret", help="a new shared secret, as id:secret for UCP_HOST_SECRETS")
+    secret.add_argument("--id", default=f"k{datetime.now(UTC):%Y%m%d}", help="its name; by default today's date")
     return commands
 
 
@@ -204,6 +211,18 @@ async def run(store: Store, argv: list[str]) -> list[str]:
             raise SystemExit("that version breaks today's rules, so it was not published again:\n" + "\n".join(found))
         version = await store.rollback_widget(args.widget_id, args.version, args.by)
         return [f"{args.widget_id}: version {version} is live, the same as version {args.version}"]
+    if args.command == "export":
+        exported = json.dumps({"widgets": await store.current_widgets()}, indent=2, ensure_ascii=False)
+        if not args.out:
+            return [exported]
+        with open(args.out, "w", encoding="utf-8", newline="\n") as file:
+            file.write(exported + "\n")
+        return [f"exported every widget's current document to {args.out}"]
+    if args.command == "new-id":
+        return [new_id("w")]
+    if args.command == "new-secret":
+        # 32 random bytes, so the token-signing snippets' HMAC gets its full strength; the gateway refuses less.
+        return [f"{args.id}:{secrets.token_urlsafe(32)}"]
     if args.command == "versions":
         rows = await store.widget_versions(args.widget_id)
         if not rows:

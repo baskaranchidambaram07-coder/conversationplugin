@@ -10,7 +10,7 @@ import pytest
 from fakepf.app import FINAL
 from ucp.connector import Accepted, AgentError, Failed, Final, Text
 from ucp.gateway.pipeline import correlation
-from ucp.pf import PfConnector, PfProfile
+from ucp.pf import PfConnector, PfProfile, check_profiles
 
 pytestmark = pytest.mark.anyio
 
@@ -152,3 +152,21 @@ async def test_every_call_after_login_carries_our_reference_for_the_logs(fake_pf
 
     calls = [reference for path, reference in seen if "/accesstoken/" not in path]
     assert len(calls) == 2 and set(calls) == {"r_trace_me"}
+
+
+async def test_test_connection_names_each_profile_and_its_outcome_and_nothing_secret(fake_pf):
+    profiles = {
+        "good": profile(fake_pf).model_dump(mode="json") | {"api_key": "fake-api-key", "password": "fake-password"},
+        "wrong": profile(fake_pf).model_dump(mode="json") | {"api_key": "fake-api-key", "password": "wrong"},
+        "down": profile("http://127.0.0.1:9").model_dump(mode="json") | {"api_key": "k", "password": "p"},
+    }
+
+    lines, connected = await check_profiles(profiles)
+    one, _ = await check_profiles(profiles, ["good"])
+    missing, found = await check_profiles(profiles, ["nowhere"])
+
+    assert not connected and one == ["good: connected"] and missing == ["nowhere: no such profile"] and not found
+    assert lines[0] == "good: connected"
+    assert lines[1].startswith("wrong: not connected, check the profile's credentials")
+    assert lines[2].startswith("down: not connected, try again later")
+    assert not re.search(r"fake-password|wrong\b.*wrong|127\.0\.0\.1|fake-tenant|fake-api-key", "\n".join(lines))
