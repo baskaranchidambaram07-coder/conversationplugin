@@ -28,6 +28,8 @@ const widgets = () => document.querySelectorAll("[data-ucp]").length;
 const requested = (fetch: ReturnType<typeof serve>) => fetch.mock.calls.map((call) => String(call[0]));
 
 beforeEach(() => {
+  // The previous test's widget goes, with the listeners it put on the window, as it would with a new page.
+  if (typeof host.UCP === "function") (host.UCP as (command: string) => void)("unmount");
   delete host.UCP;
   document.body.innerHTML = "";
   vi.spyOn(console, "info").mockImplementation(() => {});
