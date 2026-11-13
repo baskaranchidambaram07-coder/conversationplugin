@@ -57,7 +57,8 @@ border-radius:50%;border:3px solid #e7dacb;border-top-color:#6f625a}
 .expanded .panel{inset:0;width:100%;height:100%;border:0;border-radius:0}
 .open.expanded .launcher{display:none}
 iframe{display:block;width:100%;height:100%;border:0;color-scheme:normal}
-.inline{height:100%}
+.inline{height:100%;container-type:inline-size}
+@container (min-width:720px){.panel{border:0;border-radius:0}}
 .inline .panel{position:relative;inset:auto;width:100%;height:100%;min-height:480px;
 visibility:visible;opacity:1;transform:none;box-shadow:none}
 @media (max-width:599.98px),(max-height:519.98px){.w:not(.inline) .panel{inset:0;width:100%;height:100%;border:0;border-radius:0}

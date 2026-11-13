@@ -47,3 +47,26 @@ test("on a phone the open chat already fills the screen, so it offers no full sc
   await expect(chat(page).getByRole("button", { name: "Close chat" })).toBeVisible();
   await expect(chat(page).getByRole("button", { name: /full screen/ })).toHaveCount(0);
 });
+
+const corner = (page: Page) =>
+  page.evaluate(() => {
+    const panel = document.querySelector("[data-ucp]")?.shadowRoot?.querySelector(".panel");
+    return panel ? getComputedStyle(panel).borderTopLeftRadius : null;
+  });
+
+test("a page that is the assistant shows it edge to edge as a conversation app; a narrow one keeps the panel", async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 1280, height: 800 });
+  await page.goto("http://127.0.0.1:4174/hosts/fullpage.html");
+  const frame = chat(page);
+
+  await expect(frame.locator(".chat.page.empty")).toBeVisible();
+  expect(await corner(page)).toBe("0px");
+  expect((await box(page))?.width).toBe(1280);
+  await expect(page.getByRole("button", { name: "Ask the College" })).toHaveCount(0); // no launcher
+  await expect(frame.getByRole("button", { name: /full screen|Close chat/ })).toHaveCount(0);
+
+  await page.setViewportSize({ width: 600, height: 800 });
+  await expect.poll(() => corner(page)).toBe("24px");
+});
