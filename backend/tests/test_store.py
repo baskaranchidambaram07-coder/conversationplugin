@@ -78,17 +78,32 @@ async def test_a_turn_stores_the_question_and_an_empty_answer_and_a_repeat_retur
     assert (await store.conversation(mine, conversation.id)).title == "When does the library open?"
 
 
-async def test_one_turn_at_a_time_even_when_two_questions_arrive_together(store: Store):
+async def test_one_turn_at_a_time_even_when_questions_arrive_together(store: Store):
+    # Many rounds, since the race this guards against only shows when the timing lines up.
     mine = owner()
-    conversation = await store.create_conversation(mine)
+    for _ in range(25):
+        conversation = await store.create_conversation(mine)
 
-    results = await asyncio.gather(
-        *(store.start_turn(mine, conversation.id, f"k{n}", "Hi", 1) for n in range(2)), return_exceptions=True
-    )
+        results = await asyncio.gather(
+            *(store.start_turn(mine, conversation.id, f"k{n}", "Hi", 1) for n in range(4)), return_exceptions=True
+        )
 
-    assert sorted(type(result).__name__ for result in results) == ["Turn", "TurnInProgress"]
-    with pytest.raises(TurnInProgress):
-        await store.start_turn(mine, conversation.id, "k9", "Hi again", 1)
+        assert sorted(type(result).__name__ for result in results) == ["Turn"] + ["TurnInProgress"] * 3
+        with pytest.raises(TurnInProgress):
+            await store.start_turn(mine, conversation.id, "k9", "Hi again", 1)
+
+
+async def test_the_same_question_sent_several_times_at_once_is_one_turn(store: Store):
+    mine = owner()
+    for _ in range(25):
+        conversation = await store.create_conversation(mine)
+
+        turns = await asyncio.gather(*(store.start_turn(mine, conversation.id, "k1", "Hi", 1) for _ in range(4)))
+
+        assert sorted(turn.repeat for turn in turns) == [False, True, True, True]
+        assert len({(turn.question_id, turn.answer_id) for turn in turns}) == 1
+        page, _ = await store.messages(mine, conversation.id, None, 10)
+        assert [message.role for message in page] == ["user", "assistant"]
 
 
 async def test_a_finished_answer_frees_the_conversation_and_reads_back_without_any_pf_detail(store: Store):
