@@ -124,7 +124,18 @@ def main(image_tag: str | None, by: str) -> None:
         "publishing the widget file",
     )
     print("rolling the service ...", flush=True)
-    aws("ecs", "update-service", "--cluster", CLUSTER, "--service", SERVICE, "--task-definition", definition)
+    # Forced, so the same release starts afresh too: the gateway reads its secrets only when it starts.
+    aws(
+        "ecs",
+        "update-service",
+        "--cluster",
+        CLUSTER,
+        "--service",
+        SERVICE,
+        "--task-definition",
+        definition,
+        "--force-new-deployment",
+    )
     wait("services-stable", "--services", SERVICE)
     live = aws("ecs", "describe-services", "--cluster", CLUSTER, "--services", SERVICE)["services"][0]
     if live["taskDefinition"] != definition:

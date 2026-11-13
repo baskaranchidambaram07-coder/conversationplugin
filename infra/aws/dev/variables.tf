@@ -26,7 +26,7 @@ variable "github_subject_prefix" {
 variable "deploy_branches" {
   description = "Branches whose pushes may deploy to this environment."
   type        = list(string)
-  default     = ["develop", "module/m14-cloud-deployment"]
+  default     = ["develop", "module/m15-developer-experience"] # keep in step with .github/workflows/deploy-dev.yml
 }
 
 variable "gateway_cpu" {
