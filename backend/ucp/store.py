@@ -28,7 +28,7 @@ from sqlalchemy import (
     tuple_,
     update,
 )
-from sqlalchemy.dialects.postgresql import JSONB
+from sqlalchemy.dialects.postgresql import JSONB, distinct_on
 from sqlalchemy.dialects.postgresql import insert as pg_insert
 from sqlalchemy.ext.asyncio import AsyncEngine
 
@@ -213,6 +213,16 @@ class Store:
         entry = {"actor": actor, "action": action, "tenant_id": tenant_id, "widget_id": widget_id, "detail": detail}
         await db.execute(insert(audit).values({**entry, "version": version}))
         return version
+
+    async def current_widgets(self) -> dict[str, dict]:
+        """Every widget's current document, by widget ID: the whole live configuration."""
+        query = (
+            select(widgets.c.widget_id, widgets.c.document)
+            .ext(distinct_on(widgets.c.widget_id))
+            .order_by(widgets.c.widget_id, widgets.c.version.desc())
+        )
+        async with self.engine.connect() as db:
+            return {row.widget_id: row.document for row in await db.execute(query)}
 
     async def widget_versions(self, widget_id: str) -> list:
         """Every published version of a widget, newest first: version, published_at, published_by, tenant_id."""
