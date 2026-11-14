@@ -121,7 +121,7 @@
         "ai_notice": "You are chatting with an AI assistant. It can make mistakes.",
         "brand_color": "#7C3AED",
         "logo_url": null,
-        "color_scheme": "light",
+        "color_scheme": "dark",
         "launcher_position": "bottom-right",
         "history_enabled": true
       },
