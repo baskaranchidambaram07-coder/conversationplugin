@@ -1,5 +1,5 @@
 # The gateway: one container on Fargate, its image registry, its logs and its two roles, under the project's
-# permissions boundary. While the environment sleeps the service is removed; the cluster, the task definition and
+# permissions boundary. The admin API and console run beside it in the same task (console.tf), from the same image. While the environment sleeps the service is removed; the cluster, the task definition and
 # the images stay, so waking picks up the newest image the pipeline has stored.
 
 data "aws_caller_identity" "here" {}
@@ -122,6 +122,25 @@ resource "aws_ecs_task_definition" "gateway" {
         awslogs-stream-prefix = "gateway"
       }
     }
+    }, {
+    # Not essential: if it stops, visitors keep their chat; its load balancer check then has the task replaced.
+    name                   = "admin"
+    image                  = "${aws_ecr_repository.gateway.repository_url}:latest"
+    essential              = false
+    readonlyRootFilesystem = true
+    command = ["uvicorn", "ucp.admin.app:create_app", "--factory", "--host", "0.0.0.0", "--port", "8001",
+    "--no-server-header", "--no-access-log", "--proxy-headers", "--forwarded-allow-ips", "*"]
+    portMappings = [{ containerPort = 8001, protocol = "tcp" }]
+    environment  = local.admin_environment
+    secrets      = [for name, arn in local.secrets : { name = name, valueFrom = arn }]
+    logConfiguration = {
+      logDriver = "awslogs"
+      options = {
+        awslogs-group         = aws_cloudwatch_log_group.gateway.name
+        awslogs-region        = var.region
+        awslogs-stream-prefix = "admin"
+      }
+    }
   }])
 }
 
@@ -145,6 +164,11 @@ resource "aws_ecs_service" "gateway" {
     container_name   = "gateway"
     container_port   = 8000
   }
+  load_balancer {
+    target_group_arn = aws_lb_target_group.admin[0].arn
+    container_name   = "admin"
+    container_port   = 8001
+  }
   deployment_circuit_breaker {
     enable   = true
     rollback = true # a release that never becomes healthy is replaced by the one before
@@ -152,5 +176,5 @@ resource "aws_ecs_service" "gateway" {
   lifecycle {
     ignore_changes = [task_definition] # the deploy pipeline moves the service to each new release
   }
-  depends_on = [aws_lb_listener_rule.from_cloudfront]
+  depends_on = [aws_lb_listener_rule.from_cloudfront, aws_lb_listener_rule.console_from_cloudfront]
 }

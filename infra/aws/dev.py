@@ -110,6 +110,7 @@ def wake() -> None:
     apply(awake=True)
     subprocess.run([sys.executable, str(HERE / "deploy.py"), "--by", "dev.py wake"], check=True)
     print(f"awake at {terraform(DEV, 'output', '-raw', 'url', capture=True).strip()}")
+    print(f"console at {terraform(DEV, 'output', '-raw', 'console_url', capture=True).strip()}")
 
 
 def sleep() -> None:
@@ -135,6 +136,7 @@ def status() -> None:
     )["services"]
     running = next((s["runningCount"] for s in services if s["status"] == "ACTIVE"), 0)
     print(f"address:  {outputs.get('url', {}).get('value', 'not built')}")
+    print(f"console:  {outputs.get('console_url', {}).get('value', 'not built')}")
     print(f"awake:    {outputs.get('awake', {}).get('value', False)} (gateway tasks running: {running})")
     print(f"database: {database_state()}")
 
