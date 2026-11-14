@@ -61,7 +61,7 @@ test("the chat after an anonymous session has ended", async ({ page }) => {
 });
 
 // Rendered answers (M3), from the example gallery the unit tests draw.
-for (const example of ["formatting", "code", "tables"]) {
+for (const example of ["formatting", "code", "tables", "charts"]) {
   test(`an answer drawn from the ${example} example`, async ({ page }) => {
     await page.goto(CHAT);
     await ask(page, `[gallery:${example}]`);

@@ -32,9 +32,10 @@ export function toCsv(rows: string[][]) {
   return rows.map((row) => row.map(cell).join(",")).join("\r\n");
 }
 
-export function Table({ node, children }: { node?: Element; children?: ReactNode }) {
+/** A Markdown table (from its syntax tree), or a table of plain rows given directly, as a chart's data is. */
+export function Table({ node, rows: given, children }: { node?: Element; rows?: string[][]; children?: ReactNode }) {
   const [all, setAll] = useState(false);
-  const rows = node ? rowsOf(node) : [];
+  const rows = given ?? (node ? rowsOf(node) : []);
   const hidden = Math.max(0, rows.length - 1 - FOLD_AFTER);
   return (
     <figure className="table">
