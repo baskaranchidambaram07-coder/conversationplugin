@@ -17,13 +17,14 @@ from sqlalchemy import (
     func,
     insert,
     select,
+    update,
 )
-from sqlalchemy.dialects.postgresql import JSONB
+from sqlalchemy.dialects.postgresql import JSONB, distinct_on
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncEngine
 
 from ucp.gateway.pipeline import Problem
-from ucp.store import audit, metadata, tenants, widgets
+from ucp.store import Store, audit, metadata, tenants, widgets
 
 administrators = Table(
     "administrators",
@@ -146,3 +147,75 @@ class Records:
                 query = select(widgets.c.tenant_id).where(widgets.c.widget_id == widget_id).limit(1)
                 found = (await db.execute(query)).first()
         return found.tenant_id if found else None
+
+    # Widgets and their drafts
+
+    async def widgets(self, tenant_id: str) -> list[dict]:
+        """A tenant's widgets: each one's live version, if published, and its draft, if one is being edited."""
+        live = (
+            select(widgets.c.widget_id, widgets.c.version, widgets.c.published_at, widgets.c.published_by)
+            .where(widgets.c.tenant_id == tenant_id)
+            .ext(distinct_on(widgets.c.widget_id))
+            .order_by(widgets.c.widget_id, widgets.c.version.desc())
+        )
+        editing = select(drafts.c.widget_id, drafts.c.revision, drafts.c.updated_at, drafts.c.updated_by).where(
+            drafts.c.tenant_id == tenant_id
+        )
+        async with self.engine.connect() as db:
+            found: dict[str, dict] = {}
+            for row in await db.execute(live):
+                found[row.widget_id] = {"widget_id": row.widget_id, "version": row.version, "draft": None}
+            for row in await db.execute(editing):
+                entry = found.setdefault(row.widget_id, {"widget_id": row.widget_id, "version": None})
+                entry["draft"] = {"revision": row.revision, "updated_at": row.updated_at, "updated_by": row.updated_by}
+        return [found[widget_id] for widget_id in sorted(found)]
+
+    async def draft(self, widget_id: str):
+        async with self.engine.connect() as db:
+            return (await db.execute(select(drafts).where(drafts.c.widget_id == widget_id))).first()
+
+    async def create_widget(self, widget_id: str, tenant_id: str, document: dict, actor: str) -> None:
+        async with self.engine.begin() as db:
+            row = {"widget_id": widget_id, "tenant_id": tenant_id, "document": document, "revision": 1}
+            await db.execute(insert(drafts).values({**row, "updated_by": actor}))
+            await _record(db, actor, "widget.create", tenant_id, widget_id=widget_id, detail={"revision": 1})
+
+    async def save_draft(self, widget_id: str, tenant_id: str, document: dict, revision: int, actor: str) -> int:
+        """Saves the draft over the revision the editor started from, as the next one. Refused as a conflict when
+        someone saved another revision since, so no one's edits are lost unseen. A widget never edited before
+        starts from revision 0, its live version."""
+        async with self.engine.begin() as db:
+            if revision == 0:
+                row = {"widget_id": widget_id, "tenant_id": tenant_id, "document": document, "revision": 1}
+                try:
+                    async with db.begin_nested():
+                        await db.execute(insert(drafts).values({**row, "updated_by": actor}))
+                except IntegrityError as error:
+                    raise Problem("conflict") from error
+                saved = 1
+            else:
+                query = (
+                    update(drafts)
+                    .where((drafts.c.widget_id == widget_id) & (drafts.c.revision == revision))
+                    .values(document=document, revision=revision + 1, updated_at=func.now(), updated_by=actor)
+                    .returning(drafts.c.revision)
+                )
+                saved = (await db.execute(query)).scalar()
+                if saved is None:
+                    raise Problem("conflict")
+            await _record(db, actor, "draft.save", tenant_id, widget_id=widget_id, detail={"revision": saved})
+        return saved
+
+    async def publish_draft(self, store: Store, widget_id: str, revision: int, actor: str) -> int:
+        """Publishes the draft at that revision as the widget's next version. A conflict if the draft has moved on."""
+        async with self.engine.begin() as db:
+            query = (
+                select(drafts.c.tenant_id, drafts.c.document)
+                .where((drafts.c.widget_id == widget_id) & (drafts.c.revision == revision))
+                .with_for_update()
+            )
+            draft = (await db.execute(query)).first()
+            if not draft:
+                raise Problem("conflict")
+            detail = {"revision": revision}
+            return await store.publish_in(db, widget_id, draft.tenant_id, draft.document, actor, "publish", detail)

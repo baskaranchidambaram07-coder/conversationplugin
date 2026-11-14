@@ -197,7 +197,7 @@ class Store:
         """Stores the document as the widget's next version, unless it is the same as the current one, and records
         who did it in the audit log. Returns the version now in use."""
         async with self.engine.begin() as db:
-            return await self._publish(db, widget_id, tenant_id, document, actor, "publish", None)
+            return await self.publish_in(db, widget_id, tenant_id, document, actor, "publish", None)
 
     async def rollback_widget(self, widget_id: str, version: int, actor: str) -> int | None:
         """Publishes an earlier version again, as a new version, so the record of what was live stays whole.
@@ -210,11 +210,12 @@ class Store:
             if not earlier:
                 return None
             detail = {"to_version": version}
-            return await self._publish(db, widget_id, earlier.tenant_id, earlier.document, actor, "rollback", detail)
+            return await self.publish_in(db, widget_id, earlier.tenant_id, earlier.document, actor, "rollback", detail)
 
-    async def _publish(self, db, widget_id, tenant_id, document, actor, action, detail) -> int:
-        # shortcut: two people publishing the same widget at the same instant collide on the version number and
-        # one is refused; fine for an operator's command, revisit with the admin API (M8 with M9).
+    async def publish_in(self, db, widget_id, tenant_id, document, actor, action, detail) -> int:
+        """Publishing within the caller's transaction (the admin API publishes a draft it has locked)."""
+        # Two publishes of one widget at the same instant collide on the version number, and one is refused. Through
+        # the admin API a publish holds its draft's row lock, so two administrators wait in turn instead.
         current = await self._latest(db, widget_id)
         if current and current.document == document and current.tenant_id == tenant_id:
             return current.version
