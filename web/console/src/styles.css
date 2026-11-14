@@ -217,6 +217,12 @@ button {
   font-weight: 650;
 }
 
+.tenant select {
+  appearance: none;
+  padding-inline-end: 36px;
+  background: var(--paper) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%232b241f' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9.5l6 6 6-6'/%3E%3C/svg%3E") no-repeat right 12px center / 16px;
+}
+
 .who {
   display: flex;
   align-items: center;
@@ -518,7 +524,8 @@ button {
 
 .field input:focus-visible,
 .field textarea:focus-visible {
-  outline: 0;
+  outline: 2px solid transparent;
+  outline-offset: 0;
   box-shadow: 0 0 0 2px var(--ink);
 }
 
@@ -723,6 +730,12 @@ legend {
   align-items: start;
 }
 
+.beside .form {
+  display: grid;
+  gap: 18px;
+  min-width: 0;
+}
+
 .editor textarea {
   resize: vertical;
   line-height: 1.5;
@@ -848,10 +861,178 @@ legend {
     grid-template-columns: minmax(0, 1fr);
   }
 
+  .beside:not(.look) .preview {
+    display: none; /* stacked, the preview earns its length only where the look is edited */
+  }
+
   .preview {
     position: static;
     max-width: 400px;
   }
+}
+
+/* Install: snippets to copy, a check of a page */
+
+.install section {
+  display: grid;
+  gap: 10px;
+}
+
+.install h3 {
+  margin: 0;
+  font-size: 16px;
+}
+
+.snippet {
+  margin: 0;
+  min-width: 0;
+  border-radius: 12px;
+  overflow: hidden;
+  background: var(--ground);
+  box-shadow: 0 0 0 1px var(--sand);
+}
+
+.snippet figcaption {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 4px 6px 4px 14px;
+  border-block-end: 1px solid var(--sand);
+  color: var(--umber);
+  font-size: 13px;
+  font-weight: 650;
+}
+
+.snippet pre {
+  margin: 0;
+  max-height: 320px;
+  padding: 12px 14px;
+  overflow: auto;
+  scrollbar-color: rgba(111, 98, 90, 0.6) transparent;
+  font: 13px/1.6 ui-monospace, "Cascadia Mono", "SF Mono", Menlo, Consolas, monospace;
+  tab-size: 2;
+}
+
+.snippet pre:focus-visible {
+  outline-offset: -3px;
+}
+
+.tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 2px;
+}
+
+.tabs [aria-selected="true"] {
+  background: var(--sand);
+  color: var(--ink);
+}
+
+.checks {
+  display: grid;
+  gap: 6px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  font-size: 14.5px;
+}
+
+.checks li {
+  padding: 8px 12px;
+  border-radius: 12px;
+  background: var(--ground);
+}
+
+.checks .bad {
+  background: color-mix(in srgb, var(--problem) 8%, var(--paper));
+  color: var(--problem);
+}
+
+/* Go live: what changes, the versions */
+
+.golive section {
+  display: grid;
+  gap: 10px;
+}
+
+.golive h3 {
+  margin: 0;
+  font-size: 16px;
+}
+
+.changes {
+  width: 100%;
+  border-collapse: collapse;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 0 0 1px var(--sand);
+  font-size: 14.5px;
+}
+
+.changes th,
+.changes td {
+  padding: 8px 12px;
+  border-block-end: 1px solid var(--sand);
+  text-align: start;
+  vertical-align: top;
+  overflow-wrap: anywhere;
+}
+
+.changes thead th {
+  background: var(--sand);
+  font-weight: 700;
+}
+
+.changes tbody th {
+  font-weight: 650;
+}
+
+.changes tr:last-child > * {
+  border-block-end: 0;
+}
+
+.versions {
+  display: grid;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.versions > li {
+  display: grid;
+  gap: 10px;
+  padding: 12px 0;
+  border-block-end: 1px solid var(--sand);
+}
+
+.versions > li:first-child {
+  padding-block-start: 0;
+}
+
+.versions .line {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px 12px;
+}
+
+.versions small {
+  display: block;
+  color: var(--umber);
+  font-size: 13.5px;
+}
+
+.chip {
+  display: inline-block;
+  margin-inline-start: 6px;
+  padding: 1px 10px;
+  border-radius: 999px;
+  background: var(--ink);
+  color: var(--ground);
+  font-size: 12.5px;
+  font-weight: 650;
 }
 
 .station button[aria-disabled="true"] {
@@ -961,7 +1142,23 @@ code {
   .card,
   .dot,
   .tenant select,
-  .tenant output {
+  .tenant output,
+  .field input,
+  .field textarea,
+  .questions input,
+  .colour input[type="text"],
+  .secondary,
+  .primary,
+  .sign,
+  .chip,
+  .changes,
+  .choices li,
+  .snippet {
     border: 1px solid CanvasText;
+  }
+
+  .choices li.chosen,
+  .now .dot {
+    border-width: 3px;
   }
 }

@@ -177,7 +177,13 @@ def _start_control_plane(url: str, settings: Settings) -> None:
             await engine.dispose()
 
     asyncio.run(first_administrator())
-    admin = replace(settings, admin_issuer=ISSUER, admin_audience=CONSOLE, admin_origins="http://127.0.0.1:8201")
+    admin = replace(
+        settings,
+        admin_issuer=ISSUER,
+        admin_audience=CONSOLE,
+        admin_origins="http://127.0.0.1:8201",
+        gateway_origin="http://localhost:8200",  # where the sample pages load the chat from
+    )
     _in_background(admin_api(admin), 8201)
 
 

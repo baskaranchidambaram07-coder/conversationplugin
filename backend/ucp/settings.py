@@ -30,6 +30,7 @@ class Settings:
     admin_audience: str | None = None
     admin_user_claim: str = "sub"
     admin_origins: str | None = None  # comma-separated
+    gateway_origin: str | None = None  # the chat's public address, for the console's install snippets and checker
 
     @classmethod
     def from_env(cls) -> "Settings":
@@ -49,4 +50,5 @@ class Settings:
             admin_audience=os.environ.get("UCP_ADMIN_AUDIENCE"),
             admin_user_claim=os.environ.get("UCP_ADMIN_USER_CLAIM", "sub"),
             admin_origins=os.environ.get("UCP_ADMIN_ORIGINS"),
+            gateway_origin=os.environ.get("UCP_GATEWAY_ORIGIN"),
         )
