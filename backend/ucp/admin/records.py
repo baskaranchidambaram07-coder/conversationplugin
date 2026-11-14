@@ -140,24 +140,33 @@ class Records:
     # Widgets and their drafts
 
     async def widgets(self, tenant_id: str) -> list[dict]:
-        """A tenant's widgets: each one's live version, if published, and its draft, if one is being edited."""
+        """A tenant's widgets: each one's title, live version (if published), draft (if one is being edited) and
+        whether the draft holds changes not yet published."""
         live = (
-            select(widgets.c.widget_id, widgets.c.version, widgets.c.published_at, widgets.c.published_by)
+            select(widgets.c.widget_id, widgets.c.version, widgets.c.document)
             .where(widgets.c.tenant_id == tenant_id)
             .ext(distinct_on(widgets.c.widget_id))
             .order_by(widgets.c.widget_id, widgets.c.version.desc())
         )
-        editing = select(drafts.c.widget_id, drafts.c.revision, drafts.c.updated_at, drafts.c.updated_by).where(
-            drafts.c.tenant_id == tenant_id
-        )
+        editing = select(drafts).where(drafts.c.tenant_id == tenant_id)
         async with self.engine.connect() as db:
-            found: dict[str, dict] = {}
-            for row in await db.execute(live):
-                found[row.widget_id] = {"widget_id": row.widget_id, "version": row.version, "draft": None}
-            for row in await db.execute(editing):
-                entry = found.setdefault(row.widget_id, {"widget_id": row.widget_id, "version": None})
-                entry["draft"] = {"revision": row.revision, "updated_at": row.updated_at, "updated_by": row.updated_by}
-        return [found[widget_id] for widget_id in sorted(found)]
+            published = {row.widget_id: row for row in await db.execute(live)}
+            edited = {row.widget_id: row for row in await db.execute(editing)}
+        found = []
+        for widget_id in sorted(published.keys() | edited.keys()):
+            current, draft = published.get(widget_id), edited.get(widget_id)
+            document = (draft or current).document
+            found.append(
+                {
+                    "widget_id": widget_id,
+                    "title": (document.get("public") or {}).get("title", widget_id),
+                    "version": current.version if current else None,
+                    "draft": draft
+                    and {"revision": draft.revision, "updated_at": draft.updated_at, "updated_by": draft.updated_by},
+                    "unpublished": bool(draft) and (not current or draft.document != current.document),
+                }
+            )
+        return found
 
     async def draft(self, widget_id: str):
         async with self.engine.connect() as db:

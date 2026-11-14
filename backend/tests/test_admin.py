@@ -277,7 +277,20 @@ def test_a_new_widget_is_a_draft_until_published_then_the_gateway_serves_it(worl
         assert chat.get(f"/v1/widgets/{widget_id}/config").json()["title"] == "Draft"
     listed = world.get(f"/admin/v1/tenants/{world.a}/widgets", headers=signed).json()
     entry = next(widget for widget in listed if widget["widget_id"] == widget_id)
-    assert (entry["version"], entry["draft"]["revision"]) == (1, 1)
+    assert (entry["title"], entry["version"], entry["draft"]["revision"], entry["unpublished"]) == (
+        "Draft",
+        1,
+        1,
+        False,
+    )
+    world.put(
+        f"/admin/v1/widgets/{widget_id}/draft",
+        json={"revision": 1, "document": titled(world, "Changed")},
+        headers=signed,
+    )
+    listed = world.get(f"/admin/v1/tenants/{world.a}/widgets", headers=signed).json()
+    entry = next(widget for widget in listed if widget["widget_id"] == widget_id)
+    assert (entry["title"], entry["unpublished"]) == ("Changed", True)  # the draft's title, ahead of the live one
 
 
 def test_two_people_editing_one_draft_cannot_overwrite_each_other_unseen(world):

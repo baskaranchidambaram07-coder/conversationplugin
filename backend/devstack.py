@@ -28,7 +28,7 @@ import threading
 import time
 from dataclasses import replace
 from pathlib import Path
-from urllib.parse import urlencode
+from urllib.parse import parse_qs, urlencode
 
 import httpx2
 import uvicorn
@@ -156,7 +156,7 @@ def _start_control_plane(url: str, settings: Settings) -> None:
 
     @issuer.post("/token")
     async def exchange(request: Request) -> Response:
-        form = await request.form()
+        form = {name: values[0] for name, values in parse_qs((await request.body()).decode()).items()}
         subject, challenge, redirect = codes.pop(str(form.get("code")), ("", "", ""))
         digest = hashlib.sha256(str(form.get("code_verifier", "")).encode()).digest()
         proven = base64.urlsafe_b64encode(digest).decode().rstrip("=") == challenge
