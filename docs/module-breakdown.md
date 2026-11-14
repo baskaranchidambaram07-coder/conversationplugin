@@ -1007,7 +1007,7 @@ State on 13 November 2026 (pull requests 66 to 70 into `module/m15-developer-exp
   - **T3, partly:** the College's samples in `examples/college`, a public page and a portal page with `portal.js`. They have no inline scripts, and their content policy names the assistant only in `script-src`, `frame-src` and `connect-src`. The token-signing code in six languages came with M5.
   - **T1 and T2, partly:** `docs/college-sandbox-guide.md`. It covers what we send and what we need, the public page, the portal page, the content policy, and what each of the loader's debug lines means.
   - **The hosted copies** (`infra/aws/dev/samples.tf`):
-    - a private bucket behind a CloudFront address of its own, `https://dtnn7ijr4mkda.cloudfront.net`, with the pages filled in by Terraform;
+    - a private bucket behind a CloudFront address of its own, with the pages filled in by Terraform. `python infra/aws/deploy.py --samples-url` prints the address. It changes whenever the site is rebuilt: a `dev.py sleep` run from a branch without `samples.tf` removed the site on 13 November, and the next wake rebuilt it at a new address;
     - the portal signs in under any name through a CloudFront function (`functions/demo-token.js`), which signs for the demo widget only;
     - the College's widget (`both`) and the demo widget (`signed_in`) are in `widgets.dev.json`, allowed on the samples' site through `UCP_SAMPLES_ORIGIN`. A widget file may now name `${UCP_…}` settings.
   - **T6:** the procedure, `docs/onboarding-test.md`.
