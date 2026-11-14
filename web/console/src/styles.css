@@ -854,6 +854,83 @@ legend {
   }
 }
 
+/* Install: snippets to copy, a check of a page */
+
+.install section {
+  display: grid;
+  gap: 10px;
+}
+
+.install h3 {
+  margin: 0;
+  font-size: 16px;
+}
+
+.snippet {
+  margin: 0;
+  min-width: 0;
+  border-radius: 12px;
+  overflow: hidden;
+  background: var(--ground);
+  box-shadow: 0 0 0 1px var(--sand);
+}
+
+.snippet figcaption {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 4px 6px 4px 14px;
+  border-block-end: 1px solid var(--sand);
+  color: var(--umber);
+  font-size: 13px;
+  font-weight: 650;
+}
+
+.snippet pre {
+  margin: 0;
+  max-height: 320px;
+  padding: 12px 14px;
+  overflow: auto;
+  font: 13px/1.6 ui-monospace, "Cascadia Mono", "SF Mono", Menlo, Consolas, monospace;
+  tab-size: 2;
+}
+
+.snippet pre:focus-visible {
+  outline-offset: -3px;
+}
+
+.tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 2px;
+}
+
+.tabs [aria-selected="true"] {
+  background: var(--sand);
+  color: var(--ink);
+}
+
+.checks {
+  display: grid;
+  gap: 6px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  font-size: 14.5px;
+}
+
+.checks li {
+  padding: 8px 12px;
+  border-radius: 12px;
+  background: var(--ground);
+}
+
+.checks .bad {
+  background: color-mix(in srgb, var(--problem) 8%, var(--paper));
+  color: var(--problem);
+}
+
 .station button[aria-disabled="true"] {
   cursor: not-allowed;
 }

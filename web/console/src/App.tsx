@@ -4,12 +4,13 @@ import { type ReactNode, useCallback, useEffect, useId, useState } from "react";
 
 import { ApiProblem, call } from "./api";
 import { AgentEditor, Faults, SignInEditor, SitesEditor } from "./editors";
+import { Install } from "./install";
 import { type Look, LookEditor, Preview } from "./look";
 import { begin, finish, type Provider, signOut, token } from "./signIn";
 import { strings as t } from "./strings";
 import { type Station, type StationId, stations, timeLeft } from "./track";
 
-type Me = { subject: string; role: "platform" | "tenant" | "viewer"; tenant_id: string | null };
+type Me = { subject: string; role: "platform" | "tenant" | "viewer"; tenant_id: string | null; gateway: string | null };
 type Tenant = { tenant_id: string; name: string };
 type Row = { widget_id: string; title: string; version: number | null; unpublished: boolean };
 export type WidgetDocument = {
@@ -294,6 +295,7 @@ function Console({ me, route, onEnded }: { me: Me; route: string; onEnded: () =>
               key={row.widget_id}
               row={row}
               tenant={tenant}
+              gateway={me.gateway}
               readOnly={me.role === "viewer"}
               open={station as StationId | undefined}
               onSaved={refresh}
@@ -428,12 +430,13 @@ function refusal(error: unknown): { faults: string[]; conflict: boolean } | null
 function Widget(props: {
   row: Row;
   tenant: string;
+  gateway: string | null;
   readOnly: boolean;
   open?: StationId;
   onSaved: () => void;
   onProblem: (error: unknown) => void;
 }) {
-  const { row, tenant, readOnly, open, onSaved, onProblem } = props;
+  const { row, tenant, gateway, readOnly, open, onSaved, onProblem } = props;
   const [draft, setDraft] = useState<Draft | null>(null);
   const [edited, setEdited] = useState<WidgetDocument | null>(null);
   const [faults, setFaults] = useState<string[]>([]);
@@ -543,6 +546,8 @@ function Widget(props: {
               </div>
             )}
           </>
+        ) : shown === "install" ? (
+          <Install widgetId={row.widget_id} gateway={gateway} document={document} />
         ) : (
           <Facts station={shown} row={row} document={document} />
         )}

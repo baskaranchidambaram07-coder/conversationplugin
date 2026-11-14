@@ -170,6 +170,33 @@ export const strings = {
   previewCaption: "Preview · nothing is published",
   previewScheme: "Show the preview",
   titleMissing: "Give the chat a title.",
+
+  // Install
+  copied: "Copied",
+  noGateway: "This console does not know the chat's address yet, so it cannot show the code. Ask your platform administrator.",
+  everyPage: "Add this to every page that shows the chat",
+  everyPageHint: "One line, anywhere in the page. The round button appears in the corner you chose.",
+  everyPageSignedIn: "Put the setup script first. It asks your portal for a short token for the visitor who is signed in.",
+  htmlLabel: "HTML",
+  endpoint: "Your portal's token endpoint",
+  endpointHint: "An address only a signed-in visitor can call, at /widget-token above. About 30 lines, with nothing beyond the language's own library. Give it these settings:",
+  endpointSettings: "Settings for the endpoint",
+  languages: "Language",
+  endpointCode: (language: string) => `The endpoint's code in ${language}`,
+  inPage: "Or make a page that is the assistant",
+  inPageHint: "Instead of the round button, the chat fills one element of the page, like a chat app.",
+  policyTitle: "If your site has a content security policy",
+  policyHint: "Add the chat's address to these three directives, and to nothing else.",
+  policyLabel: "Content security policy",
+  checkTitle: "Check a page",
+  checkHint: "Once the code is on a page of one of your allowed sites, check it here. We read the page; we never run it.",
+  pageAddress: "Page address",
+  check: "Check",
+  checking: "Checking",
+  passed: "Yes:",
+  failed: "No:",
+  checkName: { page: "the page answers", script: "the chat's script tag is there", policy: "the content policy lets the chat in" },
+  checkFailed: "the check could not run; try again in a moment",
 };
 
 function day(at: string): string {

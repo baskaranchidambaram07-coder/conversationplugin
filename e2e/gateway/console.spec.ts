@@ -206,3 +206,53 @@ test("the look is edited beside the chat itself, which shows each change at once
   await expect(page.getByRole("link", { name: /Ask the Riverside desk/ })).toBeVisible();
   expect(await serious(page)).toEqual([]);
 });
+
+// Install (M9-T5): the code to add, filled in for the widget, and a check of a page of the customer's site.
+test("the install code is filled in for the widget, and a page of the site is checked for it", async ({ page }) => {
+  await signIn(page, "/widgets/w_gateway/install", await platformAdministrator(page, "installer"));
+  await expect(page.getByText('<script async src="http://localhost:8200/loader.js" data-widget-id="w_gateway"></script>')).toBeVisible();
+  await expect(page.getByText("script-src http://localhost:8200")).toBeVisible();
+
+  const address = page.getByLabel("Page address");
+  await address.fill("http://127.0.0.1:4174/hosts/gateway.html");
+  await page.getByRole("button", { name: "Check", exact: true }).click();
+  await expect(page.getByText("Yes: the chat's script tag is there")).toBeVisible();
+  await expect(page.getByText("Yes: the page answers")).toBeVisible();
+
+  await address.fill("http://127.0.0.1:4174/hosts/plain.html");
+  await page.getByRole("button", { name: "Check", exact: true }).click();
+  await expect(page.getByText("No: the chat's script tag is there: add the script tag for this widget")).toBeVisible();
+
+  await address.fill("https://elsewhere.example/");
+  await page.getByRole("button", { name: "Check", exact: true }).click();
+  await expect(page.getByText("No: the page answers: the page is not on one of this widget's allowed sites")).toBeVisible();
+  expect(await serious(page)).toEqual([]);
+});
+
+test("a signed-in widget's install shows its portal endpoint's settings and code in six languages", async ({ page }, info) => {
+  const api = await operatorApi(page);
+  const { tenant_id: tenant } = await api("POST", "/tenants", { name: `Portal ${info.project.name} ${Date.now().toString(36)}` });
+  await api("PUT", `/tenants/${tenant}/agent-profiles/fake-pf`, {
+    base_url: "http://127.0.0.1:8100", tenant: "fake-tenant", workspace_id: "fake-workspace", agent_version_id: "fake-agent-version",
+    api_key: "fake-api-key", username: "fake-user", password: "fake-password",
+  });
+  await api("POST", `/tenants/${tenant}/host-secrets/portal`);
+  const { widget_id: widget } = await api("POST", `/tenants/${tenant}/widgets`, {
+    document: {
+      public: { title: "Residents", welcome_message: null, suggested_prompts: [], ai_notice: null, brand_color: "#1F6F5C", logo_url: null, color_scheme: "auto", launcher_position: "bottom-right", history_enabled: true },
+      allowed_domains: ["https://portal.example.org"],
+      sign_in: "signed_in",
+      agent_profile: "fake-pf",
+      identity: { provider: "portal", issuer: "riverside-portal", secret: "portal" },
+    },
+  });
+
+  await signIn(page, `/widgets/${widget}/install`, await platformAdministrator(page, "porter"));
+  await expect(page.getByRole("heading", { name: "Your portal's token endpoint" })).toBeVisible();
+  await expect(page.getByText(`UCP_ISSUER=riverside-portal`)).toBeVisible();
+  await expect(page.getByText(`UCP_WIDGET_ID=${widget}`)).toBeVisible();
+  await page.getByRole("tab", { name: "Python" }).click();
+  await expect(page.getByRole("tab", { name: "Python" })).toHaveAttribute("aria-selected", "true");
+  await expect(page.getByText("The endpoint's code in Python")).toBeVisible();
+  await expect(page.getByText('fetch("/widget-token", { credentials: "same-origin" })').first()).toBeVisible();
+});

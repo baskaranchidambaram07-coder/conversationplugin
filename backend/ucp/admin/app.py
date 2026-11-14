@@ -32,6 +32,7 @@ from fastapi.responses import FileResponse, JSONResponse, Response
 from pydantic import BaseModel, ConfigDict, Field
 from sqlalchemy.ext.asyncio import create_async_engine
 
+from ucp.admin import install
 from ucp.admin.records import Records
 from ucp.connector import AgentError
 from ucp.gateway import pipeline
@@ -147,8 +148,9 @@ async def provider_endpoints(app: FastAPI) -> dict | None:
 
 
 @router.get("/me", summary="Who is signed in, and their role")
-async def me(admin: Signed) -> dict:
-    return {"subject": admin.subject, "role": admin.role, "tenant_id": admin.tenant_id}
+async def me(admin: Signed, request: Request) -> dict:
+    gateway = request.app.state.gateway  # the chat's public address, for the install snippets
+    return {"subject": admin.subject, "role": admin.role, "tenant_id": admin.tenant_id, "gateway": gateway}
 
 
 # Tenants
@@ -383,6 +385,32 @@ async def save_draft(
     return {"revision": await kept.save_draft(widget_id, tenant_id, document, body.revision, admin.subject)}
 
 
+class InstallCheck(_Body):
+    page: Annotated[str, Field(min_length=8, max_length=2000, description="A page of the customer's site.")]
+
+
+@router.post("/widgets/{widget_id}/install-check", summary="Check a page of the customer's site for the chat")
+async def install_check(
+    widget_id: Id, body: InstallCheck, admin: Signed, kept: Kept, published: Published, request: Request
+) -> dict:
+    """Fetches the page as a browser would (fenced: install.py) and says whether the chat can appear there. It
+    changes nothing, so viewers may check too."""
+    await _widget(kept, admin, widget_id)
+    gateway = request.app.state.gateway
+    if not gateway:
+        raise Problem("assistant_unavailable")  # this deployment does not know the chat's address
+    current = await kept.draft(widget_id) or await published.widget(widget_id)
+    try:
+        page, headers, html = await install.fetch(
+            request.app.state.client, body.page, current.document["allowed_domains"]
+        )
+    except install.Refused as refused:
+        return {"checks": [{"check": "page", "ok": False, "detail": str(refused)}]}
+    except httpx2.HTTPError:
+        return {"checks": [{"check": "page", "ok": False, "detail": "the page did not answer"}]}
+    return {"checks": install.checks(page, headers, html, widget_id, gateway)}
+
+
 # Secrets: a tenant's PF connection profiles and its sites' shared secrets (M8-T4, T5). Written, never read back.
 
 
@@ -538,6 +566,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     )
     app.state.vault = Vault(settings.secrets_key) if settings.secrets_key else None
     app.state.endpoints = None
+    app.state.gateway = settings.gateway_origin.rstrip("/") if settings.gateway_origin else None
     # The platform's own profiles and secrets, from the gateway's settings: only their names, to check references.
     app.state.platform = {
         "profile": set(json.loads(settings.agent_profiles or "{}")),

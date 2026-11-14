@@ -92,7 +92,12 @@ def test_sign_in_needs_the_company_providers_token_for_this_api_and_a_role(world
     assert world.get("/admin/v1/me", headers=bearer(world, "stranger")).json()["code"] == "forbidden"
 
     me = world.get("/admin/v1/me", headers=bearer(world, "viewer_a"))
-    assert me.json() == {"subject": f"viewer_a-{world.tag}", "role": "viewer", "tenant_id": f"t_a{world.tag}"}
+    assert me.json() == {
+        "subject": f"viewer_a-{world.tag}",
+        "role": "viewer",
+        "tenant_id": f"t_a{world.tag}",
+        "gateway": None,
+    }
 
 
 def test_a_browser_may_call_it_only_from_the_consoles_own_address(world):

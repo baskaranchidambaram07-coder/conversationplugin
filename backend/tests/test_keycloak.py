@@ -148,6 +148,6 @@ def test_an_administrator_signs_in_to_the_admin_api_with_keycloak(database_url, 
     settings = Settings(database_url=database_url, admin_issuer=REALM, admin_audience="ucp-console")
     with TestClient(admin_api(settings)) as api:
         me = api.get("/admin/v1/me", headers={"authorization": f"Bearer {console}"})
-        assert me.json() == {"subject": subject, "role": "platform", "tenant_id": None}
+        assert me.json() == {"subject": subject, "role": "platform", "tenant_id": None, "gateway": None}
         widget_token = {"authorization": f"Bearer {id_token('visitor')}"}  # Keycloak's, but made for the chat
         assert api.get("/admin/v1/me", headers=widget_token).json()["code"] == "sign_in_required"
