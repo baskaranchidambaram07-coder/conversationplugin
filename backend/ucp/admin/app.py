@@ -553,7 +553,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         return {"status": "ok"}
 
     if settings.web_dir and (settings.web_dir / "console" / "dist" / "index.html").is_file():
-        app.include_router(console(settings.web_dir / "console" / "dist"))
+        app.include_router(console(settings.web_dir / "console" / "dist", settings.web_dir / "widget" / "dist"))
     return app
 
 
@@ -564,25 +564,42 @@ def console_policy(token_endpoint: str | None) -> str:
     return (
         "default-src 'none'; script-src 'self'; style-src 'self'; font-src 'self'; img-src 'self' https: data:; "
         f"connect-src 'self' {provider}".rstrip()
-        + "; base-uri 'none'; form-action 'none'; frame-ancestors 'none'"
+        + "; frame-src 'self'; base-uri 'none'; form-action 'none'; frame-ancestors 'none'"
     )
 
 
-def console(dist: Path) -> APIRouter:
+# The chat's own page as the console's live preview (M9-T3): framed by the console only, fetching nothing.
+PREVIEW_POLICY = (
+    "default-src 'none'; script-src 'self'; style-src 'self'; font-src 'self'; img-src 'self' https: data:; "
+    "connect-src 'none'; base-uri 'none'; form-action 'none'; frame-ancestors 'self'"
+)
+
+
+def console(dist: Path, chat: Path) -> APIRouter:
     """The admin console (M9), from web/console/dist: hashed assets kept forever, and its page for every other
-    path, so a route reloaded in the browser still opens the console."""
+    path, so a route reloaded in the browser still opens the console. With the built chat (web/widget/dist), its
+    page at /preview, the console's live preview, and the chat's assets beside the console's own."""
     pages = APIRouter(include_in_schema=False)
     page = (dist / "index.html").read_bytes()
-    assets = dist / "assets"
+    folders = [dist / "assets", chat / "assets"]
     types = {".js": "text/javascript; charset=utf-8", ".css": "text/css; charset=utf-8", ".woff2": "font/woff2"}
 
     @pages.get("/assets/{name}")
     async def asset(name: str) -> FileResponse:
-        path = assets / name
-        if path.parent != assets or path.suffix not in types or not path.is_file():
-            raise Problem("not_found")
-        headers = {"cache-control": "public, max-age=31536000, immutable"}
-        return FileResponse(path, media_type=types[path.suffix], headers=headers)
+        for folder in folders:
+            path = folder / name
+            if path.parent == folder and path.suffix in types and path.is_file():
+                headers = {"cache-control": "public, max-age=31536000, immutable"}
+                return FileResponse(path, media_type=types[path.suffix], headers=headers)
+        raise Problem("not_found")
+
+    if (chat / "index.html").is_file():
+        preview = (chat / "index.html").read_bytes()
+
+        @pages.get("/preview")
+        async def chat_preview() -> Response:
+            headers = {"content-security-policy": PREVIEW_POLICY, "cache-control": "no-cache"}
+            return Response(preview, media_type="text/html; charset=utf-8", headers=headers)
 
     @pages.get("/{route:path}")
     async def index(route: str, request: Request) -> Response:

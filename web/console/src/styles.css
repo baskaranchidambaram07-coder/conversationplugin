@@ -285,8 +285,10 @@ button {
   font-size: 13px;
 }
 
-.column .secondary {
+.column a.secondary {
+  display: inline-flex;
   margin-inline: 8px;
+  padding: 8px 16px;
 }
 
 .work {
@@ -655,6 +657,13 @@ legend {
   font-size: 16px;
 }
 
+/* A button inside a form keeps the width of its words. */
+.editor > .secondary,
+.field > .secondary,
+.once > .quiet {
+  justify-self: start;
+}
+
 .actions {
   display: flex;
   flex-wrap: wrap;
@@ -703,6 +712,146 @@ legend {
   border-radius: 8px;
   background: var(--paper);
   overflow-wrap: anywhere;
+}
+
+/* Look: the form beside the chat itself */
+
+.beside {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 400px;
+  gap: 28px;
+  align-items: start;
+}
+
+.editor textarea {
+  resize: vertical;
+  line-height: 1.5;
+}
+
+.questions {
+  display: grid;
+  gap: 8px;
+  margin: 8px 0 0;
+  padding-inline-start: 22px;
+  color: var(--umber);
+}
+
+.questions input,
+.colour input[type="text"] {
+  min-height: 44px;
+  width: 100%;
+  padding: 10px 14px;
+  border: 0;
+  border-radius: 12px;
+  background: var(--paper);
+  box-shadow: 0 0 0 1px var(--sand);
+  color: var(--ink);
+}
+
+.colour {
+  align-items: flex-start;
+}
+
+.colour input[type="color"] {
+  flex: none;
+  width: 44px;
+  height: 44px;
+  padding: 3px;
+  border: 0;
+  border-radius: 12px;
+  background: var(--paper);
+  box-shadow: 0 0 0 1px var(--sand);
+  cursor: pointer;
+}
+
+.colour input[type="text"] {
+  flex: 0 1 140px;
+  font-family: ui-monospace, "Cascadia Mono", "SF Mono", Menlo, Consolas, monospace;
+}
+
+.notes {
+  flex: 1 1 220px;
+  display: grid;
+  gap: 2px;
+  font-size: 13.5px;
+  font-weight: 650;
+}
+
+.notes p {
+  margin: 0;
+}
+
+.warn {
+  color: #8a4b12;
+}
+
+.check {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  font-weight: 650;
+  font-size: 14px;
+}
+
+.check input {
+  width: 18px;
+  height: 18px;
+  accent-color: var(--ink);
+}
+
+.preview {
+  position: sticky;
+  top: 16px;
+  display: grid;
+  gap: 8px;
+  margin: 0;
+}
+
+.preview .panel {
+  height: min(560px, 70vh);
+  border-radius: 24px;
+  overflow: hidden;
+  background: var(--ground);
+  border: 1px solid var(--sand);
+  box-shadow: 0 24px 60px -24px rgba(43, 36, 31, 0.45), 0 8px 20px -12px rgba(43, 36, 31, 0.25);
+}
+
+.preview iframe {
+  display: block;
+  width: 100%;
+  height: 100%;
+  border: 0;
+}
+
+.preview figcaption {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+  color: var(--umber);
+  font-size: 13px;
+}
+
+.toggle {
+  display: inline-flex;
+  gap: 2px;
+}
+
+.toggle [aria-pressed="true"] {
+  background: var(--sand);
+  color: var(--ink);
+}
+
+@media (max-width: 1199.98px) {
+  .beside {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .preview {
+    position: static;
+    max-width: 400px;
+  }
 }
 
 .station button[aria-disabled="true"] {

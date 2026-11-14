@@ -144,6 +144,32 @@ export const strings = {
   audience: "This assistant's client ID there",
   audienceHint: "Leave it empty to use the widget ID.",
   signInMissing: "Say how signed-in visitors are recognised.",
+
+  // Look
+  welcomeHint: "The first thing visitors read. One or two short sentences.",
+  questionsHint: "Up to four. Visitors tap one to ask it.",
+  question: (n: number) => `Suggested question ${n}`,
+  colourHint: "Used only on things visitors press: the round button, the suggested questions and send.",
+  colourPicker: "Pick the colour",
+  colourRule: "Write the colour as # and six digits, for example #5B2A86.",
+  textOn: (ink: string, ratio: string) => `Text on it: ${ink}, ${ratio} : 1`,
+  white: "white",
+  black: "black",
+  faintOnLight: "On light screens these buttons hardly stand out from the chat's cream background.",
+  creamOnDark: "On dark screens this colour gives way to cream, so the buttons stay visible.",
+  logo: "Logo address",
+  logoHint: "A square image on https. The title's initials show while it loads, or if it cannot load.",
+  notice: "AI notice",
+  noticeHint: "Leave it empty for: You are chatting with an AI assistant. It can make mistakes.",
+  scheme: "Light or dark",
+  schemes: { light: "Light", dark: "Dark", auto: "As the visitor's device is set" },
+  corner: "Corner of the round button",
+  corners: { "bottom-right": "Bottom right", "bottom-left": "Bottom left" },
+  history: "Signed-in visitors can reopen their earlier chats",
+  previewTitle: "Preview of the chat",
+  previewCaption: "Preview · nothing is published",
+  previewScheme: "Show the preview",
+  titleMissing: "Give the chat a title.",
 };
 
 function day(at: string): string {
