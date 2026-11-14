@@ -459,6 +459,17 @@ A draw.io or Excalidraw diagram in an answer, drawn rather than shown as code; d
 - **Spoken:** the drawing is an image named with its counts ("Diagram: 6 shapes and 7 lines") and described by every label and every line's ends and label.
 - **While arriving, or unreadable:** the code panel, until the diagram is complete and readable.
 
+### Chart
+A bar, line, area, pie or scatter chart in an answer, drawn from data the agent sends; data on paper, like a table.
+- **Frame:** as a diagram's: Paper White, 1px Soft Sand edge, 12px radius, full card width. The title leads in 15px semibold Warm Ink; a legend follows for two or more series (or a pie's slices), Muted Umber 13px names, each after its key: a 10px square for bars and areas, a 14px stroke for lines, a dot for a scatter.
+- **Series colours:** the data-visualisation method's validated categorical palette in its fixed order (blue, orange, aqua, yellow, magenta, green, violet, red), stepped separately for the light and dark card. They are data colours, never the brand's (the Pressable Colour Rule), and text never wears them.
+- **Marks:** bars at most 24px thick, 2px apart, square at the baseline and rounded 4px at their value; lines 2px with round joins, breaking where a value is missing; areas a 10% wash under the line; dots 8px with a 2px Paper ring; pie slices as a donut, 2px Paper gaps between them, the read slice 4px larger.
+- **Chrome:** 1px Soft Sand gridlines at round values, the zero line in Warm Ink at 30%, axis numbers in Muted Umber 12px with even figures, compact past ten thousand (20K). Category names thin out rather than overlap.
+- **Reading:** pointer or arrow keys pick a category, slice or dot. A band wash (bars) or a crosshair (lines) marks it, and a tip in the chart's top corner away from it lists each value in Warm Ink semibold before its series name: Paper White, 1px Soft Sand ring, 10px radius. It floats, so a reading never moves the layout under the pointer.
+- **Spoken:** the chart is a focusable group named by kind and title, described by each series' lowest and highest point (a pie: each slice's share), with how to use the arrow keys; a polite live region speaks each reading.
+- **Tools row:** "Show as table", with a table glyph, which opens the same numbers as a table under the chart (numbers right-aligned, Copy as CSV).
+- **While arriving, or unreadable:** the code panel.
+
 ### Scroll regions
 Code bodies and table scroll areas take keyboard focus. Their focus ring is the chat's 3px Warm Ink outline drawn inset (offset -3px), so the frame's clipping never hides it.
 

@@ -1,13 +1,14 @@
 // A diagram in an answer (M3): draw.io or Excalidraw source drawn as SVG on paper, in its own frame, which scrolls
 // sideways when the diagram is too wide to read at the card's width. Its code stays one press away, to copy into
 // draw.io or Excalidraw. Loaded only when an answer holds a diagram; anything it cannot read is shown as code.
-import { useId, useLayoutEffect, useMemo, useRef, useState } from "react";
+import { useId, useMemo, useRef, useState } from "react";
 
 import { CopyButton, Icon } from "../Icon";
 import { strings as t } from "../strings";
 import { Code } from "./Code";
 import { type Line, type Point, sceneOf, type Shape } from "./scene";
 import type { FenceProps } from "./registry";
+import { useRoom } from "./room";
 
 const PAD = 12;
 const READABLE = 10; // px: a diagram's usual label is never drawn smaller; the frame scrolls instead
@@ -152,18 +153,8 @@ export default function Diagram({ code, language }: FenceProps) {
   const scene = useMemo(() => sceneOf(code), [code]);
   const [showCode, setShowCode] = useState(false);
   const described = useId();
-  // The frame's width, measured, because the chat's content policy allows no inline style to size the drawing by.
   const frame = useRef<HTMLDivElement>(null);
-  const [room, setRoom] = useState(0);
-  useLayoutEffect(() => {
-    const element = frame.current;
-    if (!element) return;
-    setRoom(element.clientWidth);
-    if (typeof ResizeObserver === "undefined") return;
-    const watch = new ResizeObserver(() => setRoom(element.clientWidth));
-    watch.observe(element);
-    return () => watch.disconnect();
-  }, [scene]);
+  const room = useRoom(frame, scene);
   if (!scene) return <Code code={code} language={language} />;
 
   // The drawing's extent: every shape (with a person's name under them), every line and every line's label.
