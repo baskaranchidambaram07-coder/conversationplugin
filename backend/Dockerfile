@@ -1,14 +1,16 @@
 # Built from the repository root: docker build --file backend/Dockerfile .
 # The root .dockerignore admits only the files named there, so local settings and tools never reach an image.
 
-# The loader and the chat, which the gateway serves from its own origin.
+# The loader and the chat, which the gateway serves from its own origin, and the admin console (with the tested
+# token-signing examples its Install station shows).
 FROM node:24-slim AS web
 WORKDIR /src
 COPY package.json package-lock.json tsconfig.base.json ./
 COPY protocol ./protocol
 COPY web ./web
+COPY examples/token-signing ./examples/token-signing
 COPY e2e/package.json ./e2e/
-RUN npm ci --no-audit --no-fund && npm run build --workspace @ucp/loader --workspace @ucp/widget
+RUN npm ci --no-audit --no-fund && npm run build --workspace @ucp/loader --workspace @ucp/widget --workspace @ucp/console
 
 FROM python:3.12-slim AS build
 COPY --from=ghcr.io/astral-sh/uv:0.9.24 /uv /bin/uv
@@ -26,6 +28,7 @@ WORKDIR /app
 COPY --from=build /app /app
 COPY --from=web /src/web/loader/dist ./web/loader/dist
 COPY --from=web /src/web/widget/dist ./web/widget/dist
+COPY --from=web /src/web/console/dist ./web/console/dist
 # The widget files the release publishes in each environment (infra/aws/deploy.py).
 COPY backend/deploy ./deploy
 ENV PATH="/app/.venv/bin:$PATH" PYTHONUNBUFFERED=1 UCP_WEB_DIR=/app/web

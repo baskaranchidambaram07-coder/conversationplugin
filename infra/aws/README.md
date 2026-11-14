@@ -11,6 +11,7 @@ Run every command from the repository root, in Git Bash, with the AWS command li
 | CloudFront: HTTPS on its own `*.cloudfront.net` address, which the customer's script tag uses | Serves the loader, the chat and the API; caches the chat's files | Stays, so the address never changes; answers every request with "This test environment is asleep" (503), so a customer's page simply shows no chat |
 | Load balancer: reachable only from CloudFront, which proves itself with a secret header | Runs | Removed |
 | Gateway: one container on Fargate (1 vCPU, 2 GB), in a public subnet with no inbound except from the load balancer | Runs | Removed (the cluster, the release and the images stay) |
+| The admin console and its API (`console.tf`): a second container in the gateway's task, from the same image, behind a CloudFront address of its own | Runs; administrators sign in with the Cognito pool `ucp-dev-admins` (an authenticator app required, no self sign-up) | Answers "asleep"; the pool and its users stay |
 | PostgreSQL 17: private, encrypted, seven days of point-in-time backups | Runs | Stopped (AWS starts it again after seven days; `sleep` stops it again) |
 | Secrets Manager `ucp-dev/*`, image registry, logs, network | Stay | Stay |
 | The College's samples, hosted (`samples.tf`): a private bucket behind a CloudFront address of its own, whose portal signs in under any name for the demo widget only | Answered | The pages stay; the chat does not appear on them |
@@ -29,6 +30,8 @@ Run these from an up-to-date `develop`. Wake and sleep apply the Terraform in th
 | Check it from outside: health, configuration, an anonymous and a signed-in turn | `cd backend && uv run python smoke.py <address> w_smoke` | a minute |
 | Check it in a browser: the leak search, and the hosted samples | `npm run build && npm run e2e:deployed` | a few minutes |
 | The hosted samples' address, for the College (`docs/college-sandbox-guide.md`) | `python infra/aws/deploy.py --samples-url` | seconds |
+| The admin console's address | `python infra/aws/deploy.py --console-url` | seconds |
+| Invite a platform administrator to the console: Cognito emails them a temporary password | `python infra/aws/console_admin.py EMAIL` | a minute |
 
 A plain `terraform apply` without `-var=awake=true` puts the environment to sleep: always go through `dev.py`.
 
@@ -53,6 +56,24 @@ python infra/aws/deploy.py --image <commit> --by "<your name>"
 
 The loader and the chat are in the image, so rolling back the application rolls them back too. Widget configuration has its own history: `python -m ucp.widgets versions` and `rollback` (see `docs/tech-stack.md`), run as a one-off task or by releasing a changed `widgets.dev.json`.
 
+## The admin console
+
+The console (M9) is served by the admin API, a second container in the gateway's task (`console.tf`, `service.tf`). Its own CloudFront address proves itself to the load balancer with a secret header of its own, which is how the load balancer tells console requests from the chat's. Administrators sign in with the Cognito user pool `ucp-dev-admins`, on Cognito's own sign-in pages. Nobody can sign up: an administrator is invited, chooses a password at the first sign-in, and sets up an authenticator app.
+
+The deploying user needs Cognito permissions for this (`iam/ucp-dev-deployer.json`, statements `ConsoleSignIn*`, limited to user pools tagged `project=ucp`, `environment=dev`). An AWS administrator publishes the file as the policy's new version (`iam/README.md`).
+
+**The first time,** from an up-to-date `develop`, once the policy is published:
+
+```
+python infra/aws/dev.py sleep        # builds the pool, the key and the console's address; removes the old service
+python infra/aws/dev.py wake         # starts the service again, now with the admin container beside the gateway
+python infra/aws/console_admin.py you@example.org
+```
+
+The sleep is needed once: the running service cannot be pointed at the admin container in place, so it is built again.
+
+**Inviting someone:** `console_admin.py EMAIL` adds them to the pool, so Cognito emails them a temporary password, and records them as a platform administrator. Platform administrators add organisations in the console. The console has no screen for people yet: a customer's administrator or viewer is invited to the pool the same way with `--pool-only`, then given their role through the admin API (`POST /admin/v1/administrators` with their `sub`, which the script prints).
+
 ## Secrets
 
 | Secret | Holds | Set by |
@@ -61,6 +82,7 @@ The loader and the chat are in the image, so rolling back the application rolls 
 | `ucp-dev/session-keys` | The keys that sign visitors' sessions | Terraform, once; `secret_store.py session-keys` to rotate |
 | `ucp-dev/host-secrets` | The shared secrets of signed-in sites (`smoke` for the smoke test, `demo` for the hosted samples) | Terraform for `smoke` and `demo`; `secret_store.py host-secret NAME` for a customer, such as `college` |
 | `ucp-dev/agent-profiles` | The PF staging connection profile `pf-staging` | `secret_store.py agent-profiles`, from the `PF_*` settings in `.env` |
+| `ucp-dev/secrets-key` | The key that seals what administrators set through the console (`ucp.vault`), given to the gateway and the admin API | Terraform, once, write-only. Never written again: a new key would leave the sealed secrets unreadable |
 
 ```
 cd backend && uv run --env-file ../.env python ../infra/aws/secret_store.py agent-profiles

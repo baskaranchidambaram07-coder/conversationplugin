@@ -6,6 +6,12 @@
 !protocol
 !web
 !e2e/package.json
+!examples/token-signing/node/sign.mjs
+!examples/token-signing/python/sign.py
+!examples/token-signing/java/Sign.java
+!examples/token-signing/dotnet/Program.cs
+!examples/token-signing/go/sign.go
+!examples/token-signing/php/sign.php
 !backend/pyproject.toml
 !backend/uv.lock
 !backend/ucp
