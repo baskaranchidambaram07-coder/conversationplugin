@@ -17,6 +17,7 @@ from sqlalchemy import (
     ForeignKey,
     Index,
     Integer,
+    LargeBinary,
     MetaData,
     Table,
     Text,
@@ -65,10 +66,36 @@ audit = Table(
     Column("actor", Text, nullable=False),
     Column("action", Text, nullable=False),
     Column("tenant_id", Text, nullable=False),
-    Column("widget_id", Text, nullable=False),
-    Column("version", Integer, nullable=False),
+    Column("widget_id", Text),  # empty for an action on no widget: a tenant, an administrator, a secret (0005)
+    Column("version", Integer),
     Column("detail", JSONB),
     Index("audit_by_widget", "widget_id", "at"),
+    Index("audit_by_tenant", "tenant_id", "at"),
+)
+
+# The tenants (M8). A tenant named by a published widget is recorded the first time one is published.
+tenants = Table(
+    "tenants",
+    metadata,
+    Column("tenant_id", Text, primary_key=True),
+    Column("name", Text, nullable=False),
+    Column("created_at", DateTime(timezone=True), nullable=False, server_default=func.now()),
+    Column("created_by", Text, nullable=False),
+)
+
+# Secrets set through the admin API (M8), sealed by ucp.vault: a tenant's shared secrets ("host") and PF connection
+# profiles ("profile"). The gateway opens them by tenant and name; nothing else reads them.
+sealed_secrets = Table(
+    "secrets",
+    metadata,
+    Column("tenant_id", Text, ForeignKey("tenants.tenant_id"), primary_key=True),
+    Column("kind", Text, primary_key=True),
+    Column("name", Text, primary_key=True),
+    Column("key_id", Text, nullable=False),
+    Column("nonce", LargeBinary, nullable=False),
+    Column("sealed", LargeBinary, nullable=False),
+    Column("updated_at", DateTime(timezone=True), nullable=False, server_default=func.now()),
+    Column("updated_by", Text, nullable=False),
 )
 
 conversations = Table(
@@ -186,7 +213,7 @@ class Store:
         """Stores the document as the widget's next version, unless it is the same as the current one, and records
         who did it in the audit log. Returns the version now in use."""
         async with self.engine.begin() as db:
-            return await self._publish(db, widget_id, tenant_id, document, actor, "publish", None)
+            return await self.publish_in(db, widget_id, tenant_id, document, actor, "publish", None)
 
     async def rollback_widget(self, widget_id: str, version: int, actor: str) -> int | None:
         """Publishes an earlier version again, as a new version, so the record of what was live stays whole.
@@ -199,15 +226,18 @@ class Store:
             if not earlier:
                 return None
             detail = {"to_version": version}
-            return await self._publish(db, widget_id, earlier.tenant_id, earlier.document, actor, "rollback", detail)
+            return await self.publish_in(db, widget_id, earlier.tenant_id, earlier.document, actor, "rollback", detail)
 
-    async def _publish(self, db, widget_id, tenant_id, document, actor, action, detail) -> int:
-        # shortcut: two people publishing the same widget at the same instant collide on the version number and
-        # one is refused; fine for an operator's command, revisit with the admin API (M8 with M9).
+    async def publish_in(self, db, widget_id, tenant_id, document, actor, action, detail) -> int:
+        """Publishing within the caller's transaction (the admin API publishes a draft it has locked)."""
+        # Two publishes of one widget at the same instant collide on the version number, and one is refused. Through
+        # the admin API a publish holds its draft's row lock, so two administrators wait in turn instead.
         current = await self._latest(db, widget_id)
         if current and current.document == document and current.tenant_id == tenant_id:
             return current.version
         version = current.version + 1 if current else 1
+        known = {"tenant_id": tenant_id, "name": tenant_id, "created_by": actor}
+        await db.execute(pg_insert(tenants).values(known).on_conflict_do_nothing())
         row = {"widget_id": widget_id, "version": version, "tenant_id": tenant_id, "document": document}
         await db.execute(insert(widgets).values({**row, "published_by": actor}))
         entry = {"actor": actor, "action": action, "tenant_id": tenant_id, "widget_id": widget_id, "detail": detail}
@@ -261,6 +291,15 @@ class Store:
             .limit(1)
         )
         return (await db.execute(query)).first()
+
+    async def sealed(self, tenant_id: str, kind: str, name: str):
+        """A sealed secret set through the admin API: (key_id, nonce, sealed), or None."""
+        found = sealed_secrets.c
+        query = select(found.key_id, found.nonce, found.sealed).where(
+            (found.tenant_id == tenant_id) & (found.kind == kind) & (found.name == name)
+        )
+        async with self.engine.connect() as db:
+            return (await db.execute(query)).first()
 
     # Signed-in visitors (M5)
 

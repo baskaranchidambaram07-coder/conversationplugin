@@ -169,6 +169,10 @@ After `npm install` on this Windows machine, check `package-lock.json` before co
 | A new widget ID; a new shared secret (`id:secret`) | `cd backend && uv run python -m ucp.widgets new-id`, `new-secret [--id k2]` |
 | Test the connection to PF with each profile in `UCP_AGENT_PROFILES` | `cd backend && UCP_AGENT_PROFILES=... uv run python -m ucp.pf check [profile …]` |
 | Regenerate the API description after changing a route | `cd backend && uv run python -m ucp.gateway.openapi` |
+| Run the admin API (M8), on its own | `cd backend && uv run uvicorn ucp.admin.app:create_app --factory --port 8201` (with `UCP_DATABASE_URL`, `UCP_ADMIN_ISSUER`, `UCP_ADMIN_AUDIENCE`, `UCP_SECRETS_KEY`) |
+| Make the first platform administrator | `cd backend && uv run python -m ucp.admin first-administrator SUBJECT [--label NAME]` (with `UCP_DATABASE_URL`, `UCP_ADMIN_ISSUER`) |
+| A new key to seal secrets set through the admin API | `cd backend && uv run python -m ucp.vault new-key` (put it first in `UCP_SECRETS_KEY`) |
+| Regenerate the admin API's description | `cd backend && uv run python -m ucp.admin.openapi` |
 | Check the token-signing snippets this machine can run (the pipeline runs all six) | `cd backend && uv run python ../examples/token-signing/check.py` |
 | Regenerate the message format after changing `backend/ucp/protocol.py` | `cd backend && uv run python -m ucp.protocol && cd .. && npm run generate --workspace @ucp/protocol` |
 | Run the fake PF on port 8100 (behaviours are listed in `backend/fakepf/app.py`) | `cd backend && uv run uvicorn fakepf.app:app --port 8100` |

@@ -1,5 +1,5 @@
-"""Settings, read once from the environment when the gateway starts. Secrets are injected there by the platform
-(Secrets Manager on AWS) and never written to a file in the image."""
+"""Settings, read once from the environment when the gateway or the admin API starts. Secrets are injected there by
+the platform (Secrets Manager on AWS) and never written to a file in the image."""
 
 import os
 from dataclasses import dataclass
@@ -21,6 +21,15 @@ class Settings:
     # admits only that network. Never set where visitors can reach the gateway directly: they could write it.
     visitor_address_header: str | None = None
     log_level: str = "INFO"  # the gateway's own log lines; DEBUG, INFO, WARNING or ERROR
+    # Seals the secrets set through the admin API (ucp.vault), as "id:key,id:key" with 32-byte keys in base64url;
+    # the first seals. The gateway needs it to read them, the admin API to write them.
+    secrets_key: str | None = None
+    # The admin API (ucp.admin): the company identity provider its administrators sign in with, the API's audience
+    # there (its client ID), the claim naming the user, and the console addresses allowed to call it.
+    admin_issuer: str | None = None
+    admin_audience: str | None = None
+    admin_user_claim: str = "sub"
+    admin_origins: str | None = None  # comma-separated
 
     @classmethod
     def from_env(cls) -> "Settings":
@@ -35,4 +44,9 @@ class Settings:
             public_origin=os.environ.get("UCP_PUBLIC_ORIGIN"),
             visitor_address_header=os.environ.get("UCP_VISITOR_ADDRESS_HEADER"),
             log_level=os.environ.get("UCP_LOG_LEVEL", "INFO"),
+            secrets_key=os.environ.get("UCP_SECRETS_KEY"),
+            admin_issuer=os.environ.get("UCP_ADMIN_ISSUER"),
+            admin_audience=os.environ.get("UCP_ADMIN_AUDIENCE"),
+            admin_user_claim=os.environ.get("UCP_ADMIN_USER_CLAIM", "sub"),
+            admin_origins=os.environ.get("UCP_ADMIN_ORIGINS"),
         )

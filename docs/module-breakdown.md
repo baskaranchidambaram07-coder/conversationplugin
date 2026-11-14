@@ -773,6 +773,40 @@ State on 13 November 2026 (pull requests 51 to 54 into `module/m08-control-plane
   - **Backups:** `export` the configuration after each change.
 - For M15: the College's guide uses `new-id`, `new-secret` and `seed`.
 
+State on 14 November 2026 (pull requests 87 to 90 into `module/m08-control-plane`). At your request M8 now has its admin API, ahead of the console. Two decisions are yours: secrets set through the API are sealed in PostgreSQL, and the API is hosted on AWS with M9.
+
+- **Shape (D3):**
+  - The admin API is its own app, `uvicorn ucp.admin.app:create_app --factory`, from the same image under `/admin/v1`. The gateway never mounts it.
+  - Its description is exported to `protocol/admin-openapi.json` for M9.
+- **T8, sign-in and roles:**
+  - Administrators sign in with the company identity provider's token (`UCP_ADMIN_ISSUER`, `UCP_ADMIN_AUDIENCE`), checked by M5's provider code. Proven with Keycloak in the pipeline.
+  - The `administrators` table gives each person one role: `platform` (everything), `tenant` (their tenant, including its administrators and viewers) or `viewer` (reads their tenant). Another tenant's things answer 404.
+  - No cookies are used, browsers must come from `UCP_ADMIN_ORIGINS`, and requests are limited per address and per administrator.
+- **T1, T2, T3 and T7:**
+  - Tenants and widgets are records.
+  - A widget is created and edited as a draft with a revision number: a save or a publish from a stale revision is refused (`conflict`, 409), so two editors cannot overwrite each other unseen.
+  - Every fault is named at once, and a widget stays in its tenant.
+  - Publishing makes an unchangeable version under the draft's row lock. Rollback is refused if the version breaks today's rules, and comparison lists each changed setting.
+- **T4 and T5, secrets:**
+  - PF connection profiles and customers' shared secrets are sealed with AES-GCM (`ucp.vault`, keys in `UCP_SECRETS_KEY` from the secret store), bound to their tenant and name, and never returned.
+  - A new shared secret is shown once, and the one before it stays valid until the next.
+  - "Test connection" signs in to PF and reports only the outcome.
+  - The gateway opens a tenant's own secrets first, then the platform's settings.
+  - A widget may point only at its tenant's own secrets. A platform-level profile is the platform administrators' to choose.
+- **T9:** every change and its audit entry are written in one transaction. Entries may now name a tenant, an administrator or a secret instead of a widget version. A tenant's people read their own entries.
+- **T10:** `python -m ucp.admin first-administrator SUBJECT`. Import and export stay `ucp.widgets seed` and `export`.
+- **Tests:**
+  - `backend/tests/test_admin.py` (22 tests): the role × operation × tenant matrix over 28 operations, sign-in refusals, the console-origin check, limits, gateway separation, two editors, every fault at once, rollback and comparison, secrets never returned or stored in clear, the shared-secret rotation through the gateway, tenant isolation of secrets, test connection against the fake PF, a tenant's own profile answering through the gateway, the vault, and the description file.
+  - Plus admin sign-in with Keycloak (`test_keycloak.py`).
+- **Done condition, met:** the onboarding journey through the API (`e2e/gateway/onboarding-api.spec.ts`) passes on three engines. The operator creates a tenant and its administrator; that administrator sets and tests the tenant's PF profile, then creates and publishes a widget; a visitor chats on the customer's page; and the audit log tells the story. The role matrix is green.
+- **Deferred:**
+  - hosting on AWS, with its own address and firewall rules (with M9);
+  - feature switches and retention (they wait on the second release and the purge policy);
+  - re-sealing secrets under a new key;
+  - self-service sign-up, and usage and billing.
+- **For M9:** the console calls `/admin/v1` with the provider's token as a bearer, from an address in `UCP_ADMIN_ORIGINS`. Cross-origin headers for that address come with the console.
+- **For M14:** when the admin API is hosted, the gateway needs `UCP_SECRETS_KEY` too (`python -m ucp.vault new-key`), so it can open tenants' secrets. Run migration `0005` before the release.
+
 ---
 
 ### M9 — Admin console
@@ -1120,6 +1154,8 @@ For each new cloud the work is two small adapters, one Terraform stack, and a re
 | First customer | Goodenough College, London: a registered educational charity housing international postgraduate students. First region London, English first. It is neither a public body nor an FCA-regulated firm; see `government-readiness.md` section 2.9. |
 | Browser exposure | No PF or connection detail reaches the browser (R13, D15, M12-T11). |
 | Abuse controls | Limits and quotas in the first release (M12-T4). |
+| Admin API secrets (14 Nov) | PF connection profiles and shared secrets set through the admin API are sealed with AES-GCM in PostgreSQL, under keys from the secret store. The app's AWS role keeps read-only access to Secrets Manager, and the code stays free of cloud libraries. |
+| Admin API hosting (14 Nov) | Built and tested on this machine and in the pipeline now; hosted on AWS with the console (M9), behind a company identity-provider registration. |
 
 ### Still open
 
