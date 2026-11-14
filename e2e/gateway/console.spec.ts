@@ -9,6 +9,7 @@ async function serious(page: Page) {
   const { violations } = await new AxeBuilder({ page })
     .withTags(["wcag2a", "wcag2aa", "wcag21a", "wcag21aa", "wcag22aa"])
     .analyze();
+  await page.bringToFront(); // axe finishes in a page of its own, which can leave this one hidden in WebKit, never still enough to click
   return violations.filter((v) => v.impact === "serious" || v.impact === "critical").map((v) => v.id);
 }
 
