@@ -19,6 +19,8 @@ Roughly, from list prices as remembered and not checked: about US$0.11 an hour a
 
 ## Every day
 
+Run these from an up-to-date `develop`. Wake and sleep apply the Terraform in the working copy, so running them from a branch that lacks a file removes whatever that file built.
+
 | To | Run | Takes |
 |---|---|---|
 | See what is running, and the address | `python infra/aws/dev.py status` | seconds |
