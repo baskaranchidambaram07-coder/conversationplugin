@@ -13,6 +13,9 @@ const configs = {
   w_test: { ...example, widget_id: "w_test" },
   w_left: { ...example, widget_id: "w_left", launcher_position: "bottom-left" },
   w_chat: { ...example, widget_id: "w_chat" },
+  // Fixed schemes whatever the system's: dark with a near-black brand (which gives way to cream there), and light.
+  w_dark: { ...example, widget_id: "w_dark", color_scheme: "dark", brand_color: "#2B241F" },
+  w_light: { ...example, widget_id: "w_light", color_scheme: "light" },
 };
 // These widgets open the stand-in chat (e2e/chat-stub.html), which lets the loader be tested on its own.
 const STAND_IN = new Set(["w_test", "w_left"]);
@@ -60,8 +63,9 @@ async function file(path) {
   const embed = path.match(/^\/embed\/([\w-]+)$/);
   if (embed && STAND_IN.has(embed[1])) return [200, types.html, await readFile(new URL("e2e/chat-stub.html", root))];
   if (embed) {
-    const chat = await readFile(new URL("web/widget/dist/index.html", root));
-    return [200, types.html, chat, { "content-security-policy": policyFor(embed[1]) }];
+    const chat = await readFile(new URL("web/widget/dist/index.html", root), "utf8");
+    const page = chat.replace("<html", `<html data-scheme="${configs[embed[1]]?.color_scheme ?? "light"}"`);
+    return [200, types.html, page, { "content-security-policy": policyFor(embed[1]) }];
   }
   const asset = path.match(/^\/assets\/([\w.-]+)\.(js|css|woff2)$/);
   if (asset) return [200, types[asset[2]], await readFile(new URL(`web/widget/dist/assets/${asset[1]}.${asset[2]}`, root))];
