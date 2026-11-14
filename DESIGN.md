@@ -307,13 +307,19 @@ The widget has two layouts on the host page, chosen by window size.
 
 - **Floating (600px wide and 520px tall or larger):** the launcher sits 24px (edge) from the configured bottom corner, right by default or left by configuration, and never closer than the device safe-area inset on that side. The panel is 400 x 640, shrunk to `min(400px, 100vw - 48px)` by `min(640px, 100dvh - 120px)`, aligned to the same side and 16px (gap) above the launcher. The open launcher stays in place and becomes the close button.
 - **Full screen (under 600px wide or under 520px tall):** the panel fills the viewport with no border and no radius, the launcher steps aside, and the host page's scroll is locked while it is open. The chat's own header carries the close control.
-- **Inline (host-chosen target element):** the panel fills the target, at least 480px tall, with no launcher, no shadow and no motion. The chat shows no close button.
+- **Expanded (floating, on a window larger than a phone, on the visitor's request):** the panel fills the window with no border and no radius, the launcher steps aside, and the host page's scroll is locked. "Exit full screen" goes back to the panel; closing the chat does too, so it always opens as a panel.
+- **Inline (host-chosen target element):** the panel fills the target, at least 480px tall, with no launcher, no shadow and no motion. The chat shows no close button. From 720px wide it runs edge to edge, with no border and no radius, as the conversation app it then is: a page that is the assistant fills the window with it.
 
 Inside the panel the chat is one column, top to bottom: the header (logo tile, title, then its actions: New chat, Your chats and close, each only where it applies), the scrolling conversation, the composer, then the credit. The side gutter is 16px, or 10px when the frame is under 340px wide, where visitor bubbles may also widen from 85% to 92%. The same order holds down to 280px wide. Items in the conversation stack 12px apart. The conversation fades out over its top and bottom 14px as it scrolls under the header and into the composer (a CSS mask, not an overlay), and its scrollbar is thin, in Soft Sand. When the visitor scrolls up, a "Go to the latest message" pill appears centred above the composer.
 
 **Earlier chats.** On widgets with history on, signed-in visitors see their earlier chats.
 - **Narrow frames (under 720px):** "Your chats" in the header swaps the list in for the conversation and the composer, inside the same scrolling region, with 10px top padding so the 14px top fade clears the list. The credit stays. Opening and closing the list is an immediate swap, with no motion.
-- **Wide frames (720px and wider):** the chat becomes a grid. The header spans the top; a 288px "Your chats" column stands at the inline start with its own thin Soft Sand scrollbar and a 1px Soft Sand rule at its inline end; the conversation and the composer keep a measure of at most 760px, centred in the rest.
+- **Wide frames (720px and wider: the chat expanded, or filling a page inline): a conversation app.**
+  - **Your chats:** a 288px column runs the full height at the inline start, on the ground mixed with 35% Soft Sand, with its own thin scrollbar and a 1px Soft Sand rule at its inline end. Its chats are rows on that ground (12px radius, no card or hairlines), the open one filled with Soft Sand.
+  - **The rest:** the header across the top of the conversation; the conversation, the composer, the AI notice and the credit share one centred column of at most 760px.
+  - **Answers sit on the page**, as the page's own text: no card, no edge, 2px 4px padding. Visitor bubbles stay Soft Sand, at most 75% wide.
+  - **The AI notice** moves under the composer, centred at 13px, so it is always in sight.
+  - **An empty chat** holds the welcome (24px, 650, centred, balanced, at most 30ch) just above the middle of the screen, the composer at the middle, and the suggested questions centred under it. The first question brings the usual order back.
 - **A reopened chat:** a quiet "Show earlier messages", centred above the first turn, loads older messages above without moving the view.
 
 Inside an answer card, rendered Markdown stacks its blocks 10px apart; list items sit 4px apart with a 1.35em inline-start indent. Code panels and table frames stretch to the card's full width and never widen it.
@@ -373,6 +379,7 @@ Who the visitor is talking to, and a way out; no colour bar.
 - **Actions:** a group of 44px round icon buttons at the end, 2px apart, transparent, each with a faint ink wash (7%) on hover. In order:
   - **New chat:** a plus glyph, shown once there is a conversation to leave, on narrow frames only.
   - **Your chats / Back to the chat:** a list glyph that becomes a chevron (mirrored in right-to-left). Shown only to signed-in visitors on widgets with history on, on narrow frames only; the two states share one place beside Close.
+  - **Open full screen / Exit full screen:** a four-arrow glyph pointing out, or in. Shown only in the floating panel, and only when the loader says the window is larger than a phone.
   - **Close:** shown only in the floating panel.
 - **Under 340px:** when all three would show, the header's New chat is hidden so the title keeps its room; New chat stays in the list.
 

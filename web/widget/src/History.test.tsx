@@ -1,4 +1,4 @@
-import { cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
+import { act, cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { afterEach, expect, test, vi } from "vitest";
 
 import { App } from "./App";
@@ -43,8 +43,9 @@ const answered = (text: string) =>
     .map((event) => `data: ${JSON.stringify(event)}\n\n`)
     .join("");
 
-/** A chat framed by a loader that says whether the visitor is signed in, and answers token requests. */
-function framed(signedIn: boolean) {
+/** A chat framed by a loader that says whether the visitor is signed in, and answers token requests. A wide frame
+ * (the chat filling a page or the window) matches every width query. */
+function framed(signedIn: boolean, wide = false) {
   const target = new EventTarget();
   const deliver = (data: object) =>
     target.dispatchEvent(Object.assign(new Event("message"), { data: { ucp: 1, ...data }, origin: LOADER, source: parent }));
@@ -53,8 +54,9 @@ function framed(signedIn: boolean) {
       if (data.type === "get-token") queueMicrotask(() => deliver({ type: "token", id: data.id, token: "h_1" }));
     }),
   };
-  const win = Object.assign(target, { parent }) as unknown as Window;
-  return { win, start: () => deliver({ type: "init", mode: "floating", signedIn }) };
+  const matchMedia = () => ({ matches: wide, addEventListener() {}, removeEventListener() {} });
+  const win = Object.assign(target, { parent, matchMedia }) as unknown as Window;
+  return { win, parent, deliver, start: () => deliver({ type: "init", mode: "floating", signedIn }) };
 }
 
 /** The gateway: two earlier chats (a page of older ones behind them), a long chat, and an answer to every question. */
@@ -218,4 +220,47 @@ test("with no earlier chats, the list says where they will appear", async () => 
 
   expect(await screen.findByText(t.noChats)).toBeTruthy();
   expect(screen.getByRole("button", { name: t.startChat })).toBeTruthy();
+});
+
+// Full screen: the loader says whether its panel can fill the window; a wide frame is laid out as a conversation app.
+
+test("a floating chat offers full screen only where the loader can fill the window, and asks it to", async () => {
+  gateway();
+  const { win, parent, deliver, start } = framed(false);
+  render(<App widgetId="w_1" win={win} />);
+  start();
+  await screen.findByRole("heading", { name: "Ask the College" });
+  expect(screen.queryByRole("button", { name: t.expand })).toBeNull();
+
+  act(() => deliver({ type: "layout", expandable: true, expanded: false }));
+  fireEvent.click(screen.getByRole("button", { name: t.expand }));
+  expect(parent.postMessage).toHaveBeenLastCalledWith({ ucp: 1, type: "expand", on: true }, LOADER);
+
+  act(() => deliver({ type: "layout", expandable: true, expanded: true }));
+  fireEvent.click(screen.getByRole("button", { name: t.shrink }));
+  expect(parent.postMessage).toHaveBeenLastCalledWith({ ucp: 1, type: "expand", on: false }, LOADER);
+
+  act(() => deliver({ type: "layout", expandable: false, expanded: false })); // the window became phone-sized
+  expect(screen.queryByRole("button", { name: /full screen/ })).toBeNull();
+});
+
+test("in a wide frame an empty chat holds the composer and suggested questions in the middle, the AI notice under it", async () => {
+  gateway();
+  const { win, start } = framed(true, true);
+  const { container } = render(<App widgetId="w_1" win={win} />);
+  start();
+  await screen.findByRole("heading", { name: "Ask the College" });
+
+  const page = container.querySelector(".chat")!;
+  expect([...page.classList]).toEqual(expect.arrayContaining(["page", "empty", "split"]));
+  const foot = container.querySelector("footer")!;
+  const question = within(foot).getByRole("button", { name: "When does the library open?" });
+  expect(foot.querySelector("form")!.compareDocumentPosition(question) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+  expect(within(foot).getByText(t.notice)).toBeTruthy();
+
+  fireEvent.click(question);
+  expect(await screen.findByText("Sunday: ten to four.")).toBeTruthy();
+  expect(page.classList.contains("empty")).toBe(false);
+  expect(screen.queryByRole("button", { name: "When does the library open?" })).toBeNull();
+  expect(within(foot).getByText(t.notice)).toBeTruthy(); // still in sight under the composer
 });

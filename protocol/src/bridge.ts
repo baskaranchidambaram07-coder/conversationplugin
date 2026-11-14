@@ -7,17 +7,21 @@
 export type ChatMessage =
   | { ucp: 1; type: "ready" }
   | { ucp: 1; type: "get-token"; id: number }
-  | { ucp: 1; type: "close" };
+  | { ucp: 1; type: "close" }
+  | { ucp: 1; type: "expand"; on: boolean }; // the visitor asks to fill the window, or to go back to the panel
 
 /**
  * From the loader to the chat. The chat pins the parent's origin from `init` and trusts no other.
  * `shown` and `hidden` follow the panel opening and closing, so the chat can take focus and pause its animations.
+ * `layout` says whether the panel can fill the window here (never on a phone, where it already does) and whether
+ * it does, after `init` and whenever either changes.
  */
 export type LoaderMessage =
   | { ucp: 1; type: "init"; mode: "floating" | "inline"; signedIn: boolean }
   | { ucp: 1; type: "token"; id: number; token: string | null }
   | { ucp: 1; type: "shown" }
-  | { ucp: 1; type: "hidden" };
+  | { ucp: 1; type: "hidden" }
+  | { ucp: 1; type: "layout"; expandable: boolean; expanded: boolean };
 
 type Candidate = { ucp?: unknown; type?: unknown; [field: string]: unknown };
 
@@ -28,7 +32,10 @@ function v1(data: unknown): data is Candidate {
 export function fromChat(data: unknown): ChatMessage | null {
   if (!v1(data)) return null;
   const ok =
-    data.type === "ready" || data.type === "close" || (data.type === "get-token" && Number.isInteger(data.id));
+    data.type === "ready" ||
+    data.type === "close" ||
+    (data.type === "get-token" && Number.isInteger(data.id)) ||
+    (data.type === "expand" && typeof data.on === "boolean");
   return ok ? (data as ChatMessage) : null;
 }
 
@@ -40,6 +47,7 @@ export function fromLoader(data: unknown): LoaderMessage | null {
       typeof data.signedIn === "boolean") ||
     (data.type === "token" && Number.isInteger(data.id) && (typeof data.token === "string" || data.token === null)) ||
     data.type === "shown" ||
-    data.type === "hidden";
+    data.type === "hidden" ||
+    (data.type === "layout" && typeof data.expandable === "boolean" && typeof data.expanded === "boolean");
   return ok ? (data as LoaderMessage) : null;
 }

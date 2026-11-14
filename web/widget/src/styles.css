@@ -818,11 +818,13 @@ textarea::placeholder {
   margin-block: 24px;
 }
 
-/* Wide frames: the list beside the conversation, which keeps a readable measure */
+/* Wide frames (the chat filling a page, or the window): a conversation app. The list of chats runs the full height
+   at the start; the conversation, the composer, the AI notice and the credit share one centred column; answers sit
+   on the page itself rather than on cards. */
 .chat.split {
   display: grid;
   grid-template:
-    "head head" auto
+    "side head" auto
     "side log" minmax(0, 1fr)
     "side foot" auto
     / 288px minmax(0, 1fr);
@@ -835,24 +837,103 @@ textarea::placeholder {
 .split > .side {
   grid-area: side;
   overflow-y: auto;
-  padding-block: 4px 16px;
-  padding-inline: var(--gutter) 12px;
+  padding-block: 22px 16px;
+  padding-inline: 12px;
   border-inline-end: 1px solid var(--sand);
+  background: color-mix(in srgb, var(--sand) 35%, var(--ground));
   scrollbar-width: thin;
   scrollbar-color: var(--sand) transparent;
 }
 
 .split .log {
   grid-area: log;
-  padding-inline: max(var(--gutter), (100% - 760px) / 2);
 }
 
 .split .foot {
   grid-area: foot;
 }
 
-.split .compose {
+.page .log {
+  padding-inline: max(var(--gutter), (100% - 760px) / 2);
+}
+
+.page .compose,
+.page .count,
+.page .foot .prompts,
+.page .foot .notice {
   margin-inline: max(var(--gutter), (100% - 760px) / 2);
+}
+
+.page .compose {
+  padding: 8px;
+  padding-inline-start: 20px;
+}
+
+.page .mine {
+  max-width: 75%;
+}
+
+/* An answer is the page's own text, as in a conversation app: no card, the same width as the column. */
+.page .answer,
+.page .welcome {
+  padding: 2px 4px;
+  border-radius: 0;
+  background: none;
+  box-shadow: none;
+}
+
+/* The AI notice stays in sight under the composer, beside the credit. */
+.page .foot .notice {
+  margin-block: 2px 0;
+  text-align: center;
+  font-size: 13px;
+}
+
+/* In the list beside the conversation, chats are rows on the column's own ground. */
+.split .chats {
+  overflow: visible;
+  border-radius: 0;
+  background: none;
+  box-shadow: none;
+}
+
+.split .chats li + li {
+  border: 0;
+}
+
+.split .chats button {
+  min-height: 52px;
+  padding: 8px 12px;
+  border-radius: 12px;
+}
+
+/* An empty chat: the welcome above the middle, the composer at it, the suggested questions under it. */
+.page.empty .log {
+  justify-content: flex-end;
+  mask-image: none;
+}
+
+.page.empty .welcome {
+  align-self: center;
+  max-width: 30ch;
+  font-size: 24px;
+  font-weight: 650;
+  line-height: 1.3;
+  text-align: center;
+  text-wrap: balance;
+}
+
+.page.empty .foot {
+  flex: 1;
+}
+
+.split.empty {
+  grid-template-rows: auto minmax(0, 1fr) minmax(0, 1fr);
+}
+
+.page .foot .prompts {
+  justify-content: center;
+  margin-block: 14px 18px;
 }
 
 /* Narrow frames: the same order, tighter */
