@@ -54,11 +54,12 @@ The gateway reads its settings from the environment when it starts:
 | Runtime and packages | Node with npm workspaces | 24.11 / 11.6 | Already on the build machine; no extra package manager |
 | Language | TypeScript | 7.0 | Strict mode throughout |
 | Chat interface | React | 19.3 | Your stated preference |
+| Admin console | React and Vite, as the chat (`web/console`) | 19.3 / 8.3 | Served by the admin app; signs in at the company provider with PKCE in a few lines, so it needs no sign-in library |
 | Build | Vite | 8.3 | Builds the chat; also runs the unit tests |
 | Loader build | esbuild | 0.28 | Produces one small file with no dependencies |
 | Unit tests | Vitest with Testing Library and jsdom | 5.1 / 16.3 / 29.1 | Component tests without a browser |
 | Browser tests | Playwright | 1.65 | Chromium 158, Firefox 159, WebKit 27.2, plus phone emulation |
-| Accessibility checks | axe-core for Playwright | 4.14 | A WCAG 2.2 AA scan of every chat state and the launcher; serious or critical findings fail |
+| Accessibility checks | axe-core for Playwright | 4.14 | A WCAG 2.2 AA scan of every chat state, the launcher and every console screen; serious or critical findings fail |
 | Chat typeface | Nunito, self-hosted (`@fontsource-variable/nunito`) | 5.3 | Open licence; served from our origin, so visitors' addresses never go to a font host |
 | Message format types | json-schema-to-typescript | 16.0 | Turns the schema the backend exports into TypeScript types (`protocol/src/v1.ts`) |
 | Schema checks in tests | Ajv with ajv-formats | 8.20 / 3.0 | Checks the shared example files against the schema, so the TypeScript side reaches the same verdict as the Python models |

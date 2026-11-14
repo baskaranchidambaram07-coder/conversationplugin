@@ -834,6 +834,41 @@ Second release: usage view, audit-log viewer, storage and single sign-on set-up,
 
 **Done when** a new administrator completes onboarding from the console alone.
 
+State on 14 November 2026 (pull requests 92 to 96 into `module/m09-admin-console`). Your decisions: administrators sign in with Amazon Cognito, made by Terraform; the console is the chat's warm world, calmer; the preview is the chat's own component.
+
+- **Shape:**
+  - `web/console` (React), served by the admin app from `web/console/dist` at its own address. Its content policy names only the sign-in token endpoint and forbids framing (`frame-ancestors 'none'`).
+  - Sign-in is the authorization-code flow with PKCE at the company provider, whose endpoints the console reads from `/admin/v1/sign-in`. The token lives in the tab's session storage and the session ends a minute before it expires.
+  - Each widget is a track of six stations (Agent, Sites, Sign-in, Look, Install, Go live), each signed with its minutes, with the time left signed at the end. The direction is recorded in `.impeccable/surfaces/web-console.md` and `DESIGN.md`.
+- **T1:** sign-in, and an organisation picker for platform administrators. Viewers see everything and change nothing.
+- **T2:**
+  - The widget column shows each widget's state.
+  - A new widget walks the first three stations before its draft is made: a connection added and tested, the allowed sites, then sign-in.
+  - A save names the draft revision it started from, so a change someone else saved since is reported, not overwritten.
+  - Keys, passwords and shared secrets go straight to the admin API. A new shared secret is shown once.
+- **T3:**
+  - The Look editor sits beside the chat itself, served by the admin app at `/preview` (framed only by the console) and sent the draft by message as it is typed. Nothing in the preview is sent or published.
+  - Colour notes use the loader's and chat's own rules (`@ucp/protocol/brand`).
+  - The preview sits beside the other form stations too, from 1200px wide.
+- **T5:**
+  - The script tag, a page that is the assistant, the setup script for signed-in widgets, the portal endpoint's settings, and the tested token-signing code in six languages.
+  - The three content-policy entries (`script-src`, `frame-src`, `connect-src`).
+  - An installation checker, `POST /admin/v1/widgets/{w}/install-check`. It fetches one page of the widget's own sites over https, never a private address, checked again on every redirect, at most 1 MB in 10 seconds. It says whether the page answers, carries this widget's tag, and lets the chat in.
+- **T6:** Go live shows what the draft changes, setting by setting. It publishes the revision read, and lists the versions. Any version can be compared with the live one and made live again after a confirmation.
+- **Design finish review:** verdict "ship after fixes", and all eight fixes are made. Among them: the track tells the truth about a live widget, Look is done only once saved, focus moves to the opened station, and forced-colours mode keeps focus and edges.
+- **Tests:**
+  - Unit and UI (10): the track's states and minutes, sign-in with PKCE and the session's end, colour notes, and the changes between two versions.
+  - Integration: `backend/tests/test_admin.py` (24) adds the console's serving, its policy and the preview's; `test_install.py` (7) covers the checker's fence, redirects, size, tag and policy.
+  - End to end: `e2e/gateway/console.spec.ts`, 12 journeys on three engines. They cover sign-in and refusals, the new-widget wizard, editing with a viewer's read-only view, Look, both installs, the rollback journey, the keyboard alone, secrets never shown again, and the done condition. Each screen gets an accessibility scan.
+- **Found and fixed:** Firefox crashed in every accessibility scan of the console. It crashes when axe scans a section named by `aria-labelledby`, so the station card is named by `aria-label`.
+- **Done condition, met:** a new tenant administrator, made beforehand by a platform administrator, completes onboarding in the console alone, on three engines. They add and test a connection, add a site, choose sign-in, set the look, read the install code and publish; then a visitor chats on the customer's page. The journey records its time; a robot takes seconds. The first timed run by a person stays with M15.
+- **Deferred:**
+  - T4, feature and conversation-layout settings: history is a switch in Look; the rest wait for the second release's features;
+  - the iframe-only snippet: the chat needs the loader's handshake;
+  - form validation generated from the server's schema: the console checks the few fields a step needs, and the API names every fault;
+  - snippets compared with approved files, and screenshot comparison;
+  - hosting on AWS behind Cognito, with its deployment tests (served behind sign-in, the API address per environment, the cache refreshed on release).
+
 ---
 
 ### M10 — Attachments (second release)

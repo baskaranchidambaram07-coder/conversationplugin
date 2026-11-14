@@ -5,6 +5,26 @@
     "version": "1"
   },
   "paths": {
+    "/admin/v1/sign-in": {
+      "get": {
+        "summary": "Where the console signs administrators in (no sign-in needed to read it)",
+        "operationId": "sign_in_admin_v1_sign_in_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object",
+                  "title": "Response Sign In Admin V1 Sign In Get"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/admin/v1/me": {
       "get": {
         "summary": "Who is signed in, and their role",
@@ -464,6 +484,61 @@
                   "type": "object",
                   "additionalProperties": true,
                   "title": "Response Save Draft Admin V1 Widgets  Widget Id  Draft Put"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/admin/v1/widgets/{widget_id}/install-check": {
+      "post": {
+        "summary": "Check a page of the customer's site for the chat",
+        "description": "Fetches the page as a browser would (fenced: install.py) and says whether the chat can appear there. It\nchanges nothing, so viewers may check too.",
+        "operationId": "install_check_admin_v1_widgets__widget_id__install_check_post",
+        "parameters": [
+          {
+            "name": "widget_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^[A-Za-z0-9_-]{1,64}$",
+              "description": "Our opaque ID. Never a PF ID.",
+              "title": "Widget Id"
+            },
+            "description": "Our opaque ID. Never a PF ID."
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/InstallCheck"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true,
+                  "title": "Response Install Check Admin V1 Widgets  Widget Id  Install Check Post"
                 }
               }
             }
@@ -1047,6 +1122,23 @@
         "type": "string",
         "pattern": "^[A-Za-z0-9_-]{1,64}$",
         "description": "Our opaque ID. Never a PF ID."
+      },
+      "InstallCheck": {
+        "properties": {
+          "page": {
+            "type": "string",
+            "maxLength": 2000,
+            "minLength": 8,
+            "title": "Page",
+            "description": "A page of the customer's site."
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "page"
+        ],
+        "title": "InstallCheck"
       },
       "NewAdministrator": {
         "properties": {

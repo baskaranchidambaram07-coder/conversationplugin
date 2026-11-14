@@ -38,7 +38,7 @@ test("an operator onboards a customer through the admin API; a visitor chats on 
   await operator("POST", "/administrators", { subject: manager, role: "tenant", tenant_id: tenant });
 
   const admin = await signIn(request, manager);
-  expect(await admin("GET", "/me")).toEqual({ subject: manager, role: "tenant", tenant_id: tenant });
+  expect(await admin("GET", "/me")).toEqual({ subject: manager, role: "tenant", tenant_id: tenant, gateway: "http://localhost:8200" });
   await admin("PUT", `/tenants/${tenant}/agent-profiles/fake-pf`, FAKE_PF);
   expect(await admin("POST", `/tenants/${tenant}/agent-profiles/fake-pf/test`)).toEqual({ connected: true });
   const title = `Ask Riverside ${run.slice(-4)}`;

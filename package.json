@@ -5,6 +5,7 @@
     "protocol",
     "web/loader",
     "web/widget",
+    "web/console",
     "e2e"
   ],
   "scripts": {

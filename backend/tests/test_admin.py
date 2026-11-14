@@ -92,7 +92,12 @@ def test_sign_in_needs_the_company_providers_token_for_this_api_and_a_role(world
     assert world.get("/admin/v1/me", headers=bearer(world, "stranger")).json()["code"] == "forbidden"
 
     me = world.get("/admin/v1/me", headers=bearer(world, "viewer_a"))
-    assert me.json() == {"subject": f"viewer_a-{world.tag}", "role": "viewer", "tenant_id": f"t_a{world.tag}"}
+    assert me.json() == {
+        "subject": f"viewer_a-{world.tag}",
+        "role": "viewer",
+        "tenant_id": f"t_a{world.tag}",
+        "gateway": None,
+    }
 
 
 def test_a_browser_may_call_it_only_from_the_consoles_own_address(world):
@@ -277,7 +282,20 @@ def test_a_new_widget_is_a_draft_until_published_then_the_gateway_serves_it(worl
         assert chat.get(f"/v1/widgets/{widget_id}/config").json()["title"] == "Draft"
     listed = world.get(f"/admin/v1/tenants/{world.a}/widgets", headers=signed).json()
     entry = next(widget for widget in listed if widget["widget_id"] == widget_id)
-    assert (entry["version"], entry["draft"]["revision"]) == (1, 1)
+    assert (entry["title"], entry["version"], entry["draft"]["revision"], entry["unpublished"]) == (
+        "Draft",
+        1,
+        1,
+        False,
+    )
+    world.put(
+        f"/admin/v1/widgets/{widget_id}/draft",
+        json={"revision": 1, "document": titled(world, "Changed")},
+        headers=signed,
+    )
+    listed = world.get(f"/admin/v1/tenants/{world.a}/widgets", headers=signed).json()
+    entry = next(widget for widget in listed if widget["widget_id"] == widget_id)
+    assert (entry["title"], entry["unpublished"]) == ("Changed", True)  # the draft's title, ahead of the live one
 
 
 def test_two_people_editing_one_draft_cannot_overwrite_each_other_unseen(world):
@@ -452,3 +470,61 @@ def test_the_admin_api_description_file_matches_the_routes():
 
     stale = "Run: cd backend && uv run python -m ucp.admin.openapi"
     assert OPENAPI_FILE.read_text(encoding="utf-8") == openapi_text(), stale
+
+
+# The console (M9): where it signs in, and its page
+
+
+def test_the_console_learns_where_to_sign_in_without_signing_in(world):
+    found = world.get("/admin/v1/sign-in").json()
+
+    assert found == {
+        "client_id": AUDIENCE,
+        "authorization_endpoint": f"{world.provider.base_url}/authorize",
+        "token_endpoint": f"{world.provider.base_url}/token",
+    }
+
+
+def test_the_console_page_is_served_for_any_route_and_may_be_framed_by_no_site(database_url, provider, tmp_path):  # noqa: F811
+    dist = tmp_path / "console" / "dist"
+    (dist / "assets").mkdir(parents=True)
+    (dist / "index.html").write_text("<!doctype html><title>Console</title>")
+    (dist / "assets" / "index-abc.js").write_text("/* console */")
+    settings = Settings(
+        database_url=database_url, web_dir=tmp_path, admin_issuer=provider.base_url, admin_audience=AUDIENCE
+    )
+
+    with TestClient(admin.create_app(settings)) as client:
+        for route in ("/", "/widgets/w_1/look"):
+            page = client.get(route)
+            assert page.text == "<!doctype html><title>Console</title>"
+            policy = page.headers["content-security-policy"]
+            assert "frame-ancestors 'none'" in policy and f"connect-src 'self' {provider.base_url};" in policy
+        assert client.get("/assets/index-abc.js").headers["cache-control"] == "public, max-age=31536000, immutable"
+        assert client.get("/assets/nothing.js").status_code == 404
+        assert client.get("/admin/v1/me").json()["code"] == "sign_in_required"  # the API stays the API
+
+
+def test_the_chat_itself_is_the_consoles_preview_framed_by_the_console_only(database_url, provider, tmp_path):  # noqa: F811
+    for app, page in (("console", "<title>Console</title>"), ("widget", "<title>Chat</title>")):
+        (tmp_path / app / "dist" / "assets").mkdir(parents=True)
+        (tmp_path / app / "dist" / "index.html").write_text(page)
+    (tmp_path / "widget" / "dist" / "assets" / "index-chat.js").write_text("/* chat */")
+    settings = Settings(
+        database_url=database_url, web_dir=tmp_path, admin_issuer=provider.base_url, admin_audience=AUDIENCE
+    )
+
+    with TestClient(admin.create_app(settings)) as client:
+        preview = client.get("/preview")
+        assert preview.text == "<title>Chat</title>"
+        assert "frame-ancestors 'self'" in preview.headers["content-security-policy"]
+        assert "connect-src 'none'" in preview.headers["content-security-policy"]
+        assert client.get("/assets/index-chat.js").text == "/* chat */"
+        assert "frame-src 'self'" in client.get("/").headers["content-security-policy"]
+
+
+def test_refused_sign_ins_slow_an_address_down_while_signed_in_administrators_are_not(world, monkeypatch):
+    monkeypatch.setattr(admin, "ATTEMPTS_PER_MINUTE", 3)
+
+    assert [world.get("/admin/v1/me").status_code for _ in range(4)] == [401, 401, 401, 429]
+    assert [world.get("/admin/v1/me", headers=bearer(world, "viewer_a")).status_code for _ in range(5)] == [200] * 5

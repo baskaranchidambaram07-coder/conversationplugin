@@ -1,6 +1,6 @@
 {
   "schemaVersion": 2,
-  "generatedAt": "2026-11-13T12:00:00Z",
+  "generatedAt": "2026-11-14T12:00:00Z",
   "title": "Design System: Conversation Plugin",
   "extensions": {
     "colorMeta": {
@@ -78,6 +78,141 @@
           "#c9c9c9",
           "#eeeeee"
         ]
+      },
+      "night-ground": {
+        "role": "neutral",
+        "displayName": "Night Ground",
+        "canonical": "#1c1815",
+        "tonalRamp": [
+          "#0c0b0a",
+          "#272423",
+          "#45413e",
+          "#65605d",
+          "#86817e",
+          "#a8a4a1",
+          "#ccc8c6",
+          "#f0eeec"
+        ]
+      },
+      "night-border": {
+        "role": "neutral",
+        "displayName": "Night Border",
+        "canonical": "#3b332d",
+        "tonalRamp": [
+          "#0d0b09",
+          "#292421",
+          "#47413c",
+          "#685f59",
+          "#89807a",
+          "#aba39e",
+          "#cec8c3",
+          "#f2eeeb"
+        ]
+      },
+      "cream-ink": {
+        "role": "neutral",
+        "displayName": "Cream Ink",
+        "canonical": "#f2e9df",
+        "tonalRamp": [
+          "#0d0b08",
+          "#282420",
+          "#47413b",
+          "#676058",
+          "#888179",
+          "#aaa49d",
+          "#cdc8c2",
+          "#f1eeea"
+        ]
+      },
+      "light-umber": {
+        "role": "neutral",
+        "displayName": "Light Umber",
+        "canonical": "#b5a69a",
+        "tonalRamp": [
+          "#0e0a07",
+          "#2a241e",
+          "#4a4038",
+          "#6b5f54",
+          "#8d8075",
+          "#aea399",
+          "#d1c7c0",
+          "#f3ede8"
+        ]
+      },
+      "night-paper": {
+        "role": "neutral",
+        "displayName": "Night Paper",
+        "canonical": "#27211d",
+        "tonalRamp": [
+          "#0d0b09",
+          "#282422",
+          "#46413d",
+          "#66605b",
+          "#88817c",
+          "#aaa4a0",
+          "#cdc8c5",
+          "#f1eeec"
+        ]
+      },
+      "column-tint": {
+        "role": "neutral",
+        "displayName": "Column Tint",
+        "canonical": "color-mix(in srgb, #e7dacb 35%, #fbf3ea)",
+        "tonalRamp": [
+          "#0d0b08",
+          "#29241f",
+          "#47413a",
+          "#686057",
+          "#898178",
+          "#aba49c",
+          "#cec8c2",
+          "#f2eeea"
+        ]
+      },
+      "problem-red": {
+        "role": "error",
+        "displayName": "Problem Red",
+        "canonical": "#9b2c1f",
+        "tonalRamp": [
+          "#1e0100",
+          "#470c06",
+          "#732218",
+          "#a13b2d",
+          "#c85e4e",
+          "#e48879",
+          "#feb4a6",
+          "#ffe1d8"
+        ]
+      },
+      "good-green": {
+        "role": "success",
+        "displayName": "Good Green",
+        "canonical": "#2f6b3a",
+        "tonalRamp": [
+          "#010f03",
+          "#0d2d13",
+          "#214d29",
+          "#396f42",
+          "#5a9262",
+          "#84b389",
+          "#b0d4b3",
+          "#def6e0"
+        ]
+      },
+      "warn-amber": {
+        "role": "warning",
+        "displayName": "Warn Amber",
+        "canonical": "#8a4b12",
+        "tonalRamp": [
+          "#170600",
+          "#3c1b00",
+          "#63340c",
+          "#8b5020",
+          "#b07243",
+          "#ce9871",
+          "#ebbfa1",
+          "#ffe8d5"
+        ]
       }
     },
     "typographyMeta": {
@@ -148,6 +283,50 @@
       "code-inline": {
         "displayName": "Inline code",
         "purpose": "Code inside running answer text."
+      },
+      "console-body": {
+        "displayName": "Console body",
+        "purpose": "The admin console's running text."
+      },
+      "console-page-title": {
+        "displayName": "Console page title",
+        "purpose": "The widget's name: the console page's one h1."
+      },
+      "console-station-title": {
+        "displayName": "Console station title",
+        "purpose": "The open station's h2 in its card."
+      },
+      "console-section-title": {
+        "displayName": "Console section title",
+        "purpose": "h3 inside a station."
+      },
+      "console-mark": {
+        "displayName": "Console mark",
+        "purpose": "'Conversation Plugin' in the top bar."
+      },
+      "console-action": {
+        "displayName": "Console action",
+        "purpose": "The console's primary action."
+      },
+      "console-field-label": {
+        "displayName": "Console field label",
+        "purpose": "Field labels and legends."
+      },
+      "console-hint": {
+        "displayName": "Console hint",
+        "purpose": "Hints under labels, second lines of choice tiles."
+      },
+      "console-small": {
+        "displayName": "Console small",
+        "purpose": "Station minutes, widget state lines, the preview caption."
+      },
+      "console-sign": {
+        "displayName": "Console sign",
+        "purpose": "The track's sign: the time left to go-live."
+      },
+      "console-snippet": {
+        "displayName": "Console snippet",
+        "purpose": "Code to copy on the Install station."
       }
     },
     "shadows": [
@@ -200,6 +379,16 @@
         "name": "focus-inset",
         "value": "outline: 3px solid #2b241f; outline-offset: -3px",
         "purpose": "Focus on a code body, a table scroll area or a row in the list of chats, drawn inside the clipped frame."
+      },
+      {
+        "name": "console-focus",
+        "value": "outline: 3px solid #2b241f; outline-offset: 2px",
+        "purpose": "Focus on everything in the admin console."
+      },
+      {
+        "name": "console-field-focus",
+        "value": "outline: 2px solid transparent; box-shadow: 0 0 0 2px #2b241f",
+        "purpose": "A console field holding focus; the transparent outline shows in forced colours."
       }
     ],
     "motion": [
@@ -265,6 +454,18 @@
       {
         "name": "chat-wide",
         "value": "min-width: 720px"
+      },
+      {
+        "name": "console-preview-stacks",
+        "value": "max-width: 1199.98px"
+      },
+      {
+        "name": "console-column-above",
+        "value": "max-width: 899.98px"
+      },
+      {
+        "name": "console-track-vertical",
+        "value": "max-width: 639.98px"
       }
     ]
   },
@@ -364,11 +565,59 @@
       "description": "Data on paper in a 12px sand-edged frame: sticky sand header, sand hairlines and cell rules, no stripes, tabular figures; tools row with copy and show-all.",
       "html": "<figure class=\"ds-table\"><div class=\"ds-scroll\" tabindex=\"0\" role=\"region\" aria-label=\"Table: Building, Room, Weekdays, Weekends\"><table><thead><tr><th>Building</th><th>Room</th><th>Weekdays</th><th>Weekends</th></tr></thead><tbody><tr><td>House 1</td><td>Basement A</td><td>07:00 to 23:00</td><td>08:00 to 22:00</td></tr><tr><td>House 2</td><td>Basement B</td><td>07:00 to 23:00</td><td>08:00 to 22:00</td></tr><tr><td>House 3</td><td>Basement C</td><td>07:00 to 21:00</td><td>Closed</td></tr></tbody></table></div><div class=\"ds-tools\"><button class=\"ds-quiet\" type=\"button\"><svg viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M8 8h11v11H8zM5 16V5h11\"/></svg>Copy as CSV</button><button class=\"ds-quiet\" type=\"button\">Show all 14 rows</button></div></figure>",
       "css": ".ds-table{font-family:'Nunito Variable',Nunito,system-ui,sans-serif;margin:0;overflow:hidden;border-radius:12px;background:#fff;box-shadow:0 0 0 1px #e7dacb;color:#2b241f;max-width:360px}.ds-scroll{--edge:#fff;overflow:auto;background:linear-gradient(to right,var(--edge) 40%,transparent) left/28px 100% no-repeat local,linear-gradient(to left,var(--edge) 40%,transparent) right/28px 100% no-repeat local,radial-gradient(farthest-side at 0 50%,rgba(43,36,31,.22),transparent) left/12px 100% no-repeat scroll,radial-gradient(farthest-side at 100% 50%,rgba(43,36,31,.22),transparent) right/12px 100% no-repeat scroll,var(--edge);scrollbar-width:thin;scrollbar-color:rgba(111,98,90,.6) transparent}.ds-scroll:focus-visible{outline:3px solid #2b241f;outline-offset:-3px}.ds-table table{width:100%;border-collapse:separate;border-spacing:0;font-size:14.5px;line-height:1.45;font-variant-numeric:tabular-nums}.ds-table th{position:sticky;inset-block-start:0;padding:8px 12px;background:#e7dacb;font-weight:700;text-align:start;white-space:nowrap}.ds-table td{min-width:8ch;padding:8px 12px;border-block-start:1px solid #e7dacb;vertical-align:top}.ds-table :is(th,td)+:is(th,td){border-inline-start:1px solid #e7dacb}.ds-tools{display:flex;flex-wrap:wrap;align-items:center;gap:4px;padding:4px 6px;border-block-start:1px solid #e7dacb}.ds-quiet{display:inline-flex;align-items:center;gap:6px;min-height:36px;padding:6px 10px;border:0;border-radius:999px;background:transparent;color:#6f625a;font:inherit;font-size:14px;font-weight:650;white-space:nowrap;flex-shrink:0;cursor:pointer}.ds-quiet svg{width:18px;height:18px}.ds-quiet:hover{background:rgba(43,36,31,.06);color:#2b241f}.ds-quiet:focus-visible{outline:3px solid #2b241f;outline-offset:2px}"
+    },
+    {
+      "name": "Console primary action",
+      "kind": "button",
+      "refersTo": "console-button-primary",
+      "description": "The one Warm Ink action that ends a console form.",
+      "html": "<button class=\"ds-c-primary\" type=\"button\">Save</button>",
+      "css": ".ds-c-primary{font-family:'Nunito Variable',Nunito,system-ui,sans-serif;display:inline-flex;align-items:center;min-height:44px;padding:10px 22px;border:0;border-radius:999px;background:#2b241f;color:#fbf3ea;font-size:15px;font-weight:650;cursor:pointer;transition:background-color .15s ease-out}.ds-c-primary:hover{background:color-mix(in srgb,#2b241f 88%,#fbf3ea)}.ds-c-primary:focus-visible{outline:3px solid #2b241f;outline-offset:2px}.ds-c-primary:disabled{opacity:.45;cursor:default}"
+    },
+    {
+      "name": "Onboarding track",
+      "kind": "nav",
+      "refersTo": "console-station-dot",
+      "description": "Six stations to go-live, each signed with its minutes; the time left signed at the end.",
+      "html": "<section class=\"ds-track\" aria-label=\"Steps to go live\"><p class=\"ds-sign\">About 11 minutes to live</p><ol><li class=\"done\"><button type=\"button\"><span class=\"dot\"><svg viewBox=\"0 0 24 24\" width=\"18\" height=\"18\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M5 12.5l4.5 4.5L19 7.5\"/></svg></span><span class=\"name\">Agent</span><small>Done</small></button></li><li class=\"done\"><button type=\"button\"><span class=\"dot\"><svg viewBox=\"0 0 24 24\" width=\"18\" height=\"18\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M5 12.5l4.5 4.5L19 7.5\"/></svg></span><span class=\"name\">Sites</span><small>Done</small></button></li><li class=\"now\"><button type=\"button\" class=\"open\" aria-current=\"step\"><span class=\"dot\">3</span><span class=\"name\">Sign-in</span><small>about 3 min</small></button></li><li class=\"next\"><button type=\"button\"><span class=\"dot\">4</span><span class=\"name\">Look</span><small>about 4 min</small></button></li><li class=\"next\"><button type=\"button\"><span class=\"dot\">5</span><span class=\"name\">Install</span><small>about 3 min</small></button></li><li class=\"next\"><button type=\"button\"><span class=\"dot\">6</span><span class=\"name\">Go live</span><small>about 2 min</small></button></li></ol></section>",
+      "css": ".ds-track{font-family:'Nunito Variable',Nunito,system-ui,sans-serif;position:relative;color:#2b241f;font-size:15px}.ds-sign{position:absolute;top:0;inset-inline-end:0;margin:0;padding:5px 12px;border-radius:999px;background:#2b241f;color:#fbf3ea;font-size:13px;font-weight:650}.ds-track ol{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));margin:0;padding:48px 0 0;list-style:none}.ds-track li{position:relative}.ds-track li::before{content:'';position:absolute;top:13px;inset-inline:0;height:3px;background:#e7dacb}.ds-track li.done::before{background:#2b241f}.ds-track li:first-child::before{inset-inline-start:50%}.ds-track li:last-child::before{inset-inline-end:50%}.ds-track button{position:relative;display:grid;justify-items:center;gap:1px;width:100%;padding:0 4px 8px;border:0;border-radius:12px;background:none;font:inherit;color:inherit;cursor:pointer}.ds-track .dot{display:grid;place-items:center;width:28px;height:28px;margin-bottom:8px;border-radius:50%;background:#fff;box-shadow:0 0 0 2px #e7dacb;color:#6f625a;font-size:13px;font-weight:800}.ds-track .done .dot{background:#2b241f;box-shadow:none;color:#fbf3ea}.ds-track .now .dot{box-shadow:0 0 0 3px #2b241f;color:#2b241f}.ds-track .name{font-weight:650}.ds-track small{color:#6f625a;font-size:13px}.ds-track button:hover .name,.ds-track .open .name{text-decoration:underline 2px;text-underline-offset:5px}.ds-track button:focus-visible{outline:3px solid #2b241f;outline-offset:2px}"
+    },
+    {
+      "name": "Console field",
+      "kind": "input",
+      "refersTo": "console-field",
+      "description": "A labelled field with its hint; a 2px ink ring on focus.",
+      "html": "<div class=\"ds-c-field\"><label for=\"ds-c-f\">Title visitors will see</label><p>Shown at the top of the chat. You can change it later.</p><input id=\"ds-c-f\" type=\"text\" value=\"Ask Riverside\"></div>",
+      "css": ".ds-c-field{font-family:'Nunito Variable',Nunito,system-ui,sans-serif;display:grid;gap:4px;color:#2b241f}.ds-c-field label{font-size:14px;font-weight:650}.ds-c-field p{margin:0;color:#6f625a;font-size:13.5px}.ds-c-field input{font:inherit;font-size:15px;min-height:44px;padding:10px 14px;border:0;border-radius:12px;background:#fff;box-shadow:0 0 0 1px #e7dacb;color:#2b241f}.ds-c-field input:focus-visible{outline:2px solid transparent;box-shadow:0 0 0 2px #2b241f}"
+    },
+    {
+      "name": "Console choice tiles",
+      "kind": "chip",
+      "refersTo": "console-choice-tile",
+      "description": "Radio choices as sand-edged tiles; the chosen one ringed in ink.",
+      "html": "<ul class=\"ds-choices\"><li><label><input type=\"radio\" name=\"ds-m\"><span><b>Anyone</b><small>No sign-in. For public pages.</small></span></label></li><li class=\"chosen\"><label><input type=\"radio\" name=\"ds-m\" checked><span><b>Only signed-in visitors</b><small>For a portal, where visitors have already signed in.</small></span></label></li></ul>",
+      "css": ".ds-choices{font-family:'Nunito Variable',Nunito,system-ui,sans-serif;display:grid;gap:6px;margin:0;padding:0;list-style:none;color:#2b241f;font-size:15px}.ds-choices li{padding:10px 12px;border-radius:12px;box-shadow:0 0 0 1px #e7dacb}.ds-choices li.chosen{box-shadow:0 0 0 2px #2b241f}.ds-choices label{display:flex;gap:12px;align-items:flex-start;cursor:pointer}.ds-choices input{width:18px;height:18px;margin:2px 0 0;accent-color:#2b241f}.ds-choices input:focus-visible{outline:3px solid #2b241f;outline-offset:2px}.ds-choices b{display:block;font-weight:650}.ds-choices small{color:#6f625a;font-size:13.5px}"
+    },
+    {
+      "name": "Console station card",
+      "kind": "card",
+      "refersTo": "console-station-card",
+      "description": "The open station: its heading and purpose, then its form or content.",
+      "html": "<section class=\"ds-stop\" aria-label=\"Sites\"><h2 tabindex=\"-1\">Sites</h2><p>The only sites that may show this chat.</p></section>",
+      "css": ".ds-stop{font-family:'Nunito Variable',Nunito,system-ui,sans-serif;display:grid;gap:2px;padding:24px;border-radius:18px;background:#fff;box-shadow:0 0 0 1px #e7dacb;color:#2b241f}.ds-stop h2{margin:0;font-size:18px}.ds-stop p{margin:0;color:#6f625a;font-size:15px}"
+    },
+    {
+      "name": "Console snippet",
+      "kind": "custom",
+      "refersTo": "console-snippet",
+      "description": "Code to copy on the cream ground, labelled, with a quiet Copy.",
+      "html": "<figure class=\"ds-snippet\"><figcaption><span>HTML</span><button type=\"button\">Copy</button></figcaption><pre tabindex=\"0\"><code>&lt;script async src=\"https://chat.example/loader.js\" data-widget-id=\"w_demo\"&gt;&lt;/script&gt;</code></pre></figure>",
+      "css": ".ds-snippet{font-family:'Nunito Variable',Nunito,system-ui,sans-serif;margin:0;border-radius:12px;overflow:hidden;background:#fbf3ea;box-shadow:0 0 0 1px #e7dacb;color:#2b241f}.ds-snippet figcaption{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:4px 6px 4px 14px;border-bottom:1px solid #e7dacb;color:#6f625a;font-size:13px;font-weight:650}.ds-snippet button{font:inherit;font-size:14px;min-height:36px;padding:8px 12px;border:0;border-radius:999px;background:none;color:#6f625a;cursor:pointer}.ds-snippet button:hover{background:rgba(43,36,31,.06);color:#2b241f}.ds-snippet button:focus-visible{outline:3px solid #2b241f;outline-offset:2px}.ds-snippet pre{margin:0;padding:12px 14px;overflow:auto;font:13px/1.6 ui-monospace,'Cascadia Mono','SF Mono',Menlo,Consolas,monospace}.ds-snippet pre:focus-visible{outline:3px solid #2b241f;outline-offset:-3px}"
     }
   ],
   "narrative": {
     "northStar": "The Polite Guest",
-    "overview": "The widget is a friendly consumer app sitting on someone else's page. It arrives as one small round button in the customer's colour and opens into a soft, warm-grounded panel that looks like an app the visitor already knows how to use. It does not dress up the host page or compete with it: the host's design comes first, the customer's colour comes second, and the world's own materials (a warm cream ground, a soft sand border, a deep warm ink) stay quiet underneath.\n\nInside, the chat is a calm warm page: answers on white cards, the visitor's own words in quiet sand bubbles, and the customer's colour only on suggested questions and the send button. Type is a rounded humanist sans, self-hosted, set in plain short sentences. Rich answers (headings, lists, code and tables) are made from the same materials: code sits on the cream ground, tables on paper, both framed by a sand edge, and anything too wide scrolls inside its own frame rather than stretching the conversation.\n\nDepth is long, soft and low-contrast, tinted with the world's ink rather than grey. Motion is small and physical: a press that settles back with a slight overshoot, a panel that rises a short way and fades in without bouncing, three dots that breathe while an answer is on its way. Under reduced motion every movement goes; only the fade stays, and the dots hold still.\n\nThe world refuses the category default for chat widgets: no coloured header bar, no avatar, no brand-coloured message bubbles. The customer's colour appears only on things that can be pressed.",
+    "overview": "The widget is a friendly consumer app sitting on someone else's page. It arrives as one small round button in the customer's colour and opens into a soft, warm-grounded panel that looks like an app the visitor already knows how to use. It does not dress up the host page or compete with it: the host's design comes first, the customer's colour comes second, and the world's own materials (a warm cream ground, a soft sand border, a deep warm ink) stay quiet underneath.\n\nInside, the chat is a calm warm page: answers on white cards, the visitor's own words in quiet sand bubbles, and the customer's colour only on suggested questions and the send button. Type is a rounded humanist sans, self-hosted, set in plain short sentences. Rich answers (headings, lists, code and tables) are made from the same materials: code sits on the cream ground, tables on paper, both framed by a sand edge, and anything too wide scrolls inside its own frame rather than stretching the conversation.\n\nDepth is long, soft and low-contrast, tinted with the world's ink rather than grey. Motion is small and physical: a press that settles back with a slight overshoot, a panel that rises a short way and fades in without bouncing, three dots that breathe while an answer is on its way, and sketch rows that breathe the same way while the list of chats loads. Under reduced motion every movement goes; only the fade stays, and the dots and sketch rows hold still.\n\nThe world refuses the category default for chat widgets: no coloured header bar, no avatar, no brand-coloured message bubbles. The customer's colour appears only on things that can be pressed.\n\nThe admin console (`web/console`) is a second surface in the same world, calmer and tuned for forms and tables. Administrators take each widget along a track of six stations to go-live (Agent, Sites, Sign-in, Look, Install, Go live), each signed with its minutes, the time left signed at the track's end. It uses the chat's ground, sand, ink and umber, white cards with a sand edge and round pills, and draws no customer colour of its own: the brand appears only inside the chat's own preview. It is flat apart from that preview, which floats on the chat's Panel shadow.",
     "keyCharacteristics": [
       "Warm tinted ground, soft border and warm ink; never pure grey.",
       "The customer's brand colour fills only actionable elements: the launcher, suggested questions, send and stop.",
@@ -377,7 +626,8 @@
       "A press spring on release, a short rise-and-fade on open, no entry bounce.",
       "Full screen on small windows; a floating panel anchored to the launcher's corner elsewhere.",
       "Code and tables in their own 12px frames that scroll sideways, with a soft ink cue at an edge only while more lies that way.",
-      "Earlier chats as rows on one white, sand-edged card: in place of the conversation on narrow frames, a 288px column beside it from 720px."
+      "Earlier chats as rows on one white, sand-edged card: in place of the conversation on narrow frames, a 288px column beside it from 720px.",
+      "The admin console: the same materials, flat, with Warm Ink as its only action colour and the six-station track as its signature."
     ],
     "rules": [
       {
@@ -387,7 +637,22 @@
       },
       {
         "name": "The Warm Neutral Rule",
-        "body": "Every neutral, including shadow tint, comes from the world's warm ink family. No cool or pure greys.",
+        "body": "Every neutral, including shadow tint, comes from the world's warm ink family. No cool or pure greys. The one exception is the dark scheme's shadow, which is black.",
+        "section": "colors"
+      },
+      {
+        "name": "The Vanishing Brand Rule",
+        "body": "On Night Ground a brand colour under 1.5:1 against it (a near-black) gives way to Cream Ink, with ink on brand recomputed. Any other brand keeps its colour. The launcher sits on the customer's page, not on our ground, so it always keeps the brand.",
+        "section": "colors"
+      },
+      {
+        "name": "The Light Sheet Rule",
+        "body": "A diagram keeps a Paper White sheet in both schemes, because its source's colours assume a light page. Its tools below stay in the scheme.",
+        "section": "colors"
+      },
+      {
+        "name": "The Ink Action Rule",
+        "body": "The console has no brand of its own: Warm Ink fills its primary action, and the customer's colour appears only inside the chat preview and the colour field's own swatch.",
         "section": "colors"
       },
       {
@@ -407,25 +672,29 @@
       }
     ],
     "dos": [
-      "Do keep the brand colour on pressable things only (launcher, suggested questions, send/stop), and pick the text and glyph colour on it (white or black) by contrast at runtime.",
-      "Do tint every shadow with Warm Ink (`rgba(43,36,31,…)`) and keep it long and soft.",
-      "Do use the two-tone focus ring (3px white outline, 7px Warm Ink band) on anything the widget draws over the host page, and the 3px Warm Ink outline 2px off inside the chat.",
-      "Do put answers on Paper White cards with a 1px Soft Sand edge, and the visitor's words on Soft Sand bubbles, both at 18px.",
-      "Do keep tap targets for pressable things at least 44px (36px for secondary and quiet actions inside a card).",
-      "Do open with a 12px rise and a 200ms fade on `cubic-bezier(.16,1,.3,1)`, and keep only the fade under reduced motion.",
-      "Do spring only on release (`cubic-bezier(.34,1.56,.64,1)`), never on entry.",
-      "Do go full screen under 600px wide or 520px tall, with no radius and no border.",
-      "Do self-host the chat's font.",
-      "Do let wide code and tables scroll sideways inside their own 12px frame, with the soft ink edge cue, never widening the card or the conversation.",
-      "Do start an answer's headings at h2 (18px, 700); the chat's title is the only h1."
+      "**Do** keep the brand colour on pressable things only (launcher, suggested questions, send/stop), and pick the text and glyph colour on it (white or black) by contrast at runtime.",
+      "**Do** tint every shadow with Warm Ink (`rgba(43,36,31,…)`) and keep it long and soft.",
+      "**Do** use the two-tone focus ring (3px white outline, 7px Warm Ink band) on anything the widget draws over the host page, and the 3px Warm Ink outline 2px off inside the chat.",
+      "**Do** put answers on Paper White cards with a 1px Soft Sand edge, and the visitor's words on Soft Sand bubbles, both at 18px.",
+      "**Do** keep tap targets for pressable things at least 44px (36px for secondary and quiet actions inside a card).",
+      "**Do** open with a 12px rise and a 200ms fade on `cubic-bezier(.16,1,.3,1)`, and keep only the fade under reduced motion.",
+      "**Do** spring only on release (`cubic-bezier(.34,1.56,.64,1)`), never on entry.",
+      "**Do** go full screen under 600px wide or 520px tall, with no radius and no border.",
+      "**Do** self-host the chat's font.",
+      "**Do** let wide code and tables scroll sideways inside their own 12px frame, with the soft ink edge cue, never widening the card or the conversation.",
+      "**Do** start an answer's headings at h2 (18px, 700); the chat's title is the only h1.",
+      "**Do** sign every station of the console's track with its minutes, and the time left at the track's end.",
+      "**Do** end each console form with its one Warm Ink primary action, with the chat's own preview at 400px beside the four form stations."
     ],
     "donts": [
-      "Don't use a coloured header bar, an avatar, or brand-coloured message bubbles.",
-      "Don't fill backgrounds, borders or message surfaces with the brand colour; a brand outline is a border and is not allowed.",
-      "Don't use cool or pure greys for neutrals or shadows.",
-      "Don't run any animation while the widget is closed.",
-      "Don't bounce the panel on entry.",
-      "Don't stripe table rows; rows are separated by Soft Sand hairlines."
+      "**Don't** use a coloured header bar, an avatar, or brand-coloured message bubbles.",
+      "**Don't** fill backgrounds, borders or message surfaces with the brand colour; a brand outline is a border and is not allowed.",
+      "**Don't** use cool or pure greys for neutrals or shadows.",
+      "**Don't** run any animation while the widget is closed.",
+      "**Don't** bounce the panel on entry.",
+      "**Don't** stripe table rows; rows are separated by Soft Sand hairlines.",
+      "**Don't** use the customer's colour anywhere in the console outside the chat preview and the colour field.",
+      "**Don't** name a console section by `aria-labelledby`; use `aria-label` (Firefox crashes when axe scans it)."
     ]
   }
 }
