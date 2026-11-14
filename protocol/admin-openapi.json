@@ -5,6 +5,26 @@
     "version": "1"
   },
   "paths": {
+    "/admin/v1/sign-in": {
+      "get": {
+        "summary": "Where the console signs administrators in (no sign-in needed to read it)",
+        "operationId": "sign_in_admin_v1_sign_in_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object",
+                  "title": "Response Sign In Admin V1 Sign In Get"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/admin/v1/me": {
       "get": {
         "summary": "Who is signed in, and their role",
