@@ -19,7 +19,9 @@ export const strings = {
   newWidget: "New widget",
   noWidgets: "No widgets yet.",
   firstWidget: "Make your first one: it takes about 19 minutes.",
-  chooseWidget: "Choose a widget on the left, or make a new one.",
+  chooseWidget: "Choose a widget, or make a new one.",
+  track: "Steps to go live",
+  openNow: ", open",
   role: { platform: "platform administrator", tenant: "administrator", viewer: "viewer (read only)" } as Record<string, string>,
   station: {
     agent: "Agent",
@@ -193,9 +195,9 @@ export const strings = {
   pageAddress: "Page address",
   check: "Check",
   checking: "Checking",
-  passed: "Yes:",
-  failed: "No:",
-  checkName: { page: "the page answers", script: "the chat's script tag is there", policy: "the content policy lets the chat in" },
+  passed: "Yes",
+  failed: "No",
+  checkName: { page: "Does the page answer?", script: "Is the chat's script tag on it?", policy: "Does its content policy let the chat in?" },
   checkFailed: "the check could not run; try again in a moment",
 
   // Go live

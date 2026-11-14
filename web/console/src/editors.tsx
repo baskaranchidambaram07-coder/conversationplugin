@@ -255,6 +255,7 @@ export function SignInEditor(props: {
   const { tenant, signIn, identity, onChange, readOnly, onProblem } = props;
   const [secrets, reload] = useSecrets(tenant, onProblem);
   const [made, setMade] = useState<Made | null>(null);
+  const [copied, setCopied] = useState(false);
   const method = identity && !identity.secret ? "provider" : "portal";
   const secretName = identity?.secret ?? "portal";
   const existing = (secrets ?? []).find((secret) => secret.kind === "host" && secret.name === secretName);
@@ -348,8 +349,17 @@ export function SignInEditor(props: {
                   <code>
                     {made.key_id}:{made.secret}
                   </code>
-                  <button type="button" className="quiet" onClick={() => void navigator.clipboard?.writeText(`${made.key_id}:${made.secret}`)}>
-                    {t.copy}
+                  <button
+                    type="button"
+                    className="quiet"
+                    onClick={() =>
+                      void navigator.clipboard?.writeText(`${made.key_id}:${made.secret}`).then(() => {
+                        setCopied(true);
+                        setTimeout(() => setCopied(false), 2000);
+                      })
+                    }
+                  >
+                    {copied ? t.copied : t.copy}
                   </button>
                 </div>
               )}

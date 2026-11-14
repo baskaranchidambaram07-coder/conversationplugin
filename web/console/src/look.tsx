@@ -73,7 +73,8 @@ export function LookEditor(props: { value: Look; signedIn: boolean; onChange: (l
                 onChange={(event) => {
                   const next = [...slots];
                   next[index] = event.target.value;
-                  change({ suggested_prompts: next.filter(Boolean) }); // an emptied question is dropped
+                  while (next.length && !next.at(-1)) next.pop(); // an emptied question keeps its place; saving drops it
+                  change({ suggested_prompts: next });
                 }}
               />
             </li>
@@ -186,7 +187,7 @@ export function Preview({ look, widgetId }: { look: Look; widgetId: string }) {
 
   useEffect(() => {
     if (!ready) return;
-    const config = { v: 1, widget_id: widgetId, ...look };
+    const config = { v: 1, widget_id: widgetId, ...look, suggested_prompts: look.suggested_prompts?.filter(Boolean) };
     frame.current?.contentWindow?.postMessage({ ucp: 1, type: "preview", config, scheme: shown }, location.origin);
   }, [ready, look, shown, widgetId]);
 

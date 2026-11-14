@@ -168,8 +168,8 @@ export function Install(props: { widgetId: string; gateway: string | null; docum
           <ul className="checks" aria-live="polite">
             {checks.map((one) => (
               <li key={one.check} className={one.ok ? "good" : "bad"}>
-                <b>{one.ok ? t.passed : t.failed}</b> {t.checkName[one.check]}
-                {one.detail && (one.check !== "page" || !one.ok) ? `: ${one.detail}` : ""}
+                {t.checkName[one.check]} <b>{one.ok ? t.passed : t.failed}</b>
+                {one.detail && (one.check !== "page" || !one.ok) ? ` — ${one.detail}` : ""}
               </li>
             ))}
           </ul>

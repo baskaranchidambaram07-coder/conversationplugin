@@ -329,7 +329,7 @@ function Track(props: {
 }) {
   const { track, shown, sign, reachable, onOpen } = props;
   return (
-    <section className="journey" aria-label={t.station.live}>
+    <section className="journey" aria-label={t.track}>
       <p className="sign">{sign}</p>
       <ol className="track">
         {track.map((one, index) => (
@@ -338,7 +338,6 @@ function Track(props: {
               type="button"
               className={one.id === shown ? "open" : undefined}
               aria-current={one.state === "now" ? "step" : undefined}
-              aria-pressed={one.id === shown}
               aria-disabled={!reachable(one.id) || undefined}
               title={reachable(one.id) ? undefined : t.notYet}
               onClick={() => reachable(one.id) && onOpen(one.id)}
@@ -346,6 +345,7 @@ function Track(props: {
               <span className="dot">{one.state === "done" ? <Glyph path={CHECK} /> : index + 1}</span>
               <span className="name">{t.station[one.id]}</span>
               <small>{one.state === "done" ? t.done : t.minutes(one.minutes)}</small>
+              {one.id === shown && <span className="hidden">{t.openNow}</span>}
             </button>
           </li>
         ))}
@@ -356,17 +356,16 @@ function Track(props: {
 
 const EDITED: StationId[] = ["agent", "sites", "sign-in", "look"];
 
-/** The editor of one of the first three stations, over a copy of the document. */
+/** The editor of one of the first four stations, over a copy of the document. */
 function StationEditor(props: {
   station: StationId;
-  widgetId: string;
   tenant: string;
   document: WidgetDocument;
   onChange: (document: WidgetDocument) => void;
   readOnly: boolean;
   onProblem: (error: unknown) => void;
 }) {
-  const { station, widgetId, tenant, document, onChange, readOnly, onProblem } = props;
+  const { station, tenant, document, onChange, readOnly, onProblem } = props;
   if (station === "agent") {
     return (
       <AgentEditor
@@ -380,15 +379,12 @@ function StationEditor(props: {
   }
   if (station === "look") {
     return (
-      <div className="beside">
-        <LookEditor
-          value={document.public as Look}
-          signedIn={document.sign_in !== "anonymous"}
-          onChange={(look) => onChange({ ...document, public: look })}
-          readOnly={readOnly}
-        />
-        <Preview look={document.public as Look} widgetId={widgetId} />
-      </div>
+      <LookEditor
+        value={document.public as Look}
+        signedIn={document.sign_in !== "anonymous"}
+        onChange={(look) => onChange({ ...document, public: look })}
+        readOnly={readOnly}
+      />
     );
   }
   if (station === "sites") {
@@ -444,6 +440,7 @@ function Widget(props: {
   const [conflict, setConflict] = useState(false);
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
+  useEffect(() => window.document.getElementById("stop-title")?.focus(), [open]);
 
   const load = useCallback(() => {
     void call<Draft>("GET", `/widgets/${row.widget_id}/draft`).then((found) => {
@@ -457,7 +454,7 @@ function Widget(props: {
   if (!draft || !edited) return <div className="ring" role="status" aria-label={t.loading} />;
   const document = draft.document;
   const track = stations({
-    set: ["agent", "sites", "sign-in", "look"],
+    set: row.version === null && draft.revision <= 1 ? ["agent", "sites", "sign-in"] : ["agent", "sites", "sign-in", "look"],
     version: row.version,
     unpublished: row.unpublished || row.version === null,
     signedIn: document.sign_in !== "anonymous",
@@ -467,15 +464,14 @@ function Widget(props: {
   const changed = JSON.stringify(edited) !== JSON.stringify(document);
 
   async function save() {
-    const gap = missing(shown, edited!);
+    const sent = { ...edited!, public: { ...edited!.public, suggested_prompts: edited!.public.suggested_prompts?.filter(Boolean) } };
+    const gap = missing(shown, sent);
     if (gap) return setFaults([gap]);
     setSaving(true);
     try {
-      const { revision } = await call<{ revision: number }>("PUT", `/widgets/${row.widget_id}/draft`, {
-        revision: draft!.revision,
-        document: edited,
-      });
-      setDraft({ revision, document: edited! });
+      const { revision } = await call<{ revision: number }>("PUT", `/widgets/${row.widget_id}/draft`, { revision: draft!.revision, document: sent });
+      setDraft({ revision, document: sent });
+      setEdited(sent);
       setFaults([]);
       setSaved(true);
       onSaved();
@@ -498,7 +494,7 @@ function Widget(props: {
       <Track
         track={track}
         shown={shown}
-        sign={row.version !== null && !left ? standing(row) : t.timeLeft(left)}
+        sign={row.version !== null ? standing(row) : t.timeLeft(left)}
         reachable={() => true}
         onOpen={(id) => {
           setEdited(document);
@@ -507,46 +503,49 @@ function Widget(props: {
           go(`/widgets/${row.widget_id}/${id}`);
         }}
       />
-      <section className="card stop" aria-labelledby="stop-title">
+      {/* named by aria-label: Firefox crashes when axe scans a section named by aria-labelledby */}
+      <section className="card stop" aria-label={t.station[shown]}>
         <header>
-          <h2 id="stop-title">{t.station[shown]}</h2>
+          <h2 id="stop-title" tabIndex={-1}>{t.station[shown]}</h2>
           <p>{t.stationIntro[shown]}</p>
         </header>
         {EDITED.includes(shown) ? (
-          <>
-            {readOnly && <p className="note">{t.readOnly}</p>}
-            <StationEditor
-              station={shown}
-              widgetId={row.widget_id}
-              tenant={tenant}
-              document={edited}
-              onChange={(next) => {
-                setEdited(next);
-                setSaved(false);
-              }}
-              readOnly={readOnly}
-              onProblem={onProblem}
-            />
-            <Faults faults={faults} />
-            {conflict && (
-              <p className="problem" role="alert">
-                {t.conflict}{" "}
-                <button type="button" className="secondary" onClick={load}>
-                  {t.reload}
-                </button>
-              </p>
-            )}
-            {!readOnly && (
-              <div className="actions">
-                <button type="button" className="primary" disabled={!changed || saving} onClick={() => void save()}>
-                  {saving ? t.saving : t.save}
-                </button>
-                <output aria-live="polite" className="note">
-                  {saved && !changed ? t.saved : ""}
-                </output>
-              </div>
-            )}
-          </>
+          <div className={`beside ${shown}`}>
+            <div className="form">
+              {readOnly && <p className="note">{t.readOnly}</p>}
+              <StationEditor
+                station={shown}
+                tenant={tenant}
+                document={edited}
+                onChange={(next) => {
+                  setEdited(next);
+                  setSaved(false);
+                }}
+                readOnly={readOnly}
+                onProblem={onProblem}
+              />
+              <Faults faults={faults} />
+              {conflict && (
+                <p className="problem" role="alert">
+                  {t.conflict}{" "}
+                  <button type="button" className="secondary" onClick={load}>
+                    {t.reload}
+                  </button>
+                </p>
+              )}
+              {!readOnly && (
+                <div className="actions">
+                  <button type="button" className="primary" disabled={!changed || saving} onClick={() => void save()}>
+                    {saving ? t.saving : t.save}
+                  </button>
+                  <output aria-live="polite" className="note">
+                    {saved && !changed ? t.saved : ""}
+                  </output>
+                </div>
+              )}
+            </div>
+            <Preview look={edited.public as Look} widgetId={row.widget_id} />
+          </div>
         ) : shown === "install" ? (
           <Install widgetId={row.widget_id} gateway={gateway} document={document} />
         ) : shown === "live" ? (
@@ -594,11 +593,24 @@ function NewWidget(props: {
   const [faults, setFaults] = useState<string[]>([]);
   const [creating, setCreating] = useState(false);
   const titleId = useId();
+  useEffect(() => window.document.getElementById("stop-title")?.focus(), [open]);
 
   const track = stations({ set, version: null, unpublished: true, signedIn: document.sign_in !== "anonymous" });
   const next = track.find((one) => one.state === "now")?.id ?? "agent";
   const reachable = (id: StationId) => EDITED.includes(id) && (set.includes(id) || id === next);
   const shown = open && reachable(open) ? open : next;
+
+  const appearance: Look = {
+    title: title.trim(),
+    welcome_message: null,
+    suggested_prompts: [],
+    ai_notice: null,
+    brand_color: "#2B241F",
+    logo_url: null,
+    color_scheme: "auto",
+    launcher_position: "bottom-right",
+    history_enabled: document.sign_in !== "anonymous",
+  };
 
   async function carryOn() {
     const gap = !title.trim() ? t.nameMissing : missing(shown, document);
@@ -611,17 +623,6 @@ function NewWidget(props: {
     }
     setCreating(true);
     try {
-      const appearance = {
-        title: title.trim(),
-        welcome_message: null,
-        suggested_prompts: [],
-        ai_notice: null,
-        brand_color: "#2B241F",
-        logo_url: null,
-        color_scheme: "auto",
-        launcher_position: "bottom-right",
-        history_enabled: document.sign_in !== "anonymous",
-      };
       const { identity, ...rest } = document;
       const made = await call<{ widget_id: string }>("POST", `/tenants/${tenant}/widgets`, {
         document: { ...rest, ...(document.sign_in === "anonymous" ? {} : { identity }), public: appearance },
@@ -645,25 +646,22 @@ function NewWidget(props: {
         <input id={titleId} type="text" value={title} maxLength={80} onChange={(event) => setTitle(event.target.value)} />
       </div>
       <Track track={track} shown={shown} sign={t.timeLeft(timeLeft(track))} reachable={reachable} onOpen={(id) => go(`/widgets/new/${id}`)} />
-      <section className="card stop" aria-labelledby="stop-title">
+      <section className="card stop" aria-label={t.station[shown]}>
         <header>
-          <h2 id="stop-title">{t.station[shown]}</h2>
+          <h2 id="stop-title" tabIndex={-1}>{t.station[shown]}</h2>
           <p>{t.stationIntro[shown]}</p>
         </header>
-        <StationEditor
-          station={shown}
-          widgetId=""
-          tenant={tenant}
-          document={document}
-          onChange={setDocument}
-          readOnly={false}
-          onProblem={onProblem}
-        />
-        <Faults faults={faults} />
-        <div className="actions">
-          <button type="button" className="primary" disabled={creating} onClick={() => void carryOn()}>
-            {shown === "sign-in" ? (creating ? t.creating : t.create) : t.continue}
-          </button>
+        <div className={`beside ${shown}`}>
+          <div className="form">
+            <StationEditor station={shown} tenant={tenant} document={document} onChange={setDocument} readOnly={false} onProblem={onProblem} />
+            <Faults faults={faults} />
+            <div className="actions">
+              <button type="button" className="primary" disabled={creating} onClick={() => void carryOn()}>
+                {shown === "sign-in" ? (creating ? t.creating : t.create) : t.continue}
+              </button>
+            </div>
+          </div>
+          <Preview look={appearance} widgetId="" />
         </div>
       </section>
     </>

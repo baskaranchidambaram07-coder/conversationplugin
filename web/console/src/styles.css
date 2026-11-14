@@ -217,6 +217,12 @@ button {
   font-weight: 650;
 }
 
+.tenant select {
+  appearance: none;
+  padding-inline-end: 36px;
+  background: var(--paper) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%232b241f' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9.5l6 6 6-6'/%3E%3C/svg%3E") no-repeat right 12px center / 16px;
+}
+
 .who {
   display: flex;
   align-items: center;
@@ -518,7 +524,8 @@ button {
 
 .field input:focus-visible,
 .field textarea:focus-visible {
-  outline: 0;
+  outline: 2px solid transparent;
+  outline-offset: 0;
   box-shadow: 0 0 0 2px var(--ink);
 }
 
@@ -723,6 +730,12 @@ legend {
   align-items: start;
 }
 
+.beside .form {
+  display: grid;
+  gap: 18px;
+  min-width: 0;
+}
+
 .editor textarea {
   resize: vertical;
   line-height: 1.5;
@@ -848,6 +861,10 @@ legend {
     grid-template-columns: minmax(0, 1fr);
   }
 
+  .beside:not(.look) .preview {
+    display: none; /* stacked, the preview earns its length only where the look is edited */
+  }
+
   .preview {
     position: static;
     max-width: 400px;
@@ -892,6 +909,7 @@ legend {
   max-height: 320px;
   padding: 12px 14px;
   overflow: auto;
+  scrollbar-color: rgba(111, 98, 90, 0.6) transparent;
   font: 13px/1.6 ui-monospace, "Cascadia Mono", "SF Mono", Menlo, Consolas, monospace;
   tab-size: 2;
 }
@@ -976,7 +994,6 @@ legend {
 
 .versions {
   display: grid;
-  gap: 8px;
   margin: 0;
   padding: 0;
   list-style: none;
@@ -985,9 +1002,12 @@ legend {
 .versions > li {
   display: grid;
   gap: 10px;
-  padding: 10px 12px;
-  border-radius: 12px;
-  box-shadow: 0 0 0 1px var(--sand);
+  padding: 12px 0;
+  border-block-end: 1px solid var(--sand);
+}
+
+.versions > li:first-child {
+  padding-block-start: 0;
 }
 
 .versions .line {
@@ -1122,7 +1142,18 @@ code {
   .card,
   .dot,
   .tenant select,
-  .tenant output {
+  .tenant output,
+  .field input,
+  .field textarea,
+  .questions input,
+  .colour input[type="text"],
+  .secondary,
+  .choices li,
+  .snippet {
     border: 1px solid CanvasText;
+  }
+
+  .choices li.chosen {
+    border-width: 2px;
   }
 }

@@ -1,18 +1,14 @@
 import AxeBuilder from "@axe-core/playwright";
-import { expect, type Page, test } from "@playwright/test";
+import { expect, type Locator, type Page, test } from "@playwright/test";
 
 // The admin console (M9), served by the admin API in the stack under test (backend/devstack.py), signing in through
 // the stand-in company identity provider with the authorization-code flow and PKCE, as Cognito or Entra ID would.
 const CONSOLE = "http://127.0.0.1:8201";
 
 async function serious(page: Page) {
-  // The automated Firefox on the Windows build machine crashes in axe scans of the console's forms (found on 14
-  // November 2026; typing, or a scan of a plain page, does not crash it). Linux Firefox in the pipeline scans them all,
-  // except the chat inside the Look station's preview, which crashes it too; the chat is scanned in its own suites.
-  const firefox = test.info().project.name === "firefox";
-  if (firefox && process.platform === "win32") return [];
-  const scan = new AxeBuilder({ page }).withTags(["wcag2a", "wcag2aa", "wcag21a", "wcag21aa", "wcag22aa"]);
-  const { violations } = await (firefox ? scan.exclude(".preview iframe") : scan).analyze();
+  const { violations } = await new AxeBuilder({ page })
+    .withTags(["wcag2a", "wcag2aa", "wcag21a", "wcag21aa", "wcag22aa"])
+    .analyze();
   return violations.filter((v) => v.impact === "serious" || v.impact === "critical").map((v) => v.id);
 }
 
@@ -44,7 +40,7 @@ test("an administrator signs in with the company provider and lands where they w
   await expect(page).toHaveURL(`${CONSOLE}/widgets/w_gateway/look`);
   await expect(page.getByRole("heading", { level: 1, name: "Ask the College" })).toBeVisible();
   await expect(page.getByText(`${operator} · platform administrator`)).toBeVisible();
-  await expect(page.getByRole("button", { name: /Look/, pressed: true })).toBeVisible();
+  await expect(page.getByRole("button", { name: /Look.*, open/ })).toBeVisible();
   await expect(page.getByLabel("Colour of buttons")).toHaveValue("#5B2A86");
   await expect(page.getByText("Live · version 1").first()).toBeVisible();
   expect(await serious(page)).toEqual([]);
@@ -53,7 +49,7 @@ test("an administrator signs in with the company provider and lands where they w
   await expect(page).toHaveURL(`${CONSOLE}/widgets/w_gateway/sites`);
   await expect(page.getByText("http://127.0.0.1:4174")).toBeVisible();
   await page.goBack();
-  await expect(page.getByRole("button", { name: /Look/, pressed: true })).toBeVisible();
+  await expect(page.getByRole("button", { name: /Look.*, open/ })).toBeVisible();
 
   await page.getByRole("button", { name: "Sign out" }).click();
   await expect(page.getByRole("heading", { name: "Sign in to set up your assistant" })).toBeVisible();
@@ -84,6 +80,20 @@ const FAKE_PF = {
   "Service user name": "fake-user",
   "Service user password": "fake-password",
 };
+const FAKE_PROFILE = {
+  base_url: "http://127.0.0.1:8100", tenant: "fake-tenant", workspace_id: "fake-workspace", agent_version_id: "fake-agent-version",
+  api_key: "fake-api-key", username: "fake-user", password: "fake-password",
+};
+
+/** A draft for a widget anyone may use, on the test server's pages, answered through the fake PF connection. */
+function anonymous(title: string) {
+  return {
+    public: { title, welcome_message: null, suggested_prompts: [], ai_notice: null, brand_color: "#1F6F5C", logo_url: null, color_scheme: "auto", launcher_position: "bottom-right", history_enabled: false },
+    allowed_domains: ["http://127.0.0.1:4174"],
+    sign_in: "anonymous",
+    agent_profile: "fake-pf",
+  };
+}
 
 async function operatorApi(page: Page) {
   const reply = await page.request.get("http://127.0.0.1:8300/token?sub=onboarding-operator");
@@ -129,6 +139,8 @@ test("a new widget: a connection added and tested, a site, sign-in, then its dra
   await expect(page).toHaveURL(new RegExp(`${CONSOLE}/widgets/w_[A-Za-z0-9_-]+/look$`));
   await expect(page.getByRole("heading", { level: 1, name: "Ask Riverside" })).toBeVisible();
   await expect(page.getByRole("link", { name: /Ask Riverside Not live yet/ })).toHaveAttribute("aria-current", "page");
+  await expect(page.getByRole("button", { name: /Look/ })).toHaveAttribute("aria-current", "step"); // not done until saved
+  await expect(page.getByText("About 9 minutes to live")).toBeVisible();
   const created = (await api("GET", `/tenants/${tenant}/widgets`)) as { widget_id: string }[];
   expect(created).toHaveLength(1);
 });
@@ -217,16 +229,16 @@ test("the install code is filled in for the widget, and a page of the site is ch
   const address = page.getByLabel("Page address");
   await address.fill("http://127.0.0.1:4174/hosts/gateway.html");
   await page.getByRole("button", { name: "Check", exact: true }).click();
-  await expect(page.getByText("Yes: the chat's script tag is there")).toBeVisible();
-  await expect(page.getByText("Yes: the page answers")).toBeVisible();
+  await expect(page.getByText("Is the chat's script tag on it? Yes")).toBeVisible();
+  await expect(page.getByText("Does the page answer? Yes")).toBeVisible();
 
   await address.fill("http://127.0.0.1:4174/hosts/plain.html");
   await page.getByRole("button", { name: "Check", exact: true }).click();
-  await expect(page.getByText("No: the chat's script tag is there: add the script tag for this widget")).toBeVisible();
+  await expect(page.getByText("Is the chat's script tag on it? No — add the script tag for this widget")).toBeVisible();
 
   await address.fill("https://elsewhere.example/");
   await page.getByRole("button", { name: "Check", exact: true }).click();
-  await expect(page.getByText("No: the page answers: the page is not on one of this widget's allowed sites")).toBeVisible();
+  await expect(page.getByText("Does the page answer? No — the page is not on one of this widget's allowed sites")).toBeVisible();
   expect(await serious(page)).toEqual([]);
 });
 
@@ -353,4 +365,74 @@ test("a new administrator onboards a widget from the console alone, and a visito
   const chat = visitor.frameLocator("[data-ucp] iframe");
   await chat.getByRole("button", { name: "What are your opening hours?" }).click();
   await expect(chat.getByRole("article").getByText("READY", { exact: true })).toBeVisible();
+});
+
+/** Presses Tab (or Shift+Tab) until the element has the focus, as a keyboard user reaches it; fails if it never does. */
+async function tabTo(page: Page, target: Locator, key = "Tab") {
+  for (let presses = 0; presses < 80; presses++) {
+    await page.keyboard.press(key);
+    if (await target.evaluate((element) => element === document.activeElement)) return;
+  }
+  throw new Error(`Tab never reaches ${target}`);
+}
+
+test("the keyboard alone moves along the track, edits, saves and publishes", async ({ page }, info) => {
+  const api = await operatorApi(page);
+  const { tenant_id: tenant } = await api("POST", "/tenants", { name: `Keys ${info.project.name} ${Date.now().toString(36)}` });
+  await api("PUT", `/tenants/${tenant}/agent-profiles/fake-pf`, FAKE_PROFILE);
+  const { widget_id: widget } = await api("POST", `/tenants/${tenant}/widgets`, { document: anonymous("Ask Keys") });
+
+  await signIn(page, `/widgets/${widget}/agent`, await platformAdministrator(page, "keys"));
+  await expect(page.getByRole("button", { name: /Agent.*, open/ })).toBeVisible();
+  await tabTo(page, page.getByRole("button", { name: /Look/ }));
+  await page.keyboard.press("Enter");
+  await expect(page).toHaveURL(`${CONSOLE}/widgets/${widget}/look`);
+  await tabTo(page, page.getByLabel("Title", { exact: true }));
+  await page.keyboard.press("ControlOrMeta+a");
+  await page.keyboard.type("Ask Keys Again");
+  await tabTo(page, page.getByRole("radio", { name: "Bottom right" })); // Tab reaches a group's chosen option; arrows change it
+  await page.keyboard.press("ArrowDown");
+  await tabTo(page, page.getByRole("button", { name: "Save" }));
+  await page.keyboard.press("Enter");
+  await expect(page.getByText("Saved. Visitors see it once you publish.")).toBeVisible();
+
+  await tabTo(page, page.getByRole("button", { name: /Go live/ }), "Shift+Tab"); // back up to the track
+  await page.keyboard.press("Enter");
+  await tabTo(page, page.getByRole("button", { name: "Publish version 1" }));
+  await page.keyboard.press("Enter");
+  await expect(page.getByText("Published. Version 1 is live")).toBeVisible();
+  const config = await page.request.get(`http://localhost:8200/v1/widgets/${widget}/config`);
+  expect(await config.json()).toMatchObject({ title: "Ask Keys Again", launcher_position: "bottom-left" });
+});
+
+test("a connection's keys and a shared secret are never shown again once saved", async ({ page }, info) => {
+  const api = await operatorApi(page);
+  const { tenant_id: tenant } = await api("POST", "/tenants", { name: `Secrets ${info.project.name} ${Date.now().toString(36)}` });
+  await api("PUT", `/tenants/${tenant}/agent-profiles/fake-pf`, FAKE_PROFILE);
+  await api("POST", `/tenants/${tenant}/host-secrets/portal`);
+  const document = { ...anonymous("Residents"), sign_in: "signed_in", identity: { provider: "portal", issuer: "riverside-portal", secret: "portal" } };
+  const { widget_id: widget } = await api("POST", `/tenants/${tenant}/widgets`, { document });
+  const typed = async () => page.locator("input, textarea").evaluateAll((fields) => fields.map((field) => (field as HTMLInputElement).value).join("\n"));
+
+  await signIn(page, `/widgets/${widget}/agent`, await platformAdministrator(page, "keeper"));
+  await page.getByRole("button", { name: "Add a connection" }).click();
+  const second = { ...FAKE_PF, "Name of the connection": "second", "API key": "second-api-key", "Service user password": "second-password" };
+  for (const [label, value] of Object.entries(second)) await page.getByLabel(label, { exact: true }).fill(value);
+  await page.getByRole("button", { name: "Save connection" }).click();
+  await expect(page.getByRole("radio", { name: /second/ })).toBeVisible();
+  expect(await typed()).not.toMatch(/second-api-key|second-password/);
+  await expect(page.locator("body")).not.toContainText(/second-api-key|second-password/);
+
+  await page.getByRole("button", { name: /Sign-in/ }).click();
+  await page.getByRole("button", { name: "Make a new secret" }).click();
+  await expect(page.getByText("Copy this now: it will not be shown again.")).toBeVisible();
+  const made = (await page.locator(".once code").textContent())!.trim();
+  expect(made).toMatch(/^\S+:\S{20,}$/);
+  await page.getByRole("button", { name: /Agent/ }).click();
+  await page.getByRole("button", { name: /Sign-in/ }).click();
+  await expect(page.getByText(/The secret “portal” exists/)).toBeVisible();
+  await expect(page.locator("body")).not.toContainText(made.split(":")[1]);
+  await page.reload();
+  await expect(page.getByRole("button", { name: "Make a new secret" })).toBeVisible();
+  await expect(page.locator("body")).not.toContainText(made.split(":")[1]);
 });
