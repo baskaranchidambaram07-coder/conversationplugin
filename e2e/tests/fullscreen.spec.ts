@@ -15,8 +15,7 @@ test("on a desktop the chat fills the window and goes back to its panel; the pag
   const frame = chat(page);
 
   await frame.getByRole("button", { name: "Open full screen" }).click();
-  await expect.poll(async () => (await box(page))?.width).toBe(1280);
-  expect((await box(page))?.height).toBe(800);
+  await expect.poll(() => box(page)).toMatchObject({ width: 1280, height: 800 }); // once the opening animation ends
   expect(await page.evaluate(() => document.documentElement.style.overflow)).toBe("hidden");
   // Laid out as a conversation app: the composer and the suggested questions in the middle, no answer cards.
   await expect(frame.locator(".chat.page.empty footer .prompts")).toBeVisible();
