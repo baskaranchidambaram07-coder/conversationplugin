@@ -126,6 +126,30 @@
       "Resource": "*"
     },
     {
+      "Sid": "ConsoleSignInPoolCreate",
+      "Effect": "Allow",
+      "Action": "cognito-idp:CreateUserPool",
+      "Resource": "*",
+      "Condition": {
+        "StringEquals": { "aws:RequestTag/project": "ucp", "aws:RequestTag/environment": "dev" }
+      }
+    },
+    {
+      "Sid": "ConsoleSignInProjectPools",
+      "Effect": "Allow",
+      "Action": "cognito-idp:*",
+      "Resource": "arn:aws:cognito-idp:us-east-1:*:userpool/*",
+      "Condition": {
+        "StringEquals": { "aws:ResourceTag/project": "ucp", "aws:ResourceTag/environment": "dev" }
+      }
+    },
+    {
+      "Sid": "ConsoleSignInLookups",
+      "Effect": "Allow",
+      "Action": ["cognito-idp:ListUserPools", "cognito-idp:DescribeUserPoolDomain"],
+      "Resource": "*"
+    },
+    {
       "Sid": "ProjectRolesReadAndTidy",
       "Effect": "Allow",
       "Action": [

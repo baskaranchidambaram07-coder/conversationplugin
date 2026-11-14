@@ -14,7 +14,7 @@ Status: 12 November 2026. Everything marked "verified" was run on that date, on 
 | Container image | Verified in the pipeline: it builds, with the loader and chat inside, and answers | Nothing |
 | Local database | PostgreSQL 17 runs while a test command runs, then stops | Your decision on running it as a Windows service |
 | Infrastructure tool | Terraform 1.17.2 builds the dev environment (`infra/aws`); Trivy 0.76.2 checks it | Nothing |
-| AWS access for development | Verified: 14 needed actions allowed, 8 forbidden ones refused (deployer policy version 2) | Nothing |
+| AWS access for development | Verified: 14 needed actions allowed, 8 forbidden ones refused (deployer policy version 2) | An administrator to publish the deployer policy's Cognito statements, for the hosted console (`infra/aws/iam`) |
 | Dev environment on AWS | Built and proven on 13 November 2026, run on demand (`infra/aws/README.md`) | Production in London |
 | Purple Fabric staging | Verified by live capture | Remaining questions in `pf-capability-sheet.md` |
 | Production in London | Not started | Account access and web addresses |
@@ -101,12 +101,13 @@ Region `us-east-1`, built with Terraform 1.17.2. Every resource name starts with
 | Service | Purpose |
 |---|---|
 | VPC across two zones, with public and private subnets and security groups | The gateway in a public subnet with no NAT (your choice for dev), reachable only from the load balancer; the database private, with no route out |
-| CloudFront | HTTPS on an address AWS provides; caches the chat's files; stays while asleep and answers that the environment is asleep |
+| CloudFront | HTTPS on an address AWS provides; caches the chat's files; stays while asleep and answers that the environment is asleep. The admin console has an address of its own |
 | Application load balancer | Only CloudFront's addresses with its secret header get in; holds long streamed replies open; removed while asleep |
-| ECS on Fargate | The gateway, one task of 1 vCPU and 2 GB; it serves the loader and the chat as well as the API; removed while asleep |
+| ECS on Fargate | The gateway, one task of 1 vCPU and 2 GB; it serves the loader and the chat as well as the API. The admin API and console run beside it in the same task. Removed while asleep |
+| Cognito | The console's administrators: a user pool with no self sign-up and an authenticator app required, on Cognito's own sign-in pages |
 | RDS for PostgreSQL 17 | Conversation history and configuration; encrypted, seven days of point-in-time backups; stopped while asleep |
 | ECR | The gateway's images, scanned on push, commit tags fixed |
-| Secrets Manager | The database connection, session keys, host secrets and the PF profile, under `ucp-dev/` |
+| Secrets Manager | The database connection, session keys, host secrets, the PF profile and the key that seals what administrators set, under `ucp-dev/` |
 | CloudWatch Logs and two alarms | The gateway's logs; alarms for server errors and no healthy gateway |
 | IAM roles under a permissions boundary | What the running service and the pipeline may do |
 | GitHub sign-in to AWS | Lets the pipeline deploy without stored access keys |

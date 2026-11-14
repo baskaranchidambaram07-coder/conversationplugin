@@ -13,6 +13,12 @@ ephemeral "random_password" "smoke_secret" {
   special = false
 }
 
+# Seals the secrets administrators set through the admin API (ucp.vault): 43 base64url characters are 32 bytes.
+ephemeral "random_password" "secrets_key" {
+  length  = 43
+  special = false
+}
+
 resource "aws_secretsmanager_secret" "database_url" {
   name                    = "ucp-dev/database-url"
   recovery_window_in_days = 0
@@ -51,6 +57,17 @@ resource "aws_secretsmanager_secret_version" "host_secrets" {
   secret_string_wo_version = 2
 }
 
+resource "aws_secretsmanager_secret" "secrets_key" {
+  name                    = "ucp-dev/secrets-key"
+  recovery_window_in_days = 0
+}
+
+resource "aws_secretsmanager_secret_version" "secrets_key" {
+  secret_id                = aws_secretsmanager_secret.secrets_key.id
+  secret_string_wo         = "k1:${ephemeral.random_password.secrets_key.result}"
+  secret_string_wo_version = 1 # never written again: a new key would leave the sealed secrets unreadable
+}
+
 resource "aws_secretsmanager_secret" "agent_profiles" {
   name                    = "ucp-dev/agent-profiles"
   recovery_window_in_days = 0
@@ -62,5 +79,6 @@ locals {
     UCP_SESSION_KEYS   = aws_secretsmanager_secret.session_keys.arn
     UCP_HOST_SECRETS   = aws_secretsmanager_secret.host_secrets.arn
     UCP_AGENT_PROFILES = aws_secretsmanager_secret.agent_profiles.arn
+    UCP_SECRETS_KEY    = aws_secretsmanager_secret.secrets_key.arn
   }
 }

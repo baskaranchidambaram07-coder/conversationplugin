@@ -48,10 +48,11 @@ def wait(*args: str) -> None:
 
 
 def public_url(setting: str = "UCP_PUBLIC_ORIGIN") -> str:
-    """An address browsers use, as the newest release tells the gateway: the gateway's own (UCP_PUBLIC_ORIGIN) or the
-    hosted samples' (UCP_SAMPLES_ORIGIN). Both are CloudFront's, and change only when the environment is rebuilt."""
+    """An address browsers use, as the newest release tells its containers: the gateway's own (UCP_PUBLIC_ORIGIN),
+    the hosted samples' (UCP_SAMPLES_ORIGIN) or the console's (UCP_ADMIN_ORIGINS). All are CloudFront's, and change
+    only when the environment is rebuilt."""
     containers = aws("ecs", "describe-task-definition", "--task-definition", FAMILY)["taskDefinition"]
-    environment = containers["containerDefinitions"][0]["environment"]
+    environment = [item for container in containers["containerDefinitions"] for item in container["environment"]]
     return next(item["value"] for item in environment if item["name"] == setting)
 
 
@@ -68,11 +69,17 @@ def release(image_tag: str | None) -> str:
     ]
 
 
-def once(definition: str, network: dict, command: list[str], what: str) -> list[str]:
+def once(
+    definition: str, network: dict, command: list[str], what: str, environment: dict[str, str] | None = None
+) -> list[str]:
     """Runs one command in a task of its own with the release's image, shows its output, and stops on failure.
-    Returns the lines it wrote."""
+    Returns the lines it wrote. The command runs in the gateway's container, with any extra settings given; the
+    task ends when it does (the admin container beside it is not essential)."""
     print(f"{what} ...", flush=True)
-    overrides = {"containerOverrides": [{"name": "gateway", "command": command}]}
+    override: dict = {"name": "gateway", "command": command}
+    if environment:
+        override["environment"] = [{"name": name, "value": value} for name, value in environment.items()]
+    overrides = {"containerOverrides": [override]}
     task = aws(
         "ecs",
         "run-task",
@@ -97,7 +104,7 @@ def once(definition: str, network: dict, command: list[str], what: str) -> list[
     except subprocess.CalledProcessError:
         pass
     print("\n".join(f"  {line}" for line in lines) or "  (no output)")
-    code = stopped["containers"][0].get("exitCode")
+    code = next(c for c in stopped["containers"] if c["name"] == "gateway").get("exitCode")
     if code != 0:
         sys.exit(f"{what} failed (exit {code}): {stopped.get('stoppedReason', '')}")
     return lines
@@ -150,8 +157,10 @@ if __name__ == "__main__":
     arguments.add_argument("--by", default="deploy.py", help="who releases it, for the widget file's audit entry")
     arguments.add_argument("--url", action="store_true", help="only print the address browsers use, and stop")
     arguments.add_argument("--samples-url", action="store_true", help="only print the hosted samples' address")
+    arguments.add_argument("--console-url", action="store_true", help="only print the admin console's address")
     args = arguments.parse_args()
-    if args.url or args.samples_url:
-        print(public_url("UCP_SAMPLES_ORIGIN" if args.samples_url else "UCP_PUBLIC_ORIGIN"))
+    if args.url or args.samples_url or args.console_url:
+        setting = "UCP_SAMPLES_ORIGIN" if args.samples_url else "UCP_ADMIN_ORIGINS" if args.console_url else ""
+        print(public_url(setting or "UCP_PUBLIC_ORIGIN"))
     else:
         main(args.image, args.by)
