@@ -7,11 +7,12 @@ const CONSOLE = "http://127.0.0.1:8201";
 
 async function serious(page: Page) {
   // The automated Firefox on the Windows build machine crashes in axe scans of the console's forms (found on 14
-  // November 2026; typing, or a scan of a plain page, does not crash it). Linux Firefox in the pipeline scans them all.
-  if (test.info().project.name === "firefox" && process.platform === "win32") return [];
-  const { violations } = await new AxeBuilder({ page })
-    .withTags(["wcag2a", "wcag2aa", "wcag21a", "wcag21aa", "wcag22aa"])
-    .analyze();
+  // November 2026; typing, or a scan of a plain page, does not crash it). Linux Firefox in the pipeline scans them all,
+  // except the chat inside the Look station's preview, which crashes it too; the chat is scanned in its own suites.
+  const firefox = test.info().project.name === "firefox";
+  if (firefox && process.platform === "win32") return [];
+  const scan = new AxeBuilder({ page }).withTags(["wcag2a", "wcag2aa", "wcag21a", "wcag21aa", "wcag22aa"]);
+  const { violations } = await (firefox ? scan.exclude(".preview iframe") : scan).analyze();
   return violations.filter((v) => v.impact === "serious" || v.impact === "critical").map((v) => v.id);
 }
 
