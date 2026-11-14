@@ -40,7 +40,12 @@ class FakeProvider:
         async def discovery():
             if self.down:
                 return JSONResponse({}, status_code=503)
-            return {"issuer": self.base_url, "jwks_uri": f"{self.base_url}/keys"}
+            return {
+                "issuer": self.base_url,
+                "jwks_uri": f"{self.base_url}/keys",
+                "authorization_endpoint": f"{self.base_url}/authorize",
+                "token_endpoint": f"{self.base_url}/token",
+            }
 
         @app.get("/keys")
         async def keys():

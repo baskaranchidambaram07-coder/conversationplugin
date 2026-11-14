@@ -17,15 +17,18 @@ console's own addresses (UCP_ADMIN_ORIGINS).
 """
 
 import json
+import logging
 from contextlib import AsyncExitStack, asynccontextmanager
 from dataclasses import dataclass
 from datetime import UTC, datetime
+from pathlib import Path
 from secrets import token_hex, token_urlsafe
 from typing import Annotated, Literal
+from urllib.parse import urlsplit
 
 import httpx2
 from fastapi import APIRouter, Depends, FastAPI, Query, Request
-from fastapi.responses import JSONResponse, Response
+from fastapi.responses import FileResponse, JSONResponse, Response
 from pydantic import BaseModel, ConfigDict, Field
 from sqlalchemy.ext.asyncio import create_async_engine
 
@@ -35,6 +38,7 @@ from ucp.gateway import pipeline
 from ucp.gateway.api import visitor_address
 from ucp.gateway.pipeline import CODES, Problem, api_error
 from ucp.identity import Identity, ProviderKeys, verify_provider_token
+from ucp.identity import _secure as secure
 from ucp.pf import PfConnector, PfProfile
 from ucp.protocol import Id
 from ucp.sessions import Limiter
@@ -43,6 +47,7 @@ from ucp.store import Store, new_id
 from ucp.vault import Sealed, Vault
 from ucp.widgets import problems
 
+log = logging.getLogger("ucp.admin")
 PER_MINUTE = 120  # requests from one signed-in administrator
 ATTEMPTS_PER_MINUTE = 30  # requests from one address before sign-in is checked
 
@@ -100,6 +105,38 @@ async def signed_in(request: Request) -> Admin:
 
 type Signed = Annotated[Admin, Depends(signed_in)]
 type Kept = Annotated[Records, Depends(records)]
+
+
+@router.get("/sign-in", summary="Where the console signs administrators in (no sign-in needed to read it)")
+async def sign_in(request: Request) -> dict:
+    endpoints = await provider_endpoints(request.app)
+    if not endpoints:
+        raise Problem("assistant_unavailable")
+    return {"client_id": request.app.state.identity.audience, **endpoints}
+
+
+async def provider_endpoints(app: FastAPI) -> dict | None:
+    """Where the console sends administrators to sign in and exchanges the code it gets back: the provider's
+    authorization and token endpoints, by OpenID Connect discovery, read once and kept."""
+    identity = app.state.identity
+    if not identity:
+        return None
+    if not app.state.endpoints:
+        try:
+            address = f"{identity.issuer.rstrip('/')}/.well-known/openid-configuration"
+            found = (await app.state.client.get(address)).raise_for_status().json()
+            endpoints = {
+                "authorization_endpoint": found["authorization_endpoint"],
+                "token_endpoint": found["token_endpoint"],
+            }
+        except (httpx2.HTTPError, ValueError, KeyError, TypeError) as error:
+            log.warning("the administrators' identity provider cannot be discovered: %s", type(error).__name__)
+            return None
+        if not all(map(secure, endpoints.values())):
+            log.warning("the administrators' identity provider is not served over https")
+            return None
+        app.state.endpoints = endpoints
+    return app.state.endpoints
 
 
 @router.get("/me", summary="Who is signed in, and their role")
@@ -493,6 +530,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         else None
     )
     app.state.vault = Vault(settings.secrets_key) if settings.secrets_key else None
+    app.state.endpoints = None
     # The platform's own profiles and secrets, from the gateway's settings: only their names, to check references.
     app.state.platform = {
         "profile": set(json.loads(settings.agent_profiles or "{}")),
@@ -507,4 +545,45 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     async def healthz() -> dict[str, str]:
         return {"status": "ok"}
 
+    if settings.web_dir and (settings.web_dir / "console" / "dist" / "index.html").is_file():
+        app.include_router(console(settings.web_dir / "console" / "dist"))
     return app
+
+
+def console_policy(token_endpoint: str | None) -> str:
+    """The console's own page: only our files, the API on this address and the identity provider's token endpoint;
+    no site may frame it (M9: the console cannot be framed). Logos may come from any https site, as the chat's do."""
+    provider = urlsplit(token_endpoint)._replace(path="", query="", fragment="").geturl() if token_endpoint else ""
+    return (
+        "default-src 'none'; script-src 'self'; style-src 'self'; font-src 'self'; img-src 'self' https: data:; "
+        f"connect-src 'self' {provider}".rstrip()
+        + "; base-uri 'none'; form-action 'none'; frame-ancestors 'none'"
+    )
+
+
+def console(dist: Path) -> APIRouter:
+    """The admin console (M9), from web/console/dist: hashed assets kept forever, and its page for every other
+    path, so a route reloaded in the browser still opens the console."""
+    pages = APIRouter(include_in_schema=False)
+    page = (dist / "index.html").read_bytes()
+    assets = dist / "assets"
+    types = {".js": "text/javascript; charset=utf-8", ".css": "text/css; charset=utf-8", ".woff2": "font/woff2"}
+
+    @pages.get("/assets/{name}")
+    async def asset(name: str) -> FileResponse:
+        path = assets / name
+        if path.parent != assets or path.suffix not in types or not path.is_file():
+            raise Problem("not_found")
+        headers = {"cache-control": "public, max-age=31536000, immutable"}
+        return FileResponse(path, media_type=types[path.suffix], headers=headers)
+
+    @pages.get("/{route:path}")
+    async def index(route: str, request: Request) -> Response:
+        if route.startswith(("admin/", "assets/")):
+            raise Problem("not_found")
+        endpoints = await provider_endpoints(request.app) or {}
+        policy = console_policy(endpoints.get("token_endpoint"))
+        headers = {"content-security-policy": policy, "cache-control": "no-cache"}
+        return Response(page, media_type="text/html; charset=utf-8", headers=headers)
+
+    return pages

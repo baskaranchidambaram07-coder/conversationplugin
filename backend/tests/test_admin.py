@@ -452,3 +452,36 @@ def test_the_admin_api_description_file_matches_the_routes():
 
     stale = "Run: cd backend && uv run python -m ucp.admin.openapi"
     assert OPENAPI_FILE.read_text(encoding="utf-8") == openapi_text(), stale
+
+
+# The console (M9): where it signs in, and its page
+
+
+def test_the_console_learns_where_to_sign_in_without_signing_in(world):
+    found = world.get("/admin/v1/sign-in").json()
+
+    assert found == {
+        "client_id": AUDIENCE,
+        "authorization_endpoint": f"{world.provider.base_url}/authorize",
+        "token_endpoint": f"{world.provider.base_url}/token",
+    }
+
+
+def test_the_console_page_is_served_for_any_route_and_may_be_framed_by_no_site(database_url, provider, tmp_path):  # noqa: F811
+    dist = tmp_path / "console" / "dist"
+    (dist / "assets").mkdir(parents=True)
+    (dist / "index.html").write_text("<!doctype html><title>Console</title>")
+    (dist / "assets" / "index-abc.js").write_text("/* console */")
+    settings = Settings(
+        database_url=database_url, web_dir=tmp_path, admin_issuer=provider.base_url, admin_audience=AUDIENCE
+    )
+
+    with TestClient(admin.create_app(settings)) as client:
+        for route in ("/", "/widgets/w_1/look"):
+            page = client.get(route)
+            assert page.text == "<!doctype html><title>Console</title>"
+            policy = page.headers["content-security-policy"]
+            assert "frame-ancestors 'none'" in policy and f"connect-src 'self' {provider.base_url};" in policy
+        assert client.get("/assets/index-abc.js").headers["cache-control"] == "public, max-age=31536000, immutable"
+        assert client.get("/assets/nothing.js").status_code == 404
+        assert client.get("/admin/v1/me").json()["code"] == "sign_in_required"  # the API stays the API
