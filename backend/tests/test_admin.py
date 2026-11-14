@@ -3,23 +3,33 @@ audit entry for every change. Against PostgreSQL and a stand-in identity provide
 runs against a real Keycloak in the pipeline (tests/test_keycloak.py)."""
 
 import asyncio
+import json
 import secrets
+import time
 
+import jwt
 import pytest
 from fastapi.testclient import TestClient
+from sqlalchemy import text
 from sqlalchemy.ext.asyncio import create_async_engine
 
+from tests.test_pf import profile as pf_profile
 from tests.test_provider import provider  # noqa: F401  (the stand-in identity provider, as a fixture)
 from tests.test_public import PUBLIC, document
+from tests.test_sessions import KEYS
 from ucp.admin import app as admin
 from ucp.admin.__main__ import main as command
 from ucp.admin.records import Records
 from ucp.gateway.app import create_app as gateway
 from ucp.settings import Settings
 from ucp.store import Store
+from ucp.vault import Vault, new_key
 
 CONSOLE = "https://console.example.org"
 AUDIENCE = "ucp-console"
+KEY = new_key()
+FAKE = {"base_url": "https://pf.invalid", "tenant": "x", "workspace_id": "x", "agent_version_id": "x", "username": "x"}
+OWN_PROFILE = json.dumps({**FAKE, "api_key": "k", "password": "p"})
 
 
 def run(database_url, work):
@@ -48,13 +58,20 @@ def world(database_url, provider):  # noqa: F811
     async def make(records):
         for tenant in (f"t_a{tag}", f"t_b{tag}"):
             await records.create_tenant(tenant, f"Tenant {tenant}", "setup")
+            # Each tenant's own profile of the name the widgets use, so its own administrators may use it.
+            await records.put_secret(Vault(KEY), tenant, "profile", "pf-staging", OWN_PROFILE, "setup", None)
             await Store(records.engine).publish_widget(f"w_{tenant}", tenant, document(tenant_id=tenant), "setup")
         for who, (role, tenant) in people.items():
             await records.add_administrator(provider.base_url, f"{who}-{tag}", role, tenant, who, "setup")
 
     run(database_url, make)
     settings = Settings(
-        database_url=database_url, admin_issuer=provider.base_url, admin_audience=AUDIENCE, admin_origins=CONSOLE
+        database_url=database_url,
+        admin_issuer=provider.base_url,
+        admin_audience=AUDIENCE,
+        admin_origins=CONSOLE,
+        secrets_key=KEY,
+        agent_profiles=json.dumps({"platform-only": {}}),
     )
     with TestClient(admin.create_app(settings)) as client:
         client.tag, client.provider = tag, provider
@@ -147,6 +164,12 @@ def operations(tag: str) -> dict:
         "list A's versions": ("GET", f"/admin/v1/widgets/w_{a}/versions", None),
         "list B's versions": ("GET", f"/admin/v1/widgets/w_{b}/versions", None),
         "compare A's versions": ("GET", f"/admin/v1/widgets/w_{a}/compare?from=1&to=1", None),
+        "list A's secrets": ("GET", f"/admin/v1/tenants/{a}/secrets", None),
+        "list B's secrets": ("GET", f"/admin/v1/tenants/{b}/secrets", None),
+        "set A's profile": ("PUT", f"/admin/v1/tenants/{a}/agent-profiles/pf-new", json.loads(OWN_PROFILE)),
+        "set B's profile": ("PUT", f"/admin/v1/tenants/{b}/agent-profiles/pf-new", json.loads(OWN_PROFILE)),
+        "make A a shared secret": ("POST", f"/admin/v1/tenants/{a}/host-secrets/portal", None),
+        "make B a shared secret": ("POST", f"/admin/v1/tenants/{b}/host-secrets/portal", None),
     }  # fmt: skip
 
 
@@ -174,6 +197,12 @@ EXPECTED = {
     "list A's versions":             (200,     200,     200),
     "list B's versions":             (200,     404,     404),
     "compare A's versions":          (200,     200,     200),
+    "list A's secrets":              (200,     200,     200),
+    "list B's secrets":              (200,     404,     404),
+    "set A's profile":               (200,     200,     403),
+    "set B's profile":               (200,     404,     404),
+    "make A a shared secret":        (201,     201,     403),
+    "make B a shared secret":        (201,     404,     404),
 }  # fmt: skip
 
 
@@ -303,3 +332,116 @@ def test_rollback_and_comparing_versions(world):
     assert world.get(f"{widget}/versions/9", headers=signed).status_code == 404
     entries = world.get(f"/admin/v1/audit?widget=w_{world.a}", headers=signed).json()
     assert [(e["action"], e["version"]) for e in entries[:3]] == [("rollback", 3), ("publish", 2), ("draft.save", None)]
+
+
+# Secrets (M8-T4, T5): sealed, never returned, scoped to their tenant
+
+
+def test_profiles_and_shared_secrets_are_never_returned_nor_stored_in_clear(world, database_url):
+    signed = bearer(world, "admin_a")
+    body = {**FAKE, "api_key": "key-only-pf-knows", "password": "password-only-pf-knows"}
+    profile = world.put(f"/admin/v1/tenants/{world.a}/agent-profiles/pf-college", json=body, headers=signed)
+    assert profile.json() == {"name": "pf-college"}
+    made = world.post(f"/admin/v1/tenants/{world.a}/host-secrets/portal", headers=signed).json()
+
+    listed = world.get(f"/admin/v1/tenants/{world.a}/secrets", headers=signed)
+    assert {(s["kind"], s["name"]) for s in listed.json()} >= {("profile", "pf-college"), ("host", "portal")}
+    stored = run(database_url, raw_secrets)
+    for words in ("key-only-pf-knows", "password-only-pf-knows", made["secret"]):
+        assert words not in listed.text and words.encode() not in stored
+    audit = world.get(f"/admin/v1/audit?tenant={world.a}&limit=3", headers=signed).text
+    assert "pf-college" in audit and "password-only-pf-knows" not in audit and made["secret"] not in audit
+
+
+async def raw_secrets(records) -> bytes:
+    async with records.engine.connect() as db:
+        return b"".join(row.sealed + row.nonce for row in await db.execute(text("SELECT sealed, nonce FROM secrets")))
+
+
+def signed_by(made: dict, widget: str) -> str:
+    now = int(time.time())
+    claims = {"iss": "college-portal", "aud": widget, "sub": "resident-7", "iat": now, "exp": now + 300}
+    claims["jti"] = secrets.token_hex(8)
+    return jwt.encode(claims, made["secret"], algorithm="HS256", headers={"kid": made["key_id"]})
+
+
+def test_a_new_shared_secret_works_at_once_and_the_one_before_stays_valid_until_the_next(world, database_url):
+    signed = bearer(world, "admin_a")
+    made = [world.post(f"/admin/v1/tenants/{world.a}/host-secrets/portal", headers=signed).json() for _ in range(3)]
+    identity = {"provider": "portal", "issuer": "college-portal", "secret": "portal"}
+    widget = f"w_signed{world.tag}"
+    signed_in = document(tenant_id=world.a, sign_in="signed_in", identity=identity)
+    run(database_url, lambda records: Store(records.engine).publish_widget(widget, world.a, signed_in, "setup"))
+
+    with TestClient(gateway(Settings(database_url=database_url, session_keys=KEYS, secrets_key=KEY))) as chat:
+
+        def start(secret: dict) -> int:
+            body = {"widget_id": widget, "host_token": signed_by(secret, widget)}
+            return chat.post("/v1/sessions", json=body).status_code
+
+        assert [start(made[2]), start(made[1]), start(made[0])] == [200, 200, 403]
+
+
+def test_a_widget_points_only_at_its_own_tenants_secrets(world):
+    a_admin, platform = bearer(world, "admin_a"), bearer(world, "platform")
+    create = f"/admin/v1/tenants/{world.a}/widgets"
+    b_only = {**FAKE, "api_key": "k", "password": "p"}
+    world.put(f"/admin/v1/tenants/{world.b}/agent-profiles/b-only", json=b_only, headers=platform)
+
+    def make(profile: str, who: dict):
+        return world.post(create, json={"document": document(tenant_id=world.a, agent_profile=profile)}, headers=who)
+
+    others = make("b-only", a_admin)
+    assert others.status_code == 400 and "no connection profile named b-only" in others.json()["faults"][0]
+    assert make("platform-only", a_admin).status_code == 400  # a platform profile is the platform's to choose
+    made = make("platform-only", platform)
+    assert made.status_code == 201
+    renamed = titled(world, "Renamed") | {"agent_profile": "platform-only"}
+    draft = f"/admin/v1/widgets/{made.json()['widget_id']}/draft"
+    assert world.put(draft, json={"revision": 1, "document": renamed}, headers=a_admin).json() == {"revision": 2}
+
+
+def test_test_connection_says_whether_pf_signs_in_and_reveals_nothing(world, fake_pf):
+    signed = bearer(world, "admin_a")
+    good = pf_profile(fake_pf).model_dump(mode="json") | {"api_key": "fake-api-key", "password": "fake-password"}
+    profiles = {"good": good, "wrong": good | {"password": "wrong"}, "down": good | {"base_url": "http://127.0.0.1:9"}}
+    replies = {}
+    for name, body in profiles.items():
+        world.put(f"/admin/v1/tenants/{world.a}/agent-profiles/{name}", json=body, headers=signed)
+        replies[name] = world.post(f"/admin/v1/tenants/{world.a}/agent-profiles/{name}/test", headers=signed)
+
+    assert replies["good"].json() == {"connected": True}
+    assert replies["wrong"].json() == {"connected": False, "advice": "check the profile's credentials"}
+    assert replies["down"].json()["connected"] is False
+    assert not any("127.0.0.1" in reply.text or "fake-" in reply.text for reply in replies.values())
+    assert world.post(f"/admin/v1/tenants/{world.a}/agent-profiles/nothing/test", headers=signed).status_code == 404
+
+
+def test_a_tenants_own_profile_answers_its_widgets_through_the_gateway(world, database_url, fake_pf):
+    good = pf_profile(fake_pf).model_dump(mode="json") | {"api_key": "fake-api-key", "password": "fake-password"}
+    world.put(f"/admin/v1/tenants/{world.a}/agent-profiles/pf-staging", json=good, headers=bearer(world, "admin_a"))
+
+    with TestClient(gateway(Settings(database_url=database_url, session_keys=KEYS, secrets_key=KEY))) as chat:
+        session = chat.post("/v1/sessions", json={"widget_id": f"w_{world.a}", "host_token": None}).json()
+        auth = {"authorization": f"Bearer {session['token']}"}
+        conversation = chat.post("/v1/conversations", headers=auth).json()["id"]
+        question = {"text": "Hello", "client_message_id": "c1"}
+        reply = chat.post(f"/v1/conversations/{conversation}/messages", json=question, headers=auth)
+        assert "message.completed" in reply.text
+
+
+def test_sealed_secrets_open_only_where_they_were_sealed_and_with_a_key_held():
+    old, new = new_key(), new_key()
+    sealed = Vault(old).seal("s3cret", "t_a/host/portal")
+
+    assert Vault(f"{new},{old}").open(*sealed, "t_a/host/portal") == "s3cret"  # a rotated key still opens
+    with pytest.raises(ValueError, match="does not open here"):
+        Vault(old).open(*sealed, "t_b/host/portal")  # moved to another tenant
+    with pytest.raises(ValueError, match="no key"):
+        Vault(new).open(*sealed, "t_a/host/portal")
+    tampered = (sealed[0], sealed[1], bytes([sealed[2][0] ^ 1]) + sealed[2][1:])
+    with pytest.raises(ValueError):
+        Vault(old).open(*tampered, "t_a/host/portal")
+    for bad in ("", "k1", "k1:short", "k1:" + "!" * 43):
+        with pytest.raises(ValueError):
+            Vault(bad)
