@@ -73,7 +73,8 @@ audit = Table(
     Index("audit_by_tenant", "tenant_id", "at"),
 )
 
-# The tenants (M8). A tenant named by a published widget is recorded the first time one is published.
+# The tenants (M8). A tenant named by a published widget is recorded the first time one is published. A deleted
+# tenant keeps its row, marked deleted, so publishing a widget of it again cannot bring it back (0006).
 tenants = Table(
     "tenants",
     metadata,
@@ -81,7 +82,27 @@ tenants = Table(
     Column("name", Text, nullable=False),
     Column("created_at", DateTime(timezone=True), nullable=False, server_default=func.now()),
     Column("created_by", Text, nullable=False),
+    Column("deleted_at", DateTime(timezone=True)),
+    Column("deleted_by", Text),
 )
+
+# Widgets deleted through the admin API (0006). Their versions stay, as versions never change; the gateway no
+# longer serves them, whatever is published for them afterwards.
+deleted_widgets = Table(
+    "deleted_widgets",
+    metadata,
+    Column("widget_id", Text, primary_key=True),
+    Column("tenant_id", Text, nullable=False),
+    Column("deleted_at", DateTime(timezone=True), nullable=False, server_default=func.now()),
+    Column("deleted_by", Text, nullable=False),
+)
+
+
+def served():
+    """Published versions the gateway may serve: neither their widget nor their tenant is deleted."""
+    gone = select(tenants.c.tenant_id).where(tenants.c.deleted_at.is_not(None))
+    return widgets.c.widget_id.not_in(select(deleted_widgets.c.widget_id)) & widgets.c.tenant_id.not_in(gone)
+
 
 # Secrets set through the admin API (M8), sealed by ucp.vault: a tenant's shared secrets ("host") and PF connection
 # profiles ("profile"). The gateway opens them by tenant and name; nothing else reads them.
@@ -248,6 +269,7 @@ class Store:
         """Every widget's current document, by widget ID: the whole live configuration."""
         query = (
             select(widgets.c.widget_id, widgets.c.document)
+            .where(served())
             .ext(distinct_on(widgets.c.widget_id))
             .order_by(widgets.c.widget_id, widgets.c.version.desc())
         )
@@ -273,20 +295,21 @@ class Store:
             return list(await db.execute(query))
 
     async def widget(self, widget_id: str, version: int | None = None):
-        """A widget's current version, or the one asked for: (version, tenant_id, document), or None."""
+        """A widget's current version, if it is served, or the one asked for: (version, tenant_id, document), or
+        None."""
         async with self.engine.connect() as db:
             if version is None:
-                return await self._latest(db, widget_id)
+                return await self._latest(db, widget_id, served())
             query = select(widgets.c.version, widgets.c.tenant_id, widgets.c.document).where(
                 (widgets.c.widget_id == widget_id) & (widgets.c.version == version)
             )
             return (await db.execute(query)).first()
 
     @staticmethod
-    async def _latest(db, widget_id: str):
+    async def _latest(db, widget_id: str, *only):
         query = (
             select(widgets.c.version, widgets.c.tenant_id, widgets.c.document)
-            .where(widgets.c.widget_id == widget_id)
+            .where(widgets.c.widget_id == widget_id, *only)
             .order_by(widgets.c.version.desc())
             .limit(1)
         )

@@ -1,10 +1,11 @@
 // The Go live station (M9-T6): what the draft changes, publishing it as the next version, the history, comparing
-// a version with the live one, and making an earlier version live again. Publishing names the revision read, so a
+// a version with the live one, making an earlier version live again, and deleting the widget. Publishing names the revision read, so a
 // change someone else saved since is never published unseen.
 import { useCallback, useEffect, useState } from "react";
 
 import { ApiProblem, call } from "./api";
 import type { WidgetDocument } from "./App";
+import { Deletion } from "./organisations";
 import { strings as t } from "./strings";
 
 type Version = { version: number; published_at: string; published_by: string | null };
@@ -53,14 +54,16 @@ function Changes({ list, before, after }: { list: Change[]; before: string; afte
 
 export function GoLive(props: {
   widgetId: string;
+  title: string;
   live: number | null;
   revision: number;
   document: WidgetDocument;
   readOnly: boolean;
   onChanged: () => void;
+  onDeleted: () => void;
   onProblem: (error: unknown) => void;
 }) {
-  const { widgetId, live, revision, document, readOnly, onChanged, onProblem } = props;
+  const { widgetId, title, live, revision, document, readOnly, onChanged, onDeleted, onProblem } = props;
   const [versions, setVersions] = useState<Version[] | null>(null);
   const [liveDocument, setLiveDocument] = useState<WidgetDocument | null>(null);
   const [compared, setCompared] = useState<{ version: number; list: Change[] } | null>(null);
@@ -187,6 +190,19 @@ export function GoLive(props: {
             ))}
           </ol>
         </section>
+      )}
+      {!readOnly && (
+        <Deletion
+          title={t.deleteWidgetTitle}
+          name={title}
+          consequences={t.deleteWidgetHint}
+          action={t.deleteWidget}
+          onDelete={async () => {
+            await call("DELETE", `/widgets/${widgetId}`);
+            onDeleted();
+          }}
+          onProblem={onProblem}
+        />
       )}
     </div>
   );

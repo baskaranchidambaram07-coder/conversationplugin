@@ -13,6 +13,7 @@ from sqlalchemy import (
     Table,
     Text,
     delete,
+    exists,
     func,
     insert,
     select,
@@ -24,7 +25,7 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncEngine
 
 from ucp.gateway.pipeline import Problem
-from ucp.store import Store, audit, metadata, tenants, widgets
+from ucp.store import Store, audit, deleted_widgets, metadata, tenants, widgets
 from ucp.store import sealed_secrets as secrets
 from ucp.vault import Vault, place
 
@@ -102,7 +103,8 @@ class Records:
     # Tenants
 
     async def tenants(self, tenant_id: str | None = None) -> list:
-        query = select(tenants).order_by(tenants.c.tenant_id)
+        """The tenants not deleted: all of them, or the one asked for."""
+        query = select(tenants).where(tenants.c.deleted_at.is_(None)).order_by(tenants.c.tenant_id)
         if tenant_id:
             query = query.where(tenants.c.tenant_id == tenant_id)
         async with self.engine.connect() as db:
@@ -115,6 +117,29 @@ class Records:
                 await _record(db, actor, "tenant.create", tenant_id, detail={"name": name})
         except IntegrityError as error:
             raise Problem("conflict") from error
+
+    async def delete_tenant(self, tenant_id: str, actor: str) -> None:
+        """Deletes a tenant with no widgets left: its administrators lose their roles and its secrets are erased.
+        The tenant stays recorded as deleted, so publishing a widget of it again does not bring it back; its
+        widgets' versions, its audit trail and its visitors' conversations stay until the purge policy."""
+        async with self.engine.begin() as db:
+            # Locked until done, so a widget cannot be made in the tenant meanwhile (create_widget waits for it).
+            query = select(tenants.c.name).where((tenants.c.tenant_id == tenant_id) & tenants.c.deleted_at.is_(None))
+            tenant = (await db.execute(query.with_for_update())).first()
+            if not tenant:
+                raise Problem("not_found")
+            gone = select(deleted_widgets.c.widget_id)
+            left = select(widgets.c.widget_id).where(
+                (widgets.c.tenant_id == tenant_id) & widgets.c.widget_id.not_in(gone)
+            )
+            if await db.scalar(select(exists(left) | exists().where(drafts.c.tenant_id == tenant_id))):
+                raise Problem("conflict")  # its widgets are deleted first, one by one, each with its own record
+            people = await db.execute(delete(administrators).where(administrators.c.tenant_id == tenant_id))
+            erased = await db.execute(delete(secrets).where(secrets.c.tenant_id == tenant_id))
+            marked = {"deleted_at": func.now(), "deleted_by": actor}
+            await db.execute(update(tenants).where(tenants.c.tenant_id == tenant_id).values(marked))
+            detail = {"name": tenant.name, "administrators": people.rowcount, "secrets": erased.rowcount}
+            await _record(db, actor, "tenant.delete", tenant_id, detail=detail)
 
     # Audit
 
@@ -129,13 +154,19 @@ class Records:
             return list(await db.execute(query))
 
     async def widget_tenant(self, widget_id: str) -> str | None:
-        """The tenant a widget belongs to: its draft's, or its published versions'."""
+        """The tenant a widget belongs to: its draft's, or its published versions'. None for a widget not found,
+        deleted, or in a deleted tenant."""
         async with self.engine.connect() as db:
+            if await db.scalar(select(exists().where(deleted_widgets.c.widget_id == widget_id))):
+                return None
             found = (await db.execute(select(drafts.c.tenant_id).where(drafts.c.widget_id == widget_id))).first()
             if not found:
                 query = select(widgets.c.tenant_id).where(widgets.c.widget_id == widget_id).limit(1)
                 found = (await db.execute(query)).first()
-        return found.tenant_id if found else None
+            if not found:
+                return None
+            live = (tenants.c.tenant_id == found.tenant_id) & tenants.c.deleted_at.is_(None)
+            return found.tenant_id if await db.scalar(select(exists().where(live))) else None
 
     # Widgets and their drafts
 
@@ -144,7 +175,7 @@ class Records:
         whether the draft holds changes not yet published."""
         live = (
             select(widgets.c.widget_id, widgets.c.version, widgets.c.document)
-            .where(widgets.c.tenant_id == tenant_id)
+            .where(widgets.c.tenant_id == tenant_id, widgets.c.widget_id.not_in(select(deleted_widgets.c.widget_id)))
             .ext(distinct_on(widgets.c.widget_id))
             .order_by(widgets.c.widget_id, widgets.c.version.desc())
         )
@@ -174,9 +205,27 @@ class Records:
 
     async def create_widget(self, widget_id: str, tenant_id: str, document: dict, actor: str) -> None:
         async with self.engine.begin() as db:
+            # Waits for a deletion of the tenant in progress (delete_tenant), then finds it deleted.
+            live = select(tenants.c.tenant_id).where(
+                (tenants.c.tenant_id == tenant_id) & tenants.c.deleted_at.is_(None)
+            )
+            if not (await db.execute(live.with_for_update(key_share=True))).first():
+                raise Problem("not_found")
             row = {"widget_id": widget_id, "tenant_id": tenant_id, "document": document, "revision": 1}
             await db.execute(insert(drafts).values({**row, "updated_by": actor}))
             await _record(db, actor, "widget.create", tenant_id, widget_id=widget_id, detail={"revision": 1})
+
+    async def delete_widget(self, widget_id: str, tenant_id: str, actor: str) -> None:
+        """Deletes a widget: the gateway stops serving it within half a minute (ucp.widgets) and the admin API no
+        longer shows it. Its draft goes; its versions, audit trail and visitors' conversations stay."""
+        try:
+            async with self.engine.begin() as db:
+                values = {"widget_id": widget_id, "tenant_id": tenant_id, "deleted_by": actor}
+                await db.execute(insert(deleted_widgets).values(values))
+                await db.execute(delete(drafts).where(drafts.c.widget_id == widget_id))
+                await _record(db, actor, "widget.delete", tenant_id, widget_id=widget_id)
+        except IntegrityError as error:
+            raise Problem("not_found") from error  # deleted by someone else a moment before
 
     async def save_draft(self, widget_id: str, tenant_id: str, document: dict, revision: int, actor: str) -> int:
         """Saves the draft over the revision the editor started from, as the next one. Refused as a conflict when

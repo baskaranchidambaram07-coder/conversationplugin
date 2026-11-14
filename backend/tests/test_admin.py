@@ -45,7 +45,8 @@ def run(database_url, work):
 
 @pytest.fixture
 def world(database_url, provider):  # noqa: F811
-    """Two tenants, A and B, with a platform administrator, and a tenant administrator and a viewer in each."""
+    """Two tenants, A and B, with a platform administrator, and a tenant administrator and a viewer in each; and an
+    empty tenant, C."""
     tag = secrets.token_hex(3)
     people = {
         "platform": ("platform", None),
@@ -63,6 +64,7 @@ def world(database_url, provider):  # noqa: F811
             await Store(records.engine).publish_widget(f"w_{tenant}", tenant, document(tenant_id=tenant), "setup")
         for who, (role, tenant) in people.items():
             await records.add_administrator(provider.base_url, f"{who}-{tag}", role, tenant, who, "setup")
+        await records.create_tenant(f"t_c{tag}", "Empty", "setup")
 
     run(database_url, make)
     settings = Settings(
@@ -175,6 +177,10 @@ def operations(tag: str) -> dict:
         "set B's profile": ("PUT", f"/admin/v1/tenants/{b}/agent-profiles/pf-new", json.loads(OWN_PROFILE)),
         "make A a shared secret": ("POST", f"/admin/v1/tenants/{a}/host-secrets/portal", None),
         "make B a shared secret": ("POST", f"/admin/v1/tenants/{b}/host-secrets/portal", None),
+        # Last, as they take things away.
+        "delete empty tenant C": ("DELETE", f"/admin/v1/tenants/t_c{tag}", None),
+        "delete A's widget": ("DELETE", f"/admin/v1/widgets/w_{a}", None),
+        "delete B's widget": ("DELETE", f"/admin/v1/widgets/w_{b}", None),
     }  # fmt: skip
 
 
@@ -208,6 +214,9 @@ EXPECTED = {
     "set B's profile":               (200,     404,     404),
     "make A a shared secret":        (201,     201,     403),
     "make B a shared secret":        (201,     404,     404),
+    "delete empty tenant C":         (204,     403,     403),
+    "delete A's widget":             (204,     204,     403),
+    "delete B's widget":             (204,     404,     404),
 }  # fmt: skip
 
 
@@ -296,6 +305,59 @@ def test_a_new_widget_is_a_draft_until_published_then_the_gateway_serves_it(worl
     listed = world.get(f"/admin/v1/tenants/{world.a}/widgets", headers=signed).json()
     entry = next(widget for widget in listed if widget["widget_id"] == widget_id)
     assert (entry["title"], entry["unpublished"]) == ("Changed", True)  # the draft's title, ahead of the live one
+
+
+def served(database_url, widget_id: str) -> int:
+    with TestClient(gateway(Settings(database_url=database_url))) as chat:
+        return chat.get(f"/v1/widgets/{widget_id}/config").status_code
+
+
+def test_a_deleted_widget_is_not_served_nor_shown_and_a_release_does_not_bring_it_back(world, database_url):
+    signed, widget = bearer(world, "admin_a"), f"w_{world.a}"
+    assert served(database_url, widget) == 200
+    assert world.delete(f"/admin/v1/widgets/{widget}", headers=signed).status_code == 204
+
+    assert served(database_url, widget) == 404
+    listed = world.get(f"/admin/v1/tenants/{world.a}/widgets", headers=signed).json()
+    assert widget not in [entry["widget_id"] for entry in listed]
+    for path in ("draft", "versions", "versions/1"):
+        assert world.get(f"/admin/v1/widgets/{widget}/{path}", headers=signed).status_code == 404
+    assert world.delete(f"/admin/v1/widgets/{widget}", headers=signed).status_code == 404
+
+    # A release publishes the widget file again, here with a change: a new version, still not served.
+    publish = Store.publish_widget
+    run(database_url, lambda records: publish(Store(records.engine), widget, world.a, titled(world, "Again"), "seed"))
+    assert served(database_url, widget) == 404
+    entries = world.get(f"/admin/v1/audit?tenant={world.a}&widget={widget}", headers=signed).json()
+    assert ("widget.delete", f"admin_a-{world.tag}") in [(e["action"], e["actor"]) for e in entries]
+
+
+def test_a_tenant_is_deleted_once_its_widgets_are_and_takes_its_people_and_secrets_with_it(world, database_url):
+    platform = bearer(world, "platform")
+    assert world.delete(f"/admin/v1/tenants/{world.a}", headers=platform).status_code == 409  # its widget is there
+    assert world.delete(f"/admin/v1/widgets/w_{world.a}", headers=platform).status_code == 204
+    assert world.delete(f"/admin/v1/tenants/{world.a}", headers=platform).status_code == 204
+
+    assert world.a not in [t["tenant_id"] for t in world.get("/admin/v1/tenants", headers=platform).json()]
+    for person in ("admin_a", "viewer_a"):
+        assert world.get("/admin/v1/me", headers=bearer(world, person)).status_code == 403  # no longer one of ours
+    assert world.get("/admin/v1/me", headers=bearer(world, "admin_b")).status_code == 200
+    assert run(database_url, lambda records: records.secret_names(world.a)) == []
+    made = {"document": document(tenant_id=world.a)}
+    assert world.post(f"/admin/v1/tenants/{world.a}/widgets", json=made, headers=platform).status_code == 404
+    assert world.delete(f"/admin/v1/tenants/{world.a}", headers=platform).status_code == 404
+
+    # The widget file names the tenant again at a release: it stays deleted, and the widget is not served.
+    widget, publish = f"w_late{world.tag}", Store.publish_widget
+    run(database_url, lambda records: publish(Store(records.engine), widget, world.a, document(tenant_id=world.a)))
+    assert served(database_url, widget) == 404
+    assert world.a not in [t["tenant_id"] for t in world.get("/admin/v1/tenants", headers=platform).json()]
+    deleted = world.get(f"/admin/v1/audit?tenant={world.a}", headers=platform).json()
+    entry = next(e for e in deleted if e["action"] == "tenant.delete")
+    assert (entry["actor"], entry["detail"]) == (
+        f"platform-{world.tag}",
+        {"name": f"Tenant {world.a}", "administrators": 2, "secrets": 1},
+    )
 
 
 def test_two_people_editing_one_draft_cannot_overwrite_each_other_unseen(world):

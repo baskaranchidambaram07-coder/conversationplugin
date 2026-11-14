@@ -694,7 +694,12 @@ The signature: six stations to go-live, each signed with its minutes.
 
 ### Console: changes and versions
 - **Changes table:** full width, the Sand edge, 12px, clipped, 14.5px. A Soft Sand header row at 700; each row headed by its setting at 650; 8px 12px cells, top-aligned, wrapping anywhere; a 1px Soft Sand hairline between rows and no rule between columns.
-- **Versions:** an ordered list of divided rows (12px padding, a 1px Soft Sand rule under each, none above the first): "Version N" in bold, the live one with a "Live" chip (Warm Ink pill, 1px 10px), and "published by …, 14 Nov, 10:05" in Console hint. Earlier versions carry a quiet "Compare with live" (`aria-expanded`, opening a changes table under the row) and a quiet "Make this live again", which asks once more with a secondary "Yes, make version N live again" and a quiet "Cancel".
+- **Versions:** an ordered list of divided rows (12px padding, a 1px Soft Sand rule under each but the last, none above the first): "Version N" in bold, the live one with a "Live" chip (Warm Ink pill, 1px 10px), and "published by …, 14 Nov, 10:05" in Console hint. Earlier versions carry a quiet "Compare with live" (`aria-expanded`, opening a changes table under the row) and a quiet "Make this live again", which asks once more with a secondary "Yes, make version N live again" and a quiet "Cancel".
+
+### Console: organisations and deleting
+- **New organisation:** for platform administrators, a quiet "+ New organisation" beside the organisation switcher. Its page is a station card holding one field, Name, with the primary "Create the organisation"; the new organisation is then chosen and its page opens.
+- **An organisation's page** (the console's home): its name as the page title, "N widgets · ID t_…" as the sub line, and what to do next. A platform administrator also sees how to delete it: while it has widgets, a hint saying to delete them first; once it has none, the deletion block.
+- **Deletion block:** set apart at the end of its page (Go live for a widget, the organisation's page for an organisation) by a 1px Soft Sand rule, with an h3 ("Delete this widget"), what goes and what stays in Console hint, and a secondary "Delete the widget". That opens the name to type back ("Type “Ask the College” to confirm", 420px at most) and the primary "Yes, delete “Ask the College”", enabled only once the name matches, beside a quiet "Cancel". The action stays Warm Ink, as every action does (the Ink Action Rule): typing the name back is the safeguard, not a red button. Afterwards the organisation's page says "“Ask the College” is deleted." in a polite live region. Viewers see none of it.
 
 ### Console: messages
 - **Problem line:** Problem Red at 650.
