@@ -31,6 +31,7 @@ const EXAMPLES = [
   { name: "code", question: "[gallery:code]", parts: "figure.code", count: 6 },
   { name: "tables", question: "[gallery:tables]", parts: "figure.table", count: 2 },
   { name: "diagrams", question: "[gallery:diagrams]", parts: "figure.diagram svg[role=img]", count: 2 },
+  { name: "charts", question: "[gallery:charts]", parts: "figure.chart .plot svg", count: 5 },
   { name: "Purple Fabric's recorded long", question: "[long]", parts: "figure", count: 3 },
 ];
 
@@ -128,4 +129,28 @@ test("in a 400px panel a wide diagram keeps its words readable, scrolls inside i
   await expect.poll(() => frame.evaluate((element) => element.scrollLeft)).toBeGreaterThan(0);
   await page.getByRole("button", { name: "Show code" }).first().click();
   await expect(page.getByRole("region", { name: "Diagram source" })).toContainText("<mxGraphModel");
+});
+
+test("charts fit the narrowest chat, and their values read by pointer, by keyboard and as a table", async ({ page }) => {
+  await page.setViewportSize({ width: 280, height: 620 });
+  await ask(page, "[gallery:charts]");
+  const bars = page.getByRole("group", { name: "Bar chart: Library visits by month" });
+  const readout = page.locator("figure.chart [aria-live]").first();
+
+  for (const svg of await page.locator("figure.chart svg").all()) {
+    const [inside, room] = await svg.evaluate((element) => [element.getBoundingClientRect().right, element.closest("figure")!.getBoundingClientRect().right]);
+    expect(inside).toBeLessThanOrEqual(room + 0.5);
+  }
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+
+  await bars.scrollIntoViewIfNeeded();
+  const box = (await bars.boundingBox())!;
+  await page.mouse.move(box.x + box.width - 20, box.y + box.height / 2);
+  await expect(readout).toContainText("Feb");
+  await bars.focus();
+  await page.keyboard.press("Home");
+  await expect(readout).toHaveText("Sep: 1,240 Day; 610 Evening");
+
+  await page.getByRole("button", { name: "Show as table" }).first().click();
+  await expect(page.getByRole("region", { name: "Table: Month, Day, Evening" })).toBeVisible();
 });

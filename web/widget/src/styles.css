@@ -364,7 +364,8 @@ h1 {
 
 .code,
 .table,
-.diagram {
+.diagram,
+.chart {
   align-self: stretch;
   min-width: 0;
   margin: 0;
@@ -447,7 +448,8 @@ h1 {
 }
 
 .table,
-.diagram {
+.diagram,
+.chart {
   background: var(--paper);
 }
 
@@ -465,6 +467,173 @@ h1 {
 
 .diagram pre {
   border-block-start: 1px solid var(--sand);
+}
+
+/* A chart (M3-T6). Its series take the validated categorical palette in its fixed order, each colour stepped for
+   the light and the dark card. Marks are thin and the grid quiet; text always wears the text colours, and a series'
+   identity comes from the key beside it, never from coloured words. */
+.chart {
+  --c1: light-dark(#2a78d6, #3987e5);
+  --c2: light-dark(#eb6834, #d95926);
+  --c3: light-dark(#1baf7a, #199e70);
+  --c4: light-dark(#eda100, #c98500);
+  --c5: light-dark(#e87ba4, #d55181);
+  --c6: light-dark(#008300, #008300);
+  --c7: light-dark(#6250d6, #9085e9);
+  --c8: light-dark(#e34948, #e66767);
+}
+
+.c1 { color: var(--c1); }
+.c2 { color: var(--c2); }
+.c3 { color: var(--c3); }
+.c4 { color: var(--c4); }
+.c5 { color: var(--c5); }
+.c6 { color: var(--c6); }
+.c7 { color: var(--c7); }
+.c8 { color: var(--c8); }
+
+.chart figcaption {
+  padding: 12px 14px 0;
+  font-size: 15px;
+  font-weight: 650;
+  line-height: 1.35;
+}
+
+.chart .legend {
+  display: flex;
+  flex-direction: row; /* not the answer's own list layout */
+  flex-wrap: wrap;
+  gap: 2px 14px;
+  margin: 6px 14px 0;
+  padding: 0;
+  list-style: none;
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--umber);
+}
+
+.chart .legend li,
+.chart .tip > span {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+/* The reading: values lead in the ink, names follow in the quieter umber, each beside its series' key. */
+.chart .tip {
+  position: absolute;
+  top: 2px;
+  display: grid;
+  gap: 1px;
+  max-width: 70%;
+  padding: 6px 10px;
+  border-radius: 10px;
+  background: var(--paper);
+  box-shadow: 0 0 0 1px var(--sand);
+  font-size: 13px;
+  line-height: 1.4;
+  color: var(--umber);
+  font-variant-numeric: tabular-nums;
+  pointer-events: none;
+}
+
+.chart .tip.left {
+  left: 8px;
+}
+
+.chart .tip.right {
+  right: 8px;
+}
+
+.chart .tip > span:first-child,
+.chart .tip strong {
+  color: var(--ink);
+  font-weight: 650;
+}
+
+.chart .key {
+  flex: none;
+  width: 10px;
+  height: 10px;
+  border-radius: 2px;
+  background: currentColor;
+}
+
+.chart .key.line {
+  width: 14px;
+  height: 2px;
+  border-radius: 1px;
+}
+
+.chart .key.dot {
+  border-radius: 50%;
+}
+
+.chart .plot {
+  position: relative;
+  touch-action: pan-y;
+  margin-block: 2px 8px;
+}
+
+.chart .plot:focus-visible {
+  outline-offset: -3px;
+}
+
+.chart svg {
+  display: block;
+  overflow: visible;
+}
+
+.chart .grid {
+  stroke: var(--sand);
+}
+
+.chart .base {
+  stroke: color-mix(in srgb, var(--ink) 30%, transparent);
+}
+
+.chart .tick {
+  fill: var(--umber);
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+}
+
+.chart .mark {
+  fill: currentColor;
+}
+
+.chart .line {
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linejoin: round;
+  stroke-linecap: round;
+}
+
+.chart .wash {
+  fill: currentColor;
+  fill-opacity: 0.1;
+}
+
+.chart .dot,
+.chart .slice {
+  fill: currentColor;
+  stroke: var(--paper); /* the surface ring and the gap between slices */
+  stroke-width: 2;
+}
+
+.chart .hover {
+  fill: color-mix(in srgb, var(--ink) 6%, transparent);
+}
+
+.chart .cross {
+  stroke: color-mix(in srgb, var(--ink) 40%, transparent);
+}
+
+/* A chart's numbers as a table: the values right-aligned in even figures, as a Markdown table aligns them. */
+.chart + .table :is(th, td):not(:first-child) {
+  text-align: end;
+  font-variant-numeric: tabular-nums;
 }
 
 .table .scroll {
@@ -1015,6 +1184,7 @@ textarea::placeholder {
   .code,
   .table,
   .diagram,
+  .chart,
   .chats {
     border: 1px solid CanvasText;
   }

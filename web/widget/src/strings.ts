@@ -38,6 +38,15 @@ export const strings = {
   diagramLine: (from: string, to: string, label: string) =>
     `${from || "A line"}${to ? ` to ${to}` : ""}${label ? `: ${label}` : ""}`,
   copyFor: (tool: string) => `Copy for ${tool}`,
+  chart: (kind: string, title: string) =>
+    `${{ bar: "Bar", line: "Line", area: "Area", pie: "Pie", scatter: "Scatter" }[kind] ?? "A"} chart${title ? `: ${title}` : ""}`,
+  chartRange: (name: string, low: string, lowAt: string, high: string, highAt: string) =>
+    `${name} from ${low} (${lowAt}) to ${high} (${highAt})`,
+  chartKeys: "Use the arrow keys to read each value.",
+  showTable: "Show as table",
+  hideTable: "Hide table",
+  share: "Share",
+  other: "Other",
   showCode: "Show code",
   hideCode: "Hide code",
   code: "Code",
