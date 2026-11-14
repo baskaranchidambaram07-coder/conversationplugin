@@ -197,7 +197,53 @@ export const strings = {
   failed: "No:",
   checkName: { page: "the page answers", script: "the chat's script tag is there", policy: "the content policy lets the chat in" },
   checkFailed: "the check could not run; try again in a moment",
+
+  // Go live
+  nothing: "(none)",
+  yes: "Yes",
+  no: "No",
+  noChanges: "No setting differs.",
+  setting: "Setting",
+  draft: "Draft",
+  liveNow: "Live",
+  settingName: {
+    "public.title": "Title",
+    "public.welcome_message": "Welcome text",
+    "public.suggested_prompts": "Suggested questions",
+    "public.brand_color": "Colour of buttons",
+    "public.logo_url": "Logo address",
+    "public.ai_notice": "AI notice",
+    "public.color_scheme": "Light or dark",
+    "public.launcher_position": "Corner of the round button",
+    "public.history_enabled": "Earlier chats",
+    allowed_domains: "Sites",
+    sign_in: "Who may chat",
+    agent_profile: "Connection",
+    "identity.provider": "Sign-in through",
+    "identity.issuer": "Issuer",
+    "identity.audience": "Client ID",
+    "identity.secret": "Shared secret",
+  } as Record<string, string>,
+  firstPublish: "Nothing is live yet. Publishing makes the chat appear on the pages that carry its code.",
+  toPublish: "Visitors still see the live version. These changes are waiting:",
+  upToDate: "Visitors see the latest settings.",
+  publish: (version: number) => `Publish version ${version}`,
+  publishing: "Publishing",
+  published: (version: number) => `Published. Version ${version} is live; visitors see it within half a minute.`,
+  publishRefused: "This draft cannot be published as it is. Open its stations to see why.",
+  versionsTitle: "Versions",
+  versionName: (version: number) => `Version ${version}`,
+  publishedBy: (by: string, at: string) => `published by ${by}, ${moment(at)}`,
+  someone: "someone",
+  compareWithLive: "Compare with live",
+  rollBack: "Make this live again",
+  confirmRollback: (version: number) => `Yes, make version ${version} live again`,
+  rolledBack: (version: number, made: number) => `Version ${version} is live again, as version ${made}.`,
 };
+
+function moment(at: string): string {
+  return new Intl.DateTimeFormat("en-GB", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" }).format(new Date(at));
+}
 
 function day(at: string): string {
   return new Intl.DateTimeFormat("en-GB", { day: "numeric", month: "short", year: "numeric" }).format(new Date(at));

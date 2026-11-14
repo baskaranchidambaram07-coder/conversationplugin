@@ -931,6 +931,90 @@ legend {
   color: var(--problem);
 }
 
+/* Go live: what changes, the versions */
+
+.golive section {
+  display: grid;
+  gap: 10px;
+}
+
+.golive h3 {
+  margin: 0;
+  font-size: 16px;
+}
+
+.changes {
+  width: 100%;
+  border-collapse: collapse;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 0 0 1px var(--sand);
+  font-size: 14.5px;
+}
+
+.changes th,
+.changes td {
+  padding: 8px 12px;
+  border-block-end: 1px solid var(--sand);
+  text-align: start;
+  vertical-align: top;
+  overflow-wrap: anywhere;
+}
+
+.changes thead th {
+  background: var(--sand);
+  font-weight: 700;
+}
+
+.changes tbody th {
+  font-weight: 650;
+}
+
+.changes tr:last-child > * {
+  border-block-end: 0;
+}
+
+.versions {
+  display: grid;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.versions > li {
+  display: grid;
+  gap: 10px;
+  padding: 10px 12px;
+  border-radius: 12px;
+  box-shadow: 0 0 0 1px var(--sand);
+}
+
+.versions .line {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px 12px;
+}
+
+.versions small {
+  display: block;
+  color: var(--umber);
+  font-size: 13.5px;
+}
+
+.chip {
+  display: inline-block;
+  margin-inline-start: 6px;
+  padding: 1px 10px;
+  border-radius: 999px;
+  background: var(--ink);
+  color: var(--ground);
+  font-size: 12.5px;
+  font-weight: 650;
+}
+
 .station button[aria-disabled="true"] {
   cursor: not-allowed;
 }

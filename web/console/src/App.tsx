@@ -4,6 +4,7 @@ import { type ReactNode, useCallback, useEffect, useId, useState } from "react";
 
 import { ApiProblem, call } from "./api";
 import { AgentEditor, Faults, SignInEditor, SitesEditor } from "./editors";
+import { GoLive } from "./golive";
 import { Install } from "./install";
 import { type Look, LookEditor, Preview } from "./look";
 import { begin, finish, type Provider, signOut, token } from "./signIn";
@@ -548,6 +549,19 @@ function Widget(props: {
           </>
         ) : shown === "install" ? (
           <Install widgetId={row.widget_id} gateway={gateway} document={document} />
+        ) : shown === "live" ? (
+          <GoLive
+            widgetId={row.widget_id}
+            live={row.version}
+            revision={draft.revision}
+            document={document}
+            readOnly={readOnly}
+            onChanged={() => {
+              onSaved();
+              load();
+            }}
+            onProblem={onProblem}
+          />
         ) : (
           <Facts station={shown} row={row} document={document} />
         )}

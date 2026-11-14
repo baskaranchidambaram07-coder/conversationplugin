@@ -256,3 +256,100 @@ test("a signed-in widget's install shows its portal endpoint's settings and code
   await expect(page.getByText("The endpoint's code in Python")).toBeVisible();
   await expect(page.getByText('fetch("/widget-token", { credentials: "same-origin" })').first()).toBeVisible();
 });
+
+// Go live (M9-T6): publish, what changed, the versions, compare, and the rollback journey.
+test("a widget is published, changed and published again, compared, and rolled back; visitors get the old one", async ({ page }, info) => {
+  const api = await operatorApi(page);
+  const { tenant_id: tenant } = await api("POST", "/tenants", { name: `Go live ${info.project.name} ${Date.now().toString(36)}` });
+  await api("PUT", `/tenants/${tenant}/agent-profiles/fake-pf`, {
+    base_url: "http://127.0.0.1:8100", tenant: "fake-tenant", workspace_id: "fake-workspace", agent_version_id: "fake-agent-version",
+    api_key: "fake-api-key", username: "fake-user", password: "fake-password",
+  });
+  const { widget_id: widget } = await api("POST", `/tenants/${tenant}/widgets`, {
+    document: {
+      public: { title: "First title", welcome_message: null, suggested_prompts: [], ai_notice: null, brand_color: "#1F6F5C", logo_url: null, color_scheme: "auto", launcher_position: "bottom-right", history_enabled: false },
+      allowed_domains: ["http://127.0.0.1:4174"],
+      sign_in: "anonymous",
+      agent_profile: "fake-pf",
+    },
+  });
+
+  await signIn(page, `/widgets/${widget}/live`, await platformAdministrator(page, "publisher"));
+  await expect(page.getByRole("heading", { name: "Not live yet" })).toBeVisible();
+  await page.getByRole("button", { name: "Publish version 1" }).click();
+  await expect(page.getByText("Published. Version 1 is live; visitors see it within half a minute.")).toBeVisible();
+  await expect(page.getByText("Live · version 1").first()).toBeVisible();
+
+  await page.getByRole("button", { name: /Look/ }).click();
+  await page.getByLabel("Title", { exact: true }).fill("Second title");
+  await page.getByRole("button", { name: "Save" }).click();
+  await expect(page.getByText("Saved. Visitors see it once you publish.")).toBeVisible();
+  await page.getByRole("button", { name: /Go live/ }).click();
+  const waiting = page.getByRole("table");
+  await expect(waiting.getByRole("row", { name: "Title First title Second title" })).toBeVisible();
+  await page.getByRole("button", { name: "Publish version 2" }).click();
+  await expect(page.getByText("Published. Version 2 is live")).toBeVisible();
+
+  await page.getByRole("button", { name: "Compare with live" }).click();
+  await expect(page.getByRole("row", { name: "Title Second title First title" })).toBeVisible();
+  await page.getByRole("button", { name: "Make this live again" }).click();
+  await page.getByRole("button", { name: "Yes, make version 1 live again" }).click();
+  await expect(page.getByText("Version 1 is live again, as version 3.")).toBeVisible();
+  const config = await page.request.get(`http://localhost:8200/v1/widgets/${widget}/config`);
+  expect((await config.json()).title).toBe("First title"); // the gateway serves the rolled-back version
+  expect(await serious(page)).toEqual([]);
+});
+
+// M9's done condition: a new administrator completes onboarding from the console alone, timed. Only their account
+// is made beforehand (by a platform administrator); everything they do is in the console, then a visitor chats.
+test("a new administrator onboards a widget from the console alone, and a visitor chats with it", async ({ page }, info) => {
+  test.slow();
+  const api = await operatorApi(page);
+  const run = `${info.project.name}-${Date.now().toString(36)}`;
+  const { tenant_id: tenant } = await api("POST", "/tenants", { name: `Riverside ${run}` });
+  const newcomer = `riverside-admin-${run}`;
+  await api("POST", "/administrators", { subject: newcomer, role: "tenant", tenant_id: tenant });
+  const started = Date.now();
+
+  await signIn(page, "/", newcomer);
+  await expect(page.getByText(`${newcomer} · administrator`)).toBeVisible();
+  await page.getByRole("link", { name: "New widget" }).click();
+  await page.getByLabel("Title visitors will see").fill(`Ask Riverside ${run.slice(-4)}`);
+  await page.getByRole("button", { name: "Add a connection" }).click();
+  for (const [label, value] of Object.entries(FAKE_PF)) await page.getByLabel(label, { exact: true }).fill(value);
+  await page.getByRole("button", { name: "Save connection" }).click();
+  await expect(page.getByText("Connected", { exact: true })).toBeVisible();
+  await page.getByRole("button", { name: "Continue" }).click();
+  await page.getByLabel("Add a site").fill("http://127.0.0.1:4174");
+  await page.getByRole("button", { name: "Add", exact: true }).click();
+  await page.getByRole("button", { name: "Continue" }).click();
+  await page.getByRole("radio", { name: /^Anyone No sign-in/ }).check();
+  await page.getByRole("button", { name: "Create the draft" }).click();
+
+  await expect(page).toHaveURL(new RegExp(`${CONSOLE}/widgets/w_[A-Za-z0-9_-]+/look$`));
+  const widget = page.url().split("/").at(-2)!;
+  await page.getByLabel("Welcome text").fill("Hello. Ask me anything about Riverside.");
+  await page.getByLabel("Suggested question 1").fill("What are your opening hours?");
+  await page.getByLabel("Colour of buttons").fill("#1F6F5C");
+  await page.getByRole("radio", { name: "Bottom left" }).check();
+  await page.getByRole("button", { name: "Save" }).click();
+  await expect(page.getByText("Saved. Visitors see it once you publish.")).toBeVisible();
+
+  await page.getByRole("button", { name: /Install/ }).click();
+  await expect(page.getByText(`data-widget-id="${widget}"`)).toBeVisible();
+  await page.getByRole("button", { name: /Go live/ }).click();
+  await page.getByRole("button", { name: "Publish version 1" }).click();
+  await expect(page.getByText("Published. Version 1 is live")).toBeVisible();
+  const minutes = ((Date.now() - started) / 60_000).toFixed(1);
+  info.annotations.push({ type: "onboarding time", description: `${minutes} minutes in the console, typed by a robot` });
+
+  const visitor = await page.context().newPage();
+  await visitor.goto(`http://127.0.0.1:4174/hosts/gateway-any.html?widget=${widget}`);
+  const launcher = visitor.getByRole("button", { name: `Ask Riverside ${run.slice(-4)}` });
+  await expect(launcher).toBeVisible();
+  expect((await launcher.boundingBox())!.x).toBeLessThan(200); // bottom left, as chosen in the console
+  await launcher.click();
+  const chat = visitor.frameLocator("[data-ucp] iframe");
+  await chat.getByRole("button", { name: "What are your opening hours?" }).click();
+  await expect(chat.getByRole("article").getByText("READY", { exact: true })).toBeVisible();
+});
