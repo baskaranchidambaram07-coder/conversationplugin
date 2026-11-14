@@ -18,6 +18,7 @@ export function settings(config: Partial<WidgetConfig>) {
     color,
     ink: inkOn(color), // so no brand colour can make the icon unreadable
     left: config.launcher_position === "bottom-left",
+    scheme: config.color_scheme === "dark" || config.color_scheme === "auto" ? config.color_scheme : "light",
   };
 }
 
@@ -29,6 +30,7 @@ const SIDE = (side: string) => `max(24px,env(safe-area-inset-${side}))`;
 const EASE = "cubic-bezier(.16,1,.3,1)";
 const CSS = `
 :host{all:initial;display:block}
+.w{color-scheme:light}.dark{color-scheme:dark}.auto{color-scheme:light dark}
 .launcher{all:unset;box-sizing:border-box;position:fixed;z-index:2147483647;bottom:${EDGE};right:${SIDE("right")};
 width:56px;height:56px;border-radius:50%;display:grid;place-items:center;cursor:pointer;
 background:var(--brand);color:var(--ink);box-shadow:0 10px 24px -10px rgba(43,36,31,.55),0 2px 6px -2px rgba(43,36,31,.3);
@@ -41,14 +43,14 @@ transition:transform .4s cubic-bezier(.34,1.56,.64,1),box-shadow .2s ${EASE}}
 .open .launcher .x{display:block}
 .panel{box-sizing:border-box;position:fixed;z-index:2147483646;right:${SIDE("right")};bottom:calc(${EDGE} + 72px);
 width:min(400px,calc(100vw - 48px));height:min(640px,calc(100vh - 120px));height:min(640px,calc(100dvh - 120px));
-border-radius:24px;overflow:hidden;background:#fbf3ea;border:1px solid #e7dacb;
+border-radius:24px;overflow:hidden;background:light-dark(#fbf3ea,#1c1815);border:1px solid light-dark(#e7dacb,#3b332d);
 box-shadow:0 24px 60px -24px rgba(43,36,31,.45),0 8px 20px -12px rgba(43,36,31,.25);
 visibility:hidden;opacity:0;transform:translateY(12px);
 transition:opacity .2s ${EASE},transform .2s ${EASE},visibility 0s .2s}
 .open .panel{visibility:visible;opacity:1;transform:none;transition-delay:0s}
 /* a quiet loading mark until the chat page has loaded */
 .panel::before{content:"";position:absolute;inset:0;margin:auto;width:28px;height:28px;box-sizing:border-box;
-border-radius:50%;border:3px solid #e7dacb;border-top-color:#6f625a}
+border-radius:50%;border:3px solid light-dark(#e7dacb,#3b332d);border-top-color:light-dark(#6f625a,#b5a69a)}
 /* it spins only while the chat is open: a closed widget runs nothing on the host page */
 .open .panel::before{animation:spin .9s linear infinite}
 .ready::before{display:none}
@@ -56,7 +58,7 @@ border-radius:50%;border:3px solid #e7dacb;border-top-color:#6f625a}
 .left .launcher,.left .panel{right:auto;left:${SIDE("left")}}
 .expanded .panel{inset:0;width:100%;height:100%;border:0;border-radius:0}
 .open.expanded .launcher{display:none}
-iframe{display:block;width:100%;height:100%;border:0;color-scheme:normal}
+iframe{display:block;width:100%;height:100%;border:0}
 .inline{height:100%;container-type:inline-size}
 @container (min-width:720px){.panel{border:0;border-radius:0}}
 .inline .panel{position:relative;inset:auto;width:100%;height:100%;min-height:480px;
@@ -139,7 +141,7 @@ function mount(origin: string, options: MountOptions, win: Window): Widget | und
       place = null;
     }
     if (!place) return say(`✗ no element on the page matches "${target}"`);
-    const { title, color, ink, left } = settings(config);
+    const { title, color, ink, left, scheme } = settings(config);
     // Our own element name, so a host page's rules for div and friends miss it; important inline display and
     // height so even `* { all: unset !important }` cannot collapse it.
     host = doc.createElement("ucp-widget");
@@ -156,7 +158,7 @@ function mount(origin: string, options: MountOptions, win: Window): Widget | und
       root.appendChild(doc.createElement("style")).textContent = CSS;
     }
     const frame = root.appendChild(doc.createElement("div"));
-    frame.className = `w${left ? " left" : ""}${inline ? " inline" : ""}`;
+    frame.className = `w ${scheme}${left ? " left" : ""}${inline ? " inline" : ""}`;
     frame.style.setProperty("--brand", color);
     frame.style.setProperty("--ink", ink);
     const panel = frame.appendChild(doc.createElement("div"));

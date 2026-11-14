@@ -31,7 +31,7 @@ def web(tmp_path):
     (tmp_path / "loader/dist").mkdir(parents=True)
     (tmp_path / "widget/dist/assets").mkdir(parents=True)
     (tmp_path / "loader/dist/loader.js").write_text("/* loader */")
-    (tmp_path / "widget/dist/index.html").write_text("<!doctype html><title>Chat</title>")
+    (tmp_path / "widget/dist/index.html").write_text('<!doctype html><html lang="en"><title>Chat</title></html>')
     (tmp_path / "widget/dist/assets/index-abc123.js").write_text("/* chat */")
     (tmp_path / "widget/dist/secret.txt").write_text("not an asset")
     return tmp_path
@@ -78,6 +78,7 @@ async def test_the_chat_page_may_be_framed_only_by_the_widgets_sites_and_loads_o
     response = client.get(f"/embed/{widget_id}")
 
     assert response.status_code == 200 and response.text.startswith("<!doctype html>")
+    assert f'<html data-scheme="{PUBLIC["color_scheme"]}" lang="en">' in response.text  # painted in it from the start
     assert response.headers["content-security-policy"] == (
         "default-src 'none'; script-src 'self'; style-src 'self'; font-src 'self'; connect-src 'self'; "
         "img-src 'self' https://example.org; base-uri 'none'; form-action 'none'; "

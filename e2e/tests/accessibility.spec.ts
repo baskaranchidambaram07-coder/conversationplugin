@@ -21,72 +21,79 @@ async function ask(page: Page, question: string) {
   await field.press("Enter");
 }
 
-test("the chat's opening view", async ({ page }) => {
-  await page.goto(CHAT);
-  await expect(page.getByRole("heading", { name: "Ask the College" })).toBeVisible();
+// Every state in both colour schemes: the example widget follows the system's (auto), which each pass emulates.
+for (const colorScheme of ["light", "dark"] as const) {
+  test.describe(`${colorScheme} scheme`, () => {
+    test.use({ colorScheme });
 
-  expect(await serious(page)).toEqual([]);
-});
+    test("the chat's opening view", async ({ page }) => {
+      await page.goto(CHAT);
+      await expect(page.getByRole("heading", { name: "Ask the College" })).toBeVisible();
 
-test("the chat with a finished answer, and the copy action", async ({ page }) => {
-  await page.goto(CHAT);
-  await page.getByRole("button", { name: "When does the library open?" }).click();
-  await expect(page.getByRole("button", { name: "Copy answer" })).toBeVisible({ timeout: 20_000 }); // a long answer streams for seconds
+      expect(await serious(page)).toEqual([]);
+    });
 
-  expect(await serious(page)).toEqual([]);
-});
+    test("the chat with a finished answer, and the copy action", async ({ page }) => {
+      await page.goto(CHAT);
+      await page.getByRole("button", { name: "When does the library open?" }).click();
+      await expect(page.getByRole("button", { name: "Copy answer" })).toBeVisible({ timeout: 20_000 }); // a long answer streams for seconds
 
-test("the chat while it waits for the first word, with the stop button", async ({ page }) => {
-  await page.goto(CHAT);
-  await ask(page, "When does the library open on Sunday? [slow]");
-  await expect(page.getByRole("img", { name: "Finding an answer" })).toBeVisible();
+      expect(await serious(page)).toEqual([]);
+    });
 
-  expect(await serious(page)).toEqual([]);
-});
+    test("the chat while it waits for the first word, with the stop button", async ({ page }) => {
+      await page.goto(CHAT);
+      await ask(page, "When does the library open on Sunday? [slow]");
+      await expect(page.getByRole("img", { name: "Finding an answer" })).toBeVisible();
 
-test("the chat showing an error with its reference and retry", async ({ page }) => {
-  await page.goto(CHAT);
-  await ask(page, "Hello [busy]");
-  await expect(page.getByRole("alert")).toBeVisible();
+      expect(await serious(page)).toEqual([]);
+    });
 
-  expect(await serious(page)).toEqual([]);
-});
+    test("the chat showing an error with its reference and retry", async ({ page }) => {
+      await page.goto(CHAT);
+      await ask(page, "Hello [busy]");
+      await expect(page.getByRole("alert")).toBeVisible();
 
-test("the chat after an anonymous session has ended", async ({ page }) => {
-  await page.goto(CHAT);
-  await ask(page, "Hello [expire]");
-  await expect(page.getByRole("button", { name: "Start a new chat" })).toBeVisible();
+      expect(await serious(page)).toEqual([]);
+    });
 
-  expect(await serious(page)).toEqual([]);
-});
+    test("the chat after an anonymous session has ended", async ({ page }) => {
+      await page.goto(CHAT);
+      await ask(page, "Hello [expire]");
+      await expect(page.getByRole("button", { name: "Start a new chat" })).toBeVisible();
 
-// Rendered answers (M3), from the example gallery the unit tests draw.
-for (const example of ["formatting", "code", "tables", "charts"]) {
-  test(`an answer drawn from the ${example} example`, async ({ page }) => {
-    await page.goto(CHAT);
-    await ask(page, `[gallery:${example}]`);
-    await expect(page.getByRole("button", { name: "Copy answer" })).toBeVisible({ timeout: 20_000 }); // a long answer streams for seconds
+      expect(await serious(page)).toEqual([]);
+    });
 
-    expect(await serious(page)).toEqual([]);
+    // Rendered answers (M3), from the example gallery the unit tests draw.
+    for (const example of ["formatting", "code", "tables", "charts"]) {
+      test(`an answer drawn from the ${example} example`, async ({ page }) => {
+        await page.goto(CHAT);
+        await ask(page, `[gallery:${example}]`);
+        await expect(page.getByRole("button", { name: "Copy answer" })).toBeVisible({ timeout: 20_000 }); // a long answer streams for seconds
+
+        expect(await serious(page)).toEqual([]);
+      });
+    }
+
+    test("a long table, unfolded and scrolled", async ({ page }) => {
+      await page.goto(CHAT);
+      await ask(page, "[gallery:tables]");
+      await page.getByRole("button", { name: "Show all 14 rows" }).click();
+      await page.getByRole("region", { name: /^Table: House/ }).evaluate((region) => region.scrollBy(80, 120));
+
+      expect(await serious(page)).toEqual([]);
+    });
+
+    test("the launcher, closed and open, on a customer's page", async ({ page }) => {
+      await page.goto(`${HOST}/chat.html`);
+      const launcher = page.getByRole("button", { name: "Ask the College" });
+      await expect(launcher).toBeVisible();
+      expect(await serious(page)).toEqual([]);
+
+      await launcher.click();
+      await expect(page.frameLocator("[data-ucp] iframe").getByRole("heading", { name: "Ask the College" })).toBeVisible();
+      expect(await serious(page)).toEqual([]);
+    });
   });
 }
-
-test("a long table, unfolded and scrolled", async ({ page }) => {
-  await page.goto(CHAT);
-  await ask(page, "[gallery:tables]");
-  await page.getByRole("button", { name: "Show all 14 rows" }).click();
-  await page.getByRole("region", { name: /^Table: House/ }).evaluate((region) => region.scrollBy(80, 120));
-
-  expect(await serious(page)).toEqual([]);
-});
-
-test("the launcher, closed and open, on a customer's page", async ({ page }) => {
-  await page.goto(`${HOST}/chat.html`);
-  const launcher = page.getByRole("button", { name: "Ask the College" });
-  await expect(launcher).toBeVisible();
-  expect(await serious(page)).toEqual([]);
-
-  await launcher.click();
-  await expect(page.frameLocator("[data-ucp] iframe").getByRole("heading", { name: "Ask the College" })).toBeVisible();
-  expect(await serious(page)).toEqual([]);
-});

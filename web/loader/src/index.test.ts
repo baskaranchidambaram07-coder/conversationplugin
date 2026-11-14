@@ -162,12 +162,12 @@ test("the loader stores nothing on the visitor's device", async () => {
 });
 
 test.each([
-  [{ title: "  Ask the College  ", brand_color: "#5B2A86", launcher_position: "bottom-left" }, "Ask the College", "#5B2A86", true],
-  [{ title: "", brand_color: "purple" }, "Chat", "#2b241f", false],
-  [{ title: "x".repeat(200), brand_color: "#5B2A86\n" }, "x".repeat(80), "#2b241f", false],
-  [{ title: 42, brand_color: "red;background:url(x)", launcher_position: "top-right" }, "Chat", "#2b241f", false],
-])("configuration %j is read safely", (config, title, color, left) => {
-  expect(settings(config as never)).toMatchObject({ title, color, left });
+  [{ title: "  Ask the College  ", brand_color: "#5B2A86", launcher_position: "bottom-left", color_scheme: "dark" }, "Ask the College", "#5B2A86", true, "dark"],
+  [{ title: "", brand_color: "purple" }, "Chat", "#2b241f", false, "light"],
+  [{ title: "x".repeat(200), brand_color: "#5B2A86\n", color_scheme: "auto" }, "x".repeat(80), "#2b241f", false, "auto"],
+  [{ title: 42, brand_color: "red;background:url(x)", launcher_position: "top-right", color_scheme: "dark x" }, "Chat", "#2b241f", false, "light"],
+])("configuration %j is read safely", (config, title, color, left, scheme) => {
+  expect(settings(config as never)).toMatchObject({ title, color, left, scheme });
 });
 
 test("the launcher icon keeps at least 4.5:1 contrast on any brand colour", () => {

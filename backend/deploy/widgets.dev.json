@@ -108,6 +108,28 @@
         "audience": "ucp-demo",
         "secret": "demo"
       }
+    },
+    "w_KPBdCU6D_S6H6hwY_uN-ZA": {
+      "tenant_id": "t_scl",
+      "public": {
+        "title": "Ask SCL",
+        "welcome_message": "Hello. Ask about supply chain and fleet operations.",
+        "suggested_prompts": [
+          "How can we cut empty miles in our fleet?",
+          "What drives a low on-time delivery rate?"
+        ],
+        "ai_notice": "You are chatting with an AI assistant. It can make mistakes.",
+        "brand_color": "#7C3AED",
+        "logo_url": null,
+        "color_scheme": "dark",
+        "launcher_position": "bottom-right",
+        "history_enabled": true
+      },
+      "allowed_domains": [
+        "https://supplychain.dx57bapd1nc23.amplifyapp.com"
+      ],
+      "sign_in": "anonymous",
+      "agent_profile": "pf-staging"
     }
   }
 }
