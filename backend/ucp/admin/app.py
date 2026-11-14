@@ -22,19 +22,20 @@ from typing import Annotated, Literal
 
 import httpx2
 from fastapi import APIRouter, Depends, FastAPI, Query, Request
-from fastapi.responses import Response
+from fastapi.responses import JSONResponse, Response
 from pydantic import BaseModel, ConfigDict, Field
 from sqlalchemy.ext.asyncio import create_async_engine
 
 from ucp.admin.records import Records
 from ucp.gateway import pipeline
 from ucp.gateway.api import visitor_address
-from ucp.gateway.pipeline import Problem
+from ucp.gateway.pipeline import CODES, Problem, api_error
 from ucp.identity import Identity, ProviderKeys, verify_provider_token
 from ucp.protocol import Id
 from ucp.sessions import Limiter
 from ucp.settings import Settings
 from ucp.store import Store, new_id
+from ucp.widgets import problems
 
 PER_MINUTE = 120  # requests from one signed-in administrator
 ATTEMPTS_PER_MINUTE = 30  # requests from one address before sign-in is checked
@@ -213,6 +214,156 @@ async def read_audit(
     return [_entry(row) for row in await kept.audit(tenant, widget, limit)]
 
 
+# Widgets: each is edited as a draft, then published as an unchangeable version (M8-T3)
+
+
+class NewWidget(_Body):
+    document: dict = Field(description="The widget's settings, as in a widget file; its tenant is the one named.")
+
+
+class Draft(_Body):
+    revision: Annotated[int, Field(ge=0, description="The revision this edit started from; 0 for the live version.")]
+    document: dict
+
+
+class Publish(_Body):
+    revision: Annotated[int, Field(ge=1, description="The draft revision to publish, as last read.")]
+
+
+class Rollback(_Body):
+    version: Annotated[int, Field(ge=1)]
+
+
+class _Faults(Exception):
+    def __init__(self, faults: list[str]):
+        self.faults = faults
+
+
+async def _faults(_: Request, error: _Faults) -> JSONResponse:
+    body = api_error("invalid_request").model_dump(mode="json")
+    return JSONResponse({**body, "faults": error.faults}, status_code=CODES["invalid_request"][0])
+
+
+def _checked(widget_id: str, tenant_id: str, document: dict) -> dict:
+    """The document as it will be stored, or a 400 naming every fault at once. Its tenant is the widget's own."""
+    if document.get("tenant_id", tenant_id) != tenant_id:
+        raise _Faults([f"{widget_id}: tenant_id: a widget stays in its own tenant, {tenant_id}"])
+    document = {**document, "tenant_id": tenant_id}
+    if found := problems({widget_id: document}):
+        raise _Faults(found)
+    return document
+
+
+async def _widget(kept: Records, admin: Admin, widget_id: str, *, write: bool = False) -> str:
+    tenant_id = await kept.widget_tenant(widget_id)
+    if not tenant_id:
+        raise Problem("not_found")
+    admin.reach(tenant_id, write=write)
+    return tenant_id
+
+
+def store(request: Request) -> Store:
+    return request.app.state.store
+
+
+type Published = Annotated[Store, Depends(store)]
+
+
+@router.get("/tenants/{tenant_id}/widgets", summary="A tenant's widgets, with their live version and draft")
+async def list_widgets(tenant_id: Id, admin: Signed, kept: Kept) -> list[dict]:
+    admin.reach(tenant_id)
+    return await kept.widgets(tenant_id)
+
+
+@router.post("/tenants/{tenant_id}/widgets", status_code=201, summary="A new widget, as a draft")
+async def create_widget(tenant_id: Id, body: NewWidget, admin: Signed, kept: Kept) -> dict:
+    admin.reach(tenant_id, write=True)
+    if not await kept.tenants(tenant_id):
+        raise Problem("not_found")
+    widget_id = new_id("w")
+    await kept.create_widget(widget_id, tenant_id, _checked(widget_id, tenant_id, body.document), admin.subject)
+    return {"widget_id": widget_id, "revision": 1}
+
+
+@router.get("/widgets/{widget_id}/draft", summary="The draft being edited, or the live version as revision 0")
+async def read_draft(widget_id: Id, admin: Signed, kept: Kept, published: Published) -> dict:
+    await _widget(kept, admin, widget_id)
+    if draft := await kept.draft(widget_id):
+        return {"revision": draft.revision, "document": draft.document, "updated_by": draft.updated_by}
+    live = await published.widget(widget_id)
+    return {"revision": 0, "document": live.document, "updated_by": None}
+
+
+@router.put("/widgets/{widget_id}/draft", summary="Save the draft; refused if someone saved since you read it")
+async def save_draft(widget_id: Id, body: Draft, admin: Signed, kept: Kept) -> dict:
+    tenant_id = await _widget(kept, admin, widget_id, write=True)
+    document = _checked(widget_id, tenant_id, body.document)
+    return {"revision": await kept.save_draft(widget_id, tenant_id, document, body.revision, admin.subject)}
+
+
+@router.post("/widgets/{widget_id}/publish", summary="Publish a draft revision as the next version")
+async def publish(widget_id: Id, body: Publish, admin: Signed, kept: Kept, published: Published) -> dict:
+    tenant_id = await _widget(kept, admin, widget_id, write=True)
+    draft = await kept.draft(widget_id)
+    if not draft or draft.revision != body.revision:
+        raise Problem("conflict")
+    _checked(widget_id, tenant_id, draft.document)  # today's rules, which may be newer than the draft
+    return {"version": await kept.publish_draft(published, widget_id, body.revision, admin.subject)}
+
+
+@router.get("/widgets/{widget_id}/versions", summary="Every published version, newest first")
+async def versions(widget_id: Id, admin: Signed, kept: Kept, published: Published) -> list[dict]:
+    await _widget(kept, admin, widget_id)
+    rows = await published.widget_versions(widget_id)
+    return [{"version": r.version, "published_at": r.published_at, "published_by": r.published_by} for r in rows]
+
+
+@router.get("/widgets/{widget_id}/versions/{version}", summary="One published version's document")
+async def version(widget_id: Id, version: int, admin: Signed, kept: Kept, published: Published) -> dict:
+    await _widget(kept, admin, widget_id)
+    row = await published.widget(widget_id, version)
+    if not row:
+        raise Problem("not_found")
+    return {"version": row.version, "document": row.document}
+
+
+@router.post("/widgets/{widget_id}/rollback", summary="Publish an earlier version again, as the next version")
+async def rollback(widget_id: Id, body: Rollback, admin: Signed, kept: Kept, published: Published) -> dict:
+    tenant_id = await _widget(kept, admin, widget_id, write=True)
+    earlier = await published.widget(widget_id, body.version)
+    if not earlier:
+        raise Problem("not_found")
+    _checked(widget_id, tenant_id, earlier.document)  # one that breaks today's rules is refused, not served broken
+    return {"version": await published.rollback_widget(widget_id, body.version, admin.subject)}
+
+
+def changes(before, after, path: str = "") -> list[dict]:
+    """Every setting that differs between two documents, by its dotted path. Lists compare as whole values."""
+    if isinstance(before, dict) and isinstance(after, dict):
+        return [
+            change
+            for key in sorted(before.keys() | after.keys())
+            for change in changes(before.get(key), after.get(key), f"{path}.{key}" if path else key)
+        ]
+    return [] if before == after else [{"path": path, "from": before, "to": after}]
+
+
+@router.get("/widgets/{widget_id}/compare", summary="What changed between two versions")
+async def compare(
+    widget_id: Id,
+    admin: Signed,
+    kept: Kept,
+    published: Published,
+    first: Annotated[int, Query(alias="from", ge=1)],
+    second: Annotated[int, Query(alias="to", ge=1)],
+) -> list[dict]:
+    await _widget(kept, admin, widget_id)
+    one, two = await published.widget(widget_id, first), await published.widget(widget_id, second)
+    if not one or not two:
+        raise Problem("not_found")
+    return changes(one.document, two.document)
+
+
 def create_app(settings: Settings | None = None) -> FastAPI:
     settings = settings or Settings.from_env()
     pipeline.install_logging(settings.log_level)
@@ -234,6 +385,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         title="Control plane", version="1", docs_url=None, redoc_url=None, openapi_url=None, lifespan=lifespan
     )
     pipeline.install(app)
+    app.add_exception_handler(_Faults, _faults)
     app.state.identity = (
         Identity(
             provider="administrators",

@@ -10,11 +10,13 @@ from fastapi.testclient import TestClient
 from sqlalchemy.ext.asyncio import create_async_engine
 
 from tests.test_provider import provider  # noqa: F401  (the stand-in identity provider, as a fixture)
+from tests.test_public import PUBLIC, document
 from ucp.admin import app as admin
 from ucp.admin.__main__ import main as command
 from ucp.admin.records import Records
 from ucp.gateway.app import create_app as gateway
 from ucp.settings import Settings
+from ucp.store import Store
 
 CONSOLE = "https://console.example.org"
 AUDIENCE = "ucp-console"
@@ -46,6 +48,7 @@ def world(database_url, provider):  # noqa: F811
     async def make(records):
         for tenant in (f"t_a{tag}", f"t_b{tag}"):
             await records.create_tenant(tenant, f"Tenant {tenant}", "setup")
+            await Store(records.engine).publish_widget(f"w_{tenant}", tenant, document(tenant_id=tenant), "setup")
         for who, (role, tenant) in people.items():
             await records.add_administrator(provider.base_url, f"{who}-{tag}", role, tenant, who, "setup")
 
@@ -55,6 +58,7 @@ def world(database_url, provider):  # noqa: F811
     )
     with TestClient(admin.create_app(settings)) as client:
         client.tag, client.provider = tag, provider
+        client.a, client.b = f"t_a{tag}", f"t_b{tag}"
         yield client
 
 
@@ -130,6 +134,19 @@ def operations(tag: str) -> dict:
         "add a viewer to B": ("POST", "/admin/v1/administrators", newcomer("viewer", b)),
         "add a platform administrator": ("POST", "/admin/v1/administrators", newcomer("platform")),
         "remove B's viewer": ("DELETE", f"/admin/v1/administrators/viewer_b-{tag}", None),
+        "list A's widgets": ("GET", f"/admin/v1/tenants/{a}/widgets", None),
+        "list B's widgets": ("GET", f"/admin/v1/tenants/{b}/widgets", None),
+        "create a widget in A": ("POST", f"/admin/v1/tenants/{a}/widgets", {"document": document(tenant_id=a)}),
+        "create a widget in B": ("POST", f"/admin/v1/tenants/{b}/widgets", {"document": document(tenant_id=b)}),
+        "read A's draft": ("GET", f"/admin/v1/widgets/w_{a}/draft", None),
+        "read B's draft": ("GET", f"/admin/v1/widgets/w_{b}/draft", None),
+        "save A's draft": ("PUT", f"/admin/v1/widgets/w_{a}/draft", {"revision": 0, "document": document(tenant_id=a)}),
+        "save B's draft": ("PUT", f"/admin/v1/widgets/w_{b}/draft", {"revision": 0, "document": document(tenant_id=b)}),
+        "publish A's draft": ("POST", f"/admin/v1/widgets/w_{a}/publish", {"revision": 1}),
+        "roll A back": ("POST", f"/admin/v1/widgets/w_{a}/rollback", {"version": 1}),
+        "list A's versions": ("GET", f"/admin/v1/widgets/w_{a}/versions", None),
+        "list B's versions": ("GET", f"/admin/v1/widgets/w_{b}/versions", None),
+        "compare A's versions": ("GET", f"/admin/v1/widgets/w_{a}/compare?from=1&to=1", None),
     }  # fmt: skip
 
 
@@ -144,6 +161,19 @@ EXPECTED = {
     "add a viewer to B":             (201,     404,     404),
     "add a platform administrator":  (201,     403,     403),
     "remove B's viewer":             (204,     404,     404),
+    "list A's widgets":              (200,     200,     200),
+    "list B's widgets":              (200,     404,     404),
+    "create a widget in A":          (201,     201,     403),
+    "create a widget in B":          (201,     404,     404),
+    "read A's draft":                (200,     200,     200),
+    "read B's draft":                (200,     404,     404),
+    "save A's draft":                (200,     200,     403),
+    "save B's draft":                (200,     404,     404),
+    "publish A's draft":             (200,     200,     403),
+    "roll A back":                   (200,     200,     403),
+    "list A's versions":             (200,     200,     200),
+    "list B's versions":             (200,     404,     404),
+    "compare A's versions":          (200,     200,     200),
 }  # fmt: skip
 
 
@@ -194,3 +224,82 @@ def test_roles_and_tenants_must_agree(world):
     assert add(newcomer("viewer")).status_code == 400
     assert add(newcomer("viewer", "t_nobody")).json()["code"] == "conflict"  # no such tenant
     assert add({"subject": f"viewer_a-{world.tag}", "role": "viewer", "tenant_id": a}).json()["code"] == "conflict"
+
+
+# Widgets, drafts and versions (M8-T3, T7)
+
+
+def titled(world, title: str) -> dict:
+    return document(tenant_id=world.a, public={**PUBLIC, "title": title})
+
+
+def test_a_new_widget_is_a_draft_until_published_then_the_gateway_serves_it(world, database_url):
+    signed = bearer(world, "admin_a")
+    made = world.post(f"/admin/v1/tenants/{world.a}/widgets", json={"document": titled(world, "Draft")}, headers=signed)
+    widget_id = made.json()["widget_id"]
+    assert made.status_code == 201 and made.json()["revision"] == 1
+    with TestClient(gateway(Settings(database_url=database_url))) as chat:
+        assert chat.get(f"/v1/widgets/{widget_id}/config").status_code == 404
+
+    assert world.post(f"/admin/v1/widgets/{widget_id}/publish", json={"revision": 1}, headers=signed).json() == {
+        "version": 1
+    }
+    with TestClient(gateway(Settings(database_url=database_url))) as chat:
+        assert chat.get(f"/v1/widgets/{widget_id}/config").json()["title"] == "Draft"
+    listed = world.get(f"/admin/v1/tenants/{world.a}/widgets", headers=signed).json()
+    entry = next(widget for widget in listed if widget["widget_id"] == widget_id)
+    assert (entry["version"], entry["draft"]["revision"]) == (1, 1)
+
+
+def test_two_people_editing_one_draft_cannot_overwrite_each_other_unseen(world):
+    path = f"/admin/v1/widgets/w_{world.a}/draft"
+    ana, ben = bearer(world, "admin_a"), bearer(world, "platform")
+    assert world.get(path, headers=ana).json()["revision"] == 0  # never edited: the live version
+
+    assert world.put(path, json={"revision": 0, "document": titled(world, "Ana's")}, headers=ana).json() == {
+        "revision": 1
+    }
+    late = world.put(path, json={"revision": 0, "document": titled(world, "Ben's")}, headers=ben)
+    assert late.status_code == 409 and late.json()["code"] == "conflict"
+    current = world.get(path, headers=ben).json()
+    assert (current["revision"], current["document"]["public"]["title"]) == (1, "Ana's")
+    assert world.put(path, json={"revision": 1, "document": titled(world, "Ben's")}, headers=ben).json() == {
+        "revision": 2
+    }
+    stale = world.post(f"/admin/v1/widgets/w_{world.a}/publish", json={"revision": 1}, headers=ana)
+    assert stale.json()["code"] == "conflict"  # Ana publishes what she saw, or nothing
+
+
+def test_a_draft_with_faults_is_refused_with_every_fault_named(world):
+    bad = document(tenant_id=world.a, allowed_domains=["http://example.org", "https://*.ac.uk"])
+    bad["public"] = {**PUBLIC, "brand_color": "purple"}
+    reply = world.put(
+        f"/admin/v1/widgets/w_{world.a}/draft", json={"revision": 0, "document": bad}, headers=bearer(world, "admin_a")
+    )
+
+    assert reply.status_code == 400 and reply.json()["code"] == "invalid_request"
+    faults = reply.json()["faults"]
+    assert len(faults) == 3 and any("brand_color" in f for f in faults) and any("*.ac.uk" in f for f in faults)
+    moved = world.put(
+        f"/admin/v1/widgets/w_{world.a}/draft",
+        json={"revision": 0, "document": document(tenant_id=world.b)},
+        headers=bearer(world, "platform"),
+    )
+    assert "stays in its own tenant" in moved.json()["faults"][0]
+
+
+def test_rollback_and_comparing_versions(world):
+    signed = bearer(world, "admin_a")
+    widget = f"/admin/v1/widgets/w_{world.a}"
+    world.put(f"{widget}/draft", json={"revision": 0, "document": titled(world, "Two")}, headers=signed)
+    assert world.post(f"{widget}/publish", json={"revision": 1}, headers=signed).json() == {"version": 2}
+
+    assert world.get(f"{widget}/compare?from=1&to=2", headers=signed).json() == [
+        {"path": "public.title", "from": PUBLIC["title"], "to": "Two"}
+    ]
+    assert world.post(f"{widget}/rollback", json={"version": 1}, headers=signed).json() == {"version": 3}
+    assert world.get(f"{widget}/compare?from=1&to=3", headers=signed).json() == []
+    assert [v["version"] for v in world.get(f"{widget}/versions", headers=signed).json()] == [3, 2, 1]
+    assert world.get(f"{widget}/versions/9", headers=signed).status_code == 404
+    entries = world.get(f"/admin/v1/audit?widget=w_{world.a}", headers=signed).json()
+    assert [(e["action"], e["version"]) for e in entries[:3]] == [("rollback", 3), ("publish", 2), ("draft.save", None)]
