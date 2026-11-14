@@ -141,11 +141,13 @@ export interface MessageFailed {
 export interface ApiError {
   code:
     | "invalid_request"
+    | "sign_in_required"
     | "session_expired"
     | "forbidden"
     | "site_not_allowed"
     | "not_found"
     | "turn_in_progress"
+    | "conflict"
     | "rate_limited"
     | "assistant_unavailable"
     | "internal_error";

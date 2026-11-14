@@ -16,6 +16,8 @@ from sqlalchemy.ext.asyncio import create_async_engine
 
 from tests.test_public import document
 from tests.test_sessions import KEYS
+from ucp.admin.app import create_app as admin_api
+from ucp.admin.records import Records
 from ucp.gateway.app import create_app
 from ucp.settings import Settings
 from ucp.store import Store
@@ -38,7 +40,7 @@ def admin():
     )
     api.delete("/college")
     api.post("", json={"realm": "college", "enabled": True}).raise_for_status()
-    for client in ("chat-widget", "another-app"):
+    for client in ("chat-widget", "another-app", "ucp-console"):
         body = {"clientId": client, "publicClient": True, "directAccessGrantsEnabled": True, "enabled": True}
         api.post("/college/clients", json=body).raise_for_status()
     for name in ("resident", "visitor"):
@@ -131,3 +133,21 @@ def test_keycloak_rotating_its_signing_key_is_followed_without_a_restart(gateway
     after = id_token()
     assert jwt.get_unverified_header(after)["kid"] != jwt.get_unverified_header(before)["kid"]
     assert user_of(start(gateway, after)) == user_of(start(gateway, before))
+
+
+def test_an_administrator_signs_in_to_the_admin_api_with_keycloak(database_url, admin):
+    console = id_token("visitor", client="ucp-console")
+    subject = jwt.decode(console, options={"verify_signature": False})["sub"]
+
+    async def promote():
+        engine = create_async_engine(database_url)
+        await Records(engine).add_administrator(REALM, subject, "platform", None, "visitor", "test")
+        await engine.dispose()
+
+    asyncio.run(promote())
+    settings = Settings(database_url=database_url, admin_issuer=REALM, admin_audience="ucp-console")
+    with TestClient(admin_api(settings)) as api:
+        me = api.get("/admin/v1/me", headers={"authorization": f"Bearer {console}"})
+        assert me.json() == {"subject": subject, "role": "platform", "tenant_id": None}
+        widget_token = {"authorization": f"Bearer {id_token('visitor')}"}  # Keycloak's, but made for the chat
+        assert api.get("/admin/v1/me", headers=widget_token).json()["code"] == "sign_in_required"
