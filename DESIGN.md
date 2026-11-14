@@ -405,7 +405,7 @@ The visitor's earlier chats, on paper, ruled in sand.
 - **Suggested-question pill (brand):** brand fill, `--on-brand` text in the Label style, fully round, at least 44px tall, 10px 16px padding; they wrap. Press: sinks to 96% over 80ms, springs back on the launcher's release curve.
 - **Send / stop (brand):** a 44px circle inside the composer, brand fill, 22px glyph in `--on-brand`: an up arrow, which becomes a filled square stop while an answer arrives. Press: sinks to 92%, springs back on release. Disabled (nothing to send) at 35% opacity.
 - **Secondary ("Try again", "Start a new chat", the list's "New chat"):** Paper White with a 1.5px Warm Ink outline, Label small, fully round, at least 36px tall, 8px 16px padding; fills with Soft Sand on hover.
-- **Quiet ("Copy answer", "Copy code", "Copy as CSV", "Show all N rows", "Show older chats", "Show earlier messages"):** text and an 18px glyph in Muted Umber, no fill, fully round, at least 36px; inside code and table frames the label never wraps. On hover a faint ink wash (6%) and Warm Ink text. A copy action says "Copied" with a check for 2 seconds only when the copy worked, and "Could not copy" (keeping the copy glyph) when the browser refuses.
+- **Quiet ("Copy answer", "Copy code", "Copy as CSV", "Copy for draw.io", "Show code", "Show all N rows", "Show older chats", "Show earlier messages"):** text and an 18px glyph in Muted Umber, no fill, fully round, at least 36px; inside code and table frames the label never wraps. On hover a faint ink wash (6%) and Warm Ink text. A copy action says "Copied" with a check for 2 seconds only when the copy worked, and "Could not copy" (keeping the copy glyph) when the browser refuses.
 - **Jump to latest:** Paper White pill with a down-arrow glyph, Label small, the Jump pill shadow.
 - **Focus (everything inside the chat):** a 3px Warm Ink outline 2px off the element; the chat's ground is known, so one tone is enough.
 
@@ -433,6 +433,15 @@ Data on paper, ruled in sand.
 - **Length:** rows past the tenth fold away behind a quiet "Show all N rows" action. Once expanded, the table scrolls vertically within `min(70vh, 560px)`.
 - **Tools row:** under a 1px Soft Sand rule, a quiet "Copy as CSV" and the show-all action; it wraps when narrow.
 - **Open:** the sticky header row shows no edge cue, because its solid Soft Sand fill covers the shade beneath it.
+
+### Diagram
+A draw.io or Excalidraw diagram in an answer, drawn rather than shown as code; data on paper, like a table.
+- **Frame:** Paper White, 1px Soft Sand edge, 12px radius, full card width, clipped. The drawing scrolls sideways inside it with the scroll-edge cue and a thin Muted Umber (60%) scrollbar.
+- **Size:** as wide as the frame and never larger than drawn, but never so small that the diagram's usual label falls under 10px; past that the frame scrolls. On a 960px frame a typical diagram shows whole; in the 400px panel it scrolls.
+- **Drawing:** the diagram's own fills, strokes and dashes, kept only when they are plain colours (`#rgb`, `#rrggbb` or a colour name). Where it sets none, boxes are Paper White with a Warm Ink stroke and words are Warm Ink, in the chat's Nunito. A line's label sits on a Paper White patch. Nothing is fetched, linked or run.
+- **Tools row:** under a 1px Soft Sand rule, a quiet "Copy for draw.io" (or "Copy for Excalidraw") and "Show code" with a code glyph, which shows the source under the drawing on the cream ground, as a code panel's body; it wraps when narrow.
+- **Spoken:** the drawing is an image named with its counts ("Diagram: 6 shapes and 7 lines") and described by every label and every line's ends and label.
+- **While arriving, or unreadable:** the code panel, until the diagram is complete and readable.
 
 ### Scroll regions
 Code bodies and table scroll areas take keyboard focus. Their focus ring is the chat's 3px Warm Ink outline drawn inset (offset -3px), so the frame's clipping never hides it.

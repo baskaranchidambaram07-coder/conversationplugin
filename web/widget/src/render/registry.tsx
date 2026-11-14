@@ -10,12 +10,25 @@ import { Code } from "./Code";
 export type FenceProps = { code: string; language: string };
 
 const Markdown = lazy(() => import("./Markdown"));
+const LazyDiagram = lazy(() => import("./Diagram"));
+
+// Until the diagram renderer has loaded, and while a diagram is still arriving, the block shows as code.
+const Diagram = (props: FenceProps) => (
+  <Suspense fallback={<Code {...props} />}>
+    <LazyDiagram {...props} />
+  </Suspense>
+);
+
+/** Whether a fenced block holds draw.io XML or Excalidraw JSON, judged cheaply on every streamed render. */
+export const isDiagram = (code: string) =>
+  /^\s*<(?:mxfile|mxGraphModel)\b/.test(code) || /^\s*[[{][\s\S]{0,200}"type"\s*:\s*"excalidraw"/.test(code);
 
 /** Fenced-block languages with a renderer of their own. Anything else is code. */
 const FENCES: Record<string, ComponentType<FenceProps>> = {};
 
-export function fenceRenderer(language: string): ComponentType<FenceProps> {
-  return FENCES[language] ?? Code;
+/** The renderer for a fenced block: by its content for diagrams (agents label draw.io XML as "xml"), else its language. */
+export function fenceRenderer(language: string, code = ""): ComponentType<FenceProps> {
+  return isDiagram(code) ? Diagram : (FENCES[language] ?? Code);
 }
 
 // Markdown the parser would take seconds over (it is quadratic in emphasis marks and in containers opened on one
