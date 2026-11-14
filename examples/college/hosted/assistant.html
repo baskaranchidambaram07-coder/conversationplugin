@@ -1,0 +1,28 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="default-src 'self'; script-src 'self' {{GATEWAY}}; frame-src {{GATEWAY}}; connect-src 'self' {{GATEWAY}}"
+    />
+    <title>Ask the College</title>
+    <link rel="stylesheet" href="assistant.css" />
+  </head>
+  <body>
+    <p class="sample">
+      <strong>Sample page.</strong> It is not a College website. Anyone can sign in here under any name, so please do
+      not type anything private. <span id="signed-in" hidden>Signed in as <strong id="name"></strong>.
+      <a href="assistant.html">Sign out</a></span>
+    </p>
+    <form id="sign-in" action="assistant.html">
+      <label for="user">Sign in as</label>
+      <input id="user" name="user" required pattern="[A-Za-z0-9_\-]{1,40}" autocomplete="off" />
+      <button>Sign in</button>
+    </form>
+    <main id="assistant"></main>
+    <script src="assistant.js"></script>
+    <script async src="{{GATEWAY}}/loader.js"></script>
+  </body>
+</html>

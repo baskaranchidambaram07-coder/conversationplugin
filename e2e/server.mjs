@@ -2,8 +2,10 @@
 // http://localhost:4174: two origins, as in production, where the customer's site and ours never share one.
 // Our side is the built loader, the built chat page, widget configurations, and a fake gateway that speaks the
 // API in backend/ucp/protocol.py until the real one (module M4) exists.
+import { createHmac, randomUUID } from "node:crypto";
 import { readFile } from "node:fs/promises";
 import { createServer } from "node:http";
+import { runInNewContext } from "node:vm";
 
 const root = new URL("../", import.meta.url);
 const example = JSON.parse(await readFile(new URL("protocol/examples/v1/WidgetConfig/valid/full.json", root), "utf8"));
@@ -63,6 +65,8 @@ async function file(path) {
   }
   const asset = path.match(/^\/assets\/([\w.-]+)\.(js|css|woff2)$/);
   if (asset) return [200, types[asset[2]], await readFile(new URL(`web/widget/dist/assets/${asset[1]}.${asset[2]}`, root))];
+  const sample = path.match(/^\/(college|hosted)\/([a-z]+)\.(html|js|css)$/);
+  if (sample) return [200, types[sample[3]], await samplePage(sample[1], `${sample[2]}.${sample[3]}`)];
   const page = path.match(/^\/hosts\/([a-z-]+)\.html$/);
   if (page) return [200, types.html, await readFile(new URL(`e2e/hosts/${page[1]}.html`, root))];
   return [404, "text/plain", "not found"];
@@ -181,13 +185,51 @@ function portalBackend(url, response) {
   if (!user) return json(response, 401, { error: "not signed in" });
   tokenCalls[user] = (tokenCalls[user] ?? 0) + 1;
   response.writeHead(200, { "content-type": "text/plain", "cache-control": "no-store" });
-  response.end(widgetToken(user));
+  response.end(tokenFor("w_portal", user));
+}
+
+const tokenFor = (widget, user) => {
+  process.env.UCP_WIDGET_ID = widget; // the snippet reads its settings on each call, and this runs to the end at once
+  return widgetToken(user);
+};
+
+// The College's sample pages (examples/college) and our hosted copies (its hosted folder, over the same files),
+// filled in as infra/aws/deploy.py fills them for the dev environment, but with this machine's gateway.
+const FILLED = { "{{GATEWAY}}": "http://localhost:8200", "{{WIDGET}}": "w_college", "{{DEMO_WIDGET}}": "w_college_demo" };
+async function samplePage(folder, name) {
+  const read = (where) => readFile(new URL(`examples/college/${where}${name}`, root), "utf8");
+  const text = folder === "hosted" ? await read("hosted/").catch(() => read("")) : await read("");
+  return text.replace(/\{\{[A-Z_]+\}\}/g, (key) => FILLED[key]);
+}
+
+// The College's backend for its sample portal: the resident signed in to this site (a cookie here) gets a token.
+function collegeBackend(request, response) {
+  const user = request.headers.cookie?.match(/(?:^|; )resident=([\w-]+)/)?.[1];
+  if (!user) return json(response, 401, { error: "not signed in" });
+  response.writeHead(200, { "content-type": "text/plain", "cache-control": "no-store" });
+  response.end(tokenFor("w_college", user));
+}
+
+// The hosted samples' sign-in, run as CloudFront runs it, with this machine's test secret in place of the real one.
+const demoCode = (await readFile(new URL("infra/aws/dev/functions/demo-token.js", root), "utf8")).replace(
+  "${secret}",
+  portal.test_host_secrets.demo.split(":")[1],
+);
+const demoToken = runInNewContext(`${demoCode}\nhandler`, { require: () => ({ createHmac }), btoa });
+function demoSignIn(url, response) {
+  const querystring = Object.fromEntries([...url.searchParams].map(([name, value]) => [name, { value }]));
+  const reply = demoToken({ request: { querystring }, context: { requestId: randomUUID() } });
+  const headers = Object.fromEntries(Object.entries(reply.headers).map(([name, header]) => [name, header.value]));
+  response.writeHead(reply.statusCode, headers);
+  response.end(reply.body.data);
 }
 
 createServer(async (request, response) => {
   const url = new URL(request.url, "http://x");
   const path = url.pathname;
   if (path.startsWith("/portal/")) return portalBackend(url, response);
+  if (path === "/widget-token") return collegeBackend(request, response);
+  if (path === "/demo-token") return demoSignIn(url, response);
   if (path.startsWith("/v1/") && !path.endsWith("/config")) return gateway(request, response, path);
   const [status, type, body, headers] = await file(path).catch(() => [404, "text/plain", "not found"]);
   // The configuration is public and read from the customer's page, so any origin may read it, without cookies.

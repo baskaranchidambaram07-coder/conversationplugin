@@ -47,12 +47,12 @@ def wait(*args: str) -> None:
     subprocess.run(["aws", "ecs", "wait", *args, "--cluster", CLUSTER, "--region", REGION], check=True)
 
 
-def public_url() -> str:
-    """The address browsers use, as the newest release tells the gateway (UCP_PUBLIC_ORIGIN): CloudFront's, which
-    changes only when the environment is rebuilt from nothing."""
+def public_url(setting: str = "UCP_PUBLIC_ORIGIN") -> str:
+    """An address browsers use, as the newest release tells the gateway: the gateway's own (UCP_PUBLIC_ORIGIN) or the
+    hosted samples' (UCP_SAMPLES_ORIGIN). Both are CloudFront's, and change only when the environment is rebuilt."""
     containers = aws("ecs", "describe-task-definition", "--task-definition", FAMILY)["taskDefinition"]
     environment = containers["containerDefinitions"][0]["environment"]
-    return next(item["value"] for item in environment if item["name"] == "UCP_PUBLIC_ORIGIN")
+    return next(item["value"] for item in environment if item["name"] == setting)
 
 
 def release(image_tag: str | None) -> str:
@@ -124,7 +124,18 @@ def main(image_tag: str | None, by: str) -> None:
         "publishing the widget file",
     )
     print("rolling the service ...", flush=True)
-    aws("ecs", "update-service", "--cluster", CLUSTER, "--service", SERVICE, "--task-definition", definition)
+    # Forced, so the same release starts afresh too: the gateway reads its secrets only when it starts.
+    aws(
+        "ecs",
+        "update-service",
+        "--cluster",
+        CLUSTER,
+        "--service",
+        SERVICE,
+        "--task-definition",
+        definition,
+        "--force-new-deployment",
+    )
     wait("services-stable", "--services", SERVICE)
     live = aws("ecs", "describe-services", "--cluster", CLUSTER, "--services", SERVICE)["services"][0]
     if live["taskDefinition"] != definition:
@@ -138,8 +149,9 @@ if __name__ == "__main__":
     arguments.add_argument("--image", help="the image tag to release; the newest release when left out")
     arguments.add_argument("--by", default="deploy.py", help="who releases it, for the widget file's audit entry")
     arguments.add_argument("--url", action="store_true", help="only print the address browsers use, and stop")
+    arguments.add_argument("--samples-url", action="store_true", help="only print the hosted samples' address")
     args = arguments.parse_args()
-    if args.url:
-        print(public_url())
+    if args.url or args.samples_url:
+        print(public_url("UCP_SAMPLES_ORIGIN" if args.samples_url else "UCP_PUBLIC_ORIGIN"))
     else:
         main(args.image, args.by)

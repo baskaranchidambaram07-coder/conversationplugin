@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="default-src 'self'; script-src 'self' {{GATEWAY}}; frame-src {{GATEWAY}}; connect-src 'self' {{GATEWAY}}"
+    />
+    <title>Try the assistant as a signed-in resident</title>
+  </head>
+  <body>
+    <p>
+      <strong>Sample page.</strong> It is not a College website. Anyone can sign in here under any name, so please
+      do not type anything private.
+    </p>
+    <h1>Try the assistant as a signed-in resident</h1>
+    <form id="sign-in" action="portal.html">
+      <label for="user">Sign in as</label>
+      <input id="user" name="user" required pattern="[A-Za-z0-9_\-]{1,40}" autocomplete="off" />
+      <button>Sign in</button>
+      <p>
+        Up to 40 letters, digits, hyphens or underscores. Sign in under the same name later, or in another browser,
+        and your earlier chats are there.
+      </p>
+    </form>
+    <p id="signed-in" hidden>Signed in as <strong id="name"></strong>. <a href="portal.html">Sign out</a></p>
+    <script src="portal.js"></script>
+    <script async src="{{GATEWAY}}/loader.js"></script>
+  </body>
+</html>

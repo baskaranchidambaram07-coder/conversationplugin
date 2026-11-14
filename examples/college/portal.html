@@ -1,0 +1,20 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="default-src 'self'; script-src 'self' {{GATEWAY}}; frame-src {{GATEWAY}}; connect-src 'self' {{GATEWAY}}"
+    />
+    <title>A portal page for signed-in residents</title>
+  </head>
+  <body>
+    <p><strong>Sample page.</strong> It shows the assistant for signed-in residents. It is not a College website.</p>
+    <h1>A portal page for signed-in residents</h1>
+    <p>Only signed-in residents see this page. The chat knows who they are, so each gets their own history back.</p>
+    <!-- portal.js first: it queues the "mount" until the loader arrives. -->
+    <script src="portal.js"></script>
+    <script async src="{{GATEWAY}}/loader.js"></script>
+  </body>
+</html>

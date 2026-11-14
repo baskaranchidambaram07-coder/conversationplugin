@@ -1,0 +1,35 @@
+/* A page that is the assistant: the chat takes all the room the page has. */
+html,
+body {
+  height: 100%;
+  margin: 0;
+}
+
+body {
+  display: flex;
+  flex-direction: column;
+  background: #fbf3ea;
+  font-family: system-ui, sans-serif;
+}
+
+.sample {
+  margin: 0;
+  padding: 6px 16px;
+  font-size: 13px;
+  color: #6f625a;
+  border-bottom: 1px solid #e7dacb;
+}
+
+#assistant {
+  flex: 1;
+  min-height: 0;
+}
+
+/* Our hosted copy only: the name to sign in under, before the assistant appears. */
+#sign-in:not([hidden]) {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  padding: 24px 16px;
+}
