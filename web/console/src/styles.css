@@ -199,6 +199,7 @@ button {
 
 .tenant {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   gap: 8px;
   margin-inline-start: 16px;
@@ -322,6 +323,37 @@ button {
   display: grid;
   gap: 10px;
   justify-items: start;
+}
+
+.empty .sub {
+  margin: 0;
+}
+
+/* Deleting a widget or an organisation: set apart at the end of its page, in the same calm ink, and asked twice */
+
+.deletion {
+  display: grid;
+  gap: 10px;
+  justify-items: start;
+  margin-block-start: 12px;
+  padding-block-start: 22px;
+  border-block-start: 1px solid var(--sand);
+}
+
+.empty .deletion {
+  width: 100%;
+  margin-block-start: 28px;
+}
+
+.deletion h3 {
+  margin: 0;
+  font-size: 16px;
+}
+
+.deletion form {
+  display: grid;
+  gap: 12px;
+  width: min(100%, 420px);
 }
 
 /* The track: six stations, each signed with its minutes; the time left signed at its end (the signature move). */
@@ -1008,6 +1040,10 @@ legend {
 
 .versions > li:first-child {
   padding-block-start: 0;
+}
+
+.versions > li:last-child {
+  border-block-end: 0; /* the next rule, if any, is the deletion's own */
 }
 
 .versions .line {

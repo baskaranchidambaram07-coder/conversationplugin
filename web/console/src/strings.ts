@@ -20,6 +20,33 @@ export const strings = {
   noWidgets: "No widgets yet.",
   firstWidget: "Make your first one: it takes about 19 minutes.",
   chooseWidget: "Choose a widget, or make a new one.",
+
+  // Organisations, and deleting
+  newOrganisation: "New organisation",
+  newOrganisationIntro: "A customer, with its own widgets, connections and administrators.",
+  organisationName: "Name",
+  organisationNameHint: "How your team knows it, for example Riverside College.",
+  organisationNameMissing: "Give the organisation a name.",
+  createOrganisation: "Create the organisation",
+  creatingOrganisation: "Creating the organisation",
+  noOrganisations: "There is no organisation yet.",
+  firstOrganisation: "Make one, then its first widget.",
+  organisationFacts: (widgets: number, id: string) => `${widgets === 1 ? "1 widget" : `${widgets} widgets`} · ID ${id}`,
+  deleteOrganisationTitle: "Delete this organisation",
+  deleteOrganisationHint:
+    "Its administrators lose their access at once, and its connections' keys and shared secrets are erased. Its audit trail is kept.",
+  deleteOrganisationFirst: (widgets: number) =>
+    `To delete this organisation, first delete its ${widgets === 1 ? "widget" : `${widgets} widgets`}, each from its Go live step.`,
+  deleteOrganisation: "Delete the organisation",
+  deleteWidgetTitle: "Delete this widget",
+  deleteWidgetHint:
+    "The chat disappears from every page that carries its script tag within half a minute. Its versions, its audit trail and visitors' conversations are kept.",
+  deleteWidget: "Delete the widget",
+  deleted: (name: string) => `“${name}” is deleted.`,
+  typeToConfirm: (name: string) => `Type “${name}” to confirm`,
+  confirmDelete: (name: string) => `Yes, delete “${name}”`,
+  deleting: "Deleting",
+  deleteChanged: "It changed while you were deciding. Look again, then try again.",
   track: "Steps to go live",
   openNow: ", open",
   role: { platform: "platform administrator", tenant: "administrator", viewer: "viewer (read only)" } as Record<string, string>,

@@ -867,7 +867,26 @@ State on 14 November 2026 (pull requests 92 to 96 into `module/m09-admin-console
   - the iframe-only snippet: the chat needs the loader's handshake;
   - form validation generated from the server's schema: the console checks the few fields a step needs, and the API names every fault;
   - snippets compared with approved files, and screenshot comparison;
-  - hosting on AWS behind Cognito, with its deployment tests (served behind sign-in, the API address per environment, the cache refreshed on release).
+  - a screen for people: a customer's administrators and viewers are given their roles through the admin API.
+
+State on 14 November 2026, later (pull requests 98 to 100; 99 into `develop`):
+
+- **Hosting on AWS, behind Cognito (98):**
+  - The admin API runs as a second container in the gateway's task, from the same image. It wakes, sleeps and releases with the gateway, and is not essential: if it stops, visitors keep their chat.
+  - The console has its own CloudFront address. Its secret header tells the load balancer to route the request to the admin container.
+  - Administrators sign in with the Cognito user pool `ucp-dev-admins` on Cognito's own pages, with no self sign-up and an authenticator app required. `infra/aws/console_admin.py` invites them.
+  - New secret `ucp-dev/secrets-key`, for both containers.
+  - The deployer policy gained three Cognito statements, limited to pools tagged for this project. An administrator published them as version 3.
+  - Rolled out from `develop` with a sleep and a wake. Smoke test 15 of 15; `npm run e2e:deployed` 5 of 5, including the hosted console (served behind Cognito's sign-in with PKCE, its page never cached, not framable). The first platform administrator was invited.
+- **Organisations and deleting (100):**
+  - Platform administrators make an organisation in the console.
+  - Deleting a widget (from Go live) or an organisation (from its page, once it has no widgets) asks for the name typed back.
+  - Published versions and the audit log never change, so a deletion is recorded rather than erased (migration `0006`):
+    - a deleted widget is no longer served or shown, whatever a release publishes for it afterwards;
+    - a deleted organisation's administrators lose their roles and its secrets are erased;
+    - versions, the audit trail and visitors' conversations stay until the purge policy.
+  - Tests: the role matrix gains the three deletions; two behaviour tests; a console journey on three engines.
+- **Found and fixed:** `dev.py wake` straight after a sleep failed while the database was still stopping. It now waits.
 
 ---
 
