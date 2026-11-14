@@ -475,6 +475,244 @@ button {
   box-shadow: 0 0 0 1px var(--sand);
 }
 
+/* Editors: fields, choices, faults, the secret shown once */
+
+.editor {
+  display: grid;
+  gap: 18px;
+}
+
+.field {
+  display: grid;
+  gap: 4px;
+  align-content: start;
+}
+
+.field label,
+.field .label {
+  margin: 0;
+  font-weight: 650;
+  font-size: 14px;
+}
+
+.hint {
+  margin: 0;
+  color: var(--umber);
+  font-size: 13.5px;
+  text-wrap: pretty;
+}
+
+.field input,
+.field select,
+.field textarea {
+  min-height: 44px;
+  width: 100%;
+  padding: 10px 14px;
+  border: 0;
+  border-radius: 12px;
+  background: var(--paper);
+  box-shadow: 0 0 0 1px var(--sand);
+}
+
+.field input:focus-visible,
+.field textarea:focus-visible {
+  outline: 0;
+  box-shadow: 0 0 0 2px var(--ink);
+}
+
+.field input[aria-invalid="true"] {
+  box-shadow: 0 0 0 2px var(--problem);
+}
+
+.field.title {
+  max-width: 520px;
+  margin-block: 18px 30px;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 16px 20px;
+}
+
+.inline {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.inline input {
+  flex: 1 1 260px;
+  width: auto;
+}
+
+.inline .problem {
+  flex-basis: 100%;
+  margin: 0;
+}
+
+fieldset {
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+legend {
+  margin-block-end: 8px;
+  padding: 0;
+  font-weight: 650;
+  font-size: 14px;
+}
+
+.choices {
+  display: grid;
+  gap: 6px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.choices li {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 10px;
+  padding: 10px 12px;
+  border-radius: 12px;
+  box-shadow: 0 0 0 1px var(--sand);
+}
+
+.choices li.chosen {
+  box-shadow: 0 0 0 2px var(--ink);
+}
+
+.choices label {
+  display: flex;
+  flex: 1 1 260px;
+  gap: 12px;
+  align-items: flex-start;
+  cursor: pointer;
+}
+
+.choices input {
+  width: 18px;
+  height: 18px;
+  margin: 2px 0 0;
+  accent-color: var(--ink);
+}
+
+.choices b {
+  display: block;
+  font-weight: 650;
+}
+
+.choices small {
+  color: var(--umber);
+  font-size: 13.5px;
+}
+
+.choices output {
+  font-size: 14px;
+  font-weight: 650;
+  color: var(--umber);
+}
+
+.choices output.good,
+.good {
+  color: #2f6b3a;
+}
+
+.sites {
+  display: grid;
+  gap: 6px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.sites li {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 6px 6px 6px 14px;
+  border-radius: 12px;
+  background: var(--ground);
+  overflow-wrap: anywhere;
+}
+
+.add {
+  display: grid;
+  gap: 14px;
+  padding: 18px;
+  border-radius: 12px;
+  background: var(--ground);
+}
+
+.add h3 {
+  margin: 0;
+  font-size: 16px;
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px 16px;
+}
+
+.primary:disabled,
+.secondary:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+
+.faults {
+  padding: 12px 16px;
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--problem) 8%, var(--paper));
+  color: var(--problem);
+}
+
+.faults p {
+  margin: 0 0 4px;
+  font-weight: 650;
+}
+
+.faults ul {
+  margin: 0;
+  padding-inline-start: 18px;
+}
+
+.once {
+  grid-column: 1 / -1;
+  display: grid;
+  gap: 8px;
+  padding: 14px 16px;
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--sand) 55%, var(--paper));
+}
+
+.once p {
+  margin: 0;
+}
+
+.once code {
+  padding: 8px 10px;
+  border-radius: 8px;
+  background: var(--paper);
+  overflow-wrap: anywhere;
+}
+
+.station button[aria-disabled="true"] {
+  cursor: not-allowed;
+}
+
+.station button[aria-disabled="true"] .name {
+  color: var(--umber);
+}
+
 code {
   font-family: ui-monospace, "Cascadia Mono", "SF Mono", Menlo, Consolas, monospace;
   font-size: 0.92em;
