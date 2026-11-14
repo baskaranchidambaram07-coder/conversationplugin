@@ -503,7 +503,8 @@ function Widget(props: {
           go(`/widgets/${row.widget_id}/${id}`);
         }}
       />
-      <section className="card stop" aria-labelledby="stop-title">
+      {/* named by aria-label: Firefox crashes when axe scans a section named by aria-labelledby */}
+      <section className="card stop" aria-label={t.station[shown]}>
         <header>
           <h2 id="stop-title">{t.station[shown]}</h2>
           <p>{t.stationIntro[shown]}</p>
@@ -626,7 +627,8 @@ function NewWidget(props: {
         <input id={titleId} type="text" value={title} maxLength={80} onChange={(event) => setTitle(event.target.value)} />
       </div>
       <Track track={track} shown={shown} sign={t.timeLeft(timeLeft(track))} reachable={reachable} onOpen={(id) => go(`/widgets/new/${id}`)} />
-      <section className="card stop" aria-labelledby="stop-title">
+      {/* named by aria-label: Firefox crashes when axe scans a section named by aria-labelledby */}
+      <section className="card stop" aria-label={t.station[shown]}>
         <header>
           <h2 id="stop-title">{t.station[shown]}</h2>
           <p>{t.stationIntro[shown]}</p>
