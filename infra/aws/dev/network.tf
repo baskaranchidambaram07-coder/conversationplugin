@@ -80,11 +80,11 @@ resource "aws_vpc_security_group_ingress_rule" "edge_from_cloudfront" {
 
 resource "aws_vpc_security_group_egress_rule" "edge_to_gateway" {
   security_group_id            = aws_security_group.edge.id
-  description                  = "To the gateway"
+  description                  = "To the gateway (8000) and the admin API (8001)"
   referenced_security_group_id = aws_security_group.gateway.id
   ip_protocol                  = "tcp"
   from_port                    = 8000
-  to_port                      = 8000
+  to_port                      = 8001
 }
 
 resource "aws_security_group" "gateway" {
@@ -99,7 +99,7 @@ resource "aws_vpc_security_group_ingress_rule" "gateway_from_edge" {
   referenced_security_group_id = aws_security_group.edge.id
   ip_protocol                  = "tcp"
   from_port                    = 8000
-  to_port                      = 8000
+  to_port                      = 8001
 }
 
 #trivy:ignore:AWS-0104 The gateway calls PF over the internet (no NAT, by the user's choice for dev); HTTPS only
