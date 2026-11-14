@@ -12,6 +12,10 @@ colors:
   cream-ink: "#f2e9df"
   light-umber: "#b5a69a"
   night-paper: "#27211d"
+  column-tint: "#f4eadf"
+  problem-red: "#9b2c1f"
+  good-green: "#2f6b3a"
+  warn-amber: "#8a4b12"
 typography:
   title:
     fontFamily: "Nunito Variable, Nunito, system-ui, sans-serif"
@@ -93,6 +97,53 @@ typography:
   code-inline:
     fontFamily: "ui-monospace, Cascadia Mono, SF Mono, Menlo, Consolas, monospace"
     fontSize: "0.9em"
+  console-body:
+    fontFamily: "Nunito Variable, Nunito, system-ui, sans-serif"
+    fontSize: "15px"
+    fontWeight: 400
+    lineHeight: 1.5
+  console-page-title:
+    fontFamily: "Nunito Variable, Nunito, system-ui, sans-serif"
+    fontSize: "26px"
+    fontWeight: 700
+    lineHeight: 1.25
+  console-station-title:
+    fontFamily: "Nunito Variable, Nunito, system-ui, sans-serif"
+    fontSize: "18px"
+    fontWeight: 700
+  console-section-title:
+    fontFamily: "Nunito Variable, Nunito, system-ui, sans-serif"
+    fontSize: "16px"
+    fontWeight: 700
+  console-mark:
+    fontFamily: "Nunito Variable, Nunito, system-ui, sans-serif"
+    fontSize: "16px"
+    fontWeight: 800
+  console-action:
+    fontFamily: "Nunito Variable, Nunito, system-ui, sans-serif"
+    fontSize: "15px"
+    fontWeight: 650
+  console-field-label:
+    fontFamily: "Nunito Variable, Nunito, system-ui, sans-serif"
+    fontSize: "14px"
+    fontWeight: 650
+  console-hint:
+    fontFamily: "Nunito Variable, Nunito, system-ui, sans-serif"
+    fontSize: "13.5px"
+    fontWeight: 400
+  console-small:
+    fontFamily: "Nunito Variable, Nunito, system-ui, sans-serif"
+    fontSize: "13px"
+    fontWeight: 400
+  console-sign:
+    fontFamily: "Nunito Variable, Nunito, system-ui, sans-serif"
+    fontSize: "13px"
+    fontWeight: 650
+  console-snippet:
+    fontFamily: "ui-monospace, Cascadia Mono, SF Mono, Menlo, Consolas, monospace"
+    fontSize: "13px"
+    fontWeight: 400
+    lineHeight: 1.6
 rounded:
   panel: "24px"
   card: "18px"
@@ -227,6 +278,85 @@ components:
     backgroundColor: "{colors.soft-border}"
     rounded: "{rounded.inline}"
     height: "12px"
+  console-top-bar:
+    backgroundColor: "{colors.warm-ground}"
+    textColor: "{colors.ink}"
+    padding: "10px 28px"
+    height: "64px"
+  console-column:
+    backgroundColor: "{colors.column-tint}"
+    padding: "20px 16px"
+    width: "280px"
+  console-widget-row:
+    textColor: "{colors.ink}"
+    rounded: "{rounded.tile}"
+    padding: "11px 12px"
+  console-widget-row-current:
+    backgroundColor: "{colors.soft-border}"
+    textColor: "{colors.ink}"
+  console-button-primary:
+    backgroundColor: "{colors.ink}"
+    textColor: "{colors.warm-ground}"
+    typography: "{typography.console-action}"
+    rounded: "{rounded.pill}"
+    padding: "10px 22px"
+    height: "44px"
+  console-sign:
+    backgroundColor: "{colors.ink}"
+    textColor: "{colors.warm-ground}"
+    typography: "{typography.console-sign}"
+    rounded: "{rounded.pill}"
+    padding: "5px 12px"
+  console-station-dot:
+    backgroundColor: "{colors.paper-white}"
+    textColor: "{colors.secondary-ink}"
+    rounded: "{rounded.full}"
+    size: "28px"
+  console-station-dot-now:
+    backgroundColor: "{colors.paper-white}"
+    textColor: "{colors.ink}"
+    rounded: "{rounded.full}"
+    size: "28px"
+  console-station-dot-done:
+    backgroundColor: "{colors.ink}"
+    textColor: "{colors.warm-ground}"
+    rounded: "{rounded.full}"
+    size: "28px"
+  console-station-card:
+    backgroundColor: "{colors.paper-white}"
+    textColor: "{colors.ink}"
+    rounded: "{rounded.card}"
+    padding: "24px"
+  console-preview:
+    backgroundColor: "{colors.warm-ground}"
+    rounded: "{rounded.panel}"
+    width: "400px"
+  console-field:
+    backgroundColor: "{colors.paper-white}"
+    textColor: "{colors.ink}"
+    typography: "{typography.console-body}"
+    rounded: "{rounded.tile}"
+    padding: "10px 14px"
+    height: "44px"
+  console-choice-tile:
+    textColor: "{colors.ink}"
+    rounded: "{rounded.tile}"
+    padding: "10px 12px"
+  console-snippet:
+    backgroundColor: "{colors.warm-ground}"
+    textColor: "{colors.ink}"
+    typography: "{typography.console-snippet}"
+    rounded: "{rounded.tile}"
+    padding: "12px 14px"
+  console-check-row:
+    backgroundColor: "{colors.warm-ground}"
+    rounded: "{rounded.tile}"
+    padding: "8px 12px"
+  console-chip:
+    backgroundColor: "{colors.ink}"
+    textColor: "{colors.warm-ground}"
+    rounded: "{rounded.pill}"
+    padding: "1px 10px"
 ---
 
 # Design System: Conversation Plugin
@@ -243,6 +373,8 @@ Depth is long, soft and low-contrast, tinted with the world's ink rather than gr
 
 The world refuses the category default for chat widgets: no coloured header bar, no avatar, no brand-coloured message bubbles. The customer's colour appears only on things that can be pressed.
 
+The admin console (`web/console`) is a second surface in the same world, calmer and tuned for forms and tables. Administrators take each widget along a track of six stations to go-live (Agent, Sites, Sign-in, Look, Install, Go live), each signed with its minutes, the time left signed at the track's end. It uses the chat's ground, sand, ink and umber, white cards with a sand edge and round pills, and draws no customer colour of its own: the brand appears only inside the chat's own preview. It is flat apart from that preview, which floats on the chat's Panel shadow.
+
 **Key Characteristics:**
 - Warm tinted ground, soft border and warm ink; never pure grey.
 - The customer's brand colour fills only actionable elements: the launcher, suggested questions, send and stop.
@@ -252,6 +384,7 @@ The world refuses the category default for chat widgets: no coloured header bar,
 - Full screen on small windows; a floating panel anchored to the launcher's corner elsewhere.
 - Code and tables in their own 12px frames that scroll sideways, with a soft ink cue at an edge only while more lies that way.
 - Earlier chats as rows on one white, sand-edged card: in place of the conversation on narrow frames, a 288px column beside it from 720px.
+- The admin console: the same materials, flat, with Warm Ink as its only action colour and the six-station track as its signature.
 
 ## Colors
 
@@ -275,6 +408,14 @@ The widget's `color_scheme` setting picks light, dark, or the visitor's own syst
 - **Cream Ink** (cream-ink) for Warm Ink, and **Light Umber** (light-umber) for Muted Umber: 6.7:1 on Night Paper.
 - Hover washes mix from the ink, so in the dark they lighten. Shadows mix from pure black, since a warm tint cannot be seen there.
 
+### Admin console
+The console uses the light neutrals only (`color-scheme: light`; it has no dark scheme). Ground, Paper White, Soft Sand, Warm Ink and Muted Umber keep their chat roles; Warm Ink also fills the primary action, the track's sign, done stations and the "Live" chip, with Warm Cream Ground as the text on it.
+- **Column Tint** (column-tint): the widget column, the ground mixed with 35% Soft Sand (`color-mix(in srgb, var(--sand) 35%, var(--ground))` in the source), the same mix as the chat's wide "Your chats" column.
+- **Problem Red** (problem-red): problem lines (650), the faults block (text on an 8% tint of itself over Paper White), a failing install check, and a field's 2px invalid ring.
+- **Good Green** (good-green): a connection that tested "Connected", the text-on-colour line under the colour field, and a passing install check.
+- **Warn Amber** (warn-amber): the colour field's warnings (a colour that hardly stands out on the cream, or gives way to cream on dark).
+- **Tints by mixing:** the secret-shown-once block is Soft Sand 55% over Paper White; hover washes are Warm Ink at 5% (widget rows) and 6% (quiet actions); the primary's hover is Warm Ink 88% into the ground.
+
 ### Named Rules
 **The Pressable Colour Rule.** The customer's brand colour appears only on things that can be pressed. Never on a header bar, a background, a border or a message surface.
 
@@ -283,6 +424,8 @@ The widget's `color_scheme` setting picks light, dark, or the visitor's own syst
 **The Vanishing Brand Rule.** On Night Ground a brand colour under 1.5:1 against it (a near-black) gives way to Cream Ink, with ink on brand recomputed. Any other brand keeps its colour. The launcher sits on the customer's page, not on our ground, so it always keeps the brand.
 
 **The Light Sheet Rule.** A diagram keeps a Paper White sheet in both schemes, because its source's colours assume a light page. Its tools below stay in the scheme.
+
+**The Ink Action Rule.** The console has no brand of its own: Warm Ink fills its primary action, and the customer's colour appears only inside the chat preview and the colour field's own swatch.
 
 ## Typography
 
@@ -314,6 +457,19 @@ The chat's title is the page's only h1, so headings in an answer are shifted dow
 - **Inline code** (mono at 0.9em of the surrounding text).
 - **Table** (400, 14.5px, 1.45, tabular figures): table cells; header cells at 700 and kept on one line.
 
+### Console hierarchy
+The console's body is 15px (one step under the chat's), at 400 and 1.5.
+- **Console page title** (700, 26px, 1.25, balanced): the widget's name, "New widget", or the empty state's line. The page's one h1.
+- **Console station title** (700, 18px): the open station's h2 in its card.
+- **Console section title** (700, 16px): h3 inside a station (the parts of Install and Go live, "Add a connection").
+- **Console mark** (800, 16px): "Conversation Plugin", followed by "console" at 600 in Muted Umber.
+- **Console action** (650, 15px): the primary action. Secondary and quiet actions are 650 at 14px, as the chat's Label small.
+- **Console field label** (650, 14px): field labels, legends, the organisation pill and the checkbox label.
+- **Console hint** (400, 13.5px, Muted Umber, pretty wrap): hints under labels, the second line of a choice tile, a version's published line; the colour notes take 650.
+- **Console small** (400, 13px, Muted Umber): a station's minutes, a widget's state line, the "Widgets" heading (700), the preview caption.
+- **Console sign** (650, 13px): the track's sign; the "Live" chip is 650 at 12.5px.
+- **Console snippet** (mono, 13px, 1.6): code to copy. The changes table and the install checks use 14.5px, the chat's table size.
+
 ### Named Rules
 **The Pretty Wrap Rule.** Running text (the notice, cards and answer text) sets `text-wrap: pretty`, and anything user- or customer-supplied wraps anywhere rather than overflowing the panel. Code and tables are the exception: code never wraps and table cells wrap only between words (header cells not at all); both scroll sideways inside their own frame instead.
 
@@ -342,11 +498,21 @@ Inside an answer card, rendered Markdown stacks its blocks 10px apart; list item
 
 **The Own Frame Rule.** Content wider than the card (code, tables) scrolls sideways inside its own frame, never the card or the conversation. Each scroll region is reachable by keyboard and named for assistive technology. A table scrolls vertically only after the visitor has expanded it, and then within `min(70vh, 560px)`, so a short table never traps a thumb inside the conversation.
 
+### Admin console
+- **Wide (900px and wider):** a top bar across (at least 64px, 10px 28px padding, a 1px Soft Sand rule under it), then a grid of the 280px widget column (20px 16px padding, a 1px Soft Sand rule at its inline end) and the work area (28px 36px 56px padding).
+- **Work area:** the widget's name (h1), a Muted Umber line of its sites and who may chat (30px below it), the track (26px below it), then the open station's card.
+- **Station card:** on the four form stations (Agent, Sites, Sign-in, Look) a two-column grid, the form at `minmax(0, 1fr)` and the chat's preview at 400px, 28px apart, top-aligned; the preview sticks 16px from the top as the form scrolls. Install and Go live use the card's full width with no preview. Forms stack 18px apart; field grids auto-fit columns of at least 240px, 16px by 20px apart.
+- **Under 1200px:** the preview stacks under the form, at most 400px wide, and shows only on Look.
+- **Under 900px:** the widget column moves above the work area with a 1px Soft Sand rule under it, its widgets in a row of tiles (at least 200px each) that scrolls sideways; work padding 22px 16px 48px; top bar padding 16px at the sides.
+- **Under 640px (phones):** the sign drops into the flow above the track, and the track turns vertical: the dot in a 28px column, name and minutes beside it, the rail running down through the dots' centres. Read-only facts fold to one column.
+
 Placement is direction-neutral: left and right are configuration, not assumptions, and the chat uses logical properties throughout so a right-to-left language mirrors.
 
 ## Elevation & Depth
 
 The system is lifted, not flat: the launcher and the panel float above the host page on long, soft, low-contrast shadows tinted with Warm Ink. Each shadow pairs a long diffuse spread with a short contact shadow. The inline panel sits in the host's flow and carries no shadow. Inside the chat, cards and the logo tile are flat and separated from the ground by a 1px Soft Sand edge drawn as a box-shadow; only the composer and the jump-to-latest pill lift.
+
+The admin console is flat. Its cards, fields, choice tiles, snippets and the changes table are separated by the 1px Sand edge; the only lifted thing is the chat preview, which carries the Panel shadow because it is the chat's panel.
 
 ### Shadow Vocabulary
 - **Launcher rest** (`box-shadow: 0 10px 24px -10px rgba(43,36,31,.55), 0 2px 6px -2px rgba(43,36,31,.3)`): the closed launcher at rest.
@@ -365,6 +531,8 @@ The system is lifted, not flat: the launcher and the panel float above the host 
 Generous, friendly corners. The panel is gently rounded (24px) and clips its content; the launcher is a full circle (56px). A single 1px Soft Sand border defines the panel edge. In full-screen mode the panel drops both radius and border so it reads as the screen itself.
 
 Inside the chat: the composer shares the panel's 24px; answer cards, the welcome card and visitor bubbles are 18px; the list of chats is one 18px card that clips its rows; the logo tile, code panels, table frames and blockquotes are 12px (code panels and table frames clip their content to it); inline code and the bars of the list's loading sketch are 6px; pills and the secondary, quiet and jump actions are fully round (999px); send/stop and the header's icon buttons are circles (44px). Glyphs are inline SVG on a 24 grid, 2px round-capped strokes in `currentColor`, drawn at 22px (18px inside small actions).
+
+The console keeps the same corners: station cards and the sign-in card 18px; fields, choice tiles, widget rows, snippets, check rows, the faults and secret blocks, the add-connection panel and the changes table 12px; the colour swatch 6px, the secret's code 8px; actions, the organisation pill, the sign and the chip fully round; station dots circles (28px); the preview panel 24px with a 1px Soft Sand border.
 
 ## Components
 
@@ -482,6 +650,66 @@ Code bodies and table scroll areas take keyboard focus. Their focus ring is the 
 ### Forced colours (chat)
 The composer, cards, bubbles, pills, send, code panels, table frames and the list of chats each gain a 1px `CanvasText` border, since their sand edge is a box-shadow that this mode removes. The open chat's row gains a 2px `Highlight` outline drawn inset, since its Soft Sand fill goes too.
 
+### Console: top bar and widget column
+- **Top bar:** on the ground. The mark, then the organisation: a pill (Paper White, Sand edge, at least 36px, 650, with an ink chevron) that is a select for a platform administrator with more than one organisation and plain text otherwise. At the inline end, who is signed in and their role in 14px Muted Umber, then a quiet "Sign out". It wraps when tight.
+- **Widget column:** a nav named "Widgets", headed in Console small at 700. Each widget is a link row (12px radius, 11px 12px padding): its title at 650, wrapping anywhere, over its state line in Console small ("Not live yet", "Live · version 2", "Live · version 2 · changes not published"). Hover: a 5% ink wash. The current widget (`aria-current="page"`): Soft Sand fill, its state line in Warm Ink, because Muted Umber on Soft Sand is under 4.5:1. Under the list, a secondary "New widget" with an 18px plus glyph.
+
+### Console: the track
+The signature: six stations to go-live, each signed with its minutes.
+- **Track:** a section named "Steps to go live" holding an ordered list in six equal columns, with 48px clear above it for the sign.
+- **Rail:** a 3px bar through the dots' centres, Soft Sand, Warm Ink under done stations; it starts at the first dot and ends at the last.
+- **Station:** a full-width button: the dot, the name at 650, then "about N min" (or "Done") in Console small. Minutes: Agent 5, Sites 2, Sign-in 3 (8 with sign-in), Look 4, Install 3 (20 with sign-in), Go live 2.
+- **Dots (28px circles):** done is Warm Ink with an 18px check glyph in the ground's cream; now is Paper White with a 3px Warm Ink ring and its number in ink, and carries `aria-current="step"`; next is Paper White with a 2px Soft Sand ring and its number (800, 13px) in Muted Umber.
+- **Open station:** its name is underlined, 2px, 5px below (the same underline on hover), and its accessible name gains a hidden ", open".
+- **Not yet reachable** (a new widget's later stations): shown, but `aria-disabled`, its name in Muted Umber, a not-allowed cursor, and the title "Finish the step before this one first."
+- **Sign:** a Warm Ink pill at the track's top inline end: "About 19 minutes to live" until the first publish, then the widget's state ("Live · version 2").
+
+### Console: station card
+- **Card:** Paper White, 18px, the Sand edge, 24px padding, parts 18px apart. Named by `aria-label` with the station's name, not `aria-labelledby`, because Firefox crashes when axe scans a section named by `aria-labelledby`.
+- **Header:** the station's name (h2, Console station title) and one sentence of what it is for, in Muted Umber.
+- **Form stations:** the form at left ends with its actions row: the primary ("Save", disabled until something changed; "Continue", then "Create the draft", for a new widget), then a polite note ("Saved. Visitors see it once you publish."). A viewer sees "You can look, but not change anything here." and no actions.
+- **Preview:** the chat's own component in an iframe (out of the tab order), in a 24px Warm Cream Ground panel with a 1px Soft Sand border and the Panel shadow, `min(560px, 70vh)` tall. A Console small caption, "Preview · nothing is published", carries a Light / Dark pair of quiet toggles (`aria-pressed`, pressed filled with Soft Sand) when the scheme follows the visitor's device.
+
+### Console: fields and choices
+- **Field:** label (Console field label), an optional hint, then the input, 4px apart. Inputs are Paper White, 12px, the Sand edge, at least 44px, 10px 14px padding; textareas resize vertically.
+- **Focus:** a 2px Warm Ink ring (a box-shadow) with a transparent 2px outline that forced colours make visible.
+- **Invalid:** a 2px Problem Red ring, with the reason under the field, linked by `aria-describedby`.
+- **Inline row:** a field and its secondary action ("Add", "Check") on one row that wraps.
+- **Colour:** a 44px native picker tile beside a hex field in mono, with notes beside them: the text-on-colour line in Good Green, warnings in Warn Amber.
+- **Choice tiles:** radio choices as a list of tiles 6px apart (12px, the Sand edge, 10px 12px padding): an 18px ink-accented radio, the choice at 650, an optional Console hint line. The chosen tile takes a 2px Warm Ink ring. A tile may carry a quiet action ("Test") and a polite result ("Connected" in Good Green).
+- **Lists to edit:** allowed sites as rows on the cream ground (12px), the site in code and a quiet "Remove" named for its site. A new connection opens in a cream panel (12px, 18px padding) with its own h3.
+- **Checkbox:** 18px, ink-accented, its label at 650 14px.
+
+### Console: actions
+- **Primary:** Warm Ink fill, Warm Cream Ground text, Console action, fully round, at least 44px, 10px 22px padding. Hover: ink 88% into the ground. One per form, ending it.
+- **Secondary:** as the chat's (Paper White, a 1.5px Warm Ink outline, 14px 650, at least 36px, 8px 16px), Soft Sand on hover.
+- **Quiet:** Muted Umber text, 14px 650, no fill, at least 36px, 8px 12px, never wrapping; a 6% ink wash and Warm Ink on hover. Selected tabs and pressed toggles take a Soft Sand fill.
+- **Disabled:** primary and secondary at 45% opacity.
+- **In a form,** a button keeps the width of its words.
+
+### Console: snippets and the install check
+- **Snippet:** code to copy in a frame of Warm Cream Ground, 12px, the Sand edge, clipped. A caption row (Muted Umber, 13px 650, 4px 6px 4px 14px padding, a 1px Soft Sand rule under it) names it and ends with a quiet "Copy", which reads "Copied" for 2 seconds. The code is Console snippet, 12px 14px padding, at most 320px tall, scrolling inside its frame with a thin Muted Umber (60%) scrollbar; it takes keyboard focus, with the ring drawn inset.
+- **Languages:** a tab list of quiet buttons picks the language of the endpoint code.
+- **Install check:** a page address and a secondary "Check", then a polite list of rows (cream ground, 12px, 8px 12px, 14.5px), one per question ("Does the page answer?", "Is the chat's script tag on it?", "Does its content policy let the chat in?") with a bold Yes or No. A Yes row is Good Green text; a No row is Problem Red on its 8% tint.
+
+### Console: changes and versions
+- **Changes table:** full width, the Sand edge, 12px, clipped, 14.5px. A Soft Sand header row at 700; each row headed by its setting at 650; 8px 12px cells, top-aligned, wrapping anywhere; a 1px Soft Sand hairline between rows and no rule between columns.
+- **Versions:** an ordered list of divided rows (12px padding, a 1px Soft Sand rule under each, none above the first): "Version N" in bold, the live one with a "Live" chip (Warm Ink pill, 1px 10px), and "published by …, 14 Nov, 10:05" in Console hint. Earlier versions carry a quiet "Compare with live" (`aria-expanded`, opening a changes table under the row) and a quiet "Make this live again", which asks once more with a secondary "Yes, make version N live again" and a quiet "Cancel".
+
+### Console: messages
+- **Problem line:** Problem Red at 650.
+- **Faults:** a block (12px, 12px 16px padding) of Problem Red on its 8% tint: "This cannot be saved yet:" over a list; `role="alert"`.
+- **Secret shown once:** a block of Soft Sand 55% over Paper White (12px, 14px 16px): "Copy this now: it will not be shown again." in bold, the secret as code on Paper White (8px radius), and a quiet "Copy". Once the station is left it is never shown again.
+- **Loading:** the chat's 28px ring, still under reduced motion.
+
+### Console: focus and forced colours
+- **Focus:** a 3px Warm Ink outline 2px off everything; fields use the 2px ink ring above; snippet bodies draw the outline inset.
+- **Forced colours:** cards, station dots, the organisation pill, fields, question and hex fields, primary and secondary actions, the sign, the Live chip, the changes table, choice tiles and snippets gain a 1px `CanvasText` border, since their edges are box-shadows; the chosen tile's and the now station's dot are 3px, so the next decision still stands out.
+
+### Console: voice and access
+- **Voice:** plain British English (organisation, colour), sentence case, short literal sentences. Stations are one word. Times are "about N min". Install checks are questions answered Yes or No. A refusal says what to do next.
+- **Access:** WCAG 2.2 AA, with every journey possible by keyboard. When a station opens, its heading takes focus. Saves and checks speak politely; faults speak as alerts. Secrets are sent sealed and shown once. Logical properties throughout, so a right-to-left language mirrors.
+
 ## Do's and Don'ts
 
 ### Do:
@@ -496,6 +724,8 @@ The composer, cards, bubbles, pills, send, code panels, table frames and the lis
 - **Do** self-host the chat's font.
 - **Do** let wide code and tables scroll sideways inside their own 12px frame, with the soft ink edge cue, never widening the card or the conversation.
 - **Do** start an answer's headings at h2 (18px, 700); the chat's title is the only h1.
+- **Do** sign every station of the console's track with its minutes, and the time left at the track's end.
+- **Do** end each console form with its one Warm Ink primary action, with the chat's own preview at 400px beside the four form stations.
 
 ### Don't:
 - **Don't** use a coloured header bar, an avatar, or brand-coloured message bubbles.
@@ -504,3 +734,5 @@ The composer, cards, bubbles, pills, send, code panels, table frames and the lis
 - **Don't** run any animation while the widget is closed.
 - **Don't** bounce the panel on entry.
 - **Don't** stripe table rows; rows are separated by Soft Sand hairlines.
+- **Don't** use the customer's colour anywhere in the console outside the chat preview and the colour field.
+- **Don't** name a console section by `aria-labelledby`; use `aria-label` (Firefox crashes when axe scans it).

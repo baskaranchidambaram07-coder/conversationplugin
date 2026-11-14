@@ -1148,12 +1148,17 @@ code {
   .questions input,
   .colour input[type="text"],
   .secondary,
+  .primary,
+  .sign,
+  .chip,
+  .changes,
   .choices li,
   .snippet {
     border: 1px solid CanvasText;
   }
 
-  .choices li.chosen {
-    border-width: 2px;
+  .choices li.chosen,
+  .now .dot {
+    border-width: 3px;
   }
 }
