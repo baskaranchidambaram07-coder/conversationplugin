@@ -64,7 +64,9 @@ def files(web_dir: Path) -> APIRouter:
         if not widget:
             raise Problem("not_found")
         headers = {"content-security-policy": chat_policy(widget), "cache-control": "no-cache"}
-        return Response(chat, media_type="text/html; charset=utf-8", headers=headers)
+        # The colour scheme is on the page itself, so its first paint is already in it (a checked literal, never text).
+        page = chat.replace(b"<html", f'<html data-scheme="{widget.config.color_scheme}"'.encode(), 1)
+        return Response(page, media_type="text/html; charset=utf-8", headers=headers)
 
     @pages.get("/loader.js")
     async def loader() -> FileResponse:

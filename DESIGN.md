@@ -7,6 +7,11 @@ colors:
   ink: "#2b241f"
   secondary-ink: "#6f625a"
   paper-white: "#ffffff"
+  night-ground: "#1c1815"
+  night-border: "#3b332d"
+  cream-ink: "#f2e9df"
+  light-umber: "#b5a69a"
+  night-paper: "#27211d"
 typography:
   title:
     fontFamily: "Nunito Variable, Nunito, system-ui, sans-serif"
@@ -263,10 +268,21 @@ A warm, low-chroma neutral family built around one hue (around 55 to 70 degrees 
 - **Muted Umber** (secondary-ink): secondary ink: the AI notice, meta lines (chat dates and the empty-list line among them), the placeholder, the character count, the credit, the quiet action, the working dots and the moving arc of the loading mark; in answers, list markers, the minor headings (h4 to h6) and the code panel's language label; at 60% (`rgba(111,98,90,.6)`) the scrollbar thumb of code panels and tables, dark enough to notice.
 - **Paper White** (paper-white): answer and welcome cards, the list of chats, the composer, the logo tile, table frames, the secondary action at rest; the inner band of the two-tone focus ring and the light option for ink on brand.
 
+### Dark scheme
+The widget's `color_scheme` setting picks light, dark, or the visitor's own system (`auto`). The gateway stamps it on the chat page, so the first paint is already in it, and the loader's panel follows it. Each neutral keeps its role and takes a dark value of the same warm hue (`light-dark()` on the root tokens):
+- **Night Ground** (night-ground) for Warm Cream Ground, **Night Paper** (night-paper) for Paper White, so cards sit one step above the ground.
+- **Night Border** (night-border) for Soft Sand Border.
+- **Cream Ink** (cream-ink) for Warm Ink, and **Light Umber** (light-umber) for Muted Umber: 6.7:1 on Night Paper.
+- Hover washes mix from the ink, so in the dark they lighten. Shadows mix from pure black, since a warm tint cannot be seen there.
+
 ### Named Rules
 **The Pressable Colour Rule.** The customer's brand colour appears only on things that can be pressed. Never on a header bar, a background, a border or a message surface.
 
-**The Warm Neutral Rule.** Every neutral, including shadow tint, comes from the world's warm ink family. No cool or pure greys.
+**The Warm Neutral Rule.** Every neutral, including shadow tint, comes from the world's warm ink family. No cool or pure greys. The one exception is the dark scheme's shadow, which is black.
+
+**The Vanishing Brand Rule.** On Night Ground a brand colour under 1.5:1 against it (a near-black) gives way to Cream Ink, with ink on brand recomputed. Any other brand keeps its colour. The launcher sits on the customer's page, not on our ground, so it always keeps the brand.
+
+**The Light Sheet Rule.** A diagram keeps a Paper White sheet in both schemes, because its source's colours assume a light page. Its tools below stay in the scheme.
 
 ## Typography
 
