@@ -1,11 +1,12 @@
 // The admin console (M9): sign in with the company identity provider, choose the organisation, and take each
 // widget along its track to go-live (the direction contract in .impeccable/surfaces/web-console.md).
-import { type ReactNode, useCallback, useEffect, useState } from "react";
+import { type ReactNode, useCallback, useEffect, useId, useState } from "react";
 
 import { ApiProblem, call } from "./api";
+import { AgentEditor, Faults, SignInEditor, SitesEditor } from "./editors";
 import { begin, finish, type Provider, signOut, token } from "./signIn";
 import { strings as t } from "./strings";
-import { type StationId, stations, timeLeft } from "./track";
+import { type Station, type StationId, stations, timeLeft } from "./track";
 
 type Me = { subject: string; role: "platform" | "tenant" | "viewer"; tenant_id: string | null };
 type Tenant = { tenant_id: string; name: string };
@@ -22,6 +23,7 @@ type Draft = { revision: number; document: WidgetDocument };
 
 const TENANT = "ucp-console-tenant"; // a platform administrator's last organisation, in this browser
 const CHECK = "M5 12.5l4.5 4.5L19 7.5";
+const PLUS = "M12 5v14M5 12h14";
 
 export function go(to: string) {
   history.pushState(null, "", to);
@@ -147,12 +149,13 @@ function Console({ me, route, onEnded }: { me: Me; route: string; onEnded: () =>
   const [tenants, setTenants] = useState<Tenant[] | null>(null);
   const [tenant, setTenant] = useState<string | null>(me.tenant_id);
   const [rows, setRows] = useState<Row[] | null>(null);
-  const [failed, setFailed] = useState(false);
+  const [failed, setFailed] = useState<string | null>(null);
 
   const guard = useCallback(
     (error: unknown) => {
       if (error instanceof ApiProblem && error.problem.code === "sign_in_required") onEnded();
-      else setFailed(true);
+      // The API's own words for a refusal it explains (too many requests); otherwise the plain unavailable note.
+      else setFailed(error instanceof ApiProblem && error.problem.code === "rate_limited" ? error.problem.message : t.unavailable);
     },
     [onEnded],
   );
@@ -170,11 +173,14 @@ function Console({ me, route, onEnded }: { me: Me; route: string; onEnded: () =>
     }, guard);
   }, [guard]);
 
-  useEffect(() => {
-    if (!tenant) return;
-    setRows(null);
-    call<Row[]>("GET", `/tenants/${tenant}/widgets`).then(setRows, guard);
+  const refresh = useCallback(() => {
+    if (tenant) void call<Row[]>("GET", `/tenants/${tenant}/widgets`).then(setRows, guard);
   }, [tenant, guard]);
+
+  useEffect(() => {
+    setRows(null);
+    refresh();
+  }, [refresh]);
 
   const [, widgetId, station] = /^\/widgets\/([\w-]+)(?:\/([\w-]+))?/.exec(route) ?? [];
   const row = rows?.find((one) => one.widget_id === widgetId);
@@ -249,14 +255,49 @@ function Console({ me, route, onEnded }: { me: Me; route: string; onEnded: () =>
               ))}
             </ul>
           )}
+          {me.role !== "viewer" && tenant && (
+            <a
+              className="secondary"
+              href="/widgets/new"
+              aria-current={widgetId === "new" ? "page" : undefined}
+              onClick={(event) => {
+                event.preventDefault();
+                go("/widgets/new");
+              }}
+            >
+              <Glyph path={PLUS} />
+              {t.newWidget}
+            </a>
+          )}
         </nav>
         <main className="work">
           {failed ? (
-            <p className="problem">{t.unavailable}</p>
+            <p className="problem" role="alert">
+              {failed}
+            </p>
           ) : !rows ? (
             <div className="ring" role="status" aria-label={t.loading} />
-          ) : row ? (
-            <Widget key={row.widget_id} row={row} open={station as StationId | undefined} onProblem={guard} />
+          ) : widgetId === "new" && tenant && me.role !== "viewer" ? (
+            <NewWidget
+              key={tenant}
+              tenant={tenant}
+              open={station as StationId | undefined}
+              onCreated={(id) => {
+                refresh();
+                go(`/widgets/${id}/look`);
+              }}
+              onProblem={guard}
+            />
+          ) : row && tenant ? (
+            <Widget
+              key={row.widget_id}
+              row={row}
+              tenant={tenant}
+              readOnly={me.role === "viewer"}
+              open={station as StationId | undefined}
+              onSaved={refresh}
+              onProblem={guard}
+            />
           ) : (
             <div className="empty">
               <h1>{rows.length ? t.chooseWidget : t.noWidgets}</h1>
@@ -274,14 +315,126 @@ function standing(row: Row): string {
   return row.unpublished ? `${t.live(row.version)} · ${t.unpublished}` : t.live(row.version);
 }
 
-function Widget({ row, open, onProblem }: { row: Row; open?: StationId; onProblem: (error: unknown) => void }) {
+/** The six stations, each signed with its minutes. A station not yet reachable is shown but cannot be opened. */
+function Track(props: {
+  track: Station[];
+  shown: StationId;
+  sign: string;
+  reachable: (id: StationId) => boolean;
+  onOpen: (id: StationId) => void;
+}) {
+  const { track, shown, sign, reachable, onOpen } = props;
+  return (
+    <section className="journey" aria-label={t.station.live}>
+      <p className="sign">{sign}</p>
+      <ol className="track">
+        {track.map((one, index) => (
+          <li key={one.id} className={`station ${one.state}`}>
+            <button
+              type="button"
+              className={one.id === shown ? "open" : undefined}
+              aria-current={one.state === "now" ? "step" : undefined}
+              aria-pressed={one.id === shown}
+              aria-disabled={!reachable(one.id) || undefined}
+              title={reachable(one.id) ? undefined : t.notYet}
+              onClick={() => reachable(one.id) && onOpen(one.id)}
+            >
+              <span className="dot">{one.state === "done" ? <Glyph path={CHECK} /> : index + 1}</span>
+              <span className="name">{t.station[one.id]}</span>
+              <small>{one.state === "done" ? t.done : t.minutes(one.minutes)}</small>
+            </button>
+          </li>
+        ))}
+      </ol>
+    </section>
+  );
+}
+
+const EDITED: StationId[] = ["agent", "sites", "sign-in"];
+
+/** The editor of one of the first three stations, over a copy of the document. */
+function StationEditor(props: {
+  station: StationId;
+  tenant: string;
+  document: WidgetDocument;
+  onChange: (document: WidgetDocument) => void;
+  readOnly: boolean;
+  onProblem: (error: unknown) => void;
+}) {
+  const { station, tenant, document, onChange, readOnly, onProblem } = props;
+  if (station === "agent") {
+    return (
+      <AgentEditor
+        tenant={tenant}
+        value={document.agent_profile}
+        onChange={(agent_profile) => onChange({ ...document, agent_profile })}
+        readOnly={readOnly}
+        onProblem={onProblem}
+      />
+    );
+  }
+  if (station === "sites") {
+    return (
+      <SitesEditor value={document.allowed_domains} onChange={(allowed_domains) => onChange({ ...document, allowed_domains })} readOnly={readOnly} />
+    );
+  }
+  return (
+    <SignInEditor
+      tenant={tenant}
+      signIn={document.sign_in}
+      identity={document.identity ?? null}
+      onChange={(sign_in, identity) => onChange({ ...document, sign_in, identity })}
+      readOnly={readOnly}
+      onProblem={onProblem}
+    />
+  );
+}
+
+/** What stops a station's settings from going on: checked here first, then again by the API. */
+function missing(station: StationId, document: WidgetDocument): string | null {
+  if (station === "agent") return document.agent_profile ? null : t.agentMissing;
+  if (station === "sites") return document.allowed_domains.length ? null : t.sitesMissing;
+  if (station === "sign-in" && document.sign_in !== "anonymous") {
+    const identity = document.identity;
+    return identity?.issuer.trim() ? null : t.signInMissing;
+  }
+  return null;
+}
+
+/** A save's refusal, in the console's words: every fault in the draft, or someone else's change first. */
+function refusal(error: unknown): { faults: string[]; conflict: boolean } | null {
+  if (!(error instanceof ApiProblem)) return null;
+  if (error.problem.code === "conflict") return { faults: [], conflict: true };
+  if (error.problem.code === "invalid_request") return { faults: error.problem.faults ?? [error.problem.message], conflict: false };
+  return null;
+}
+
+function Widget(props: {
+  row: Row;
+  tenant: string;
+  readOnly: boolean;
+  open?: StationId;
+  onSaved: () => void;
+  onProblem: (error: unknown) => void;
+}) {
+  const { row, tenant, readOnly, open, onSaved, onProblem } = props;
   const [draft, setDraft] = useState<Draft | null>(null);
+  const [edited, setEdited] = useState<WidgetDocument | null>(null);
+  const [faults, setFaults] = useState<string[]>([]);
+  const [conflict, setConflict] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [saved, setSaved] = useState(false);
 
-  useEffect(() => {
-    call<Draft>("GET", `/widgets/${row.widget_id}/draft`).then(setDraft, onProblem);
+  const load = useCallback(() => {
+    void call<Draft>("GET", `/widgets/${row.widget_id}/draft`).then((found) => {
+      setDraft(found);
+      setEdited(found.document);
+      setConflict(false);
+    }, onProblem);
   }, [row.widget_id, onProblem]);
+  useEffect(load, [load]);
 
-  if (!draft) return <div className="ring" role="status" aria-label={t.loading} />;
+  if (!draft || !edited) return <div className="ring" role="status" aria-label={t.loading} />;
   const document = draft.document;
   const track = stations({
     set: ["agent", "sites", "sign-in", "look"],
@@ -291,6 +444,30 @@ function Widget({ row, open, onProblem }: { row: Row; open?: StationId; onProble
   });
   const shown = open && track.some((one) => one.id === open) ? open : (track.find((one) => one.state === "now")?.id ?? "live");
   const left = timeLeft(track);
+  const changed = JSON.stringify(edited) !== JSON.stringify(document);
+
+  async function save() {
+    const gap = missing(shown, edited!);
+    if (gap) return setFaults([gap]);
+    setSaving(true);
+    try {
+      const { revision } = await call<{ revision: number }>("PUT", `/widgets/${row.widget_id}/draft`, {
+        revision: draft!.revision,
+        document: edited,
+      });
+      setDraft({ revision, document: edited! });
+      setFaults([]);
+      setSaved(true);
+      onSaved();
+    } catch (error) {
+      const refused = refusal(error);
+      if (!refused) return onProblem(error);
+      setFaults(refused.faults);
+      setConflict(refused.conflict);
+    } finally {
+      setSaving(false);
+    }
+  }
 
   return (
     <>
@@ -298,32 +475,152 @@ function Widget({ row, open, onProblem }: { row: Row; open?: StationId; onProble
       <p className="sub">
         {t.sites(document.allowed_domains.length)} · {who(document)}
       </p>
-      <section className="journey" aria-label={t.station.live}>
-        <p className="sign">{row.version !== null && !left ? standing(row) : t.timeLeft(left)}</p>
-        <ol className="track">
-          {track.map((one, index) => (
-            <li key={one.id} className={`station ${one.state}`}>
-              <button
-                type="button"
-                className={one.id === shown ? "open" : undefined}
-                aria-current={one.state === "now" ? "step" : undefined}
-                aria-pressed={one.id === shown}
-                onClick={() => go(`/widgets/${row.widget_id}/${one.id}`)}
-              >
-                <span className="dot">{one.state === "done" ? <Glyph path={CHECK} /> : index + 1}</span>
-                <span className="name">{t.station[one.id]}</span>
-                <small>{one.state === "done" ? t.done : t.minutes(one.minutes)}</small>
-              </button>
-            </li>
-          ))}
-        </ol>
-      </section>
+      <Track
+        track={track}
+        shown={shown}
+        sign={row.version !== null && !left ? standing(row) : t.timeLeft(left)}
+        reachable={() => true}
+        onOpen={(id) => {
+          setEdited(document);
+          setFaults([]);
+          setSaved(false);
+          go(`/widgets/${row.widget_id}/${id}`);
+        }}
+      />
       <section className="card stop" aria-labelledby="stop-title">
         <header>
           <h2 id="stop-title">{t.station[shown]}</h2>
           <p>{t.stationIntro[shown]}</p>
         </header>
-        <Facts station={shown} row={row} document={document} />
+        {EDITED.includes(shown) ? (
+          <>
+            {readOnly && <p className="note">{t.readOnly}</p>}
+            <StationEditor
+              station={shown}
+              tenant={tenant}
+              document={edited}
+              onChange={(next) => {
+                setEdited(next);
+                setSaved(false);
+              }}
+              readOnly={readOnly}
+              onProblem={onProblem}
+            />
+            <Faults faults={faults} />
+            {conflict && (
+              <p className="problem" role="alert">
+                {t.conflict}{" "}
+                <button type="button" className="secondary" onClick={load}>
+                  {t.reload}
+                </button>
+              </p>
+            )}
+            {!readOnly && (
+              <div className="actions">
+                <button type="button" className="primary" disabled={!changed || saving} onClick={() => void save()}>
+                  {saving ? t.saving : t.save}
+                </button>
+                <output aria-live="polite" className="note">
+                  {saved && !changed ? t.saved : ""}
+                </output>
+              </div>
+            )}
+          </>
+        ) : (
+          <Facts station={shown} row={row} document={document} />
+        )}
+      </section>
+    </>
+  );
+}
+
+const BLANK: WidgetDocument = {
+  tenant_id: "",
+  public: {},
+  allowed_domains: [],
+  sign_in: "anonymous",
+  agent_profile: "",
+  identity: null,
+};
+
+/** A new widget: the first three stations gather its settings here, then the draft is made and the journey goes on
+ *  at Look. Only the next station is open. */
+function NewWidget(props: {
+  tenant: string;
+  open?: StationId;
+  onCreated: (widgetId: string) => void;
+  onProblem: (error: unknown) => void;
+}) {
+  const { tenant, open, onCreated, onProblem } = props;
+  const [title, setTitle] = useState("");
+  const [document, setDocument] = useState<WidgetDocument>({ ...BLANK, tenant_id: tenant });
+  const [set, setSet] = useState<StationId[]>([]);
+  const [faults, setFaults] = useState<string[]>([]);
+  const [creating, setCreating] = useState(false);
+  const titleId = useId();
+
+  const track = stations({ set, version: null, unpublished: true, signedIn: document.sign_in !== "anonymous" });
+  const next = track.find((one) => one.state === "now")?.id ?? "agent";
+  const reachable = (id: StationId) => EDITED.includes(id) && (set.includes(id) || id === next);
+  const shown = open && reachable(open) ? open : next;
+
+  async function carryOn() {
+    const gap = !title.trim() ? t.nameMissing : missing(shown, document);
+    if (gap) return setFaults([gap]);
+    setFaults([]);
+    const finished = [...new Set([...set, shown])];
+    if (shown !== "sign-in") {
+      setSet(finished);
+      return go(`/widgets/new/${EDITED[EDITED.indexOf(shown) + 1]}`);
+    }
+    setCreating(true);
+    try {
+      const appearance = {
+        title: title.trim(),
+        welcome_message: null,
+        suggested_prompts: [],
+        ai_notice: null,
+        brand_color: "#2B241F",
+        logo_url: null,
+        color_scheme: "auto",
+        launcher_position: "bottom-right",
+        history_enabled: document.sign_in !== "anonymous",
+      };
+      const { identity, ...rest } = document;
+      const made = await call<{ widget_id: string }>("POST", `/tenants/${tenant}/widgets`, {
+        document: { ...rest, ...(document.sign_in === "anonymous" ? {} : { identity }), public: appearance },
+      });
+      onCreated(made.widget_id);
+    } catch (error) {
+      const refused = refusal(error);
+      if (!refused) return onProblem(error);
+      setFaults(refused.faults);
+    } finally {
+      setCreating(false);
+    }
+  }
+
+  return (
+    <>
+      <h1>{t.newTitle}</h1>
+      <div className="field title">
+        <label htmlFor={titleId}>{t.nameLabel}</label>
+        <p className="hint">{t.nameHint}</p>
+        <input id={titleId} type="text" value={title} maxLength={80} onChange={(event) => setTitle(event.target.value)} />
+      </div>
+      <Track track={track} shown={shown} sign={t.timeLeft(timeLeft(track))} reachable={reachable} onOpen={(id) => go(`/widgets/new/${id}`)} />
+      <section className="card stop" aria-labelledby="stop-title">
+        <header>
+          <h2 id="stop-title">{t.station[shown]}</h2>
+          <p>{t.stationIntro[shown]}</p>
+        </header>
+        <StationEditor station={shown} tenant={tenant} document={document} onChange={setDocument} readOnly={false} onProblem={onProblem} />
+        <Faults faults={faults} />
+        <div className="actions">
+          <button type="button" className="primary" disabled={creating} onClick={() => void carryOn()}>
+            {shown === "sign-in" ? (creating ? t.creating : t.create) : t.continue}
+          </button>
+        </div>
       </section>
     </>
   );

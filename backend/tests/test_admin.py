@@ -498,3 +498,10 @@ def test_the_console_page_is_served_for_any_route_and_may_be_framed_by_no_site(d
         assert client.get("/assets/index-abc.js").headers["cache-control"] == "public, max-age=31536000, immutable"
         assert client.get("/assets/nothing.js").status_code == 404
         assert client.get("/admin/v1/me").json()["code"] == "sign_in_required"  # the API stays the API
+
+
+def test_refused_sign_ins_slow_an_address_down_while_signed_in_administrators_are_not(world, monkeypatch):
+    monkeypatch.setattr(admin, "ATTEMPTS_PER_MINUTE", 3)
+
+    assert [world.get("/admin/v1/me").status_code for _ in range(4)] == [401, 401, 401, 429]
+    assert [world.get("/admin/v1/me", headers=bearer(world, "viewer_a")).status_code for _ in range(5)] == [200] * 5

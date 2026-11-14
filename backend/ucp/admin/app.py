@@ -49,7 +49,7 @@ from ucp.widgets import problems
 
 log = logging.getLogger("ucp.admin")
 PER_MINUTE = 120  # requests from one signed-in administrator
-ATTEMPTS_PER_MINUTE = 30  # requests from one address before sign-in is checked
+ATTEMPTS_PER_MINUTE = 30  # refused sign-ins from one address
 
 router = APIRouter(prefix="/admin/v1")
 
@@ -86,19 +86,26 @@ async def signed_in(request: Request) -> Admin:
     origin = request.headers.get("origin")
     if origin is not None and origin not in state.origins:
         raise Problem("forbidden")
-    state.limiter.check(f"address:{visitor_address(request)}", ATTEMPTS_PER_MINUTE)
+    address = f"refused:{visitor_address(request)}"
+
+    def refuse(code: Literal["sign_in_required", "forbidden"]) -> Problem:
+        # Only refusals count against an address, so guessing is slowed while an office of administrators behind
+        # one address is not; signed-in administrators have their own limit below.
+        state.limiter.check(address, ATTEMPTS_PER_MINUTE)
+        return Problem(code)
+
     scheme, _, token = request.headers.get("authorization", "").partition(" ")
     if scheme.lower() != "bearer" or not token:
-        raise Problem("sign_in_required")
+        raise refuse("sign_in_required")
     if not state.identity:
         raise Problem("assistant_unavailable")  # this deployment names no identity provider for administrators
     try:
         subject = await verify_provider_token(token.strip(), state.identity, "", state.provider_keys)
     except Problem as problem:
-        raise Problem("sign_in_required") if problem.code == "forbidden" else problem from None
+        raise refuse("sign_in_required") if problem.code == "forbidden" else problem from None
     row = await state.records.administrator(state.identity.issuer, subject)
     if not row:
-        raise Problem("forbidden")  # signed in, but not one of ours
+        raise refuse("forbidden")  # signed in, but not one of ours
     state.limiter.check(f"admin:{subject}", PER_MINUTE)
     return Admin(row.issuer, row.subject, row.role, row.tenant_id)
 

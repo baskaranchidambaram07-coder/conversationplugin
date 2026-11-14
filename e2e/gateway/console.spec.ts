@@ -12,6 +12,15 @@ async function serious(page: Page) {
   return violations.filter((v) => v.impact === "serious" || v.impact === "critical").map((v) => v.id);
 }
 
+/** A platform administrator of this test's own, so tests in parallel never share one administrator's limit. */
+async function platformAdministrator(page: Page, label: string): Promise<string> {
+  const reply = await page.request.get("http://127.0.0.1:8300/token?sub=onboarding-operator");
+  const headers = { authorization: `Bearer ${(await reply.json()).token}` };
+  const subject = `${label}-${test.info().project.name}-${Date.now().toString(36)}`;
+  await page.request.post(`${CONSOLE}/admin/v1/administrators`, { headers, data: { subject, role: "platform" } });
+  return subject;
+}
+
 async function signIn(page: Page, path: string, as = "onboarding-operator") {
   await page.goto(`${CONSOLE}${path}`);
   await page.getByRole("button", { name: "Sign in" }).click();
@@ -26,10 +35,11 @@ test("an administrator signs in with the company provider and lands where they w
   await expect(page.getByRole("heading", { name: "Sign in to set up your assistant" })).toBeVisible();
   expect(await serious(page)).toEqual([]);
 
-  await signIn(page, "/widgets/w_gateway/look");
+  const operator = await platformAdministrator(page, "operator");
+  await signIn(page, "/widgets/w_gateway/look", operator);
   await expect(page).toHaveURL(`${CONSOLE}/widgets/w_gateway/look`);
   await expect(page.getByRole("heading", { level: 1, name: "Ask the College" })).toBeVisible();
-  await expect(page.getByText("onboarding-operator · platform administrator")).toBeVisible();
+  await expect(page.getByText(`${operator} · platform administrator`)).toBeVisible();
   await expect(page.getByRole("button", { name: /Look/, pressed: true })).toBeVisible();
   await expect(page.getByText("#5B2A86")).toBeVisible();
   await expect(page.getByText("Live · version 1").first()).toBeVisible();
@@ -57,4 +67,100 @@ test("a sign-in this tab did not start signs no one in", async ({ page }) => {
 
   await expect(page.getByText("The sign-in did not complete. Please try again.")).toBeVisible();
   await expect(page).toHaveURL(`${CONSOLE}/`);
+});
+
+// The first three stations (M9-T2): a new widget's journey to its draft, and editing an existing widget.
+const FAKE_PF = {
+  "Name of the connection": "fake-pf",
+  "Purple Fabric address": "http://127.0.0.1:8100",
+  "Purple Fabric tenant": "fake-tenant",
+  "Workspace ID": "fake-workspace",
+  "Agent version ID": "fake-agent-version",
+  "API key": "fake-api-key",
+  "Service user name": "fake-user",
+  "Service user password": "fake-password",
+};
+
+async function operatorApi(page: Page) {
+  const reply = await page.request.get("http://127.0.0.1:8300/token?sub=onboarding-operator");
+  const headers = { authorization: `Bearer ${(await reply.json()).token}` };
+  return async (method: "GET" | "POST" | "PUT", path: string, data?: object) =>
+    (await page.request.fetch(`${CONSOLE}/admin/v1${path}`, { method, headers, data })).json();
+}
+
+test("a new widget: a connection added and tested, a site, sign-in, then its draft, with the time left going down", async ({
+  page,
+}, info) => {
+  const api = await operatorApi(page);
+  const name = `Riverside ${info.project.name} ${Date.now().toString(36)}`;
+  const { tenant_id: tenant } = await api("POST", "/tenants", { name });
+
+  await signIn(page, "/", await platformAdministrator(page, "maker"));
+  await page.getByRole("combobox", { name: "Organisation" }).selectOption({ label: name });
+  await page.getByRole("link", { name: "New widget" }).click();
+  await expect(page.getByText("About 19 minutes to live")).toBeVisible();
+  await expect(page.getByRole("button", { name: /Look/ })).toHaveAttribute("aria-disabled", "true");
+
+  await page.getByLabel("Title visitors will see").fill("Ask Riverside");
+  await page.getByRole("button", { name: "Add a connection" }).click();
+  for (const [label, value] of Object.entries(FAKE_PF)) await page.getByLabel(label, { exact: true }).fill(value);
+  await page.getByRole("button", { name: "Save connection" }).click();
+  await expect(page.getByText("Connected", { exact: true })).toBeVisible();
+  await expect(page.getByRole("radio", { name: /fake-pf/ })).toBeChecked();
+  await page.getByRole("button", { name: "Continue" }).click();
+
+  await expect(page).toHaveURL(`${CONSOLE}/widgets/new/sites`);
+  await expect(page.getByText("About 14 minutes to live")).toBeVisible();
+  await page.getByRole("button", { name: "Continue" }).click();
+  await expect(page.getByRole("alert")).toContainText("Add at least one site.");
+  await page.getByLabel("Add a site").fill("http://127.0.0.1:4174");
+  await page.getByRole("button", { name: "Add", exact: true }).click();
+  await page.getByRole("button", { name: "Continue" }).click();
+
+  await expect(page).toHaveURL(`${CONSOLE}/widgets/new/sign-in`);
+  await page.getByRole("radio", { name: /^Anyone No sign-in/ }).check();
+  // The wizard's own form: choices, fields, the track. Not in Firefox: an axe scan after its credential fields have
+  // been typed into crashes this automated Firefox (found on 14 November 2026: typing alone, or the scan on a plain
+  // page, does not). Chromium and WebKit scan it here, and Firefox scans every other console page.
+  if (test.info().project.name !== "firefox") expect(await serious(page)).toEqual([]);
+  await page.getByRole("button", { name: "Create the draft" }).click();
+
+  await expect(page).toHaveURL(new RegExp(`${CONSOLE}/widgets/w_[A-Za-z0-9_-]+/look$`));
+  await expect(page.getByRole("heading", { level: 1, name: "Ask Riverside" })).toBeVisible();
+  await expect(page.getByRole("link", { name: /Ask Riverside Not live yet/ })).toHaveAttribute("aria-current", "page");
+  const created = (await api("GET", `/tenants/${tenant}/widgets`)) as { widget_id: string }[];
+  expect(created).toHaveLength(1);
+});
+
+test("an existing widget's settings are edited and saved; a viewer sees them but changes nothing", async ({ page }, info) => {
+  const api = await operatorApi(page);
+  const name = `Editing ${info.project.name} ${Date.now().toString(36)}`;
+  const { tenant_id: tenant } = await api("POST", "/tenants", { name });
+  await api("PUT", `/tenants/${tenant}/agent-profiles/fake-pf`, Object.fromEntries(
+    Object.entries(FAKE_PF).slice(1).map(([, value], index) => [["base_url", "tenant", "workspace_id", "agent_version_id", "api_key", "username", "password"][index], value]),
+  ));
+  const document = {
+    public: { title: "Ask Editing", welcome_message: null, suggested_prompts: [], ai_notice: null, brand_color: "#1F6F5C", logo_url: null, color_scheme: "auto", launcher_position: "bottom-right", history_enabled: false },
+    allowed_domains: ["https://www.example.org"],
+    sign_in: "anonymous",
+    agent_profile: "fake-pf",
+  };
+  const { widget_id: widget } = await api("POST", `/tenants/${tenant}/widgets`, { document });
+  const viewer = `viewer-${info.project.name}-${Date.now().toString(36)}`;
+  await api("POST", "/administrators", { subject: viewer, role: "viewer", tenant_id: tenant });
+
+  await signIn(page, `/widgets/${widget}/sites`, await platformAdministrator(page, "editor"));
+  await page.getByLabel("Add a site").fill("https://portal.example.org");
+  await page.getByRole("button", { name: "Add", exact: true }).click();
+  await page.getByRole("button", { name: "Save" }).click();
+  await expect(page.getByText("Saved. Visitors see it once you publish.")).toBeVisible();
+  await expect(page.getByText("2 sites allowed")).toBeVisible();
+
+  await page.getByRole("button", { name: "Sign out" }).click();
+  await signIn(page, `/widgets/${widget}/agent`, viewer);
+  await expect(page.getByText("You can look, but not change anything here.")).toBeVisible();
+  await expect(page.getByRole("radio", { name: /fake-pf/ })).toBeDisabled();
+  await expect(page.getByRole("button", { name: "Save" })).toHaveCount(0);
+  await expect(page.getByRole("button", { name: "Add a connection" })).toHaveCount(0);
+  await expect(page.getByRole("link", { name: "New widget" })).toHaveCount(0);
 });
