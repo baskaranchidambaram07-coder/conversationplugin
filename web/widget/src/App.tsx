@@ -1,6 +1,6 @@
 // The chat inside the panel (M2), in the world of DESIGN.md and the composition the user picked
 // (web/widget/.impeccable/surfaces/src-app-tsx.md).
-import { inkOn, isColor } from "@ucp/protocol/brand";
+import { contrast, inkOn, isColor } from "@ucp/protocol/brand";
 import type { Block, Conversation, WidgetConfig } from "@ucp/protocol/v1";
 import { type CSSProperties, type KeyboardEvent, type Ref, useEffect, useLayoutEffect, useRef, useState } from "react";
 
@@ -17,6 +17,9 @@ import { strings as t } from "./strings";
 const LIMIT = 4000;
 const WARN_AT = 3600; // the character count appears only near the limit
 const INK = "#2b241f";
+
+/** The brand on the dark ground: one that nearly vanishes there (under 1.5:1, a near-black) gives way to the cream ink. */
+export const forDark = (color: string) => (contrast(color, "#1c1815") >= 1.5 ? color : "#f2e9df");
 
 type Settings = {
   title: string;
@@ -378,7 +381,11 @@ export function App({ widgetId, win = window }: { widgetId: string; win?: Window
     );
   }
 
-  const theme = { "--brand": settings.color, "--on-brand": inkOn(settings.color) } as CSSProperties;
+  const dark = forDark(settings.color);
+  const theme = {
+    "--brand": `light-dark(${settings.color}, ${dark})`,
+    "--on-brand": `light-dark(${inkOn(settings.color)}, ${inkOn(dark)})`,
+  } as CSSProperties;
   const left = LIMIT - draft.length;
   const list = (
     <ChatList

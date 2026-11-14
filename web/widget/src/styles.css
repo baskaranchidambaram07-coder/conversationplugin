@@ -1,15 +1,25 @@
 /* The chat, in the world of DESIGN.md. Logical properties throughout, so a right-to-left language mirrors. */
+/* Each colour has a light and a dark value; the widget's color_scheme, stamped on <html> by the gateway, picks. */
 :root {
-  --ground: #fbf3ea;
-  --sand: #e7dacb;
-  --ink: #2b241f;
-  --umber: #6f625a;
-  --paper: #ffffff;
+  --ground: light-dark(#fbf3ea, #1c1815);
+  --sand: light-dark(#e7dacb, #3b332d);
+  --ink: light-dark(#2b241f, #f2e9df);
+  --umber: light-dark(#6f625a, #b5a69a);
+  --paper: light-dark(#ffffff, #27211d);
+  --shade: light-dark(#2b241f, #000000);
   --brand: var(--ink);
   --on-brand: var(--paper);
   --gutter: 16px;
   --mono: ui-monospace, "Cascadia Mono", "SF Mono", Menlo, Consolas, monospace;
   color-scheme: light;
+}
+
+:root[data-scheme="dark"] {
+  color-scheme: dark;
+}
+
+:root[data-scheme="auto"] {
+  color-scheme: light dark;
 }
 
 * {
@@ -147,7 +157,7 @@ h1 {
 }
 
 .icon:hover {
-  background: rgba(43, 36, 31, 0.07);
+  background: color-mix(in srgb, var(--ink) 7%, transparent);
 }
 
 .actions {
@@ -429,15 +439,20 @@ h1 {
   background:
     linear-gradient(to right, var(--edge) 40%, transparent) left / 28px 100% no-repeat local,
     linear-gradient(to left, var(--edge) 40%, transparent) right / 28px 100% no-repeat local,
-    radial-gradient(farthest-side at 0 50%, rgba(43, 36, 31, 0.22), transparent) left / 12px 100% no-repeat scroll,
-    radial-gradient(farthest-side at 100% 50%, rgba(43, 36, 31, 0.22), transparent) right / 12px 100% no-repeat scroll,
+    radial-gradient(farthest-side at 0 50%, color-mix(in srgb, var(--shade) 22%, transparent), transparent) left / 12px 100% no-repeat scroll,
+    radial-gradient(farthest-side at 100% 50%, color-mix(in srgb, var(--shade) 22%, transparent), transparent) right / 12px 100% no-repeat scroll,
     var(--edge);
-  scrollbar-color: rgba(111, 98, 90, 0.6) transparent;
+  scrollbar-color: color-mix(in srgb, var(--umber) 60%, transparent) transparent;
 }
 
-.table .scroll,
-.diagram .scroll {
+.table .scroll {
   --edge: var(--paper);
+}
+
+/* A diagram keeps its own light sheet in either scheme: its source's colours assume one. */
+.diagram .scroll {
+  --edge: #ffffff;
+  color-scheme: light;
 }
 
 .code pre:focus-visible,
@@ -740,7 +755,7 @@ h1 {
 }
 
 .quiet:hover {
-  background: rgba(43, 36, 31, 0.06);
+  background: color-mix(in srgb, var(--ink) 6%, transparent);
   color: var(--ink);
 }
 
@@ -789,7 +804,7 @@ h1 {
   background: var(--paper);
   font-size: 14px;
   font-weight: 650;
-  box-shadow: 0 10px 24px -12px rgba(43, 36, 31, 0.45), 0 0 0 1px var(--sand);
+  box-shadow: 0 10px 24px -12px color-mix(in srgb, var(--shade) 45%, transparent), 0 0 0 1px var(--sand);
 }
 
 .latest .glyph {
@@ -814,11 +829,11 @@ h1 {
   padding-inline-start: 18px;
   border-radius: 24px;
   background: var(--paper);
-  box-shadow: 0 10px 24px -14px rgba(43, 36, 31, 0.4), 0 0 0 1px var(--sand);
+  box-shadow: 0 10px 24px -14px color-mix(in srgb, var(--shade) 40%, transparent), 0 0 0 1px var(--sand);
 }
 
 .compose:focus-within {
-  box-shadow: 0 10px 24px -14px rgba(43, 36, 31, 0.4), 0 0 0 2px var(--ink);
+  box-shadow: 0 10px 24px -14px color-mix(in srgb, var(--shade) 40%, transparent), 0 0 0 2px var(--ink);
 }
 
 textarea {
@@ -944,7 +959,7 @@ textarea::placeholder {
 }
 
 .chats button:hover {
-  background: rgba(43, 36, 31, 0.05);
+  background: color-mix(in srgb, var(--ink) 5%, transparent);
 }
 
 .chats button[aria-current="true"] {

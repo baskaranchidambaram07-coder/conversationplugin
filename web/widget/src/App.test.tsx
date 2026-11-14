@@ -1,7 +1,7 @@
 import { cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { afterEach, beforeEach, expect, test, vi } from "vitest";
 
-import { App, readConfig } from "./App";
+import { App, forDark, readConfig } from "./App";
 import { strings as t } from "./strings";
 
 const CONFIG = {
@@ -108,6 +108,17 @@ test("configuration values are read safely", () => {
   expect(
     readConfig({ title: "  ", brand_color: "purple", logo_url: "javascript:alert(1)", suggested_prompts: ["", "Hi", 5] as never }),
   ).toMatchObject({ title: "Chat", color: "#2b241f", logo: null, prompts: ["Hi"], notice: t.notice });
+});
+
+test("on the dark ground a brand keeps its colour unless it nearly vanishes there", () => {
+  expect(["#7C3AED", "#5B2A86", "#1e3a8a", "#2b241f", "#000000", "#333333"].map(forDark)).toEqual([
+    "#7C3AED",
+    "#5B2A86",
+    "#1e3a8a",
+    "#f2e9df",
+    "#f2e9df",
+    "#f2e9df",
+  ]);
 });
 
 test("Enter sends; Shift+Enter, an input method composing, or blank text does not", async () => {
