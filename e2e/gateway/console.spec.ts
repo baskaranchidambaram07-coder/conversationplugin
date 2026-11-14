@@ -354,8 +354,8 @@ test("a new administrator onboards a widget from the console alone, and a visito
   await page.getByRole("button", { name: /Go live/ }).click();
   await page.getByRole("button", { name: "Publish version 1" }).click();
   await expect(page.getByText("Published. Version 1 is live")).toBeVisible();
-  const minutes = ((Date.now() - started) / 60_000).toFixed(1);
-  info.annotations.push({ type: "onboarding time", description: `${minutes} minutes in the console, typed by a robot` });
+  const seconds = Math.round((Date.now() - started) / 1000);
+  info.annotations.push({ type: "onboarding time", description: `${seconds} seconds in the console, typed by a robot` });
 
   const visitor = await page.context().newPage();
   await visitor.goto(`http://127.0.0.1:4174/hosts/gateway-any.html?widget=${widget}`);
