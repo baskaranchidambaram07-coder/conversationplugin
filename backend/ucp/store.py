@@ -65,10 +65,21 @@ audit = Table(
     Column("actor", Text, nullable=False),
     Column("action", Text, nullable=False),
     Column("tenant_id", Text, nullable=False),
-    Column("widget_id", Text, nullable=False),
-    Column("version", Integer, nullable=False),
+    Column("widget_id", Text),  # empty for an action on no widget: a tenant, an administrator, a secret (0005)
+    Column("version", Integer),
     Column("detail", JSONB),
     Index("audit_by_widget", "widget_id", "at"),
+    Index("audit_by_tenant", "tenant_id", "at"),
+)
+
+# The tenants (M8). A tenant named by a published widget is recorded the first time one is published.
+tenants = Table(
+    "tenants",
+    metadata,
+    Column("tenant_id", Text, primary_key=True),
+    Column("name", Text, nullable=False),
+    Column("created_at", DateTime(timezone=True), nullable=False, server_default=func.now()),
+    Column("created_by", Text, nullable=False),
 )
 
 conversations = Table(
@@ -208,6 +219,8 @@ class Store:
         if current and current.document == document and current.tenant_id == tenant_id:
             return current.version
         version = current.version + 1 if current else 1
+        known = {"tenant_id": tenant_id, "name": tenant_id, "created_by": actor}
+        await db.execute(pg_insert(tenants).values(known).on_conflict_do_nothing())
         row = {"widget_id": widget_id, "version": version, "tenant_id": tenant_id, "document": document}
         await db.execute(insert(widgets).values({**row, "published_by": actor}))
         entry = {"actor": actor, "action": action, "tenant_id": tenant_id, "widget_id": widget_id, "detail": detail}
