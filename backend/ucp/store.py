@@ -17,6 +17,7 @@ from sqlalchemy import (
     ForeignKey,
     Index,
     Integer,
+    LargeBinary,
     MetaData,
     Table,
     Text,
@@ -80,6 +81,21 @@ tenants = Table(
     Column("name", Text, nullable=False),
     Column("created_at", DateTime(timezone=True), nullable=False, server_default=func.now()),
     Column("created_by", Text, nullable=False),
+)
+
+# Secrets set through the admin API (M8), sealed by ucp.vault: a tenant's shared secrets ("host") and PF connection
+# profiles ("profile"). The gateway opens them by tenant and name; nothing else reads them.
+sealed_secrets = Table(
+    "secrets",
+    metadata,
+    Column("tenant_id", Text, ForeignKey("tenants.tenant_id"), primary_key=True),
+    Column("kind", Text, primary_key=True),
+    Column("name", Text, primary_key=True),
+    Column("key_id", Text, nullable=False),
+    Column("nonce", LargeBinary, nullable=False),
+    Column("sealed", LargeBinary, nullable=False),
+    Column("updated_at", DateTime(timezone=True), nullable=False, server_default=func.now()),
+    Column("updated_by", Text, nullable=False),
 )
 
 conversations = Table(
@@ -275,6 +291,15 @@ class Store:
             .limit(1)
         )
         return (await db.execute(query)).first()
+
+    async def sealed(self, tenant_id: str, kind: str, name: str):
+        """A sealed secret set through the admin API: (key_id, nonce, sealed), or None."""
+        found = sealed_secrets.c
+        query = select(found.key_id, found.nonce, found.sealed).where(
+            (found.tenant_id == tenant_id) & (found.kind == kind) & (found.name == name)
+        )
+        async with self.engine.connect() as db:
+            return (await db.execute(query)).first()
 
     # Signed-in visitors (M5)
 

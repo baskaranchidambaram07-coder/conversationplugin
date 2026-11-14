@@ -10,7 +10,6 @@ from sqlalchemy import (
     DateTime,
     ForeignKey,
     Integer,
-    LargeBinary,
     Table,
     Text,
     delete,
@@ -20,11 +19,14 @@ from sqlalchemy import (
     update,
 )
 from sqlalchemy.dialects.postgresql import JSONB, distinct_on
+from sqlalchemy.dialects.postgresql import insert as pg_insert
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncEngine
 
 from ucp.gateway.pipeline import Problem
 from ucp.store import Store, audit, metadata, tenants, widgets
+from ucp.store import sealed_secrets as secrets
+from ucp.vault import Vault, place
 
 administrators = Table(
     "administrators",
@@ -45,19 +47,6 @@ drafts = Table(
     Column("tenant_id", Text, ForeignKey("tenants.tenant_id"), nullable=False),
     Column("document", JSONB, nullable=False),
     Column("revision", Integer, nullable=False),
-    Column("updated_at", DateTime(timezone=True), nullable=False, server_default=func.now()),
-    Column("updated_by", Text, nullable=False),
-)
-
-secrets = Table(
-    "secrets",
-    metadata,
-    Column("tenant_id", Text, ForeignKey("tenants.tenant_id"), primary_key=True),
-    Column("kind", Text, primary_key=True),
-    Column("name", Text, primary_key=True),
-    Column("key_id", Text, nullable=False),
-    Column("nonce", LargeBinary, nullable=False),
-    Column("sealed", LargeBinary, nullable=False),
     Column("updated_at", DateTime(timezone=True), nullable=False, server_default=func.now()),
     Column("updated_by", Text, nullable=False),
 )
@@ -219,3 +208,40 @@ class Records:
                 raise Problem("conflict")
             detail = {"revision": revision}
             return await store.publish_in(db, widget_id, draft.tenant_id, draft.document, actor, "publish", detail)
+
+    # Secrets: sealed by the vault, never read back through the API
+
+    async def secret_names(self, tenant_id: str) -> list:
+        query = (
+            select(secrets.c.kind, secrets.c.name, secrets.c.updated_at, secrets.c.updated_by)
+            .where(secrets.c.tenant_id == tenant_id)
+            .order_by(secrets.c.kind, secrets.c.name)
+        )
+        async with self.engine.connect() as db:
+            return list(await db.execute(query))
+
+    async def has_secret(self, tenant_id: str, kind: str, name: str) -> bool:
+        query = select(secrets.c.name).where(
+            (secrets.c.tenant_id == tenant_id) & (secrets.c.kind == kind) & (secrets.c.name == name)
+        )
+        async with self.engine.connect() as db:
+            return (await db.execute(query)).first() is not None
+
+    async def put_secret(self, vault: Vault, tenant_id: str, kind: str, name: str, value, actor: str, detail) -> None:
+        """Seals and stores a secret, replacing any of that name. `value` is the new value, or a function of the
+        current one (opened) for a rotation that keeps it."""
+        where = place(tenant_id, kind, name)
+        mine = (secrets.c.tenant_id == tenant_id) & (secrets.c.kind == kind) & (secrets.c.name == name)
+        async with self.engine.begin() as db:
+            if callable(value):
+                query = select(secrets.c.key_id, secrets.c.nonce, secrets.c.sealed).where(mine).with_for_update()
+                row = (await db.execute(query)).first()
+                value = value(vault.open(row.key_id, row.nonce, row.sealed, where) if row else None)
+            key_id, nonce, sealed = vault.seal(value, where)
+            changed = {"key_id": key_id, "nonce": nonce, "sealed": sealed, "updated_by": actor}
+            upsert = pg_insert(secrets).values({"tenant_id": tenant_id, "kind": kind, "name": name, **changed})
+            upsert = upsert.on_conflict_do_update(
+                index_elements=["tenant_id", "kind", "name"], set_={**changed, "updated_at": func.now()}
+            )
+            await db.execute(upsert)
+            await _record(db, actor, f"{kind}.set", tenant_id, detail={"name": name, **(detail or {})})

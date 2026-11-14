@@ -16,8 +16,11 @@ on another site cannot act as a signed-in administrator; a request from a browse
 console's own addresses (UCP_ADMIN_ORIGINS).
 """
 
+import json
 from contextlib import AsyncExitStack, asynccontextmanager
 from dataclasses import dataclass
+from datetime import UTC, datetime
+from secrets import token_hex, token_urlsafe
 from typing import Annotated, Literal
 
 import httpx2
@@ -27,14 +30,17 @@ from pydantic import BaseModel, ConfigDict, Field
 from sqlalchemy.ext.asyncio import create_async_engine
 
 from ucp.admin.records import Records
+from ucp.connector import AgentError
 from ucp.gateway import pipeline
 from ucp.gateway.api import visitor_address
 from ucp.gateway.pipeline import CODES, Problem, api_error
 from ucp.identity import Identity, ProviderKeys, verify_provider_token
+from ucp.pf import PfConnector, PfProfile
 from ucp.protocol import Id
 from ucp.sessions import Limiter
 from ucp.settings import Settings
 from ucp.store import Store, new_id
+from ucp.vault import Sealed, Vault
 from ucp.widgets import problems
 
 PER_MINUTE = 120  # requests from one signed-in administrator
@@ -254,6 +260,32 @@ def _checked(widget_id: str, tenant_id: str, document: dict) -> dict:
     return document
 
 
+REFERENCES = (("profile", "agent_profile", "connection profile"), ("host", "identity.secret", "shared secret"))
+
+
+def _named(document: dict | None, kind: str) -> str | None:
+    if not document:
+        return None
+    return document.get("agent_profile") if kind == "profile" else (document.get("identity") or {}).get("secret")
+
+
+async def _references(request: Request, admin: Admin, kept: Records, widget_id: str, document: dict, before) -> None:
+    """A widget's connection profile and shared secret must be its own tenant's, set through this API, so no tenant
+    can point its widget at another's. A platform one (the gateway's own settings) is for platform administrators
+    to choose; a tenant administrator may keep one they chose, not pick a new one."""
+    faults = []
+    for kind, field, what in REFERENCES:
+        name = _named(document, kind)
+        if not name or await kept.has_secret(document["tenant_id"], kind, name):
+            continue
+        offered = name in request.app.state.platform[kind]
+        if offered and (admin.role == "platform" or name == _named(before, kind)):
+            continue
+        faults.append(f"{widget_id}: {field}: this tenant has no {what} named {name}")
+    if faults:
+        raise _Faults(faults)
+
+
 async def _widget(kept: Records, admin: Admin, widget_id: str, *, write: bool = False) -> str:
     tenant_id = await kept.widget_tenant(widget_id)
     if not tenant_id:
@@ -276,12 +308,14 @@ async def list_widgets(tenant_id: Id, admin: Signed, kept: Kept) -> list[dict]:
 
 
 @router.post("/tenants/{tenant_id}/widgets", status_code=201, summary="A new widget, as a draft")
-async def create_widget(tenant_id: Id, body: NewWidget, admin: Signed, kept: Kept) -> dict:
+async def create_widget(tenant_id: Id, body: NewWidget, admin: Signed, kept: Kept, request: Request) -> dict:
     admin.reach(tenant_id, write=True)
     if not await kept.tenants(tenant_id):
         raise Problem("not_found")
     widget_id = new_id("w")
-    await kept.create_widget(widget_id, tenant_id, _checked(widget_id, tenant_id, body.document), admin.subject)
+    document = _checked(widget_id, tenant_id, body.document)
+    await _references(request, admin, kept, widget_id, document, None)
+    await kept.create_widget(widget_id, tenant_id, document, admin.subject)
     return {"widget_id": widget_id, "revision": 1}
 
 
@@ -295,10 +329,72 @@ async def read_draft(widget_id: Id, admin: Signed, kept: Kept, published: Publis
 
 
 @router.put("/widgets/{widget_id}/draft", summary="Save the draft; refused if someone saved since you read it")
-async def save_draft(widget_id: Id, body: Draft, admin: Signed, kept: Kept) -> dict:
+async def save_draft(
+    widget_id: Id, body: Draft, admin: Signed, kept: Kept, published: Published, request: Request
+) -> dict:
     tenant_id = await _widget(kept, admin, widget_id, write=True)
     document = _checked(widget_id, tenant_id, body.document)
+    before = await kept.draft(widget_id) or await published.widget(widget_id)
+    await _references(request, admin, kept, widget_id, document, before.document if before else None)
     return {"revision": await kept.save_draft(widget_id, tenant_id, document, body.revision, admin.subject)}
+
+
+# Secrets: a tenant's PF connection profiles and its sites' shared secrets (M8-T4, T5). Written, never read back.
+
+
+def _vault(request: Request) -> Vault:
+    if not request.app.state.vault:
+        raise Problem("assistant_unavailable")  # this deployment holds no key to seal secrets with
+    return request.app.state.vault
+
+
+@router.get("/tenants/{tenant_id}/secrets", summary="A tenant's connection profiles and shared secrets, by name only")
+async def list_secrets(tenant_id: Id, admin: Signed, kept: Kept) -> list[dict]:
+    admin.reach(tenant_id)
+    rows = await kept.secret_names(tenant_id)
+    return [{"kind": r.kind, "name": r.name, "updated_at": r.updated_at, "updated_by": r.updated_by} for r in rows]
+
+
+@router.put("/tenants/{tenant_id}/agent-profiles/{name}", summary="Set a PF connection profile; never shown again")
+async def set_profile(tenant_id: Id, name: Id, body: PfProfile, admin: Signed, kept: Kept, request: Request) -> dict:
+    admin.reach(tenant_id, write=True)
+    plain = {
+        **body.model_dump(),
+        "api_key": body.api_key.get_secret_value(),
+        "password": body.password.get_secret_value(),
+    }
+    await kept.put_secret(_vault(request), tenant_id, "profile", name, json.dumps(plain), admin.subject, None)
+    return {"name": name}
+
+
+@router.post("/tenants/{tenant_id}/agent-profiles/{name}/test", summary="Sign in to PF with a profile")
+async def test_profile(tenant_id: Id, name: Id, admin: Signed, request: Request) -> dict:
+    """Signs in with the profile and says how it went, never with the profile's address or credentials. A wrong
+    workspace or agent shows only on the first question: PF has no cheap call to check them."""
+    admin.reach(tenant_id, write=True)
+    profile = await Sealed(request.app.state.store, _vault(request)).get(tenant_id, "profile", name)
+    if not profile:
+        raise Problem("not_found")
+    try:
+        await PfConnector(PfProfile(**json.loads(profile)), request.app.state.client).check()
+    except AgentError as error:
+        advice = "PF did not answer; try again later" if error.retryable else "check the profile's credentials"
+        return {"connected": False, "advice": advice}
+    return {"connected": True}
+
+
+@router.post("/tenants/{tenant_id}/host-secrets/{name}", status_code=201, summary="A new shared secret, shown once")
+async def new_host_secret(tenant_id: Id, name: Id, admin: Signed, kept: Kept, request: Request) -> dict:
+    """A new secret for the customer's backend to sign visitors' tokens with. The one before it stays valid beside
+    it until the next rotation, so the customer can switch without a gap; any older one stops working."""
+    admin.reach(tenant_id, write=True)
+    key_id, secret = f"k{datetime.now(UTC):%Y%m%d}{token_hex(2)}", token_urlsafe(32)
+
+    def rotated(current: str | None) -> str:
+        return ",".join(filter(None, [f"{key_id}:{secret}", current.split(",")[0] if current else None]))
+
+    await kept.put_secret(_vault(request), tenant_id, "host", name, rotated, admin.subject, {"key_id": key_id})
+    return {"name": name, "key_id": key_id, "secret": secret}
 
 
 @router.post("/widgets/{widget_id}/publish", summary="Publish a draft revision as the next version")
@@ -396,6 +492,12 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         if settings.admin_issuer and settings.admin_audience
         else None
     )
+    app.state.vault = Vault(settings.secrets_key) if settings.secrets_key else None
+    # The platform's own profiles and secrets, from the gateway's settings: only their names, to check references.
+    app.state.platform = {
+        "profile": set(json.loads(settings.agent_profiles or "{}")),
+        "host": set(json.loads(settings.host_secrets or "{}")),
+    }
     app.state.origins = {origin.strip() for origin in (settings.admin_origins or "").split(",") if origin.strip()}
     app.state.limiter = Limiter()
     app.state.visitor_address_header = settings.visitor_address_header
