@@ -10,6 +10,7 @@ export const strings = {
   answer: "Answer:",
   input: "Your question",
   placeholder: "Type your question",
+  previewPlaceholder: "Preview: questions are not sent",
   send: "Send",
   stop: "Stop the answer",
   working: "Finding an answer",

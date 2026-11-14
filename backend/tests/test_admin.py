@@ -500,6 +500,24 @@ def test_the_console_page_is_served_for_any_route_and_may_be_framed_by_no_site(d
         assert client.get("/admin/v1/me").json()["code"] == "sign_in_required"  # the API stays the API
 
 
+def test_the_chat_itself_is_the_consoles_preview_framed_by_the_console_only(database_url, provider, tmp_path):  # noqa: F811
+    for app, page in (("console", "<title>Console</title>"), ("widget", "<title>Chat</title>")):
+        (tmp_path / app / "dist" / "assets").mkdir(parents=True)
+        (tmp_path / app / "dist" / "index.html").write_text(page)
+    (tmp_path / "widget" / "dist" / "assets" / "index-chat.js").write_text("/* chat */")
+    settings = Settings(
+        database_url=database_url, web_dir=tmp_path, admin_issuer=provider.base_url, admin_audience=AUDIENCE
+    )
+
+    with TestClient(admin.create_app(settings)) as client:
+        preview = client.get("/preview")
+        assert preview.text == "<title>Chat</title>"
+        assert "frame-ancestors 'self'" in preview.headers["content-security-policy"]
+        assert "connect-src 'none'" in preview.headers["content-security-policy"]
+        assert client.get("/assets/index-chat.js").text == "/* chat */"
+        assert "frame-src 'self'" in client.get("/").headers["content-security-policy"]
+
+
 def test_refused_sign_ins_slow_an_address_down_while_signed_in_administrators_are_not(world, monkeypatch):
     monkeypatch.setattr(admin, "ATTEMPTS_PER_MINUTE", 3)
 

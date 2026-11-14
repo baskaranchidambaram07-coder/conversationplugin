@@ -4,6 +4,7 @@ import { type ReactNode, useCallback, useEffect, useId, useState } from "react";
 
 import { ApiProblem, call } from "./api";
 import { AgentEditor, Faults, SignInEditor, SitesEditor } from "./editors";
+import { type Look, LookEditor, Preview } from "./look";
 import { begin, finish, type Provider, signOut, token } from "./signIn";
 import { strings as t } from "./strings";
 import { type Station, type StationId, stations, timeLeft } from "./track";
@@ -350,18 +351,19 @@ function Track(props: {
   );
 }
 
-const EDITED: StationId[] = ["agent", "sites", "sign-in"];
+const EDITED: StationId[] = ["agent", "sites", "sign-in", "look"];
 
 /** The editor of one of the first three stations, over a copy of the document. */
 function StationEditor(props: {
   station: StationId;
+  widgetId: string;
   tenant: string;
   document: WidgetDocument;
   onChange: (document: WidgetDocument) => void;
   readOnly: boolean;
   onProblem: (error: unknown) => void;
 }) {
-  const { station, tenant, document, onChange, readOnly, onProblem } = props;
+  const { station, widgetId, tenant, document, onChange, readOnly, onProblem } = props;
   if (station === "agent") {
     return (
       <AgentEditor
@@ -371,6 +373,19 @@ function StationEditor(props: {
         readOnly={readOnly}
         onProblem={onProblem}
       />
+    );
+  }
+  if (station === "look") {
+    return (
+      <div className="beside">
+        <LookEditor
+          value={document.public as Look}
+          signedIn={document.sign_in !== "anonymous"}
+          onChange={(look) => onChange({ ...document, public: look })}
+          readOnly={readOnly}
+        />
+        <Preview look={document.public as Look} widgetId={widgetId} />
+      </div>
     );
   }
   if (station === "sites") {
@@ -394,6 +409,7 @@ function StationEditor(props: {
 function missing(station: StationId, document: WidgetDocument): string | null {
   if (station === "agent") return document.agent_profile ? null : t.agentMissing;
   if (station === "sites") return document.allowed_domains.length ? null : t.sitesMissing;
+  if (station === "look") return document.public.title?.trim() ? null : t.titleMissing;
   if (station === "sign-in" && document.sign_in !== "anonymous") {
     const identity = document.identity;
     return identity?.issuer.trim() ? null : t.signInMissing;
@@ -487,7 +503,8 @@ function Widget(props: {
           go(`/widgets/${row.widget_id}/${id}`);
         }}
       />
-      <section className="card stop" aria-labelledby="stop-title">
+      {/* named by aria-label: Firefox crashes when axe scans a section named by aria-labelledby */}
+      <section className="card stop" aria-label={t.station[shown]}>
         <header>
           <h2 id="stop-title">{t.station[shown]}</h2>
           <p>{t.stationIntro[shown]}</p>
@@ -497,6 +514,7 @@ function Widget(props: {
             {readOnly && <p className="note">{t.readOnly}</p>}
             <StationEditor
               station={shown}
+              widgetId={row.widget_id}
               tenant={tenant}
               document={edited}
               onChange={(next) => {
@@ -609,12 +627,21 @@ function NewWidget(props: {
         <input id={titleId} type="text" value={title} maxLength={80} onChange={(event) => setTitle(event.target.value)} />
       </div>
       <Track track={track} shown={shown} sign={t.timeLeft(timeLeft(track))} reachable={reachable} onOpen={(id) => go(`/widgets/new/${id}`)} />
-      <section className="card stop" aria-labelledby="stop-title">
+      {/* named by aria-label: Firefox crashes when axe scans a section named by aria-labelledby */}
+      <section className="card stop" aria-label={t.station[shown]}>
         <header>
           <h2 id="stop-title">{t.station[shown]}</h2>
           <p>{t.stationIntro[shown]}</p>
         </header>
-        <StationEditor station={shown} tenant={tenant} document={document} onChange={setDocument} readOnly={false} onProblem={onProblem} />
+        <StationEditor
+          station={shown}
+          widgetId=""
+          tenant={tenant}
+          document={document}
+          onChange={setDocument}
+          readOnly={false}
+          onProblem={onProblem}
+        />
         <Faults faults={faults} />
         <div className="actions">
           <button type="button" className="primary" disabled={creating} onClick={() => void carryOn()}>
