@@ -445,3 +445,10 @@ def test_sealed_secrets_open_only_where_they_were_sealed_and_with_a_key_held():
     for bad in ("", "k1", "k1:short", "k1:" + "!" * 43):
         with pytest.raises(ValueError):
             Vault(bad)
+
+
+def test_the_admin_api_description_file_matches_the_routes():
+    from ucp.admin.openapi import OPENAPI_FILE, openapi_text
+
+    stale = "Run: cd backend && uv run python -m ucp.admin.openapi"
+    assert OPENAPI_FILE.read_text(encoding="utf-8") == openapi_text(), stale
