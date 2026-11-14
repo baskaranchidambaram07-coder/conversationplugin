@@ -19,6 +19,7 @@ import json
 import os
 import subprocess
 import sys
+import time
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -102,6 +103,9 @@ def teardown() -> None:
 
 def wake() -> None:
     state = database_state()
+    while state == "stopping":  # put to sleep a moment ago: it must finish stopping before it can start again
+        time.sleep(15)
+        state = database_state()
     if state == "stopped":
         print("starting the database (about 5 minutes)")
         aws("rds", "start-db-instance", "--db-instance-identifier", DATABASE)

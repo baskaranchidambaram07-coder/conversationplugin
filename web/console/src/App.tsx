@@ -7,6 +7,7 @@ import { AgentEditor, Faults, SignInEditor, SitesEditor } from "./editors";
 import { GoLive } from "./golive";
 import { Install } from "./install";
 import { type Look, LookEditor, Preview } from "./look";
+import { Deletion, NewOrganisation } from "./organisations";
 import { begin, finish, type Provider, signOut, token } from "./signIn";
 import { strings as t } from "./strings";
 import { type Station, type StationId, stations, timeLeft } from "./track";
@@ -153,6 +154,7 @@ function Console({ me, route, onEnded }: { me: Me; route: string; onEnded: () =>
   const [tenant, setTenant] = useState<string | null>(me.tenant_id);
   const [rows, setRows] = useState<Row[] | null>(null);
   const [failed, setFailed] = useState<string | null>(null);
+  const [notice, setNotice] = useState(""); // what was just deleted, said on the organisation's page
 
   const guard = useCallback(
     (error: unknown) => {
@@ -175,6 +177,19 @@ function Console({ me, route, onEnded }: { me: Me; route: string; onEnded: () =>
       setTenant((chosen) => chosen ?? found.find((one) => one.tenant_id === kept)?.tenant_id ?? found[0]?.tenant_id ?? null);
     }, guard);
   }, [guard]);
+
+  const choose = useCallback((chosen: string | null) => {
+    setTenant(chosen);
+    try {
+      if (chosen) localStorage.setItem(TENANT, chosen);
+    } catch {
+      // not remembered; the choice still holds for this visit
+    }
+  }, []);
+
+  useEffect(() => {
+    if (route !== "/") setNotice("");
+  }, [route]);
 
   const refresh = useCallback(() => {
     if (tenant) void call<Row[]>("GET", `/tenants/${tenant}/widgets`).then(setRows, guard);
@@ -201,12 +216,7 @@ function Console({ me, route, onEnded }: { me: Me; route: string; onEnded: () =>
               aria-label={t.organisation}
               value={tenant ?? ""}
               onChange={(event) => {
-                setTenant(event.target.value);
-                try {
-                  localStorage.setItem(TENANT, event.target.value);
-                } catch {
-                  // not remembered; the choice still holds for this visit
-                }
+                choose(event.target.value);
                 go("/");
               }}
             >
@@ -218,6 +228,20 @@ function Console({ me, route, onEnded }: { me: Me; route: string; onEnded: () =>
             </select>
           ) : (
             <output aria-label={t.organisation}>{tenants?.find((one) => one.tenant_id === tenant)?.name ?? ""}</output>
+          )}
+          {me.role === "platform" && (
+            <a
+              className="quiet"
+              href="/organisations/new"
+              aria-current={route === "/organisations/new" ? "page" : undefined}
+              onClick={(event) => {
+                event.preventDefault();
+                go("/organisations/new");
+              }}
+            >
+              <Glyph path={PLUS} />
+              {t.newOrganisation}
+            </a>
           )}
         </div>
         <p className="who">
@@ -278,9 +302,26 @@ function Console({ me, route, onEnded }: { me: Me; route: string; onEnded: () =>
             <p className="problem" role="alert">
               {failed}
             </p>
-          ) : !rows ? (
+          ) : route === "/organisations/new" && me.role === "platform" ? (
+            <NewOrganisation
+              onCreated={(made) => {
+                void call<Tenant[]>("GET", "/tenants").then(setTenants, guard);
+                choose(made.tenant_id);
+                go("/");
+              }}
+              onProblem={guard}
+            />
+          ) : !tenants || (tenant && !rows) ? (
             <div className="ring" role="status" aria-label={t.loading} />
-          ) : widgetId === "new" && tenant && me.role !== "viewer" ? (
+          ) : !tenant || !rows ? (
+            <div className="empty">
+              <h1>{t.noOrganisations}</h1>
+              {me.role === "platform" && <p className="note">{t.firstOrganisation}</p>}
+              <output aria-live="polite" className="note">
+                {notice}
+              </output>
+            </div>
+          ) : widgetId === "new" && me.role !== "viewer" ? (
             <NewWidget
               key={tenant}
               tenant={tenant}
@@ -291,7 +332,7 @@ function Console({ me, route, onEnded }: { me: Me; route: string; onEnded: () =>
               }}
               onProblem={guard}
             />
-          ) : row && tenant ? (
+          ) : row ? (
             <Widget
               key={row.widget_id}
               row={row}
@@ -300,12 +341,42 @@ function Console({ me, route, onEnded }: { me: Me; route: string; onEnded: () =>
               readOnly={me.role === "viewer"}
               open={station as StationId | undefined}
               onSaved={refresh}
+              onDeleted={(title) => {
+                refresh();
+                go("/");
+                setNotice(t.deleted(title));
+              }}
               onProblem={guard}
             />
           ) : (
             <div className="empty">
-              <h1>{rows.length ? t.chooseWidget : t.noWidgets}</h1>
-              {!rows.length && <p className="note">{t.firstWidget}</p>}
+              <h1>{tenants.find((one) => one.tenant_id === tenant)?.name}</h1>
+              <p className="sub">{t.organisationFacts(rows.length, tenant)}</p>
+              <p className="note">{rows.length ? t.chooseWidget : `${t.noWidgets} ${t.firstWidget}`}</p>
+              <output aria-live="polite" className="note">
+                {notice}
+              </output>
+              {me.role === "platform" &&
+                (rows.length ? (
+                  <p className="hint">{t.deleteOrganisationFirst(rows.length)}</p>
+                ) : (
+                  <Deletion
+                    key={tenant}
+                    title={t.deleteOrganisationTitle}
+                    name={tenants.find((one) => one.tenant_id === tenant)?.name ?? tenant}
+                    consequences={t.deleteOrganisationHint}
+                    action={t.deleteOrganisation}
+                    onDelete={async () => {
+                      const name = tenants.find((one) => one.tenant_id === tenant)?.name ?? tenant;
+                      await call("DELETE", `/tenants/${tenant}`);
+                      const left = await call<Tenant[]>("GET", "/tenants");
+                      setTenants(left);
+                      choose(left[0]?.tenant_id ?? null);
+                      setNotice(t.deleted(name));
+                    }}
+                    onProblem={guard}
+                  />
+                ))}
             </div>
           )}
         </main>
@@ -431,9 +502,10 @@ function Widget(props: {
   readOnly: boolean;
   open?: StationId;
   onSaved: () => void;
+  onDeleted: (title: string) => void;
   onProblem: (error: unknown) => void;
 }) {
-  const { row, tenant, gateway, readOnly, open, onSaved, onProblem } = props;
+  const { row, tenant, gateway, readOnly, open, onSaved, onDeleted, onProblem } = props;
   const [draft, setDraft] = useState<Draft | null>(null);
   const [edited, setEdited] = useState<WidgetDocument | null>(null);
   const [faults, setFaults] = useState<string[]>([]);
@@ -551,6 +623,8 @@ function Widget(props: {
         ) : shown === "live" ? (
           <GoLive
             widgetId={row.widget_id}
+            title={row.title}
+            onDeleted={() => onDeleted(row.title)}
             live={row.version}
             revision={draft.revision}
             document={document}

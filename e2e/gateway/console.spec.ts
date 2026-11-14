@@ -177,6 +177,10 @@ test("an existing widget's settings are edited and saved; a viewer sees them but
   await expect(page.getByRole("button", { name: "Save" })).toHaveCount(0);
   await expect(page.getByRole("button", { name: "Add a connection" })).toHaveCount(0);
   await expect(page.getByRole("link", { name: "New widget" })).toHaveCount(0);
+  await expect(page.getByRole("link", { name: "New organisation" })).toHaveCount(0);
+  await page.getByRole("button", { name: /Go live/ }).click();
+  await expect(page.getByRole("heading", { level: 2, name: "Go live" })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Delete the widget" })).toHaveCount(0);
 });
 
 // Look (M9-T3): the form beside the chat itself, drawn with the draft's settings as they are typed.
@@ -436,4 +440,56 @@ test("a connection's keys and a shared secret are never shown again once saved",
   await page.reload();
   await expect(page.getByRole("button", { name: "Make a new secret" })).toBeVisible();
   await expect(page.locator("body")).not.toContainText(made.split(":")[1]);
+});
+
+// Organisations made and deleted in the console, and a widget deleted: its visitors' chat goes, its history stays.
+test("an organisation is made in the console; its widget and then the organisation are deleted, each asked twice", async ({
+  page,
+}, info) => {
+  test.slow();
+  const api = await operatorApi(page);
+  const name = `Northfield ${info.project.name} ${Date.now().toString(36)}`;
+  await signIn(page, "/", await platformAdministrator(page, "founder"));
+  await page.getByRole("link", { name: "New organisation" }).click();
+  await page.getByRole("button", { name: "Create the organisation" }).click();
+  await expect(page.getByRole("alert")).toContainText("Give the organisation a name.");
+  await page.getByLabel("Name", { exact: true }).fill(name);
+  await page.getByRole("button", { name: "Create the organisation" }).click();
+  await expect(page.getByRole("heading", { level: 1, name })).toBeVisible();
+  await expect(page.getByText("No widgets yet.")).toBeVisible();
+  const tenant = await page.getByRole("combobox", { name: "Organisation" }).inputValue();
+  expect(tenant).toMatch(/^t_/);
+
+  await api("PUT", `/tenants/${tenant}/agent-profiles/fake-pf`, FAKE_PROFILE);
+  const { widget_id: widget } = await api("POST", `/tenants/${tenant}/widgets`, { document: anonymous(`Ask ${name}`) });
+  await api("POST", `/widgets/${widget}/publish`, { revision: 1 });
+  const config = () => page.request.get(`http://localhost:8200/v1/widgets/${widget}/config`).then((reply) => reply.status());
+  expect(await config()).toBe(200);
+
+  await page.reload();
+  await expect(page.getByText("1 widget · ID")).toBeVisible();
+  await expect(page.getByText("To delete this organisation, first delete its widget, each from its Go live step.")).toBeVisible();
+  await expect(page.getByRole("button", { name: "Delete the organisation" })).toHaveCount(0);
+
+  await page.getByRole("link", { name: new RegExp(`Ask ${name}`) }).click();
+  await page.getByRole("button", { name: /Go live/ }).click();
+  await page.getByRole("button", { name: "Delete the widget" }).click();
+  const confirm = page.getByRole("button", { name: `Yes, delete “Ask ${name}”` });
+  await expect(confirm).toBeDisabled();
+  await page.getByLabel(`Type “Ask ${name}” to confirm`).fill(`Ask ${name}`);
+  expect(await serious(page)).toEqual([]);
+  await confirm.click();
+  await expect(page.getByText(`“Ask ${name}” is deleted.`)).toBeVisible();
+  await expect(page.getByText("0 widgets · ID")).toBeVisible();
+  await expect.poll(config, { timeout: 45_000 }).toBe(404); // within the gateway's half a minute
+  expect((await api("GET", `/tenants/${tenant}/widgets`)) as unknown[]).toHaveLength(0);
+
+  await page.getByRole("button", { name: "Delete the organisation" }).click();
+  await page.getByLabel(`Type “${name}” to confirm`).fill(name);
+  expect(await serious(page)).toEqual([]);
+  await page.getByRole("button", { name: `Yes, delete “${name}”` }).click();
+  await expect(page.getByText(`“${name}” is deleted.`)).toBeVisible();
+  await expect(page.getByRole("option", { name })).toHaveCount(0);
+  const kept = (await api("GET", "/tenants")) as { tenant_id: string }[];
+  expect(kept.map((one) => one.tenant_id)).not.toContain(tenant);
 });

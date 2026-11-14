@@ -106,6 +106,41 @@
         }
       }
     },
+    "/admin/v1/tenants/{tenant_id}": {
+      "delete": {
+        "summary": "Delete a tenant with no widgets left (platform administrators only); its people and secrets go too",
+        "operationId": "delete_tenant_admin_v1_tenants__tenant_id__delete",
+        "parameters": [
+          {
+            "name": "tenant_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^[A-Za-z0-9_-]{1,64}$",
+              "description": "Our opaque ID. Never a PF ID.",
+              "title": "Tenant Id"
+            },
+            "description": "Our opaque ID. Never a PF ID."
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/admin/v1/administrators": {
       "get": {
         "summary": "Every administrator, or one tenant's",
@@ -769,6 +804,41 @@
                 }
               }
             }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/admin/v1/widgets/{widget_id}": {
+      "delete": {
+        "summary": "Delete a widget: no longer served; its history stays",
+        "operationId": "delete_widget_admin_v1_widgets__widget_id__delete",
+        "parameters": [
+          {
+            "name": "widget_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^[A-Za-z0-9_-]{1,64}$",
+              "description": "Our opaque ID. Never a PF ID.",
+              "title": "Widget Id"
+            },
+            "description": "Our opaque ID. Never a PF ID."
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
           },
           "422": {
             "description": "Validation Error",

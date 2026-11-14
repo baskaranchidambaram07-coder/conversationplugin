@@ -178,6 +178,17 @@ async def create_tenant(body: NewTenant, admin: Signed, kept: Kept) -> dict:
     return {"tenant_id": tenant_id, "name": body.name}
 
 
+@router.delete(
+    "/tenants/{tenant_id}",
+    status_code=204,
+    summary="Delete a tenant with no widgets left (platform administrators only); its people and secrets go too",
+)
+async def delete_tenant(tenant_id: Id, admin: Signed, kept: Kept) -> Response:
+    admin.platform()
+    await kept.delete_tenant(tenant_id, admin.subject)  # a conflict while it still has widgets
+    return Response(status_code=204)
+
+
 # Administrators
 
 
@@ -467,6 +478,13 @@ async def new_host_secret(tenant_id: Id, name: Id, admin: Signed, kept: Kept, re
 
     await kept.put_secret(_vault(request), tenant_id, "host", name, rotated, admin.subject, {"key_id": key_id})
     return {"name": name, "key_id": key_id, "secret": secret}
+
+
+@router.delete("/widgets/{widget_id}", status_code=204, summary="Delete a widget: no longer served; its history stays")
+async def delete_widget(widget_id: Id, admin: Signed, kept: Kept) -> Response:
+    tenant_id = await _widget(kept, admin, widget_id, write=True)
+    await kept.delete_widget(widget_id, tenant_id, admin.subject)
+    return Response(status_code=204)
 
 
 @router.post("/widgets/{widget_id}/publish", summary="Publish a draft revision as the next version")
