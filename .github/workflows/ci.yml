@@ -202,15 +202,17 @@ jobs:
         run: |
           terraform="docker run --rm --volume $PWD:/work --workdir /work hashicorp/terraform:1.17.2"
           $terraform fmt -check -recursive infra/aws
-          for folder in infra/aws/bootstrap infra/aws/dev; do
+          for folder in infra/aws/bootstrap infra/aws/stack; do
             $terraform -chdir=$folder init -backend=false -input=false > /dev/null
             $terraform -chdir=$folder validate
           done
-      - name: No high or critical misconfiguration, asleep or awake (accepted ones carry their reason inline)
+      - name: No high or critical misconfiguration, asleep or awake, in dev and a customer's shape (accepted ones carry their reason inline)
         run: |
           trivy="docker run --rm --volume $PWD:/work --workdir /work aquasec/trivy:0.76.2 config --quiet"
           $trivy --severity HIGH,CRITICAL --exit-code 1 infra/aws
-          $trivy --severity HIGH,CRITICAL --exit-code 1 --tf-vars infra/aws/dev/awake.tfvars infra/aws/dev
+          for environment in dev example; do
+            $trivy --severity HIGH,CRITICAL --exit-code 1 --tf-vars infra/aws/stack/awake.tfvars               --tf-vars infra/aws/environments/$environment.tfvars.json infra/aws/stack
+          done
 
   secrets:
     name: Secret scan

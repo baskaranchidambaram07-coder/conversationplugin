@@ -2,7 +2,7 @@ import { expect, type FrameLocator, type Page, test } from "@playwright/test";
 
 // M15: the College's sample pages (examples/college) and our hosted copies of them, filled in as the dev environment
 // fills them (e2e/server.mjs), against the real gateway. The hosted portal's sign-in is the function CloudFront runs
-// (infra/aws/dev/functions/demo-token.js). Every page keeps its own content policy, and nothing breaks it.
+// (infra/aws/stack/functions/demo-token.js). Every page keeps its own content policy, and nothing breaks it.
 const SITE = "http://127.0.0.1:4174";
 const someone = (name: string) => `${name}-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`;
 

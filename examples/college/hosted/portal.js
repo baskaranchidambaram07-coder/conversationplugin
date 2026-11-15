@@ -1,5 +1,5 @@
 // Our hosted copy of the portal sample. "Signing in" is choosing a name, and this site signs a demo token for it
-// at /demo-token (infra/aws/dev/functions/demo-token.js), standing in for a portal's backend.
+// at /demo-token (infra/aws/stack/functions/demo-token.js), standing in for a portal's backend.
 window.UCP =
   window.UCP ||
   function () {

@@ -8,7 +8,7 @@ import { defineConfig, devices } from "@playwright/test";
 // environment's smoke widget, allowed on http://127.0.0.1:4174 (backend/deploy/widgets.dev.json). Then the College's
 // samples as we host them, on their own site (e2e/staging/hosted-samples.spec.ts), and the admin console as hosted
 // (e2e/staging/hosted-console.spec.ts).
-//   npm run e2e:deployed        (with the environment awake: python infra/aws/dev.py wake)
+//   npm run e2e:deployed        (with the environment awake: python infra/aws/stack.py wake)
 process.env.PLAYWRIGHT_BROWSERS_PATH ??= path.resolve(import.meta.dirname, "../.tools/ms-playwright");
 const backend = path.resolve(import.meta.dirname, "../backend");
 // The PF settings to search for, read the way the gateway reads them (uv), never printed.

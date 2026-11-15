@@ -215,7 +215,7 @@ function collegeBackend(request, response) {
 }
 
 // The hosted samples' sign-in, run as CloudFront runs it, with this machine's test secret in place of the real one.
-const demoCode = (await readFile(new URL("infra/aws/dev/functions/demo-token.js", root), "utf8")).replace(
+const demoCode = (await readFile(new URL("infra/aws/stack/functions/demo-token.js", root), "utf8")).replace(
   "${secret}",
   portal.test_host_secrets.demo.split(":")[1],
 );

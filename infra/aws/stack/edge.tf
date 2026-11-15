@@ -11,7 +11,7 @@ resource "random_password" "origin" {
 #trivy:ignore:AWS-0053 CloudFront must reach it (VPC origins need a role the deploying user may not create); only CloudFront's addresses carrying its secret header get in
 resource "aws_lb" "edge" {
   count                      = var.awake ? 1 : 0
-  name                       = "ucp-dev-edge"
+  name                       = "${var.name}-edge"
   load_balancer_type         = "application"
   subnets                    = aws_subnet.public[*].id
   security_groups            = [aws_security_group.edge.id]
@@ -21,7 +21,7 @@ resource "aws_lb" "edge" {
 
 resource "aws_lb_target_group" "gateway" {
   count                = var.awake ? 1 : 0
-  name                 = "ucp-dev-gateway"
+  name                 = "${var.name}-gateway"
   port                 = 8000
   protocol             = "HTTP"
   target_type          = "ip"
@@ -83,7 +83,7 @@ data "aws_cloudfront_origin_request_policy" "all_viewer" {
 # While the environment sleeps, CloudFront answers every request itself with a short notice, rather than an error
 # about its origin. Nothing reaches the origin then, and the loader on a customer's page simply draws nothing.
 resource "aws_cloudfront_function" "asleep" {
-  name    = "ucp-dev-asleep"
+  name    = "${var.name}-asleep"
   runtime = "cloudfront-js-2.0"
   comment = "Answers while the dev environment sleeps"
   publish = true
@@ -106,11 +106,11 @@ resource "aws_cloudfront_function" "asleep" {
 #trivy:ignore:AWS-0011 A web firewall is outside the base version (docs/tech-stack.md section 5); it comes with production
 resource "aws_cloudfront_distribution" "edge" {
   enabled             = true
-  comment             = "ucp-dev"
+  comment             = var.name
   price_class         = "PriceClass_100"
   http_version        = "http2and3"
   is_ipv6_enabled     = true
-  wait_for_deployment = false # infra/aws/dev.py waits only where it matters
+  wait_for_deployment = false # infra/aws/stack.py waits only where it matters
 
   origin {
     origin_id   = "gateway"

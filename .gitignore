@@ -22,4 +22,6 @@ Universal Conversational Embed SDK Architecture.png
 .terraform/
 *.tfstate
 *.tfstate.*
-infra/aws/dev/backend.hcl
+infra/aws/environments/*.backend.hcl
+infra/aws/iam/out/
+infra/aws/stack/release.auto.tfvars.json

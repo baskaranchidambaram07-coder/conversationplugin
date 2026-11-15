@@ -10,7 +10,7 @@ resource "random_password" "console_origin" {
 
 resource "aws_lb_target_group" "admin" {
   count                = var.awake ? 1 : 0
-  name                 = "ucp-dev-admin"
+  name                 = "${var.name}-admin"
   port                 = 8001
   protocol             = "HTTP"
   target_type          = "ip"
@@ -44,7 +44,7 @@ resource "aws_lb_listener_rule" "console_from_cloudfront" {
 #trivy:ignore:AWS-0011 A web firewall is outside the base version (docs/tech-stack.md section 5); it comes with production
 resource "aws_cloudfront_distribution" "console" {
   enabled             = true
-  comment             = "ucp-dev console"
+  comment             = "${var.name} console"
   price_class         = "PriceClass_100"
   http_version        = "http2and3"
   is_ipv6_enabled     = true
@@ -114,11 +114,11 @@ resource "aws_cloudfront_distribution" "console" {
 }
 
 resource "aws_cognito_user_pool" "admins" {
-  name                     = "ucp-dev-admins"
+  name                     = "${var.name}-admins"
   username_attributes      = ["email"]
   auto_verified_attributes = ["email"]
   mfa_configuration        = "ON"
-  deletion_protection      = "INACTIVE" # dev; production protects its pool
+  deletion_protection      = var.protect_data ? "ACTIVE" : "INACTIVE"
   software_token_mfa_configuration {
     enabled = true # an authenticator app, set up at the first sign-in
   }
@@ -146,13 +146,13 @@ resource "random_id" "admins" {
 }
 
 resource "aws_cognito_user_pool_domain" "admins" {
-  domain                = "ucp-dev-admins-${random_id.admins.hex}"
+  domain                = "${var.name}-admins-${random_id.admins.hex}"
   user_pool_id          = aws_cognito_user_pool.admins.id
   managed_login_version = 2 # Cognito's current sign-in pages, which set up the authenticator app
 }
 
 resource "aws_cognito_user_pool_client" "console" {
-  name                                 = "ucp-dev-console"
+  name                                 = "${var.name}-console"
   user_pool_id                         = aws_cognito_user_pool.admins.id
   generate_secret                      = false # a browser app: the code is exchanged with PKCE (web/console/src/signIn.ts)
   allowed_oauth_flows_user_pool_client = true
