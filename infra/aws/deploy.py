@@ -20,7 +20,10 @@ import sys
 from pathlib import Path
 
 ENVIRONMENT = os.environ.get("UCP_ENV", "dev")
-SETTINGS = json.loads((Path(__file__).resolve().parent / "environments" / f"{ENVIRONMENT}.tfvars.json").read_text())
+SETTINGS_FILE = Path(__file__).resolve().parent / "environments" / f"{ENVIRONMENT}.tfvars.json"
+if not SETTINGS_FILE.exists():
+    sys.exit(f"no settings for the environment {ENVIRONMENT}: {SETTINGS_FILE} (infra/aws/SETUP.md, step 1)")
+SETTINGS = json.loads(SETTINGS_FILE.read_text())
 NAME = SETTINGS["name"]
 REGION = SETTINGS.get("region", "us-east-1")  # the default in stack/variables.tf
 CLUSTER = f"{NAME}-cluster"
