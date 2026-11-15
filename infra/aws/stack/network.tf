@@ -14,12 +14,12 @@ resource "aws_vpc" "main" {
   cidr_block           = "10.40.0.0/16"
   enable_dns_support   = true
   enable_dns_hostnames = true
-  tags                 = { Name = "ucp-dev" }
+  tags                 = { Name = var.name }
 }
 
 resource "aws_internet_gateway" "main" {
   vpc_id = aws_vpc.main.id
-  tags   = { Name = "ucp-dev" }
+  tags   = { Name = var.name }
 }
 
 resource "aws_subnet" "public" {
@@ -27,7 +27,7 @@ resource "aws_subnet" "public" {
   vpc_id            = aws_vpc.main.id
   cidr_block        = cidrsubnet(aws_vpc.main.cidr_block, 8, count.index)
   availability_zone = local.zones[count.index]
-  tags              = { Name = "ucp-dev-public-${count.index}" }
+  tags              = { Name = "${var.name}-public-${count.index}" }
 }
 
 resource "aws_subnet" "private" {
@@ -35,7 +35,7 @@ resource "aws_subnet" "private" {
   vpc_id            = aws_vpc.main.id
   cidr_block        = cidrsubnet(aws_vpc.main.cidr_block, 8, 10 + count.index)
   availability_zone = local.zones[count.index]
-  tags              = { Name = "ucp-dev-private-${count.index}" }
+  tags              = { Name = "${var.name}-private-${count.index}" }
 }
 
 resource "aws_route_table" "public" {
@@ -44,7 +44,7 @@ resource "aws_route_table" "public" {
     cidr_block = "0.0.0.0/0"
     gateway_id = aws_internet_gateway.main.id
   }
-  tags = { Name = "ucp-dev-public" }
+  tags = { Name = "${var.name}-public" }
 }
 
 resource "aws_route_table_association" "public" {
@@ -64,7 +64,7 @@ data "aws_ec2_managed_prefix_lists" "cloudfront" {
 }
 
 resource "aws_security_group" "edge" {
-  name        = "ucp-dev-edge"
+  name        = "${var.name}-edge"
   description = "The load balancer: reachable from CloudFront only"
   vpc_id      = aws_vpc.main.id
 }
@@ -88,7 +88,7 @@ resource "aws_vpc_security_group_egress_rule" "edge_to_gateway" {
 }
 
 resource "aws_security_group" "gateway" {
-  name        = "ucp-dev-gateway"
+  name        = "${var.name}-gateway"
   description = "The gateway: reachable from the load balancer only"
   vpc_id      = aws_vpc.main.id
 }
@@ -122,7 +122,7 @@ resource "aws_vpc_security_group_egress_rule" "gateway_to_database" {
 }
 
 resource "aws_security_group" "database" {
-  name        = "ucp-dev-database"
+  name        = "${var.name}-database"
   description = "PostgreSQL: reachable from the gateway only"
   vpc_id      = aws_vpc.main.id
 }

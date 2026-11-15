@@ -2,7 +2,7 @@
 
 The conversation gateway in the US development account (`us-east-1`), on addresses AWS provides. It runs **on demand**: wake it to use it, put it to sleep to stop paying for it. Everything is named `ucp-dev*`, and every role carries the `ucp-dev-boundary` permissions boundary (see `iam/`).
 
-Run every command from the repository root, in Git Bash, with the AWS command line signed in as the deploying user (`service-commandline-user`). Terraform comes from `.tools/terraform`. No command prints a secret or the account number.
+Run every command from the repository root, in Git Bash, with the AWS command line signed in as the deploying user (`service-commandline-user`). Terraform comes from `.tools/terraform`. No command prints a secret or the account number. Other environments, and the bundle customers install from, are at the end.
 
 ## What runs where
 
@@ -24,16 +24,16 @@ Run these from an up-to-date `develop`. Wake and sleep apply the Terraform in th
 
 | To | Run | Takes |
 |---|---|---|
-| See what is running, and the address | `python infra/aws/dev.py status` | seconds |
-| Wake it: database on, load balancer and gateway up, newest release out, migrations, the widget file, the PF check | `python infra/aws/dev.py wake` | about 10 minutes |
-| Put it to sleep | `python infra/aws/dev.py sleep` | about 5 minutes |
+| See what is running, and the address | `python infra/aws/stack.py status` | seconds |
+| Wake it: database on, load balancer and gateway up, newest release out, migrations, the widget file, the PF check | `python infra/aws/stack.py wake` | about 10 minutes |
+| Put it to sleep | `python infra/aws/stack.py sleep` | about 5 minutes |
 | Check it from outside: health, configuration, an anonymous and a signed-in turn | `cd backend && uv run python smoke.py <address> w_smoke` | a minute |
 | Check it in a browser: the leak search, and the hosted samples | `npm run build && npm run e2e:deployed` | a few minutes |
 | The hosted samples' address, for the College (`docs/college-sandbox-guide.md`) | `python infra/aws/deploy.py --samples-url` | seconds |
 | The admin console's address | `python infra/aws/deploy.py --console-url` | seconds |
 | Invite a platform administrator to the console: Cognito emails them a temporary password | `python infra/aws/console_admin.py EMAIL` | a minute |
 
-A plain `terraform apply` without `-var=awake=true` puts the environment to sleep: always go through `dev.py`.
+A plain `terraform apply` without `-var=awake=true` puts the environment to sleep: always go through `stack.py`.
 
 ## Releasing
 
@@ -65,8 +65,8 @@ The deploying user needs Cognito permissions for this (`iam/ucp-dev-deployer.jso
 **The first time,** from an up-to-date `develop`, once the policy is published:
 
 ```
-python infra/aws/dev.py sleep        # builds the pool, the key and the console's address; removes the old service
-python infra/aws/dev.py wake         # starts the service again, now with the admin container beside the gateway
+python infra/aws/stack.py sleep        # builds the pool, the key and the console's address; removes the old service
+python infra/aws/stack.py wake         # starts the service again, now with the admin container beside the gateway
 python infra/aws/console_admin.py you@example.org
 ```
 
@@ -105,16 +105,41 @@ Backups are taken every day and kept for seven days, with point-in-time restore.
 
 Building the environment from nothing:
 
-1. `python infra/aws/dev.py bootstrap`, the first time only: the encrypted, versioned bucket for Terraform's state, and Terraform's set-up. Its settings go to `dev/backend.hcl`, which git ignores.
-2. `python infra/aws/dev.py build`: everything, in the sleeping shape. Check first with `python infra/aws/dev.py plan --asleep` if you like.
+1. `python infra/aws/stack.py bootstrap`, the first time only: the encrypted, versioned bucket for Terraform's state, and Terraform's set-up. Its settings go to `environments/dev.backend.hcl`, which git ignores.
+2. `python infra/aws/stack.py build`: everything, in the sleeping shape. Check first with `python infra/aws/stack.py plan --asleep` if you like.
 3. `cd backend && uv run --env-file ../.env python ../infra/aws/secret_store.py agent-profiles`.
 4. GitHub, for the pipeline, the first time only: the secrets `AWS_DEPLOY_ROLE_ARN` (Terraform's output `deploy_role_arn`) and `AWS_ACCOUNT_ID` (only so the logs hide it). The role keeps its name across rebuilds, so the secrets stay right.
 5. Push to `develop` (or re-run the latest "Deploy to dev" run): the pipeline stores an image.
-6. `python infra/aws/dev.py wake`, then `cd backend && uv run python smoke.py "$(python ../infra/aws/deploy.py --url)" w_smoke`.
+6. `python infra/aws/stack.py wake`, then `cd backend && uv run python smoke.py "$(python ../infra/aws/deploy.py --url)" w_smoke`.
 
 A rebuild gets a **new CloudFront address**: a customer's script tag must change with it. The scripts and the pipeline read the address from the newest release (`python infra/aws/deploy.py --url`), so nothing else needs changing.
 
-Removing it all: `python infra/aws/dev.py teardown`. It leaves Terraform's state bucket, and GitHub's sign-in provider, which the deploying user may create but not delete; the next `build` adopts it again. To remove those too: an administrator deletes the provider, and the state bucket is removed from `bootstrap/` once it has been emptied.
+Removing it all: `python infra/aws/stack.py teardown`. It leaves Terraform's state bucket, and GitHub's sign-in provider, which the deploying user may create but not delete; the next `build` adopts it again. To remove those too: an administrator deletes the provider, and the state bucket is removed from `bootstrap/` once it has been emptied.
+
+## Other environments, and customers' bundles
+
+The same Terraform (`stack/`) and scripts build any environment, in any region and account:
+
+- **Settings:** each environment has a settings file, `environments/NAME.tfvars.json`. `dev.tfvars.json` is this one, and `example.tfvars.json` is a customer's starting point. Every setting is described in `stack/variables.tf`.
+- **Choosing one:** `stack.py` takes `--env NAME`, and the other scripts read `UCP_ENV=NAME`. Dev is the default.
+- **Kept apart:** each environment has its own state bucket, backend settings (`environments/NAME.backend.hcl`) and Terraform working data (`environments/.terraform/NAME`). Several can be run from one copy.
+- **Access:** `python infra/aws/stack.py --env NAME policies` writes the two access policies for it to `iam/out/`, rewritten from `iam/` for its name, region and tag.
+
+A customer's environment differs from dev in four ways:
+
+- **Image:** it runs the published image of its version, pinned by digest. Dev runs the newest image the pipeline stored in its own registry.
+- **No dev extras:** no GitHub sign-in, no hosted samples and no widget file. Organisations, PF connections and widgets are made in the console.
+- **Database:** `db.t4g.small` with a standby in a second zone.
+- **Protection:** `protect_data` is on, so `teardown` stops at the database and the sign-in pool.
+
+### Releasing a version for customers
+
+1. With the user's word, tag a commit on `develop` or `main`: `git tag v1.0.0`, then `git push origin v1.0.0`. The **Release** pipeline (`.github/workflows/release.yml`) builds and scans the image, then publishes `ghcr.io/baskaranchidambaram07-coder/conversationplugin:1.0.0`.
+2. **The first time only,** make the package public. GitHub makes a new package private. On GitHub, open the account's **Packages**, then `conversationplugin`, then **Package settings**. Under **Danger Zone**, change the visibility to **Public**. Every later version is public too.
+3. Run `python infra/aws/bundle.py 1.0.0`. It writes `dist/conversation-plugin-aws-1.0.0.zip` from the tag, with the image pinned by its digest. Git ignores `dist/`. The script refuses while the image can't be pulled without signing in.
+4. Share the zip. The `SETUP.md` at its root is the customer's guide.
+
+The image and the bundle contain only what this public repository does. The package lives in the GitHub account that owns the repository, and the bundle names it.
 
 ## Not in dev, by design
 

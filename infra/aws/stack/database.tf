@@ -1,9 +1,9 @@
-# PostgreSQL 17, encrypted, private, with seven days of point-in-time backups. One zone in dev; production in London
-# runs across two. While the environment sleeps, infra/aws/dev.py stops it (AWS starts a stopped database again
-# after seven days, so sleep stops it again).
+# PostgreSQL 17, encrypted, private, with seven days of point-in-time backups. One zone in dev; elsewhere a standby
+# in a second zone by default (database_multi_az). While the environment sleeps, infra/aws/stack.py stops it (AWS
+# starts a stopped database again after seven days, so sleep stops it again).
 
 resource "aws_db_subnet_group" "main" {
-  name       = "ucp-dev-database"
+  name       = "${var.name}-database"
   subnet_ids = aws_subnet.private[*].id
 }
 
@@ -15,10 +15,10 @@ ephemeral "random_password" "database" {
 }
 
 resource "aws_db_instance" "main" {
-  identifier                 = "ucp-dev-database"
+  identifier                 = "${var.name}-database"
   engine                     = "postgres"
   engine_version             = "17"
-  instance_class             = "db.t4g.micro"
+  instance_class             = var.database_class
   allocated_storage          = 20
   storage_type               = "gp3"
   storage_encrypted          = true
@@ -29,11 +29,11 @@ resource "aws_db_instance" "main" {
   db_subnet_group_name       = aws_db_subnet_group.main.name
   vpc_security_group_ids     = [aws_security_group.database.id]
   publicly_accessible        = false
-  multi_az                   = false
+  multi_az                   = var.database_multi_az
   backup_retention_period    = 7
   auto_minor_version_upgrade = true
   apply_immediately          = true
   copy_tags_to_snapshot      = true
-  deletion_protection        = false # dev holds test data only; the runbook rebuilds it from code
+  deletion_protection        = var.protect_data # dev holds test data only; the runbook rebuilds it from code
   skip_final_snapshot        = true
 }

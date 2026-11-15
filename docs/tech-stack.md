@@ -107,15 +107,15 @@ Region `us-east-1`, built with Terraform 1.17.2. Every resource name starts with
 | Cognito | The console's administrators: a user pool with no self sign-up and an authenticator app required, on Cognito's own sign-in pages |
 | RDS for PostgreSQL 17 | Conversation history and configuration; encrypted, seven days of point-in-time backups; stopped while asleep |
 | ECR | The gateway's images, scanned on push, commit tags fixed |
-| Secrets Manager | The database connection, session keys, host secrets, the PF profile and the key that seals what administrators set, under `ucp-dev/` |
+| Secrets Manager | The database connection, session keys, host secrets, the PF profile and the key that seals what administrators set, under `ucp-dev/` (an environment's name elsewhere) |
 | CloudWatch Logs and two alarms | The gateway's logs; alarms for server errors and no healthy gateway |
 | IAM roles under a permissions boundary | What the running service and the pipeline may do |
 | GitHub sign-in to AWS | Lets the pipeline deploy without stored access keys |
 | S3 | Terraform's state only (the gateway serves the loader and chat itself) |
 
-The environment runs on demand: `python infra/aws/dev.py wake` and `sleep`. My estimate is about US$0.11 an hour awake and about US$5 a month asleep, from memory of list prices and not checked against the pricing pages.
+The environment runs on demand: `python infra/aws/stack.py wake` and `sleep`. My estimate is about US$0.11 an hour awake and about US$5 a month asleep, from memory of list prices and not checked against the pricing pages.
 
-Not part of the base version: a web application firewall, our own web addresses with certificates, scheduled jobs. Production in London is a second run of the same Terraform with different parameters.
+Not part of the base version: a web application firewall, our own web addresses with certificates, scheduled jobs. Production in London is a second run of the same Terraform with different parameters. A customer's own AWS account is too: the bundle (`infra/aws/bundle.py`, guide `infra/aws/SETUP.md`) runs the image that a version tag publishes to GitHub's container registry.
 
 ## 6. What was put on the build machine
 
@@ -182,7 +182,9 @@ After `npm install` on this Windows machine, check `package-lock.json` before co
 | Install or update the test browsers | `PLAYWRIGHT_BROWSERS_PATH="$PWD/.tools/ms-playwright" npx playwright install` |
 | Terraform | `.tools/terraform/terraform.exe` |
 | Check AWS access | `bash infra/aws/iam/verify-access.sh` |
-| The dev environment: wake, sleep, status; build or tear down from code | `python infra/aws/dev.py wake` (`sleep`, `status`, `build`, `teardown`, `plan`) |
+| The dev environment: wake, sleep, status; build or tear down from code | `python infra/aws/stack.py wake` (`sleep`, `status`, `build`, `teardown`, `plan`) |
+| Another environment, such as a customer's (settings in `infra/aws/environments/NAME.tfvars.json`) | `python infra/aws/stack.py --env NAME up` (`policies`, `bootstrap`, `status`, `admin EMAIL`, `sleep`, `teardown`) |
+| The bundle a customer installs from, after the tag `vVERSION` has published the image (`infra/aws/README.md`) | `python infra/aws/bundle.py VERSION` |
 | Release to dev by hand, or roll back to an earlier commit's image | `python infra/aws/deploy.py --image <commit> --by <name>` |
 | The dev environment's address | `python infra/aws/deploy.py --url` |
 | The College's samples, as we host them | `python infra/aws/deploy.py --samples-url` |

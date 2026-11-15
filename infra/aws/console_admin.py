@@ -1,4 +1,4 @@
-"""Invites an administrator to the admin console in the dev environment (M9).
+"""Invites an administrator to the admin console (M9), in dev unless UCP_ENV names another environment.
 
     python infra/aws/console_admin.py EMAIL [--label NAME] [--pool-only]
 
@@ -14,16 +14,16 @@ import argparse
 import subprocess
 import sys
 
-from deploy import CLUSTER, FAMILY, SERVICE, aws, once
+from deploy import CLUSTER, FAMILY, NAME, SERVICE, aws, once
 
-POOL = "ucp-dev-admins"
+POOL = f"{NAME}-admins"
 
 
 def pool_id() -> str:
     pools = aws("cognito-idp", "list-user-pools", "--max-results", "60")["UserPools"]
     found = [pool["Id"] for pool in pools if pool["Name"] == POOL]
     if not found:
-        sys.exit(f"no user pool named {POOL}: build the environment from develop first (python infra/aws/dev.py wake)")
+        sys.exit(f"no user pool named {POOL}: build the environment first (python infra/aws/stack.py up)")
     return found[0]
 
 
@@ -56,11 +56,11 @@ def main(email: str, label: str | None, pool_only: bool) -> None:
     services = aws("ecs", "describe-services", "--cluster", CLUSTER, "--services", SERVICE)["services"]
     service = next((s for s in services if s["status"] == "ACTIVE"), None)
     if not service:
-        sys.exit("the environment is asleep: wake it first (python infra/aws/dev.py wake)")
+        sys.exit("the environment is asleep: wake it first (python infra/aws/stack.py wake)")
     definition = aws("ecs", "describe-task-definition", "--task-definition", FAMILY)["taskDefinition"]
     admin = next((c for c in definition["containerDefinitions"] if c["name"] == "admin"), None)
     if not admin:
-        sys.exit("the newest release has no admin container: wake the environment from develop first")
+        sys.exit("the newest release has no admin container: release a newer version first")
     settings = {item["name"]: item["value"] for item in admin["environment"]}
     user = subject(pool_id(), email)
     print(f"their user ID (sub): {user}")

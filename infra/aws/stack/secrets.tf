@@ -1,7 +1,8 @@
-# The gateway's settings that are secret, in Secrets Manager under ucp-dev/. The container service hands them to the
-# gateway as environment variables, so the gateway itself never calls AWS (backend/tests/test_portable.py).
-# Generated values are written once, write-only, and never stored in the state. The PF connection profiles come
-# from .env through infra/aws/secret_store.py, so they never pass through Terraform at all.
+# The gateway's settings that are secret, in Secrets Manager under the environment's name (ucp-dev/ in dev). The
+# container service hands them to the gateway as environment variables, so the gateway itself never calls AWS
+# (backend/tests/test_portable.py). Generated values are written once, write-only, and never stored in the state. The
+# platform's own PF connection profiles, if any, come from .env through infra/aws/secret_store.py, so they never pass
+# through Terraform at all; a customer's organisations connect PF in the admin console instead.
 
 ephemeral "random_password" "session_key" {
   length  = 43
@@ -20,7 +21,7 @@ ephemeral "random_password" "secrets_key" {
 }
 
 resource "aws_secretsmanager_secret" "database_url" {
-  name                    = "ucp-dev/database-url"
+  name                    = "${var.name}/database-url"
   recovery_window_in_days = 0
 }
 
@@ -31,7 +32,7 @@ resource "aws_secretsmanager_secret_version" "database_url" {
 }
 
 resource "aws_secretsmanager_secret" "session_keys" {
-  name                    = "ucp-dev/session-keys"
+  name                    = "${var.name}/session-keys"
   recovery_window_in_days = 0
 }
 
@@ -42,23 +43,23 @@ resource "aws_secretsmanager_secret_version" "session_keys" {
 }
 
 resource "aws_secretsmanager_secret" "host_secrets" {
-  name                    = "ucp-dev/host-secrets"
+  name                    = "${var.name}/host-secrets"
   recovery_window_in_days = 0
 }
 
 resource "aws_secretsmanager_secret_version" "host_secrets" {
   secret_id = aws_secretsmanager_secret.host_secrets.id
-  secret_string_wo = jsonencode({
-    smoke = "k1:${ephemeral.random_password.smoke_secret.result}"
-    demo  = "k1:${random_password.demo.result}" # the hosted samples' sign-in (samples.tf)
-  })
+  secret_string_wo = jsonencode(merge(
+    { smoke = "k1:${ephemeral.random_password.smoke_secret.result}" },
+    { for demo in random_password.demo : "demo" => "k1:${demo.result}" }, # the hosted samples' sign-in (samples.tf)
+  ))
   # A customer's secret is added later with infra/aws/secret_store.py, not here. Raising this number writes the whole
   # value again and drops those: add them again afterwards, and hand the customers their new secrets.
   secret_string_wo_version = 2
 }
 
 resource "aws_secretsmanager_secret" "secrets_key" {
-  name                    = "ucp-dev/secrets-key"
+  name                    = "${var.name}/secrets-key"
   recovery_window_in_days = 0
 }
 
@@ -69,8 +70,17 @@ resource "aws_secretsmanager_secret_version" "secrets_key" {
 }
 
 resource "aws_secretsmanager_secret" "agent_profiles" {
-  name                    = "ucp-dev/agent-profiles"
+  name                    = "${var.name}/agent-profiles"
   recovery_window_in_days = 0
+}
+
+# Starts empty where secret_store.py does not fill it, so the gateway can start: organisations connect PF in the
+# console.
+resource "aws_secretsmanager_secret_version" "agent_profiles" {
+  count                    = var.pf_profiles_from_script ? 0 : 1
+  secret_id                = aws_secretsmanager_secret.agent_profiles.id
+  secret_string_wo         = "{}"
+  secret_string_wo_version = 1
 }
 
 locals {

@@ -2,8 +2,8 @@ name: Deploy to dev
 
 # Each push to develop (and to the module branch being built, while it needs the dev environment) builds the gateway's image, scans it, stores
 # it, and releases it to the dev environment on AWS. While the environment sleeps the image is stored and goes out
-# on the next wake (infra/aws/dev.py). No AWS keys are stored: GitHub signs this run's identity, and AWS lets only
-# these branches of this repository take the deploy role (infra/aws/dev/github.tf).
+# on the next wake (infra/aws/stack.py). No AWS keys are stored: GitHub signs this run's identity, and AWS lets only
+# these branches of this repository take the deploy role (infra/aws/stack/github.tf, with the branches in infra/aws/environments/dev.tfvars.json).
 
 on:
   push:

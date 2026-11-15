@@ -1,7 +1,7 @@
 import { expect, test } from "@playwright/test";
 
 // M9: the admin console as hosted in the dev environment, on its own CloudFront address, signing administrators in
-// with the Cognito user pool (infra/aws/dev/console.tf). deployed.config.ts names the address; elsewhere this is skipped.
+// with the Cognito user pool (infra/aws/stack/console.tf). deployed.config.ts names the address; elsewhere this is skipped.
 const CONSOLE = process.env.UCP_CONSOLE_URL;
 
 test.skip(!CONSOLE, "needs the deployed environment: npm run e2e:deployed");
