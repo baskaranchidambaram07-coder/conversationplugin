@@ -3,7 +3,7 @@
 
 resource "aws_cloudwatch_metric_alarm" "errors" {
   count               = var.awake ? 1 : 0
-  alarm_name          = "ucp-dev-gateway-errors"
+  alarm_name          = "${var.name}-gateway-errors"
   alarm_description   = "The gateway answered with server errors"
   namespace           = "AWS/ApplicationELB"
   metric_name         = "HTTPCode_Target_5XX_Count"
@@ -18,7 +18,7 @@ resource "aws_cloudwatch_metric_alarm" "errors" {
 
 resource "aws_cloudwatch_metric_alarm" "unhealthy" {
   count               = var.awake ? 1 : 0
-  alarm_name          = "ucp-dev-gateway-unhealthy"
+  alarm_name          = "${var.name}-gateway-unhealthy"
   alarm_description   = "No healthy gateway behind the load balancer"
   namespace           = "AWS/ApplicationELB"
   metric_name         = "HealthyHostCount"
@@ -38,7 +38,7 @@ output "url" {
 
 output "samples_url" {
   description = "The College's samples, hosted for trying the assistant (docs/college-sandbox-guide.md)."
-  value       = "https://${aws_cloudfront_distribution.samples.domain_name}"
+  value       = one([for samples in aws_cloudfront_distribution.samples : "https://${samples.domain_name}"])
 }
 
 output "console_url" {
@@ -48,7 +48,7 @@ output "console_url" {
 
 output "deploy_role_arn" {
   description = "For the pipeline's AWS_DEPLOY_ROLE_ARN secret (it contains the account number: never commit it)."
-  value       = aws_iam_role.deploy.arn
+  value       = one(aws_iam_role.deploy[*].arn)
 }
 
 output "awake" {

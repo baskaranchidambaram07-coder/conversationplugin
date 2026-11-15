@@ -1,0 +1,46 @@
+name: Release
+
+# A version tag (v1.2.3) publishes the gateway's image for customers' environments: built, scanned (fixable high or
+# critical flaws stop it) and pushed to GitHub's container registry as ghcr.io/OWNER/REPOSITORY:1.2.3, where their
+# AWS pulls it. python infra/aws/bundle.py 1.2.3 then makes the bundle, which pins the image by its digest
+# (infra/aws/README.md, "Releasing a version for customers"). The image holds nothing that is not in this public
+# repository.
+
+on:
+  push:
+    tags: ["v*.*.*"]
+
+permissions:
+  contents: read
+  packages: write
+
+concurrency:
+  group: release-${{ github.ref_name }}
+  cancel-in-progress: false
+
+jobs:
+  image:
+    name: Build, scan and publish the image
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v7
+      - name: Build the image
+        run: >
+          docker build --file backend/Dockerfile
+          --label "org.opencontainers.image.source=https://github.com/$GITHUB_REPOSITORY"
+          --label "org.opencontainers.image.version=${GITHUB_REF_NAME#v}"
+          --tag release .
+      - name: Scan the image (fixable high and critical flaws stop the release)
+        run: >
+          docker run --rm --volume /var/run/docker.sock:/var/run/docker.sock aquasec/trivy:0.76.2
+          image --quiet --scanners vuln --severity HIGH,CRITICAL --ignore-unfixed --exit-code 1 release
+      - name: Publish the image
+        env:
+          TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          image="ghcr.io/${GITHUB_REPOSITORY,,}:${GITHUB_REF_NAME#v}"
+          echo "$TOKEN" | docker login ghcr.io --username "$GITHUB_ACTOR" --password-stdin
+          docker tag release "$image"
+          docker push --quiet "$image"
+          echo "Published $(docker inspect --format '{{index .RepoDigests 0}}' "$image")" >> "$GITHUB_STEP_SUMMARY"

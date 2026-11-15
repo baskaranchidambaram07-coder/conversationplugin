@@ -1,22 +1,24 @@
-# How the GitHub pipeline deploys without stored keys: GitHub signs each run's identity, and only runs on the named
+# Dev only (github_subject_prefix). How the GitHub pipeline deploys without stored keys: GitHub signs each run's identity, and only runs on the named
 # branches of this repository may take the deploy role. The role can push images, register releases, run one-off
 # tasks (migrations, publishing the widget file, the PF check), roll the service, and read the smoke widget's
 # secret. Nothing else, and never beyond the project's permissions boundary.
 
 resource "aws_iam_openid_connect_provider" "github" {
+  count          = var.github_subject_prefix == null ? 0 : 1
   url            = "https://token.actions.githubusercontent.com"
   client_id_list = ["sts.amazonaws.com"]
 }
 
 resource "aws_iam_role" "deploy" {
-  name                 = "ucp-dev-github-deploy"
+  count                = var.github_subject_prefix == null ? 0 : 1
+  name                 = "${var.name}-github-deploy"
   permissions_boundary = local.boundary
   max_session_duration = 3600
   assume_role_policy = jsonencode({
     Version = "2012-10-17"
     Statement = [{
       Effect    = "Allow"
-      Principal = { Federated = aws_iam_openid_connect_provider.github.arn }
+      Principal = { Federated = aws_iam_openid_connect_provider.github[0].arn }
       Action    = "sts:AssumeRoleWithWebIdentity"
       Condition = {
         StringEquals = {
@@ -31,8 +33,9 @@ resource "aws_iam_role" "deploy" {
 }
 
 resource "aws_iam_role_policy" "deploy" {
-  name = "deploy-the-gateway"
-  role = aws_iam_role.deploy.id
+  count = var.github_subject_prefix == null ? 0 : 1
+  name  = "deploy-the-gateway"
+  role  = aws_iam_role.deploy[0].id
   policy = jsonencode({
     Version = "2012-10-17"
     Statement = [
@@ -49,7 +52,7 @@ resource "aws_iam_role_policy" "deploy" {
       {
         Effect   = "Allow"
         Action   = ["ecs:DescribeServices", "ecs:UpdateService"]
-        Resource = "arn:aws:ecs:${var.region}:*:service/${aws_ecs_cluster.main.name}/ucp-dev-gateway"
+        Resource = "arn:aws:ecs:${var.region}:*:service/${aws_ecs_cluster.main.name}/${var.name}-gateway"
       },
       {
         Effect   = "Allow"

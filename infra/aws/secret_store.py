@@ -1,5 +1,5 @@
-"""Puts the dev environment's secrets that Terraform does not generate into Secrets Manager, never printing a value
-it was given and never writing one to disk.
+"""Puts an environment's secrets that Terraform does not generate into Secrets Manager (dev unless UCP_ENV names
+another), never printing a value it was given and never writing one to disk.
 
     cd backend && uv run --env-file ../.env python ../infra/aws/secret_store.py agent-profiles
         the PF staging connection profile, from the PF_* settings in .env, as the profile "pf-staging"
@@ -21,8 +21,9 @@ import sys
 from datetime import UTC, datetime
 from pathlib import Path
 
-REGION = "us-east-1"
 sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "backend"))
+
+from deploy import NAME, REGION  # noqa: E402
 
 
 def put(name: str, value: str) -> None:
@@ -68,26 +69,26 @@ def current(name: str) -> str:
 def agent_profiles() -> None:
     from devstack import staging_profile  # the same mapping from .env that the local stack and staging tests use
 
-    put("ucp-dev/agent-profiles", json.dumps({"pf-staging": staging_profile()}))
-    print("ucp-dev/agent-profiles: set (pf-staging)")
+    put(f"{NAME}/agent-profiles", json.dumps({"pf-staging": staging_profile()}))
+    print(f"{NAME}/agent-profiles: set (pf-staging)")
 
 
 def session_keys() -> None:
-    previous = current("ucp-dev/session-keys").split(",")[0]
-    put("ucp-dev/session-keys", f"k{datetime.now(UTC):%Y%m%d%H%M}:{secrets.token_urlsafe(32)},{previous}")
-    print("ucp-dev/session-keys: a new signing key, with the previous one kept for sessions already issued")
+    previous = current(f"{NAME}/session-keys").split(",")[0]
+    put(f"{NAME}/session-keys", f"k{datetime.now(UTC):%Y%m%d%H%M}:{secrets.token_urlsafe(32)},{previous}")
+    print(f"{NAME}/session-keys: a new signing key, with the previous one kept for sessions already issued")
 
 
 def host_secret(name: str, rotate: bool) -> None:
-    keys = json.loads(current("ucp-dev/host-secrets"))
+    keys = json.loads(current(f"{NAME}/host-secrets"))
     fresh = f"k{datetime.now(UTC):%Y%m%d%H%M}:{secrets.token_urlsafe(32)}"
     keys[name] = f"{fresh},{keys[name].split(',')[0]}" if rotate and name in keys else fresh
-    put("ucp-dev/host-secrets", json.dumps(keys))
+    put(f"{NAME}/host-secrets", json.dumps(keys))
     print(f"{name}: new secret, to hand to the customer once and not to keep anywhere else:\n{fresh}")
 
 
 if __name__ == "__main__":
-    commands = argparse.ArgumentParser(description="The dev environment's secrets.")
+    commands = argparse.ArgumentParser(description="An environment's secrets.")
     each = commands.add_subparsers(dest="command", required=True)
     each.add_parser("agent-profiles")
     each.add_parser("session-keys")

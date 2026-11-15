@@ -1,13 +1,15 @@
-"""Releases the gateway in the dev environment (M14-T5). The pipeline runs it after pushing an image; dev.py wake
-runs it to bring the newest release out.
+"""Releases the gateway in one environment (M14-T5): dev unless UCP_ENV names another
+(infra/aws/environments/NAME.tfvars.json). The pipeline runs it after pushing an image; stack.py up and wake run it
+to bring the newest release out.
 
     python infra/aws/deploy.py [--image TAG] [--by NAME]
 
-With --image, a new release (task definition revision) runs that image; without, the newest release is used. Then,
-with the release's own image: the database migrations, publishing the widget file (backend/deploy/widgets.dev.json)
-with --by recorded in the audit log, rolling the service (the container service rolls back on its own if the
-release never becomes healthy), and the PF connection check. While the environment sleeps it only says so: the
-image waits in the registry for the next wake. Uses the AWS command line; prints no secret or account number.
+With --image, a new release (task definition revision) runs that image from the environment's own registry;
+without, the newest release is used. Then, with the release's own image: the database migrations, publishing the
+widget file if the environment has one (dev: backend/deploy/widgets.dev.json) with --by recorded in the audit log,
+rolling the service (the container service rolls back on its own if the release never becomes healthy), and the
+check of the platform's PF connections if it has its own. While the environment sleeps it only says so: the image
+waits in the registry for the next wake. Uses the AWS command line; prints no secret or account number.
 """
 
 import argparse
@@ -15,13 +17,18 @@ import json
 import os
 import subprocess
 import sys
+from pathlib import Path
 
-REGION = "us-east-1"
-CLUSTER = "ucp-dev-cluster"
-SERVICE = "ucp-dev-gateway"
-FAMILY = "ucp-dev-gateway"
-REPOSITORY = "ucp-dev-gateway"
-LOGS = "/ucp-dev/gateway"
+ENVIRONMENT = os.environ.get("UCP_ENV", "dev")
+SETTINGS_FILE = Path(__file__).resolve().parent / "environments" / f"{ENVIRONMENT}.tfvars.json"
+if not SETTINGS_FILE.exists():
+    sys.exit(f"no settings for the environment {ENVIRONMENT}: {SETTINGS_FILE} (infra/aws/SETUP.md, step 1)")
+SETTINGS = json.loads(SETTINGS_FILE.read_text())
+NAME = SETTINGS["name"]
+REGION = SETTINGS.get("region", "us-east-1")  # the default in stack/variables.tf
+CLUSTER = f"{NAME}-cluster"
+SERVICE = FAMILY = REPOSITORY = f"{NAME}-gateway"
+LOGS = f"/{NAME}/gateway"
 KEEP = (
     "family",
     "taskRoleArn",
@@ -119,17 +126,18 @@ def main(image_tag: str | None, by: str) -> None:
     if image_tag and not service:
         release(image_tag)  # recorded, so the next wake brings it out
     if not service:
-        print("the environment is asleep: the release goes out on the next wake (python infra/aws/dev.py wake)")
+        print("the environment is asleep: the release goes out on the next wake (python infra/aws/stack.py wake)")
         return
     definition = release(image_tag)
     network = service["networkConfiguration"]["awsvpcConfiguration"]
     once(definition, network, ["python", "-m", "ucp.migrate"], "migrating the database")
-    once(
-        definition,
-        network,
-        ["python", "-m", "ucp.widgets", "seed", "deploy/widgets.dev.json", "--by", by],
-        "publishing the widget file",
-    )
+    if SETTINGS.get("widget_file"):
+        once(
+            definition,
+            network,
+            ["python", "-m", "ucp.widgets", "seed", SETTINGS["widget_file"], "--by", by],
+            "publishing the widget file",
+        )
     print("rolling the service ...", flush=True)
     # Forced, so the same release starts afresh too: the gateway reads its secrets only when it starts.
     aws(
@@ -147,7 +155,8 @@ def main(image_tag: str | None, by: str) -> None:
     live = aws("ecs", "describe-services", "--cluster", CLUSTER, "--services", SERVICE)["services"][0]
     if live["taskDefinition"] != definition:
         sys.exit("the release never became healthy, and the service went back to the one before")
-    once(definition, network, ["python", "-m", "ucp.pf", "check"], "checking the connection to PF")
+    if SETTINGS.get("pf_profiles_from_script"):  # elsewhere each organisation tests its own in the console
+        once(definition, network, ["python", "-m", "ucp.pf", "check"], "checking the connection to PF")
     print(f"released revision {definition.rsplit(':', 1)[1]}")
 
 

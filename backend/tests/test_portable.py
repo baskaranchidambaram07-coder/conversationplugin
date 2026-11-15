@@ -25,7 +25,7 @@ def test_no_cloud_library_is_a_dependency():
 
 
 def test_the_dev_widget_file_publishes_once_the_environment_fills_it_in():
-    # infra/aws/dev: the task's own settings fill in ${UCP_...}, and samples.tf finds the samples' widgets by secret.
+    # infra/aws/stack: the task's own settings fill in ${UCP_...}, and samples.tf finds the samples' widgets by secret.
     widgets = json.loads((BACKEND / "deploy/widgets.dev.json").read_text(encoding="utf-8"))["widgets"]
     filled_in = filled(widgets, {"UCP_SAMPLES_ORIGIN": "https://d111111abcdef8.cloudfront.net"})
 

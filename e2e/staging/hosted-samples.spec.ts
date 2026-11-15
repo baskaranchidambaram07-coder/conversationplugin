@@ -1,7 +1,7 @@
 import { expect, type FrameLocator, type Page, test } from "@playwright/test";
 
 // M15: our hosted copies of the College's samples, on their own CloudFront site, against the deployed gateway
-// answering from PF staging (infra/aws/dev/samples.tf). deployed.config.ts names the site; elsewhere this is skipped.
+// answering from PF staging (infra/aws/stack/samples.tf). deployed.config.ts names the site; elsewhere this is skipped.
 const SAMPLES = process.env.UCP_SAMPLES_URL;
 
 test.skip(!SAMPLES, "needs the deployed environment: npm run e2e:deployed");

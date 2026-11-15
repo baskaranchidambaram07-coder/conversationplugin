@@ -7,7 +7,7 @@ The test passes when both runs finish inside the hour (the budget is in section 
 
 ## Before the run (the operator, not timed)
 
-1. Wake the dev environment: `python infra/aws/dev.py wake`.
+1. Wake the dev environment: `python infra/aws/stack.py wake`.
 2. Ask the engineer where their pages will be served from, for example `http://localhost:8080` on their own machine
    or a test site of theirs on `https://`.
 3. Make their widget. Until the console exists (M9), this takes the place of "create the widget in the console", so

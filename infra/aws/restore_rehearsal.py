@@ -59,7 +59,7 @@ def main() -> None:
     services = aws("ecs", "describe-services", "--cluster", CLUSTER, "--services", SERVICE)["services"]
     service = next((s for s in services if s["status"] == "ACTIVE"), None)
     if not service:
-        sys.exit("wake the environment first: python infra/aws/dev.py wake")
+        sys.exit("wake the environment first: python infra/aws/stack.py wake")
     network, definition = service["networkConfiguration"]["awsvpcConfiguration"], release(None)
     live = aws("rds", "describe-db-instances", "--db-instance-identifier", LIVE)["DBInstances"][0]
     # The newest moment AWS can restore to (its logs are shipped every few minutes), less a margin.

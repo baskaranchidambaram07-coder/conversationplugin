@@ -1075,6 +1075,24 @@ State on 13 November 2026 (pull requests 56 to 62 into `module/m14-cloud-deploym
   - the sandbox's widgets go in `backend/deploy/widgets.dev.json`.
 - For M12: the leak search runs against the deployed stack (`npm run e2e:deployed`); running it on every build comes with M12.
 
+State on 15 November 2026: **a bundle for a customer's own AWS account** (T4; `feature/m14-customer-bundle`). By your decisions: customers run an image we publish, public, to GitHub's container registry; the live proof in a second environment was skipped.
+
+- **One Terraform for every environment:**
+  - `infra/aws/dev` is now `infra/aws/stack`, and `dev.py` is now `stack.py`;
+  - names, region and tags come from a settings file per environment (`infra/aws/environments/NAME.tfvars.json`), chosen with `--env`;
+  - GitHub's sign-in, the College's samples and the widget file are dev-only settings;
+  - customers' defaults: `db.t4g.small` with a standby in a second zone, and the database and the sign-in pool protected from deletion;
+  - organisations connect PF in the console, so the platform's own profile starts empty.
+- **Dev unchanged:** its plan shows no changes beyond Terraform's own record of twelve resources (now counted) and two sample pages whose comments name the new folder.
+- **Access for a new environment:** `stack.py --env NAME policies` rewrites the two policies for its name, region and tag, dropping the GitHub and our own user's statements (4,879 of 6,144 characters for the example).
+- **Release:** a tag `vX.Y.Z` runs `.github/workflows/release.yml`, which builds, scans and publishes `ghcr.io/baskaranchidambaram07-coder/conversationplugin:X.Y.Z`. `infra/aws/bundle.py X.Y.Z` then writes `dist/conversation-plugin-aws-X.Y.Z.zip`: the Terraform, the four scripts, the policies' sources and the guide (`infra/aws/SETUP.md`), with the image pinned by its digest.
+- **Checked without building anything:** a customer-shaped plan (57 resources, none of dev's extras); Terraform validation and the misconfiguration scan for dev's shape and the example's; the bundle unpacked and validated on its own.
+- **Not verified:**
+  - a live install from the bundle;
+  - the release pipeline, which first runs at the first tag;
+  - the guide's cost figures, which are from list prices as remembered.
+- **Not included:** customers' own domain names, a web application firewall, private subnets with NAT, and image signing.
+
 ---
 
 ### M15 — Developer experience and onboarding
@@ -1102,7 +1120,7 @@ State on 13 November 2026 (pull requests 66 to 70 into `module/m15-developer-exp
 - Built:
   - **T3, partly:** the College's samples in `examples/college`, a public page and a portal page with `portal.js`. They have no inline scripts, and their content policy names the assistant only in `script-src`, `frame-src` and `connect-src`. The token-signing code in six languages came with M5.
   - **T1 and T2, partly:** `docs/college-sandbox-guide.md`. It covers what we send and what we need, the public page, the portal page, the content policy, and what each of the loader's debug lines means.
-  - **The hosted copies** (`infra/aws/dev/samples.tf`):
+  - **The hosted copies** (`infra/aws/stack/samples.tf`):
     - a private bucket behind a CloudFront address of its own, with the pages filled in by Terraform. `python infra/aws/deploy.py --samples-url` prints the address. It changes whenever the site is rebuilt: a `dev.py sleep` run from a branch without `samples.tf` removed the site on 13 November, and the next wake rebuilt it at a new address;
     - the portal signs in under any name through a CloudFront function (`functions/demo-token.js`), which signs for the demo widget only;
     - the College's widget (`both`) and the demo widget (`signed_in`) are in `widgets.dev.json`, allowed on the samples' site through `UCP_SAMPLES_ORIGIN`. A widget file may now name `${UCP_…}` settings.
