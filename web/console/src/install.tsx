@@ -70,8 +70,8 @@ UCP("mount", {
 `;
 }
 
-export function Install(props: { widgetId: string; gateway: string | null; document: WidgetDocument }) {
-  const { widgetId, gateway, document } = props;
+export function Install(props: { widgetId: string; gateway: string | null; document: WidgetDocument; onContinue: () => void }) {
+  const { widgetId, gateway, document, onContinue } = props;
   const [page, setPage] = useState("");
   const [checks, setChecks] = useState<Check[] | null>(null);
   const [checking, setChecking] = useState(false);
@@ -175,6 +175,11 @@ export function Install(props: { widgetId: string; gateway: string | null; docum
           </ul>
         )}
       </section>
+      <div className="actions">
+        <button type="button" className="primary" onClick={onContinue}>
+          {t.continueTo(t.station.live)}
+        </button>
+      </div>
     </div>
   );
 }
