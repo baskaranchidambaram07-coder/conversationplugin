@@ -450,7 +450,7 @@ test("a connection's keys and a shared secret are never shown again once saved",
   await expect(page.locator("body")).not.toContainText(made.split(":")[1]);
 });
 
-test("a saved connection's wrong agent version is put right alone; its key and password are kept", async ({ page }, info) => {
+test("a saved connection's settings are shown but not its secrets; a wrong agent version is put right alone", async ({ page }, info) => {
   const api = await operatorApi(page);
   const { tenant_id: tenant } = await api("POST", "/tenants", { name: `Fix ${info.project.name} ${Date.now().toString(36)}` });
   await api("PUT", `/tenants/${tenant}/agent-profiles/fake-pf`, { ...FAKE_PROFILE, agent_version_id: "the-agent-not-its-version" });
@@ -460,9 +460,12 @@ test("a saved connection's wrong agent version is put right alone; its key and p
   await page.getByRole("button", { name: "Edit fake-pf" }).click();
   await expect(page.getByRole("heading", { name: "Change “fake-pf”" })).toBeVisible();
   await expect(page.getByLabel("Name of the connection")).toHaveCount(0);
-  await expect(page.getByLabel("API key")).toHaveValue(""); // never shown back
+  await expect(page.getByLabel("Agent version ID")).toHaveValue("the-agent-not-its-version"); // the settings, shown
+  await expect(page.getByLabel("Workspace ID")).toHaveValue("fake-workspace");
+  await expect(page.getByLabel("API key")).toHaveValue(""); // the secrets, never
+  await expect(page.getByLabel("Service user password")).toHaveValue("");
   await page.getByRole("button", { name: "Save connection" }).click();
-  await expect(page.getByRole("alert")).toContainText("Fill in at least one field to change.");
+  await expect(page.getByRole("alert")).toContainText("Change at least one field first.");
 
   await page.getByLabel("Agent version ID").fill("fake-agent-version");
   await page.getByRole("button", { name: "Save connection" }).click();

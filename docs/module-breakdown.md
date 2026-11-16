@@ -49,7 +49,7 @@ The customer never handles PF tokens, never builds a chat UI and never runs our 
 | R10 | Anonymous and logged-in users, with history | Short-lived session tokens issued by the gateway. Logged-in identity is proven by a token signed by the host's backend or its identity provider. History is scoped to tenant and user on every query. |
 | R11 | Attachments and voice | Optional modules switched on by configuration. Planned for the second release. |
 | R12 | Detailed testing per module | Every module below lists its tests by category: UI, backend, middleware, integration, end-to-end, deployment, and other (security, performance, accessibility, compatibility). |
-| R13 | Nothing about the PF agent or connection is visible in the browser, including the network tab and the console | Every payload sent to the browser is built from an explicit allow-list. PF addresses, the workspace and agent IDs, PF conversation IDs, tokens and PF error text stay on the server. An automated leak test checks this on every build. See D15 and M12-T11. |
+| R13 | Nothing about the PF agent or connection is visible in the browser, including the network tab and the console | Every payload sent to the browser is built from an explicit allow-list. PF addresses, the workspace and agent IDs, PF conversation IDs, tokens and PF error text stay on the server. An automated leak test checks this on every build. See D15 and M12-T11. The one exception, chosen on 16 November 2026, is the admin console: an organisation's administrators who may change a connection see its address, tenant, workspace ID, agent version ID and user name, so they can correct them. Its API key and password are never shown to anyone. |
 
 ## 3. Findings from the source material
 

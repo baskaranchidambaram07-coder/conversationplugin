@@ -175,6 +175,8 @@ def operations(tag: str) -> dict:
         "list B's secrets": ("GET", f"/admin/v1/tenants/{b}/secrets", None),
         "set A's profile": ("PUT", f"/admin/v1/tenants/{a}/agent-profiles/pf-new", json.loads(OWN_PROFILE)),
         "set B's profile": ("PUT", f"/admin/v1/tenants/{b}/agent-profiles/pf-new", json.loads(OWN_PROFILE)),
+        "read A's profile": ("GET", f"/admin/v1/tenants/{a}/agent-profiles/pf-new", None),
+        "read B's profile": ("GET", f"/admin/v1/tenants/{b}/agent-profiles/pf-new", None),
         "change A's profile": ("PATCH", f"/admin/v1/tenants/{a}/agent-profiles/pf-new", {"agent_version_id": "v2"}),
         "change B's profile": ("PATCH", f"/admin/v1/tenants/{b}/agent-profiles/pf-new", {"agent_version_id": "v2"}),
         "make A a shared secret": ("POST", f"/admin/v1/tenants/{a}/host-secrets/portal", None),
@@ -214,6 +216,8 @@ EXPECTED = {
     "list B's secrets":              (200,     404,     404),
     "set A's profile":               (200,     200,     403),
     "set B's profile":               (200,     404,     404),
+    "read A's profile":              (200,     200,     403),
+    "read B's profile":              (200,     404,     404),
     "change A's profile":            (200,     200,     403),
     "change B's profile":            (200,     404,     404),
     "make A a shared secret":        (201,     201,     403),
@@ -512,6 +516,9 @@ def test_a_profiles_fields_change_alone_and_the_rest_are_kept_sealed(world, data
     assert fixed.json() == {"name": "pf-fixed"}
     assert run(database_url, lambda records: opened(records, world.a, "pf-fixed")) == good
     assert world.post(f"{path}/test", headers=signed).json() == {"connected": True}
+    shown = world.get(path, headers=signed)
+    assert shown.json() == {field: value for field, value in good.items() if field not in ("api_key", "password")}
+    assert "fake-api-key" not in shown.text and "fake-password" not in shown.text
     never = f"/admin/v1/tenants/{world.a}/agent-profiles/never-saved"
     assert world.patch(never, json={"tenant": "x"}, headers=signed).status_code == 404
     assert world.patch(path, json={"apikey": "typo"}, headers=signed).status_code == 400
