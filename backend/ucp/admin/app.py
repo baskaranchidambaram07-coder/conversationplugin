@@ -450,6 +450,17 @@ async def set_profile(tenant_id: Id, name: Id, body: PfProfile, admin: Signed, k
     return {"name": name}
 
 
+@router.get("/tenants/{tenant_id}/agent-profiles/{name}", summary="A PF connection profile, without its secrets")
+async def read_profile(tenant_id: Id, name: Id, admin: Signed, request: Request) -> dict:
+    """What an administrator who may change the profile needs to see to correct it. R13 keeps these settings from
+    visitors' browsers; the API key and the password are never read back to anyone."""
+    admin.reach(tenant_id, write=True)
+    profile = await Sealed(request.app.state.store, _vault(request)).get(tenant_id, "profile", name)
+    if not profile:
+        raise Problem("not_found")
+    return {field: value for field, value in json.loads(profile).items() if field not in ("api_key", "password")}
+
+
 class ProfileChange(BaseModel):
     """Some fields of a saved PF connection profile; the ones left out keep their saved values."""
 

@@ -703,6 +703,61 @@
           }
         }
       },
+      "get": {
+        "summary": "A PF connection profile, without its secrets",
+        "description": "What an administrator who may change the profile needs to see to correct it. R13 keeps these settings from\nvisitors' browsers; the API key and the password are never read back to anyone.",
+        "operationId": "read_profile_admin_v1_tenants__tenant_id__agent_profiles__name__get",
+        "parameters": [
+          {
+            "name": "tenant_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^[A-Za-z0-9_-]{1,64}$",
+              "description": "Our opaque ID. Never a PF ID.",
+              "title": "Tenant Id"
+            },
+            "description": "Our opaque ID. Never a PF ID."
+          },
+          {
+            "name": "name",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^[A-Za-z0-9_-]{1,64}$",
+              "description": "Our opaque ID. Never a PF ID.",
+              "title": "Name"
+            },
+            "description": "Our opaque ID. Never a PF ID."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true,
+                  "title": "Response Read Profile Admin V1 Tenants  Tenant Id  Agent Profiles  Name  Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
       "patch": {
         "summary": "Change some fields of a PF connection profile",
         "description": "So a wrong agent version ID is put right without typing the key and the password again, which are never\nshown back.",
