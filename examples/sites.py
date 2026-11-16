@@ -1,12 +1,11 @@
 """The language samples: one small site per language (examples/html, php, java, dotnet, ruby, node, go, c, cpp). S3
 cannot run code, so each language writes its page as plain HTML when the site is built, as a static site generator
-does, and the pages go to the hosted samples' bucket under sites/. The hub (html) carries the assistant; the other
-eight start without it, for trying the onboarding: put the script tag from the admin console where a language's page
-says, then publish.
+does, and the pages go to the hosted samples' bucket under sites/. No page carries the assistant, so each can be
+onboarded by hand: put the script tag from the admin console where the page's comment says, then publish.
 
 python examples/sites.py               build with the languages this machine has, and check every page
 python examples/sites.py --all         all nine, or fail (the pipeline)
-python examples/sites.py --publish     all nine for the dev stack, uploaded; prints the address to open
+python examples/sites.py --publish     all nine, uploaded to the dev stack's samples; prints the address to open
 
 Toolchains come from .tools on the build machine, else from the PATH. Publishing uses the AWS command line and puts
 the pages beside the College's samples (infra/aws/stack/samples.tf), so they share that site's address; a rebuilt
@@ -14,7 +13,6 @@ stack has a new address and an empty bucket, so publish again after one.
 """
 
 import argparse
-import json
 import os
 import re
 import shutil
@@ -26,7 +24,6 @@ from pathlib import Path
 HERE = Path(__file__).resolve().parent
 ROOT = HERE.parent
 TOOLS = ROOT / ".tools"
-SCRIPT = '<script async src="{gateway}/loader.js" data-widget-id="{widget}"></script>'
 # Each language's commands, run in examples/; the last one prints the page. {work} is a folder for compiled programs.
 LANGUAGES = {
     "php": [["php", "php/index.php"]],
@@ -54,13 +51,12 @@ def environment() -> dict[str, str]:
     return env
 
 
-def build(work: Path, gateway: str, widget: str, every: bool) -> Path:
+def build(work: Path, every: bool) -> Path:
     """Writes the site into work/site and checks every page; returns the folder."""
     site = work / "site"
     site.mkdir()
-    shutil.copy(HERE / "html/site.css", site)
-    hub = (HERE / "html/index.html").read_text(encoding="utf-8")
-    (site / "index.html").write_text(hub.replace("{{GATEWAY}}", gateway).replace("{{WIDGET}}", widget), "utf-8")
+    for name in ("site.css", "index.html"):
+        shutil.copy(HERE / "html" / name, site)
     env = environment()
     missing = []
     for language, commands in LANGUAGES.items():
@@ -79,14 +75,12 @@ def build(work: Path, gateway: str, widget: str, every: bool) -> Path:
         print("no toolchain here for " + ", ".join(missing))
         if every:
             sys.exit(1)
-    if SCRIPT.format(gateway=gateway, widget=widget) not in (site / "index.html").read_text(encoding="utf-8"):
-        sys.exit("the hub page lacks the assistant's script tag")
     for page in site.glob("*.html"):
         text = page.read_text(encoding="utf-8")
         if not text.lstrip().startswith("<!doctype html>") or 'href="site.css"' not in text:
             sys.exit(f"{page.name} is not a whole page with the stylesheet")
     if every:
-        linked = set(re.findall(r'href="([a-z]+\.html)"', hub))
+        linked = set(re.findall(r'href="([a-z]+\.html)"', (site / "index.html").read_text(encoding="utf-8")))
         if linked != {f"{language}.html" for language in LANGUAGES}:
             sys.exit("the hub page must link to every language's page, and only to those")
     return site
@@ -95,20 +89,14 @@ def build(work: Path, gateway: str, widget: str, every: bool) -> Path:
 def main() -> None:
     arguments = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     arguments.add_argument("--all", action="store_true", help="fail unless every language builds")
-    arguments.add_argument("--publish", action="store_true", help="build all nine for the dev stack and upload them")
+    arguments.add_argument("--publish", action="store_true", help="build all nine and upload them to the dev stack")
     args = arguments.parse_args()
-    gateway, widget = "https://assistant.example", "w_sample"
-    if args.publish:
-        sys.path.insert(0, str(ROOT / "infra/aws"))
-        import deploy  # noqa: PLC0415 - the environment's names and addresses, only when publishing
-
-        gateway = deploy.public_url()
-        widgets = json.loads((ROOT / "backend/deploy/widgets.dev.json").read_text(encoding="utf-8"))["widgets"]
-        # The widget the College's public sample uses (samples.tf): anonymous chat, allowed on the samples' address.
-        widget = next(id_ for id_, w in widgets.items() if w.get("identity", {}).get("secret") == "college")
     with tempfile.TemporaryDirectory() as work:
-        site = build(Path(work), gateway, widget, args.all or args.publish)
+        site = build(Path(work), args.all or args.publish)
         if args.publish:
+            sys.path.insert(0, str(ROOT / "infra/aws"))
+            import deploy  # noqa: PLC0415 - the environment's names and addresses, only when publishing
+
             buckets = deploy.aws("s3api", "list-buckets", "--prefix", f"{deploy.NAME}-samples-").get("Buckets", [])
             if len(buckets) != 1:
                 sys.exit("no hosted samples bucket: the stack must be up with its samples (infra/aws/stack.py)")

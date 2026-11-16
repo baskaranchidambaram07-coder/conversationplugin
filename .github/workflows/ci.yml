@@ -178,7 +178,7 @@ jobs:
       # Every snippet signs tokens with the shared test settings; each is checked exactly as the gateway checks it.
       - run: uv run python ../examples/token-signing/check.py --all
         working-directory: backend
-      # The language sample sites: each of the nine writes a whole page, and the hub carries the assistant's script tag.
+      # The language sample sites: each of the nine writes a whole page, with no assistant until one is added by hand.
       - run: python examples/sites.py --all
 
   image:
