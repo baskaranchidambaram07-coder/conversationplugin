@@ -29,7 +29,7 @@ from urllib.parse import urlsplit
 import httpx2
 from fastapi import APIRouter, Depends, FastAPI, Query, Request
 from fastapi.responses import FileResponse, JSONResponse, Response
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, SecretStr
 from sqlalchemy.ext.asyncio import create_async_engine
 
 from ucp.admin import install
@@ -447,6 +447,42 @@ async def set_profile(tenant_id: Id, name: Id, body: PfProfile, admin: Signed, k
         "password": body.password.get_secret_value(),
     }
     await kept.put_secret(_vault(request), tenant_id, "profile", name, json.dumps(plain), admin.subject, None)
+    return {"name": name}
+
+
+class ProfileChange(BaseModel):
+    """Some fields of a saved PF connection profile; the ones left out keep their saved values."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    base_url: str | None = None
+    tenant: str | None = None
+    workspace_id: str | None = None
+    agent_version_id: str | None = None
+    api_key: SecretStr | None = None
+    username: str | None = None
+    password: SecretStr | None = None
+
+
+@router.patch("/tenants/{tenant_id}/agent-profiles/{name}", summary="Change some fields of a PF connection profile")
+async def change_profile(
+    tenant_id: Id, name: Id, body: ProfileChange, admin: Signed, kept: Kept, request: Request
+) -> dict:
+    """So a wrong agent version ID is put right without typing the key and the password again, which are never
+    shown back."""
+    admin.reach(tenant_id, write=True)
+    given = {
+        field: value.get_secret_value() if isinstance(value, SecretStr) else value
+        for field, value in body
+        if value is not None
+    }
+
+    def changed(current: str | None) -> str:
+        if current is None:
+            raise Problem("not_found")
+        return json.dumps({**json.loads(current), **given})
+
+    await kept.put_secret(_vault(request), tenant_id, "profile", name, changed, admin.subject, None)
     return {"name": name}
 
 
