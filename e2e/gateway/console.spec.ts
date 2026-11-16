@@ -184,7 +184,7 @@ test("an existing widget's settings are edited and saved; a viewer sees them but
 });
 
 // Look (M9-T3): the form beside the chat itself, drawn with the draft's settings as they are typed.
-test("the look is edited beside the chat itself, which shows each change at once and sends nothing", async ({ page }, info) => {
+test("the look is edited beside the chat itself, which shows each change at once and sends nothing; saved, it goes on to Install", async ({ page }, info) => {
   const api = await operatorApi(page);
   const name = `Look ${info.project.name} ${Date.now().toString(36)}`;
   const { tenant_id: tenant } = await api("POST", "/tenants", { name });
@@ -205,6 +205,7 @@ test("the look is edited beside the chat itself, which shows each change at once
   await expect(chat.getByRole("heading", { name: "Ask Riverside" })).toBeVisible();
   await expect(chat.getByRole("textbox", { name: "Your question" })).toBeDisabled();
   await expect(chat.getByRole("button", { name: "When is lunch?" })).toBeDisabled();
+  await expect(page.getByRole("button", { name: "Continue to Install" })).toBeVisible(); // nothing to save yet
 
   await page.getByLabel("Title", { exact: true }).fill("Ask the Riverside desk");
   await expect(chat.getByRole("heading", { name: "Ask the Riverside desk" })).toBeVisible();
@@ -223,10 +224,13 @@ test("the look is edited beside the chat itself, which shows each change at once
   await expect(page.getByText("Saved. Visitors see it once you publish.")).toBeVisible();
   await expect(page.getByRole("link", { name: /Ask the Riverside desk/ })).toBeVisible();
   expect(await serious(page)).toEqual([]);
+  await page.getByRole("button", { name: "Continue to Install" }).click();
+  await expect(page).toHaveURL(`${CONSOLE}/widgets/${widget}/install`);
+  await expect(page.getByRole("heading", { level: 2, name: "Install" })).toBeFocused();
 });
 
 // Install (M9-T5): the code to add, filled in for the widget, and a check of a page of the customer's site.
-test("the install code is filled in for the widget, and a page of the site is checked for it", async ({ page }) => {
+test("the install code is filled in for the widget, a page of the site is checked for it, then on to Go live", async ({ page }) => {
   await signIn(page, "/widgets/w_gateway/install", await platformAdministrator(page, "installer"));
   await expect(page.getByText('<script async src="http://localhost:8200/loader.js" data-widget-id="w_gateway"></script>')).toBeVisible();
   await expect(page.getByText("script-src http://localhost:8200")).toBeVisible();
@@ -245,6 +249,9 @@ test("the install code is filled in for the widget, and a page of the site is ch
   await page.getByRole("button", { name: "Check", exact: true }).click();
   await expect(page.getByText("Does the page answer? No — the page is not on one of this widget's allowed sites")).toBeVisible();
   expect(await serious(page)).toEqual([]);
+  await page.getByRole("button", { name: "Continue to Go live" }).click();
+  await expect(page).toHaveURL(`${CONSOLE}/widgets/w_gateway/live`);
+  await expect(page.getByRole("heading", { level: 2, name: "Go live" })).toBeFocused();
 });
 
 test("a signed-in widget's install shows its portal endpoint's settings and code in six languages", async ({ page }, info) => {
@@ -353,9 +360,9 @@ test("a new administrator onboards a widget from the console alone, and a visito
   await page.getByRole("button", { name: "Save" }).click();
   await expect(page.getByText("Saved. Visitors see it once you publish.")).toBeVisible();
 
-  await page.getByRole("button", { name: /Install/ }).click();
+  await page.getByRole("button", { name: "Continue to Install" }).click();
   await expect(page.getByText(`data-widget-id="${widget}"`)).toBeVisible();
-  await page.getByRole("button", { name: /Go live/ }).click();
+  await page.getByRole("button", { name: "Continue to Go live" }).click();
   await page.getByRole("button", { name: "Publish version 1" }).click();
   await expect(page.getByText("Published. Version 1 is live")).toBeVisible();
   const seconds = Math.round((Date.now() - started) / 1000);

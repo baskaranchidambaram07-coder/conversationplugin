@@ -92,6 +92,7 @@ export const strings = {
   nameHint: "Shown at the top of the chat. You can change it later.",
   nameMissing: "Give the widget a title first.",
   continue: "Continue",
+  continueTo: (station: string) => `Continue to ${station}`,
   create: "Create the draft",
   creating: "Creating the draft",
   save: "Save",

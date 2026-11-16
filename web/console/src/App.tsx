@@ -534,6 +534,14 @@ function Widget(props: {
   const shown = open && track.some((one) => one.id === open) ? open : (track.find((one) => one.state === "now")?.id ?? "live");
   const left = timeLeft(track);
   const changed = JSON.stringify(edited) !== JSON.stringify(document);
+  const after = track[track.findIndex((one) => one.id === shown) + 1]?.id ?? "live";
+
+  function openStation(id: StationId) {
+    setEdited(document);
+    setFaults([]);
+    setSaved(false);
+    go(`/widgets/${row.widget_id}/${id}`);
+  }
 
   async function save() {
     const sent = { ...edited!, public: { ...edited!.public, suggested_prompts: edited!.public.suggested_prompts?.filter(Boolean) } };
@@ -568,12 +576,7 @@ function Widget(props: {
         shown={shown}
         sign={row.version !== null ? standing(row) : t.timeLeft(left)}
         reachable={() => true}
-        onOpen={(id) => {
-          setEdited(document);
-          setFaults([]);
-          setSaved(false);
-          go(`/widgets/${row.widget_id}/${id}`);
-        }}
+        onOpen={openStation}
       />
       {/* named by aria-label: Firefox crashes when axe scans a section named by aria-labelledby */}
       <section className="card stop" aria-label={t.station[shown]}>
@@ -607,9 +610,16 @@ function Widget(props: {
               )}
               {!readOnly && (
                 <div className="actions">
-                  <button type="button" className="primary" disabled={!changed || saving} onClick={() => void save()}>
-                    {saving ? t.saving : t.save}
-                  </button>
+                  {/* Save while anything is unsaved; once all is saved, the way on to the next station. */}
+                  {changed ? (
+                    <button type="button" className="primary" disabled={saving} onClick={() => void save()}>
+                      {saving ? t.saving : t.save}
+                    </button>
+                  ) : (
+                    <button type="button" className="primary" onClick={() => openStation(after)}>
+                      {t.continueTo(t.station[after])}
+                    </button>
+                  )}
                   <output aria-live="polite" className="note">
                     {saved && !changed ? t.saved : ""}
                   </output>
@@ -619,7 +629,7 @@ function Widget(props: {
             <Preview look={edited.public as Look} widgetId={row.widget_id} />
           </div>
         ) : shown === "install" ? (
-          <Install widgetId={row.widget_id} gateway={gateway} document={document} />
+          <Install widgetId={row.widget_id} gateway={gateway} document={document} onContinue={() => openStation("live")} />
         ) : shown === "live" ? (
           <GoLive
             widgetId={row.widget_id}
