@@ -176,6 +176,7 @@ test("an existing widget's settings are edited and saved; a viewer sees them but
   await expect(page.getByRole("radio", { name: /fake-pf/ })).toBeDisabled();
   await expect(page.getByRole("button", { name: "Save" })).toHaveCount(0);
   await expect(page.getByRole("button", { name: "Add a connection" })).toHaveCount(0);
+  await expect(page.getByRole("button", { name: "Edit fake-pf" })).toHaveCount(0);
   await expect(page.getByRole("link", { name: "New widget" })).toHaveCount(0);
   await expect(page.getByRole("link", { name: "New organisation" })).toHaveCount(0);
   await page.getByRole("button", { name: /Go live/ }).click();
@@ -447,6 +448,27 @@ test("a connection's keys and a shared secret are never shown again once saved",
   await page.reload();
   await expect(page.getByRole("button", { name: "Make a new secret" })).toBeVisible();
   await expect(page.locator("body")).not.toContainText(made.split(":")[1]);
+});
+
+test("a saved connection's wrong agent version is put right alone; its key and password are kept", async ({ page }, info) => {
+  const api = await operatorApi(page);
+  const { tenant_id: tenant } = await api("POST", "/tenants", { name: `Fix ${info.project.name} ${Date.now().toString(36)}` });
+  await api("PUT", `/tenants/${tenant}/agent-profiles/fake-pf`, { ...FAKE_PROFILE, agent_version_id: "the-agent-not-its-version" });
+  const { widget_id: widget } = await api("POST", `/tenants/${tenant}/widgets`, { document: anonymous("Ask Fix") });
+
+  await signIn(page, `/widgets/${widget}/agent`, await platformAdministrator(page, "fixer"));
+  await page.getByRole("button", { name: "Edit fake-pf" }).click();
+  await expect(page.getByRole("heading", { name: "Change “fake-pf”" })).toBeVisible();
+  await expect(page.getByLabel("Name of the connection")).toHaveCount(0);
+  await expect(page.getByLabel("API key")).toHaveValue(""); // never shown back
+  await page.getByRole("button", { name: "Save connection" }).click();
+  await expect(page.getByRole("alert")).toContainText("Fill in at least one field to change.");
+
+  await page.getByLabel("Agent version ID").fill("fake-agent-version");
+  await page.getByRole("button", { name: "Save connection" }).click();
+  await expect(page.getByText("Connected", { exact: true })).toBeVisible(); // PF still signs in: key and password kept
+  await expect(page.getByRole("heading", { name: "Change “fake-pf”" })).toHaveCount(0);
+  expect(await serious(page)).toEqual([]);
 });
 
 // Organisations made and deleted in the console, and a widget deleted: its visitors' chat goes, its history stays.

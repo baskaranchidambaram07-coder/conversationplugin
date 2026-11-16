@@ -68,6 +68,7 @@ export function AgentEditor(props: {
   const [secrets, reload] = useSecrets(tenant, onProblem);
   const [tested, setTested] = useState<Record<string, string>>({});
   const [adding, setAdding] = useState(false);
+  const [editing, setEditing] = useState<string | null>(null); // the saved connection whose fields are being changed
   const [draft, setDraft] = useState(NEW_CONNECTION);
   const [faults, setFaults] = useState<string[]>([]);
   const connections = (secrets ?? []).filter((secret) => secret.kind === "profile");
@@ -83,19 +84,35 @@ export function AgentEditor(props: {
     }
   }
 
+  function close() {
+    setDraft(NEW_CONNECTION);
+    setFaults([]);
+    setAdding(false);
+    setEditing(null);
+  }
+
+  /** The form for a new connection (null), or for changing a saved one. */
+  function open(connection: string | null) {
+    close();
+    setAdding(connection === null);
+    setEditing(connection);
+  }
+
   async function save() {
     const { name, ...profile } = draft;
-    const missing = Object.entries(draft).filter(([, given]) => !given.trim()).map(([field]) => t.connectionField[field] ?? field);
-    if (!ID.test(name)) missing.unshift(t.connectionNameRule);
-    if (missing.length) return setFaults(missing.map((field) => t.required(field)));
+    // Changing a saved connection sends only the fields filled in; the API keeps the rest as they were sealed.
+    const given = Object.fromEntries(Object.entries(profile).filter(([, value]) => value.trim()));
+    if (editing && !Object.keys(given).length) return setFaults([t.nothingToChange]);
+    const missing = Object.entries(draft).filter(([, value]) => !value.trim()).map(([field]) => t.connectionField[field] ?? field);
+    if (!editing && !ID.test(name)) missing.unshift(t.connectionNameRule);
+    if (!editing && missing.length) return setFaults(missing.map((field) => t.required(field)));
     try {
-      await call("PUT", `/tenants/${tenant}/agent-profiles/${name}`, profile);
-      setDraft(NEW_CONNECTION);
-      setAdding(false);
-      setFaults([]);
+      if (editing) await call("PATCH", `/tenants/${tenant}/agent-profiles/${editing}`, given);
+      else await call("PUT", `/tenants/${tenant}/agent-profiles/${name}`, profile);
+      close();
       await reload();
-      onChange(name);
-      void test(name);
+      if (!editing) onChange(name);
+      void test(editing ?? name);
     } catch (error) {
       if (error instanceof ApiProblem && error.problem.code === "invalid_request") setFaults([t.connectionRefused]);
       else onProblem(error);
@@ -120,6 +137,11 @@ export function AgentEditor(props: {
               <button type="button" className="quiet" onClick={() => void test(connection.name)}>
                 {t.test}
               </button>
+              {!readOnly && (
+                <button type="button" className="quiet" aria-label={t.editConnection(connection.name)} onClick={() => open(connection.name)}>
+                  {t.edit}
+                </button>
+              )}
               <output aria-live="polite" className={tested[connection.name] === t.connected ? "good" : undefined}>
                 {tested[connection.name]}
               </output>
@@ -139,12 +161,12 @@ export function AgentEditor(props: {
         </ul>
       </fieldset>
       {!readOnly &&
-        (adding ? (
+        (adding || editing ? (
           <div className="add">
-            <h3>{t.addConnection}</h3>
-            <p className="hint">{t.connectionHint}</p>
+            <h3>{editing ? t.changeConnection(editing) : t.addConnection}</h3>
+            <p className="hint">{editing ? t.changeHint : t.connectionHint}</p>
             <div className="grid">
-              {Object.keys(NEW_CONNECTION).map((field) => (
+              {Object.keys(NEW_CONNECTION).filter((field) => !editing || field !== "name").map((field) => (
                 <Field key={field} label={t.connectionField[field] ?? field}>
                   {(id) => (
                     <input
@@ -164,13 +186,13 @@ export function AgentEditor(props: {
               <button type="button" className="secondary" onClick={() => void save()}>
                 {t.saveConnection}
               </button>
-              <button type="button" className="quiet" onClick={() => setAdding(false)}>
+              <button type="button" className="quiet" onClick={close}>
                 {t.cancel}
               </button>
             </div>
           </div>
         ) : (
-          <button type="button" className="secondary" onClick={() => setAdding(true)}>
+          <button type="button" className="secondary" onClick={() => open(null)}>
             {t.addConnection}
           </button>
         ))}

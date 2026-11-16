@@ -175,6 +175,8 @@ def operations(tag: str) -> dict:
         "list B's secrets": ("GET", f"/admin/v1/tenants/{b}/secrets", None),
         "set A's profile": ("PUT", f"/admin/v1/tenants/{a}/agent-profiles/pf-new", json.loads(OWN_PROFILE)),
         "set B's profile": ("PUT", f"/admin/v1/tenants/{b}/agent-profiles/pf-new", json.loads(OWN_PROFILE)),
+        "change A's profile": ("PATCH", f"/admin/v1/tenants/{a}/agent-profiles/pf-new", {"agent_version_id": "v2"}),
+        "change B's profile": ("PATCH", f"/admin/v1/tenants/{b}/agent-profiles/pf-new", {"agent_version_id": "v2"}),
         "make A a shared secret": ("POST", f"/admin/v1/tenants/{a}/host-secrets/portal", None),
         "make B a shared secret": ("POST", f"/admin/v1/tenants/{b}/host-secrets/portal", None),
         # Last, as they take things away.
@@ -212,6 +214,8 @@ EXPECTED = {
     "list B's secrets":              (200,     404,     404),
     "set A's profile":               (200,     200,     403),
     "set B's profile":               (200,     404,     404),
+    "change A's profile":            (200,     200,     403),
+    "change B's profile":            (200,     404,     404),
     "make A a shared secret":        (201,     201,     403),
     "make B a shared secret":        (201,     404,     404),
     "delete empty tenant C":         (204,     403,     403),
@@ -495,6 +499,29 @@ def test_test_connection_says_whether_pf_signs_in_and_reveals_nothing(world, fak
     assert replies["down"].json()["connected"] is False
     assert not any("127.0.0.1" in reply.text or "fake-" in reply.text for reply in replies.values())
     assert world.post(f"/admin/v1/tenants/{world.a}/agent-profiles/nothing/test", headers=signed).status_code == 404
+
+
+def test_a_profiles_fields_change_alone_and_the_rest_are_kept_sealed(world, database_url, fake_pf):
+    signed = bearer(world, "admin_a")
+    good = pf_profile(fake_pf).model_dump(mode="json") | {"api_key": "fake-api-key", "password": "fake-password"}
+    path = f"/admin/v1/tenants/{world.a}/agent-profiles/pf-fixed"
+    world.put(path, json=good | {"agent_version_id": "the-agent-not-its-version"}, headers=signed)
+
+    fixed = world.patch(path, json={"agent_version_id": good["agent_version_id"]}, headers=signed)
+
+    assert fixed.json() == {"name": "pf-fixed"}
+    assert run(database_url, lambda records: opened(records, world.a, "pf-fixed")) == good
+    assert world.post(f"{path}/test", headers=signed).json() == {"connected": True}
+    never = f"/admin/v1/tenants/{world.a}/agent-profiles/never-saved"
+    assert world.patch(never, json={"tenant": "x"}, headers=signed).status_code == 404
+    assert world.patch(path, json={"apikey": "typo"}, headers=signed).status_code == 400
+
+
+async def opened(records, tenant_id: str, name: str) -> dict:
+    async with records.engine.connect() as db:
+        query = "SELECT key_id, nonce, sealed FROM secrets WHERE tenant_id = :t AND kind = 'profile' AND name = :n"
+        row = (await db.execute(text(query), {"t": tenant_id, "n": name})).one()
+    return json.loads(Vault(KEY).open(row.key_id, row.nonce, row.sealed, f"{tenant_id}/profile/{name}"))
 
 
 def test_a_tenants_own_profile_answers_its_widgets_through_the_gateway(world, database_url, fake_pf):
