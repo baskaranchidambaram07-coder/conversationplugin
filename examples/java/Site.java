@@ -14,13 +14,13 @@ public class Site {
             <p class="sample">Sample page. It is not a customer website.</p>
             <main>
             <h1>Built with Java</h1>
-            <p>Java wrote this page when the site was built, and S3 serves it as plain HTML. The one script tag at the end adds the assistant: open it from the button in the corner.</p>
+            <p>Java wrote this page when the site was built, and S3 serves it as plain HTML. It has no assistant yet. To add one, put the script tag from the admin console at the end of the page.</p>
             <p class="made">Made by <code>java Site.java</code> on Java %s.</p>
             <p><a href="index.html">The same page in other languages</a></p>
             </main>
-            <script async src="%s/loader.js" data-widget-id="%s"></script>
+            <!-- The assistant's script tag from the admin console goes here. -->
             </body>
             </html>
-            """.formatted(System.getProperty("java.version"), System.getenv("UCP_GATEWAY"), System.getenv("UCP_WIDGET_ID")));
+            """.formatted(System.getProperty("java.version")));
     }
 }

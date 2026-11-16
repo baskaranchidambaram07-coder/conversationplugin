@@ -1,7 +1,4 @@
 # The site's one page, written out when the site is built (ruby site.rb > ruby.html). S3 serves the result.
-gateway = ENV.fetch("UCP_GATEWAY")
-widget = ENV.fetch("UCP_WIDGET_ID")
-
 puts <<~HTML
   <!doctype html>
   <html lang="en">
@@ -15,11 +12,11 @@ puts <<~HTML
   <p class="sample">Sample page. It is not a customer website.</p>
   <main>
   <h1>Built with Ruby</h1>
-  <p>Ruby wrote this page when the site was built, and S3 serves it as plain HTML. The one script tag at the end adds the assistant: open it from the button in the corner.</p>
+  <p>Ruby wrote this page when the site was built, and S3 serves it as plain HTML. It has no assistant yet. To add one, put the script tag from the admin console at the end of the page.</p>
   <p class="made">Made by <code>ruby site.rb</code> on Ruby #{RUBY_VERSION}.</p>
   <p><a href="index.html">The same page in other languages</a></p>
   </main>
-  <script async src="#{gateway}/loader.js" data-widget-id="#{widget}"></script>
+  <!-- The assistant's script tag from the admin console goes here. -->
   </body>
   </html>
 HTML

@@ -1,6 +1,8 @@
-"""The language samples: one small site per language (examples/html, php, java, dotnet, ruby, node, go, c, cpp), each
-page carrying the assistant's script tag. S3 cannot run code, so each language writes its page as plain HTML when the
-site is built, as a static site generator does, and the pages go to the hosted samples' bucket under sites/.
+"""The language samples: one small site per language (examples/html, php, java, dotnet, ruby, node, go, c, cpp). S3
+cannot run code, so each language writes its page as plain HTML when the site is built, as a static site generator
+does, and the pages go to the hosted samples' bucket under sites/. The hub (html) carries the assistant; the other
+eight start without it, for trying the onboarding: put the script tag from the admin console where a language's page
+says, then publish.
 
 python examples/sites.py               build with the languages this machine has, and check every page
 python examples/sites.py --all         all nine, or fail (the pipeline)
@@ -38,8 +40,8 @@ LANGUAGES = {
 }
 
 
-def environment(gateway: str, widget: str) -> dict[str, str]:
-    env = {**os.environ, "UCP_GATEWAY": gateway, "UCP_WIDGET_ID": widget}
+def environment() -> dict[str, str]:
+    env = dict(os.environ)
     if TOOLS.exists():  # the build machine: portable toolchains, and every cache they write kept inside .tools
         home = TOOLS / "home"
         roaming, local = home / "AppData/Roaming", home / "AppData/Local"
@@ -59,7 +61,7 @@ def build(work: Path, gateway: str, widget: str, every: bool) -> Path:
     shutil.copy(HERE / "html/site.css", site)
     hub = (HERE / "html/index.html").read_text(encoding="utf-8")
     (site / "index.html").write_text(hub.replace("{{GATEWAY}}", gateway).replace("{{WIDGET}}", widget), "utf-8")
-    env = environment(gateway, widget)
+    env = environment()
     missing = []
     for language, commands in LANGUAGES.items():
         if not shutil.which(commands[0][0], path=env["PATH"]):
@@ -77,11 +79,12 @@ def build(work: Path, gateway: str, widget: str, every: bool) -> Path:
         print("no toolchain here for " + ", ".join(missing))
         if every:
             sys.exit(1)
-    tag = SCRIPT.format(gateway=gateway, widget=widget)
+    if SCRIPT.format(gateway=gateway, widget=widget) not in (site / "index.html").read_text(encoding="utf-8"):
+        sys.exit("the hub page lacks the assistant's script tag")
     for page in site.glob("*.html"):
         text = page.read_text(encoding="utf-8")
-        if not text.lstrip().startswith("<!doctype html>") or tag not in text or 'href="site.css"' not in text:
-            sys.exit(f"{page.name} is not a whole page with the stylesheet and the assistant's script tag")
+        if not text.lstrip().startswith("<!doctype html>") or 'href="site.css"' not in text:
+            sys.exit(f"{page.name} is not a whole page with the stylesheet")
     if every:
         linked = set(re.findall(r'href="([a-z]+\.html)"', hub))
         if linked != {f"{language}.html" for language in LANGUAGES}:

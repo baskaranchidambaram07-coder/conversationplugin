@@ -3,7 +3,6 @@ package main
 
 import (
 	"fmt"
-	"os"
 	"runtime"
 	"strings"
 )
@@ -20,15 +19,15 @@ const page = `<!doctype html>
 <p class="sample">Sample page. It is not a customer website.</p>
 <main>
 <h1>Built with Go</h1>
-<p>Go wrote this page when the site was built, and S3 serves it as plain HTML. The one script tag at the end adds the assistant: open it from the button in the corner.</p>
+<p>Go wrote this page when the site was built, and S3 serves it as plain HTML. It has no assistant yet. To add one, put the script tag from the admin console at the end of the page.</p>
 <p class="made">Made by <code>go run site.go</code> on Go %s.</p>
 <p><a href="index.html">The same page in other languages</a></p>
 </main>
-<script async src="%s/loader.js" data-widget-id="%s"></script>
+<!-- The assistant's script tag from the admin console goes here. -->
 </body>
 </html>
 `
 
 func main() {
-	fmt.Printf(page, strings.TrimPrefix(runtime.Version(), "go"), os.Getenv("UCP_GATEWAY"), os.Getenv("UCP_WIDGET_ID"))
+	fmt.Printf(page, strings.TrimPrefix(runtime.Version(), "go"))
 }
