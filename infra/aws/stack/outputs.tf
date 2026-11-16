@@ -41,6 +41,11 @@ output "samples_url" {
   value       = one([for samples in aws_cloudfront_distribution.samples : "https://${samples.domain_name}"])
 }
 
+output "sites_urls" {
+  description = "The language sample sites, one address each (examples/sites.py publishes them)."
+  value       = { for name, site in aws_cloudfront_distribution.sites : name => "https://${site.domain_name}" }
+}
+
 output "console_url" {
   description = "The admin console, where administrators sign in with the Cognito pool (infra/aws/console_admin.py)."
   value       = "https://${aws_cloudfront_distribution.console.domain_name}"

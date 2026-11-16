@@ -1,15 +1,16 @@
 """The language samples: one small site per language (examples/html, php, java, dotnet, ruby, node, go, c, cpp). S3
 cannot run code, so each language writes its page as plain HTML when the site is built, as a static site generator
-does, and the pages go to the hosted samples' bucket under sites/. No page carries the assistant, so each can be
-onboarded by hand: put the script tag from the admin console where the page's comment says, then publish.
+does. Each site goes to the hosted samples' bucket under sites/NAME/, which a CloudFront address of its own serves
+(infra/aws/stack/samples.tf), so a widget allowed on one site is refused on the others. No page carries the
+assistant, so each can be onboarded by hand: put the script tag from the admin console where the page's comment says,
+then publish.
 
 python examples/sites.py               build with the languages this machine has, and check every page
 python examples/sites.py --all         all nine, or fail (the pipeline)
-python examples/sites.py --publish     all nine, uploaded to the dev stack's samples; prints the address to open
+python examples/sites.py --publish     all nine, uploaded to the dev stack; prints each site's address
 
-Toolchains come from .tools on the build machine, else from the PATH. Publishing uses the AWS command line and puts
-the pages beside the College's samples (infra/aws/stack/samples.tf), so they share that site's address; a rebuilt
-stack has a new address and an empty bucket, so publish again after one.
+Toolchains come from .tools on the build machine, else from the PATH. Publishing uses the AWS command line. A rebuilt
+stack has new addresses and an empty bucket, so publish again after one.
 """
 
 import argparse
@@ -51,12 +52,13 @@ def environment() -> dict[str, str]:
     return env
 
 
-def build(work: Path, every: bool) -> Path:
-    """Writes the site into work/site and checks every page; returns the folder."""
-    site = work / "site"
-    site.mkdir()
-    for name in ("site.css", "index.html"):
-        shutil.copy(HERE / "html" / name, site)
+def build(work: Path, addresses: dict[str, str], every: bool) -> Path:
+    """Writes each site into work/site/NAME, its page as index.html beside the stylesheet, and checks every page;
+    returns work/site. The hub's {{NAME}} links become the sites' addresses."""
+    hub = (HERE / "html/index.html").read_text(encoding="utf-8")
+    if every and set(re.findall(r"\{\{([a-z]+)\}\}", hub)) != set(LANGUAGES):
+        sys.exit("the hub page must link to every language's site, and only to those")
+    pages = {"html": re.sub(r"\{\{([a-z]+)\}\}", lambda link: addresses[link[1]], hub)}
     env = environment()
     missing = []
     for language, commands in LANGUAGES.items():
@@ -69,20 +71,19 @@ def build(work: Path, every: bool) -> Path:
             done = subprocess.run(run, cwd=HERE, env=env, capture_output=True, encoding="utf-8", timeout=600)  # noqa: S603
             if done.returncode:
                 sys.exit(f"{language}: {(done.stdout + done.stderr).strip()[-800:]}")  # dotnet reports on stdout
-        (site / f"{language}.html").write_text(done.stdout, "utf-8")
+        pages[language] = done.stdout
         print(f"built {language}")
     if missing:
         print("no toolchain here for " + ", ".join(missing))
         if every:
             sys.exit(1)
-    for page in site.glob("*.html"):
-        text = page.read_text(encoding="utf-8")
+    site = work / "site"
+    for name, text in pages.items():
         if not text.lstrip().startswith("<!doctype html>") or 'href="site.css"' not in text:
-            sys.exit(f"{page.name} is not a whole page with the stylesheet")
-    if every:
-        linked = set(re.findall(r'href="([a-z]+\.html)"', (site / "index.html").read_text(encoding="utf-8")))
-        if linked != {f"{language}.html" for language in LANGUAGES}:
-            sys.exit("the hub page must link to every language's page, and only to those")
+            sys.exit(f"{name}: not a whole page with the stylesheet")
+        (site / name).mkdir(parents=True)
+        (site / name / "index.html").write_text(text, "utf-8")
+        shutil.copy(HERE / "html/site.css", site / name)
     return site
 
 
@@ -91,19 +92,42 @@ def main() -> None:
     arguments.add_argument("--all", action="store_true", help="fail unless every language builds")
     arguments.add_argument("--publish", action="store_true", help="build all nine and upload them to the dev stack")
     args = arguments.parse_args()
-    with tempfile.TemporaryDirectory() as work:
-        site = build(Path(work), args.all or args.publish)
-        if args.publish:
-            sys.path.insert(0, str(ROOT / "infra/aws"))
-            import deploy  # noqa: PLC0415 - the environment's names and addresses, only when publishing
+    names = ["html", *LANGUAGES]
+    addresses = {name: f"https://{name}.example" for name in names}
+    if args.publish:
+        sys.path.insert(0, str(ROOT / "infra/aws"))
+        import deploy  # noqa: PLC0415 - the environment's names and addresses, only when publishing
 
+        prefix = f"{deploy.NAME}-site-"  # each site's distribution is commented with its name (samples.tf)
+        found = deploy.aws("cloudfront", "list-distributions")["DistributionList"].get("Items", [])
+        addresses = {
+            d["Comment"].removeprefix(prefix): f"https://{d['DomainName']}"
+            for d in found
+            if d["Comment"].startswith(prefix)
+        }
+        if set(addresses) != set(names):
+            sys.exit("the sites have no addresses yet: apply the stack first (infra/aws/stack.py wake)")
+    with tempfile.TemporaryDirectory() as work:
+        site = build(Path(work), addresses, args.all or args.publish)
+        if args.publish:
             buckets = deploy.aws("s3api", "list-buckets", "--prefix", f"{deploy.NAME}-samples-").get("Buckets", [])
             if len(buckets) != 1:
                 sys.exit("no hosted samples bucket: the stack must be up with its samples (infra/aws/stack.py)")
-            target = f"s3://{buckets[0]['Name']}/sites"
-            sync = ["aws", "s3", "sync", str(site), target, "--cache-control", "no-store", "--only-show-errors"]
+            target = f"s3://{buckets[0]['Name']}/sites"  # --delete: sites/ holds only what this script writes
+            sync = [
+                "aws",
+                "s3",
+                "sync",
+                str(site),
+                target,
+                "--delete",
+                "--cache-control",
+                "no-store",
+                "--only-show-errors",
+            ]
             subprocess.run([*sync, "--region", deploy.REGION], check=True)  # noqa: S603, S607
-            print(f"{deploy.public_url('UCP_SAMPLES_ORIGIN')}/sites/index.html")
+            for name in names:
+                print(f"{name:7} {addresses[name]}")
 
 
 if __name__ == "__main__":

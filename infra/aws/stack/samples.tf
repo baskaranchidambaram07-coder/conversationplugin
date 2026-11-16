@@ -17,6 +17,9 @@ locals {
     "assistant.css"  = "assistant.css"
   }
   types = { html = "text/html; charset=utf-8", js = "text/javascript; charset=utf-8", css = "text/css; charset=utf-8" }
+  # The language sample sites (examples/sites.py publishes each under sites/NAME/), each on an address of its own, so
+  # a widget allowed on one is refused on the others.
+  sites = var.samples ? toset(["html", "php", "java", "dotnet", "ruby", "node", "go", "c", "cpp"]) : toset([])
 }
 
 resource "random_id" "samples" {
@@ -62,7 +65,7 @@ resource "aws_s3_bucket_policy" "samples" {
         Principal = { Service = "cloudfront.amazonaws.com" }
         Action    = "s3:GetObject"
         Resource  = "${aws_s3_bucket.samples[0].arn}/*"
-        Condition = { StringEquals = { "AWS:SourceArn" = aws_cloudfront_distribution.samples[0].arn } }
+        Condition = { StringEquals = { "AWS:SourceArn" = concat(aws_cloudfront_distribution.samples[*].arn, values(aws_cloudfront_distribution.sites)[*].arn) } }
       },
       {
         Sid       = "TlsOnly"
@@ -150,6 +153,44 @@ resource "aws_cloudfront_distribution" "samples" {
       event_type   = "viewer-request"
       function_arn = aws_cloudfront_function.demo_token[0].arn
     }
+  }
+
+  restrictions {
+    geo_restriction {
+      restriction_type = "none"
+    }
+  }
+
+  viewer_certificate {
+    cloudfront_default_certificate = true
+  }
+}
+
+#trivy:ignore:AWS-0011 A web firewall is outside the base version (docs/tech-stack.md section 5); it comes with production
+resource "aws_cloudfront_distribution" "sites" {
+  for_each            = local.sites
+  enabled             = true
+  comment             = "${var.name}-site-${each.key}" # examples/sites.py finds each address by this
+  price_class         = "PriceClass_100"
+  http_version        = "http2and3"
+  is_ipv6_enabled     = true
+  default_root_object = "index.html"
+  wait_for_deployment = false
+
+  origin {
+    origin_id                = "site"
+    domain_name              = aws_s3_bucket.samples[0].bucket_regional_domain_name
+    origin_path              = "/sites/${each.key}"
+    origin_access_control_id = aws_cloudfront_origin_access_control.samples[0].id
+  }
+
+  default_cache_behavior {
+    target_origin_id       = "site"
+    viewer_protocol_policy = "redirect-to-https"
+    allowed_methods        = ["GET", "HEAD"]
+    cached_methods         = ["GET", "HEAD"]
+    cache_policy_id        = data.aws_cloudfront_cache_policy.disabled.id # a republished page shows at once
+    compress               = true
   }
 
   restrictions {

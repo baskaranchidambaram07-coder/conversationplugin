@@ -16,7 +16,6 @@ public class Site {
             <h1>Built with Java</h1>
             <p>Java wrote this page when the site was built, and S3 serves it as plain HTML. It has no assistant yet. To add one, put the script tag from the admin console at the end of the page.</p>
             <p class="made">Made by <code>java Site.java</code> on Java %s.</p>
-            <p><a href="index.html">The same page in other languages</a></p>
             </main>
             <!-- The assistant's script tag from the admin console goes here. -->
             </body>

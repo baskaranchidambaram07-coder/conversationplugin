@@ -17,7 +17,6 @@ int main(void) {
            "<p>A C program wrote this page when the site was built, and S3 serves it as plain HTML. It has no assistant "
            "yet. To add one, put the script tag from the admin console at the end of the page.</p>\n"
            "<p class=\"made\">Made by <code>gcc site.c</code> on GCC " __VERSION__ ".</p>\n"
-           "<p><a href=\"index.html\">The same page in other languages</a></p>\n"
            "</main>\n"
            "<!-- The assistant's script tag from the admin console goes here. -->\n"
            "</body>\n"
