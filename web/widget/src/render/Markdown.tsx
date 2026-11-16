@@ -1,7 +1,7 @@
 // Markdown in an answer (M3-T2). Loaded only when the first answer arrives, so the chat's first load stays small.
 // Raw HTML is never rendered, links open safely in a new tab, and images are never fetched: an image address can
 // carry data out of the conversation, so it becomes a link the visitor chooses to follow.
-import type { ReactNode } from "react";
+import { createContext, type ReactNode, useContext } from "react";
 import ReactMarkdown, { type Components } from "react-markdown";
 import remarkGfm from "remark-gfm";
 
@@ -19,6 +19,17 @@ function Link({ href, children }: { href: string | null; children: ReactNode }) 
   ) : (
     <span>{children}</span>
   );
+}
+
+// The answer's own text, so a fenced block can tell whether its closing fence has arrived yet.
+const Source = createContext("");
+
+/** A fenced block whose closing fence has arrived: its source ends with a line of backticks or tildes. */
+function Fence({ language, text, start, end }: { language: string; text: string; start?: number; end?: number }) {
+  const source = useContext(Source);
+  const closed = start === undefined || end === undefined || /\n[ \t]*(?:`{3,}|~{3,})[ \t]*$/.test(source.slice(start, end));
+  const Drawn = fenceRenderer(language, text, closed);
+  return <Drawn code={text.replace(/\n$/, "")} language={language} />;
 }
 
 // The chat's title is the page's top heading, so an answer's headings start one level below it.
@@ -49,8 +60,7 @@ const components: Components = {
     const classes = code?.type === "element" ? code.properties.className : undefined;
     const language = (Array.isArray(classes) ? String(classes[0] ?? "") : "").replace(/^language-/, "");
     const text = code?.type === "element" ? code.children.map((child) => ("value" in child ? child.value : "")).join("") : "";
-    const Fence = fenceRenderer(language, text);
-    return <Fence code={text.replace(/\n$/, "")} language={language} />;
+    return <Fence language={language} text={text} start={node?.position?.start.offset} end={node?.position?.end.offset} />;
   },
 };
 
@@ -58,9 +68,11 @@ export default function Markdown({ text }: { text: string }) {
   return (
     <div className="md">
       {/* Every address is judged once, by safeHref in the components above; the library's own filter would drop tel: */}
-      <ReactMarkdown remarkPlugins={[remarkGfm]} components={components} urlTransform={(url) => url} skipHtml>
-        {text}
-      </ReactMarkdown>
+      <Source.Provider value={text}>
+        <ReactMarkdown remarkPlugins={[remarkGfm]} components={components} urlTransform={(url) => url} skipHtml>
+          {text}
+        </ReactMarkdown>
+      </Source.Provider>
     </div>
   );
 }

@@ -92,3 +92,25 @@ Paste the XML into draw.io with **Extras → Edit Diagram**.
   ]
 }
 ```
+
+## The same desk as a Mermaid flowchart
+
+```mermaid
+flowchart LR
+    visitor([Visitor]) -- asks --> gateway[Gateway]
+    subgraph college [The College's systems]
+      gateway --> check{Signed in?}
+      check -->|yes| history[(Their history)]
+      check -.->|no| welcome[Welcome page]
+    end
+    history ==> agent((Agent))
+    welcome --> agent
+```
+
+A sequence diagram is not drawn; it stays as code to copy:
+
+```mermaid
+sequenceDiagram
+    Visitor->>Gateway: Hello
+    Gateway-->>Visitor: Hi there
+```
