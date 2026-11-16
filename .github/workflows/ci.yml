@@ -204,7 +204,7 @@ jobs:
         run: |
           terraform="docker run --rm --volume $PWD:/work --workdir /work hashicorp/terraform:1.17.2"
           $terraform fmt -check -recursive infra/aws
-          for folder in infra/aws/bootstrap infra/aws/stack; do
+          for folder in infra/aws/bootstrap infra/aws/stack infra/aws/sites; do
             $terraform -chdir=$folder init -backend=false -input=false > /dev/null
             $terraform -chdir=$folder validate
           done

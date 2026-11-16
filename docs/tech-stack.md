@@ -190,7 +190,7 @@ After `npm install` on this Windows machine, check `package-lock.json` before co
 | Release to dev by hand, or roll back to an earlier commit's image | `python infra/aws/deploy.py --image <commit> --by <name>` |
 | The dev environment's address | `python infra/aws/deploy.py --url` |
 | The College's samples, as we host them | `python infra/aws/deploy.py --samples-url` |
-| The language sample sites: build and check all nine; upload each to its own address (the addresses are printed) | `python examples/sites.py --all`, `python examples/sites.py --publish` |
+| The language sample sites: build and check all nine; make their nine addresses if missing and upload them (the addresses are printed); remove them all after a demonstration | `python examples/sites.py --all`, `--publish`, `--delete` |
 | Smoke-test the dev environment | `cd backend && uv run python smoke.py "$(python ../infra/aws/deploy.py --url)" w_smoke` |
 | Set the PF profile, rotate session keys, or make a customer's shared secret | `cd backend && uv run --env-file ../.env python ../infra/aws/secret_store.py agent-profiles` (`session-keys`, `host-secret NAME [--rotate]`) |
 | Proofs on the deployed stack | `uv run python ../infra/aws/latency.py`, `rollout_check.py`, `python infra/aws/restore_rehearsal.py`, `npm run e2e:deployed` |

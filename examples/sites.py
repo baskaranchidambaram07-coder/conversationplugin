@@ -1,19 +1,21 @@
 """The language samples: one small site per language (examples/html, php, java, dotnet, ruby, node, go, c, cpp). S3
 cannot run code, so each language writes its page as plain HTML when the site is built, as a static site generator
-does. Each site goes to the hosted samples' bucket under sites/NAME/, which a CloudFront address of its own serves
-(infra/aws/stack/samples.tf), so a widget allowed on one site is refused on the others. No page carries the
-assistant, so each can be onboarded by hand: put the script tag from the admin console where the page's comment says,
-then publish.
+does. Each site has a CloudFront address of its own (infra/aws/sites, apart from the stack: it neither sleeps nor
+wakes), so a widget allowed on one site is refused on the others. No page carries the assistant, so each can be
+onboarded by hand: put the script tag from the admin console where the page's comment says, then publish.
 
 python examples/sites.py               build with the languages this machine has, and check every page
 python examples/sites.py --all         all nine, or fail (the pipeline)
-python examples/sites.py --publish     all nine, uploaded to the dev stack; prints each site's address
+python examples/sites.py --publish     make the bucket and the nine addresses if missing, upload all nine sites,
+                                       print each site's address (the addresses stay the same on every publish)
+python examples/sites.py --delete      remove the bucket and the nine addresses, after a demonstration
 
-Toolchains come from .tools on the build machine, else from the PATH. Publishing uses the AWS command line. A rebuilt
-stack has new addresses and an empty bucket, so publish again after one.
+Toolchains come from .tools on the build machine, else from the PATH. Publishing and deleting use Terraform and the
+AWS command line, signed in as the deploying identity, with the state in the dev stack's state bucket.
 """
 
 import argparse
+import json
 import os
 import re
 import shutil
@@ -87,45 +89,47 @@ def build(work: Path, addresses: dict[str, str], every: bool) -> Path:
     return site
 
 
+def terraform(*args: str, capture: bool = False) -> str:
+    """The sites' own Terraform (infra/aws/sites), its state beside the dev stack's in the same state bucket."""
+    environments = ROOT / "infra/aws/environments"
+    data = environments / ".terraform" / "sites"
+    env = {**os.environ, "TF_DATA_DIR": str(data), "TF_IN_AUTOMATION": "1"}
+    local = TOOLS / "terraform" / ("terraform.exe" if os.name == "nt" else "terraform")
+    if TOOLS.exists():
+        (TOOLS / "terraform-plugins").mkdir(exist_ok=True)
+        env["TF_PLUGIN_CACHE_DIR"] = str(TOOLS / "terraform-plugins")
+    command = [str(local) if local.exists() else "terraform", f"-chdir={ROOT / 'infra/aws/sites'}"]
+    if not (data / "terraform.tfstate").exists():  # first run on this machine: point it at the state bucket
+        backend = environments / "dev.backend.hcl"
+        if not backend.exists():
+            sys.exit(f"no settings for the state bucket: {backend} (infra/aws/SETUP.md)")
+        init = ["init", "-input=false", f"-backend-config={backend}", "-backend-config=key=sites/dev.tfstate"]
+        subprocess.run([*command, *init], env=env, check=True, stdout=subprocess.DEVNULL)  # noqa: S603
+    done = subprocess.run([*command, *args], env=env, check=True, text=True, capture_output=capture)  # noqa: S603
+    return done.stdout if capture else ""
+
+
 def main() -> None:
     arguments = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     arguments.add_argument("--all", action="store_true", help="fail unless every language builds")
-    arguments.add_argument("--publish", action="store_true", help="build all nine and upload them to the dev stack")
+    arguments.add_argument("--publish", action="store_true", help="make the nine addresses if missing, upload")
+    arguments.add_argument("--delete", action="store_true", help="remove the bucket and the nine addresses")
     args = arguments.parse_args()
+    if args.delete:
+        terraform("destroy", "-auto-approve", "-input=false")
+        return
     names = ["html", *LANGUAGES]
     addresses = {name: f"https://{name}.example" for name in names}
-    if args.publish:
-        sys.path.insert(0, str(ROOT / "infra/aws"))
-        import deploy  # noqa: PLC0415 - the environment's names and addresses, only when publishing
-
-        prefix = f"{deploy.NAME}-site-"  # each site's distribution is commented with its name (samples.tf)
-        found = deploy.aws("cloudfront", "list-distributions")["DistributionList"].get("Items", [])
-        addresses = {
-            d["Comment"].removeprefix(prefix): f"https://{d['DomainName']}"
-            for d in found
-            if d["Comment"].startswith(prefix)
-        }
-        if set(addresses) != set(names):
-            sys.exit("the sites have no addresses yet: apply the stack first (infra/aws/stack.py wake)")
+    if args.publish:  # the addresses first: the hub links to them
+        terraform("apply", "-auto-approve", "-input=false")
+        out = json.loads(terraform("output", "-json", capture=True))
+        addresses = out["urls"]["value"]
     with tempfile.TemporaryDirectory() as work:
         site = build(Path(work), addresses, args.all or args.publish)
         if args.publish:
-            buckets = deploy.aws("s3api", "list-buckets", "--prefix", f"{deploy.NAME}-samples-").get("Buckets", [])
-            if len(buckets) != 1:
-                sys.exit("no hosted samples bucket: the stack must be up with its samples (infra/aws/stack.py)")
-            target = f"s3://{buckets[0]['Name']}/sites"  # --delete: sites/ holds only what this script writes
-            sync = [
-                "aws",
-                "s3",
-                "sync",
-                str(site),
-                target,
-                "--delete",
-                "--cache-control",
-                "no-store",
-                "--only-show-errors",
-            ]
-            subprocess.run([*sync, "--region", deploy.REGION], check=True)  # noqa: S603, S607
+            target = f"s3://{out['bucket']['value']}"  # --delete: the bucket holds only what this script writes
+            sync = ["aws", "s3", "sync", str(site), target, "--delete", "--cache-control", "no-store"]
+            subprocess.run([*sync, "--only-show-errors", "--region", "us-east-1"], check=True)  # noqa: S603, S607
             for name in names:
                 print(f"{name:7} {addresses[name]}")
 
