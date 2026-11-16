@@ -34,8 +34,10 @@ const Chart = (props: FenceProps) => (
 /** Fenced-block languages with a renderer of their own. Anything else is code. */
 const FENCES: Record<string, ComponentType<FenceProps>> = { chart: Chart };
 
-/** The renderer for a fenced block: by its content for diagrams (agents label draw.io XML as "xml"), else its language. */
-export function fenceRenderer(language: string, code = ""): ComponentType<FenceProps> {
+/** The renderer for a fenced block: by its content for diagrams (agents label draw.io XML as "xml"), else its language.
+ *  A Mermaid chart is drawn only once its fence has closed: until then every prefix of it is a chart, still growing. */
+export function fenceRenderer(language: string, code = "", closed = true): ComponentType<FenceProps> {
+  if (language === "mermaid") return closed ? Diagram : Code;
   return isDiagram(code) ? Diagram : (FENCES[language] ?? Code);
 }
 

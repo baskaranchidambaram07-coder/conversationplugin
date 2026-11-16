@@ -1,11 +1,13 @@
-// A diagram in an answer (M3): draw.io or Excalidraw source drawn as SVG on paper, in its own frame, which scrolls
-// sideways when the diagram is too wide to read at the card's width. Its code stays one press away, to copy into
-// draw.io or Excalidraw. Loaded only when an answer holds a diagram; anything it cannot read is shown as code.
+// A diagram in an answer (M3): draw.io, Excalidraw or Mermaid flowchart source drawn as SVG on paper, in its own
+// frame, which scrolls sideways when the diagram is too wide to read at the card's width. Its code stays one press
+// away, to copy into draw.io, Excalidraw or Mermaid. Loaded only when an answer holds a diagram; anything it cannot
+// read is shown as code.
 import { useId, useMemo, useRef, useState } from "react";
 
 import { CopyButton, Icon } from "../Icon";
 import { strings as t } from "../strings";
 import { Code } from "./Code";
+import { fromMermaid } from "./mermaid";
 import { type Line, type Point, sceneOf, type Shape } from "./scene";
 import type { FenceProps } from "./registry";
 import { useRoom } from "./room";
@@ -150,7 +152,7 @@ function LineView({ line }: { line: Line }) {
 }
 
 export default function Diagram({ code, language }: FenceProps) {
-  const scene = useMemo(() => sceneOf(code), [code]);
+  const scene = useMemo(() => (language === "mermaid" ? fromMermaid(code) : sceneOf(code)), [code, language]);
   const [showCode, setShowCode] = useState(false);
   const described = useId();
   const frame = useRef<HTMLDivElement>(null);
