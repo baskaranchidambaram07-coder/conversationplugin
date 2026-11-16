@@ -29,7 +29,7 @@ SCRIPT = '<script async src="{gateway}/loader.js" data-widget-id="{widget}"></sc
 LANGUAGES = {
     "php": [["php", "php/index.php"]],
     "java": [["java", "java/Site.java"]],
-    "dotnet": [["dotnet", "run", "--project", "dotnet"]],
+    "dotnet": [["dotnet", "run", "--disable-build-servers", "--project", "dotnet"]],
     "ruby": [["ruby", "ruby/site.rb"]],
     "node": [["node", "node/site.mjs"]],
     "go": [["go", "run", "go/site.go"]],
