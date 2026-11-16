@@ -114,6 +114,11 @@ export const strings = {
   connected: "Connected",
   notConnected: (advice: string) => `Not connected: ${advice}.`,
   addConnection: "Add a connection",
+  edit: "Edit",
+  editConnection: (name: string) => `Edit ${name}`,
+  changeConnection: (name: string) => `Change “${name}”`,
+  changeHint: "Fill in only what changes; anything left empty keeps what is saved. The key and the password are never shown.",
+  nothingToChange: "Fill in at least one field to change.",
   connectionHint: "From your Purple Fabric workspace. The key and the password are sealed when saved and never shown again.",
   connectionField: {
     name: "Name of the connection",
