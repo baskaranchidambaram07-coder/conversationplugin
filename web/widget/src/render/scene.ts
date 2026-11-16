@@ -1,6 +1,7 @@
-// Diagrams in answers: draw.io XML and Excalidraw JSON, read into one small scene of shapes and lines that
-// Diagram.tsx draws as SVG. The source is untrusted: only numbers, plain colours and text leave this file, so
-// nothing in a diagram can fetch, link or run anything. A diagram this cannot read is shown as code instead.
+// Diagrams in answers: draw.io XML and Excalidraw JSON (Mermaid flowcharts in mermaid.ts), read into one small scene
+// of shapes and lines that Diagram.tsx draws as SVG. The source is untrusted: only numbers, plain colours and text
+// leave this file, so nothing in a diagram can fetch, link or run anything. A diagram this cannot read is shown as
+// code instead.
 
 export type Point = [number, number];
 type Align = "start" | "middle" | "end";
@@ -41,9 +42,9 @@ export type Line = {
   to: string;
 };
 
-export type Scene = { kind: "draw.io" | "Excalidraw"; shapes: Shape[]; lines: Line[] };
+export type Scene = { kind: "draw.io" | "Excalidraw" | "Mermaid"; shapes: Shape[]; lines: Line[] };
 
-const INK = "#2b241f";
+export const INK = "#2b241f";
 const PAPER = "#ffffff";
 const MAX_ITEMS = 500;
 
@@ -60,9 +61,9 @@ const num = (value: unknown, fallback = 0) => {
   return Number.isFinite(n) ? Math.max(-100_000, Math.min(100_000, n)) : fallback;
 };
 
-const text = (value: unknown) => (typeof value === "string" ? value.slice(0, 500) : "");
+export const text = (value: unknown) => (typeof value === "string" ? value.slice(0, 500) : "");
 
-function shape(fields: Partial<Shape> & Pick<Shape, "x" | "y" | "w" | "h">): Shape {
+export function shape(fields: Partial<Shape> & Pick<Shape, "x" | "y" | "w" | "h">): Shape {
   return {
     kind: "rect",
     radius: 0,
@@ -84,12 +85,12 @@ function shape(fields: Partial<Shape> & Pick<Shape, "x" | "y" | "w" | "h">): Sha
 
 // --- draw.io --------------------------------------------------------------------------------------------------
 
-type Box = { x: number; y: number; w: number; h: number; kind: Shape["kind"] };
+export type Box = { x: number; y: number; w: number; h: number; kind: Shape["kind"] };
 
 const centre = (b: Box): Point => [b.x + b.w / 2, b.y + b.h / 2];
 
 /** Where a line from the box's centre towards p leaves the box. */
-function rim(b: Box, p: Point): Point {
+export function rim(b: Box, p: Point): Point {
   const [cx, cy] = centre(b);
   const dx = p[0] - cx;
   const dy = p[1] - cy;

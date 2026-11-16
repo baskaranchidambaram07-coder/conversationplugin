@@ -73,7 +73,9 @@ const initials = (title: string) =>
 
 const newKey = () => `cm_${crypto.randomUUID()}`;
 
-export function App({ widgetId, win = window }: { widgetId: string; win?: Window }) {
+/** `preview`: the admin console's live preview (M9-T3). The settings come by message from the console that framed
+ *  this page, on the same address only; nothing is fetched and nothing can be sent. */
+export function App({ widgetId, win = window, preview = false }: { widgetId: string; win?: Window; preview?: boolean }) {
   const [settings, setSettings] = useState<Settings | null>(null);
   const [startup, setStartup] = useState<Problem | null>(null);
   const [mode, setMode] = useState<Mode | null>(null);
@@ -119,6 +121,18 @@ export function App({ widgetId, win = window }: { widgetId: string; win?: Window
   }
 
   useEffect(() => {
+    if (preview) {
+      const shown = (event: MessageEvent) => {
+        const data = event.data as { ucp?: number; type?: string; config?: Partial<WidgetConfig>; scheme?: string } | null;
+        if (event.source !== win.parent || event.origin !== win.location.origin || data?.ucp !== 1 || data.type !== "preview") return;
+        win.document.documentElement.dataset.scheme = data.scheme === "dark" ? "dark" : "light";
+        setSettings(readConfig(data.config ?? {}));
+        setMode("inline");
+      };
+      win.addEventListener("message", shown);
+      win.parent.postMessage({ ucp: 1, type: "preview-ready" }, win.location.origin);
+      return () => win.removeEventListener("message", shown);
+    }
     if (live.current) return; // React's development double start must not connect twice
     const state = { signedIn: false } as Live;
     state.bridge = connect(win, {
@@ -409,7 +423,7 @@ export function App({ widgetId, win = window }: { widgetId: string; win?: Window
     <ul className="prompts">
       {settings.prompts.map((prompt) => (
         <li key={prompt}>
-          <button type="button" onClick={() => void ask(prompt)} disabled={Boolean(ended)}>
+          <button type="button" onClick={() => void ask(prompt)} disabled={Boolean(ended) || preview}>
             {prompt}
           </button>
         </li>
@@ -537,9 +551,9 @@ export function App({ widgetId, win = window }: { widgetId: string; win?: Window
             rows={1}
             value={draft}
             maxLength={LIMIT}
-            placeholder={t.placeholder}
+            placeholder={preview ? t.previewPlaceholder : t.placeholder}
             aria-describedby={left <= LIMIT - WARN_AT ? "left" : undefined}
-            disabled={Boolean(ended)}
+            disabled={Boolean(ended) || preview}
             onChange={(event) => setDraft(event.target.value)}
             onKeyDown={enter}
           />

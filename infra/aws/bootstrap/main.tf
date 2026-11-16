@@ -1,6 +1,7 @@
-# The bucket that holds the dev environment's Terraform state (encrypted, versioned, private, TLS only). Run once;
-# its own state is local and git-ignored, as it records nothing but this bucket. infra/aws/dev.py writes the
-# resulting backend settings to infra/aws/dev/backend.hcl, also git-ignored.
+# The bucket that holds one environment's Terraform state (encrypted, versioned, private, TLS only). Run once per
+# environment by infra/aws/stack.py bootstrap; its own state is local and git-ignored
+# (infra/aws/environments/NAME.bootstrap.tfstate), as it records nothing but this bucket. stack.py writes the
+# resulting backend settings to infra/aws/environments/NAME.backend.hcl, also git-ignored.
 
 terraform {
   required_version = ">= 1.11"
@@ -10,10 +11,22 @@ terraform {
   }
 }
 
+variable "name" {
+  type = string
+}
+
+variable "region" {
+  type = string
+}
+
+variable "environment" {
+  type = string
+}
+
 provider "aws" {
-  region = "us-east-1"
+  region = var.region
   default_tags {
-    tags = { project = "ucp", environment = "dev", managed_by = "terraform" }
+    tags = { project = "ucp", environment = var.environment, managed_by = "terraform" }
   }
 }
 
@@ -22,7 +35,7 @@ resource "random_id" "suffix" {
 }
 
 resource "aws_s3_bucket" "state" {
-  bucket = "ucp-dev-tfstate-${random_id.suffix.hex}"
+  bucket = "${var.name}-tfstate-${random_id.suffix.hex}"
 }
 
 resource "aws_s3_bucket_versioning" "state" {

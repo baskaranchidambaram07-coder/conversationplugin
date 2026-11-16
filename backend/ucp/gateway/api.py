@@ -2,6 +2,7 @@
 refused, and no cross-origin headers are ever sent, so a browser shows other sites nothing."""
 
 import asyncio
+import json
 import logging
 from datetime import UTC, datetime
 from typing import Annotated
@@ -13,6 +14,7 @@ from ucp import protocol
 from ucp.gateway.pipeline import Problem
 from ucp.gateway.public import widgets_of
 from ucp.identity import Identity, expiry, verify_provider_token, verify_shared_secret
+from ucp.pf import PfConnector, PfProfile
 from ucp.sessions import ANONYMOUS_SECONDS, Keys, Limiter, Session, anonymous_user
 from ucp.store import Owner, Store, TurnInProgress
 from ucp.turns import Turns
@@ -60,8 +62,20 @@ def owner(session: Session) -> Owner:
     return Owner(session.tenant_id, session.widget_id, session.user_id)
 
 
-async def _shared_secret(request: Request, widget_id: str, identity: Identity, token: str) -> str:
-    secret = request.app.state.host_secrets.get(identity.secret)
+async def _sealed(request: Request, tenant_id: str, kind: str, name: str) -> str | None:
+    """A secret the tenant set through the admin API (M8), looked for before the platform's own settings."""
+    sealed = request.app.state.sealed
+    try:
+        return await sealed.get(tenant_id, kind, name) if sealed else None
+    except ValueError:
+        log.error("tenant %s's %s %s cannot be opened with the keys held", tenant_id, kind, name)
+        return None
+
+
+async def _shared_secret(request: Request, widget: Widget, identity: Identity, token: str) -> str:
+    widget_id = widget.widget_id
+    sealed = await _sealed(request, widget.document.tenant_id, "host", identity.secret)
+    secret = Keys(sealed).keys if sealed else request.app.state.host_secrets.get(identity.secret)
     if not secret:
         log.error("widget %s names host secret %s, which is not configured", widget_id, identity.secret)
         raise Problem("assistant_unavailable", retryable=True)
@@ -92,7 +106,7 @@ async def start_session(body: protocol.SessionRequest, request: Request) -> prot
     identity = document.identity
     try:
         if identity.secret:
-            subject = await _shared_secret(request, widget.widget_id, identity, body.host_token)
+            subject = await _shared_secret(request, widget, identity, body.host_token)
         else:
             subject = await verify_provider_token(
                 body.host_token, identity, widget.widget_id, request.app.state.provider_keys
@@ -115,6 +129,19 @@ def _store(request: Request) -> Store:
     if not store:
         raise Problem("assistant_unavailable", retryable=True)
     return store
+
+
+async def _connector(request: Request, tenant_id: str, name: str) -> PfConnector | None:
+    """The tenant's own connection profile of that name, set through the admin API, or else the platform's. One
+    connector per profile while it stays the same, so its PF sign-in is reused."""
+    sealed = await _sealed(request, tenant_id, "profile", name)
+    if not sealed:
+        return request.app.state.connectors.get(name)
+    held = request.app.state.tenant_connectors
+    key = (tenant_id, name)
+    if key not in held or held[key][0] != sealed:
+        held[key] = (sealed, PfConnector(PfProfile(**json.loads(sealed)), request.app.state.client))
+    return held[key][1]
 
 
 async def _widget(request: Request, session: Session) -> Widget:
@@ -199,7 +226,7 @@ async def send_message(
     widget = await _widget(request, session)
     limits, profile = widget.document.limits, widget.document.agent_profile
     request.app.state.limiter.check(f"messages:{session.user_id}", limits.messages_per_minute_per_session)
-    connector = request.app.state.connectors.get(profile)
+    connector = await _connector(request, widget.document.tenant_id, profile)
     if not connector:
         log.error("widget %s names agent profile %s, which is not configured", widget.widget_id, profile)
         raise Problem("assistant_unavailable", retryable=True)

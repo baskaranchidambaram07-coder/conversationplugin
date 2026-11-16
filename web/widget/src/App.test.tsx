@@ -236,3 +236,30 @@ test("a block type this chat does not know shows its plain text, or says it cann
   expect(await screen.findByText("Sales rose.")).toBeTruthy();
   expect(screen.getByText(t.unknownBlock)).toBeTruthy();
 });
+
+test("the console's preview draws the settings it is sent, only from the console's own address, and sends nothing", async () => {
+  const fetched = vi.fn();
+  vi.stubGlobal("fetch", fetched);
+  render(<App widgetId="" preview />);
+  const send = (origin: string, title: string) =>
+    window.dispatchEvent(
+      new MessageEvent("message", {
+        source: window,
+        origin,
+        data: { ucp: 1, type: "preview", config: { ...CONFIG, title }, scheme: "dark" },
+      }),
+    );
+
+  send("https://elsewhere.example", "Not ours");
+  send(location.origin, "Ask Riverside");
+
+  expect(await screen.findByRole("heading", { name: "Ask Riverside" })).toBeTruthy();
+  expect(screen.queryByText("Not ours")).toBeNull();
+  expect(document.documentElement.dataset.scheme).toBe("dark");
+  expect(screen.getByRole("textbox", { name: t.input })).toHaveProperty("disabled", true);
+  expect(screen.getByRole("textbox", { name: t.input }).getAttribute("placeholder")).toBe(t.previewPlaceholder);
+  expect(screen.getByRole("button", { name: "When does the library open?" })).toHaveProperty("disabled", true);
+  expect(fetched).not.toHaveBeenCalled();
+  vi.unstubAllGlobals();
+  delete document.documentElement.dataset.scheme;
+});

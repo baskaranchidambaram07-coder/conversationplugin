@@ -358,13 +358,13 @@ State on 12 November 2026 (pull requests 22 to 24 into `module/m03-rendering-eng
 - Bounds: an answer over 20,000 characters, with over 2,000 emphasis marks, or opening 32 containers on one line is shown as plain text (`tooHeavy` in `web/widget/src/render/registry.tsx`). Past those the parser takes seconds, or overflows its stack. Just under them, the slowest shapes found, a 1,000-row table and a 50-block answer each draw in under 2 s in the unit tests.
 - The example gallery is `web/widget/src/render/gallery/` (formatting, code, tables, and the injection corpus) together with the recorded PF answers. The unit tests draw every example whole and at every streamed prefix that ends beside Markdown syntax; the browser tests ask the fake gateway for each (`[gallery:name]`, `[injection]`) on all four targets, and the accessibility scan covers them.
 - Diagrams and charts, built on 13 and 14 November 2026:
-  - **Diagrams (T7, in part):** a finished draw.io or Excalidraw block is drawn as SVG, with "Copy for draw.io" and "Show code" (pull request 71). Mermaid is not drawn.
+  - **Diagrams (T7, in part):** a finished draw.io or Excalidraw block is drawn as SVG, with "Copy for draw.io" and "Show code" (pull request 71). Since 16 November 2026 a Mermaid `flowchart` or `graph` is drawn the same way, once its fence has closed (`web/widget/src/render/mermaid.ts`): read as text and laid out in layers by our own code, with its shapes, arrow kinds, arrow words and subgraphs. The Mermaid library is not used: it writes inline styles, which the chat's content policy refuses, and it would add about 1 MB. Other Mermaid diagrams (sequence, class, Gantt and so on) are shown as code.
   - **Charts (T6):** a fence tagged `chart` holds plain JSON: `type` (bar, line, area, pie or scatter), `title`, `x`, `y`, `labels`, `data`. The format is at the top of `web/widget/src/render/plot.ts`. It is checked whole, so nothing executable reaches the drawing. A chart still arriving, invalid, or over the limits (8 series, 3 for a scatter, 1 for a pie, 5,000 points) shows as code. A pie folds its smallest slices past seven into "Other".
   - **What a chart offers:** a legend for two or more series. Values are read by pointer or arrow keys, in a tip over the chart and through a live region. Screen readers hear a summary of each series' range, and "Show as table" gives the same numbers as a table that copies as CSV.
   - **Colours:** the categorical palette from the data-visualisation method, in its fixed order, stepped for each scheme. It is validated for colour-blind readers against our light and dark cards; the light step's three sub-3:1 colours are why the table view exists.
   - **Against D14:** drawn as our own SVG (4 KB compressed, loaded only with a chart), not with Recharts. Recharts would have added over 100 KB to the chat and a large dependency tree, as Mermaid would have for diagrams.
   - **PF agent:** an agent must be told the chart format in its instructions. Without that it answers with Markdown tables, which still render.
-- Deferred: T9 viewer, chart image download and stacked charts, Mermaid, T8 media and files, highlighting, downloads, screenshot comparison across themes and widths, the layout-jump check while streaming, and comparing an answer reloaded from history with its streamed version (needs M7).
+- Deferred: T9 viewer, chart image download and stacked charts, Mermaid diagrams other than flowcharts, T8 media and files, highlighting, downloads, screenshot comparison across themes and widths, the layout-jump check while streaming, and comparing an answer reloaded from history with its streamed version (needs M7).
 - For M4: serve the embed page with the content policy the test server uses, `default-src 'none'; script-src 'self'; style-src 'self'; font-src 'self'; connect-src 'self'; img-src 'self' <the widget's logo origin>; base-uri 'none'; form-action 'none'`, plus `frame-ancestors`. The gallery and the injection corpus cause no violation under it. This replaces the `https:` images noted under M2.
 
 **Tests**
@@ -773,6 +773,40 @@ State on 13 November 2026 (pull requests 51 to 54 into `module/m08-control-plane
   - **Backups:** `export` the configuration after each change.
 - For M15: the College's guide uses `new-id`, `new-secret` and `seed`.
 
+State on 14 November 2026 (pull requests 87 to 90 into `module/m08-control-plane`). At your request M8 now has its admin API, ahead of the console. Two decisions are yours: secrets set through the API are sealed in PostgreSQL, and the API is hosted on AWS with M9.
+
+- **Shape (D3):**
+  - The admin API is its own app, `uvicorn ucp.admin.app:create_app --factory`, from the same image under `/admin/v1`. The gateway never mounts it.
+  - Its description is exported to `protocol/admin-openapi.json` for M9.
+- **T8, sign-in and roles:**
+  - Administrators sign in with the company identity provider's token (`UCP_ADMIN_ISSUER`, `UCP_ADMIN_AUDIENCE`), checked by M5's provider code. Proven with Keycloak in the pipeline.
+  - The `administrators` table gives each person one role: `platform` (everything), `tenant` (their tenant, including its administrators and viewers) or `viewer` (reads their tenant). Another tenant's things answer 404.
+  - No cookies are used, browsers must come from `UCP_ADMIN_ORIGINS`, and requests are limited per address and per administrator.
+- **T1, T2, T3 and T7:**
+  - Tenants and widgets are records.
+  - A widget is created and edited as a draft with a revision number: a save or a publish from a stale revision is refused (`conflict`, 409), so two editors cannot overwrite each other unseen.
+  - Every fault is named at once, and a widget stays in its tenant.
+  - Publishing makes an unchangeable version under the draft's row lock. Rollback is refused if the version breaks today's rules, and comparison lists each changed setting.
+- **T4 and T5, secrets:**
+  - PF connection profiles and customers' shared secrets are sealed with AES-GCM (`ucp.vault`, keys in `UCP_SECRETS_KEY` from the secret store), bound to their tenant and name, and never returned.
+  - A new shared secret is shown once, and the one before it stays valid until the next.
+  - "Test connection" signs in to PF and reports only the outcome.
+  - The gateway opens a tenant's own secrets first, then the platform's settings.
+  - A widget may point only at its tenant's own secrets. A platform-level profile is the platform administrators' to choose.
+- **T9:** every change and its audit entry are written in one transaction. Entries may now name a tenant, an administrator or a secret instead of a widget version. A tenant's people read their own entries.
+- **T10:** `python -m ucp.admin first-administrator SUBJECT`. Import and export stay `ucp.widgets seed` and `export`.
+- **Tests:**
+  - `backend/tests/test_admin.py` (22 tests): the role × operation × tenant matrix over 28 operations, sign-in refusals, the console-origin check, limits, gateway separation, two editors, every fault at once, rollback and comparison, secrets never returned or stored in clear, the shared-secret rotation through the gateway, tenant isolation of secrets, test connection against the fake PF, a tenant's own profile answering through the gateway, the vault, and the description file.
+  - Plus admin sign-in with Keycloak (`test_keycloak.py`).
+- **Done condition, met:** the onboarding journey through the API (`e2e/gateway/onboarding-api.spec.ts`) passes on three engines. The operator creates a tenant and its administrator; that administrator sets and tests the tenant's PF profile, then creates and publishes a widget; a visitor chats on the customer's page; and the audit log tells the story. The role matrix is green.
+- **Deferred:**
+  - hosting on AWS, with its own address and firewall rules (with M9);
+  - feature switches and retention (they wait on the second release and the purge policy);
+  - re-sealing secrets under a new key;
+  - self-service sign-up, and usage and billing.
+- **For M9:** the console calls `/admin/v1` with the provider's token as a bearer, from an address in `UCP_ADMIN_ORIGINS`. Cross-origin headers for that address come with the console.
+- **For M14:** when the admin API is hosted, the gateway needs `UCP_SECRETS_KEY` too (`python -m ucp.vault new-key`), so it can open tenants' secrets. Run migration `0005` before the release.
+
 ---
 
 ### M9 — Admin console
@@ -799,6 +833,60 @@ Second release: usage view, audit-log viewer, storage and single sign-on set-up,
 - Other: accessibility scan and keyboard pass on every screen (administrators in government use it too); screenshot comparison; secrets never shown after saving; session timeout; the console cannot be framed by any site.
 
 **Done when** a new administrator completes onboarding from the console alone.
+
+State on 14 November 2026 (pull requests 92 to 96 into `module/m09-admin-console`). Your decisions: administrators sign in with Amazon Cognito, made by Terraform; the console is the chat's warm world, calmer; the preview is the chat's own component.
+
+- **Shape:**
+  - `web/console` (React), served by the admin app from `web/console/dist` at its own address. Its content policy names only the sign-in token endpoint and forbids framing (`frame-ancestors 'none'`).
+  - Sign-in is the authorization-code flow with PKCE at the company provider, whose endpoints the console reads from `/admin/v1/sign-in`. The token lives in the tab's session storage and the session ends a minute before it expires.
+  - Each widget is a track of six stations (Agent, Sites, Sign-in, Look, Install, Go live), each signed with its minutes, with the time left signed at the end. The direction is recorded in `.impeccable/surfaces/web-console.md` and `DESIGN.md`.
+- **T1:** sign-in, and an organisation picker for platform administrators. Viewers see everything and change nothing.
+- **T2:**
+  - The widget column shows each widget's state.
+  - A new widget walks the first three stations before its draft is made: a connection added and tested, the allowed sites, then sign-in.
+  - A save names the draft revision it started from, so a change someone else saved since is reported, not overwritten.
+  - Keys, passwords and shared secrets go straight to the admin API. A new shared secret is shown once.
+- **T3:**
+  - The Look editor sits beside the chat itself, served by the admin app at `/preview` (framed only by the console) and sent the draft by message as it is typed. Nothing in the preview is sent or published.
+  - Colour notes use the loader's and chat's own rules (`@ucp/protocol/brand`).
+  - The preview sits beside the other form stations too, from 1200px wide.
+- **T5:**
+  - The script tag, a page that is the assistant, the setup script for signed-in widgets, the portal endpoint's settings, and the tested token-signing code in six languages.
+  - The three content-policy entries (`script-src`, `frame-src`, `connect-src`).
+  - An installation checker, `POST /admin/v1/widgets/{w}/install-check`. It fetches one page of the widget's own sites over https, never a private address, checked again on every redirect, at most 1 MB in 10 seconds. It says whether the page answers, carries this widget's tag, and lets the chat in.
+- **T6:** Go live shows what the draft changes, setting by setting. It publishes the revision read, and lists the versions. Any version can be compared with the live one and made live again after a confirmation.
+- **Design finish review:** verdict "ship after fixes", and all eight fixes are made. Among them: the track tells the truth about a live widget, Look is done only once saved, focus moves to the opened station, and forced-colours mode keeps focus and edges.
+- **Tests:**
+  - Unit and UI (10): the track's states and minutes, sign-in with PKCE and the session's end, colour notes, and the changes between two versions.
+  - Integration: `backend/tests/test_admin.py` (24) adds the console's serving, its policy and the preview's; `test_install.py` (7) covers the checker's fence, redirects, size, tag and policy.
+  - End to end: `e2e/gateway/console.spec.ts`, 12 journeys on three engines. They cover sign-in and refusals, the new-widget wizard, editing with a viewer's read-only view, Look, both installs, the rollback journey, the keyboard alone, secrets never shown again, and the done condition. Each screen gets an accessibility scan.
+- **Found and fixed:** Firefox crashed in every accessibility scan of the console. It crashes when axe scans a section named by `aria-labelledby`, so the station card is named by `aria-label`.
+- **Done condition, met:** a new tenant administrator, made beforehand by a platform administrator, completes onboarding in the console alone, on three engines. They add and test a connection, add a site, choose sign-in, set the look, read the install code and publish; then a visitor chats on the customer's page. The journey records its time; a robot takes seconds. The first timed run by a person stays with M15.
+- **Deferred:**
+  - T4, feature and conversation-layout settings: history is a switch in Look; the rest wait for the second release's features;
+  - the iframe-only snippet: the chat needs the loader's handshake;
+  - form validation generated from the server's schema: the console checks the few fields a step needs, and the API names every fault;
+  - snippets compared with approved files, and screenshot comparison;
+  - a screen for people: a customer's administrators and viewers are given their roles through the admin API.
+
+State on 14 November 2026, later (pull requests 98 to 100; 99 into `develop`):
+
+- **Hosting on AWS, behind Cognito (98):**
+  - The admin API runs as a second container in the gateway's task, from the same image. It wakes, sleeps and releases with the gateway, and is not essential: if it stops, visitors keep their chat.
+  - The console has its own CloudFront address. Its secret header tells the load balancer to route the request to the admin container.
+  - Administrators sign in with the Cognito user pool `ucp-dev-admins` on Cognito's own pages, with no self sign-up and an authenticator app required. `infra/aws/console_admin.py` invites them.
+  - New secret `ucp-dev/secrets-key`, for both containers.
+  - The deployer policy gained three Cognito statements, limited to pools tagged for this project. An administrator published them as version 3.
+  - Rolled out from `develop` with a sleep and a wake. Smoke test 15 of 15; `npm run e2e:deployed` 5 of 5, including the hosted console (served behind Cognito's sign-in with PKCE, its page never cached, not framable). The first platform administrator was invited.
+- **Organisations and deleting (100):**
+  - Platform administrators make an organisation in the console.
+  - Deleting a widget (from Go live) or an organisation (from its page, once it has no widgets) asks for the name typed back.
+  - Published versions and the audit log never change, so a deletion is recorded rather than erased (migration `0006`):
+    - a deleted widget is no longer served or shown, whatever a release publishes for it afterwards;
+    - a deleted organisation's administrators lose their roles and its secrets are erased;
+    - versions, the audit trail and visitors' conversations stay until the purge policy.
+  - Tests: the role matrix gains the three deletions; two behaviour tests; a console journey on three engines.
+- **Found and fixed:** `dev.py wake` straight after a sleep failed while the database was still stopping. It now waits.
 
 ---
 
@@ -987,6 +1075,24 @@ State on 13 November 2026 (pull requests 56 to 62 into `module/m14-cloud-deploym
   - the sandbox's widgets go in `backend/deploy/widgets.dev.json`.
 - For M12: the leak search runs against the deployed stack (`npm run e2e:deployed`); running it on every build comes with M12.
 
+State on 15 November 2026: **a bundle for a customer's own AWS account** (T4; `feature/m14-customer-bundle`). By your decisions: customers run an image we publish, public, to GitHub's container registry; the live proof in a second environment was skipped.
+
+- **One Terraform for every environment:**
+  - `infra/aws/dev` is now `infra/aws/stack`, and `dev.py` is now `stack.py`;
+  - names, region and tags come from a settings file per environment (`infra/aws/environments/NAME.tfvars.json`), chosen with `--env`;
+  - GitHub's sign-in, the College's samples and the widget file are dev-only settings;
+  - customers' defaults: `db.t4g.small` with a standby in a second zone, and the database and the sign-in pool protected from deletion;
+  - organisations connect PF in the console, so the platform's own profile starts empty.
+- **Dev unchanged:** its plan shows no changes beyond Terraform's own record of twelve resources (now counted) and two sample pages whose comments name the new folder.
+- **Access for a new environment:** `stack.py --env NAME policies` rewrites the two policies for its name, region and tag, dropping the GitHub and our own user's statements (4,879 of 6,144 characters for the example).
+- **Release:** a tag `vX.Y.Z` runs `.github/workflows/release.yml`, which builds, scans and publishes `ghcr.io/baskaranchidambaram07-coder/conversationplugin:X.Y.Z`. `infra/aws/bundle.py X.Y.Z` then writes `dist/conversation-plugin-aws-X.Y.Z.zip`: the Terraform, the four scripts, the policies' sources and the guide (`infra/aws/SETUP.md`), with the image pinned by its digest.
+- **Checked without building anything:** a customer-shaped plan (57 resources, none of dev's extras); Terraform validation and the misconfiguration scan for dev's shape and the example's; the bundle unpacked and validated on its own.
+- **Not verified:**
+  - a live install from the bundle;
+  - the release pipeline, which first runs at the first tag;
+  - the guide's cost figures, which are from list prices as remembered.
+- **Not included:** customers' own domain names, a web application firewall, private subnets with NAT, and image signing.
+
 ---
 
 ### M15 — Developer experience and onboarding
@@ -1014,7 +1120,7 @@ State on 13 November 2026 (pull requests 66 to 70 into `module/m15-developer-exp
 - Built:
   - **T3, partly:** the College's samples in `examples/college`, a public page and a portal page with `portal.js`. They have no inline scripts, and their content policy names the assistant only in `script-src`, `frame-src` and `connect-src`. The token-signing code in six languages came with M5.
   - **T1 and T2, partly:** `docs/college-sandbox-guide.md`. It covers what we send and what we need, the public page, the portal page, the content policy, and what each of the loader's debug lines means.
-  - **The hosted copies** (`infra/aws/dev/samples.tf`):
+  - **The hosted copies** (`infra/aws/stack/samples.tf`):
     - a private bucket behind a CloudFront address of its own, with the pages filled in by Terraform. `python infra/aws/deploy.py --samples-url` prints the address. It changes whenever the site is rebuilt: a `dev.py sleep` run from a branch without `samples.tf` removed the site on 13 November, and the next wake rebuilt it at a new address;
     - the portal signs in under any name through a CloudFront function (`functions/demo-token.js`), which signs for the demo widget only;
     - the College's widget (`both`) and the demo widget (`signed_in`) are in `widgets.dev.json`, allowed on the samples' site through `UCP_SAMPLES_ORIGIN`. A widget file may now name `${UCP_…}` settings.
@@ -1120,6 +1226,8 @@ For each new cloud the work is two small adapters, one Terraform stack, and a re
 | First customer | Goodenough College, London: a registered educational charity housing international postgraduate students. First region London, English first. It is neither a public body nor an FCA-regulated firm; see `government-readiness.md` section 2.9. |
 | Browser exposure | No PF or connection detail reaches the browser (R13, D15, M12-T11). |
 | Abuse controls | Limits and quotas in the first release (M12-T4). |
+| Admin API secrets (14 Nov) | PF connection profiles and shared secrets set through the admin API are sealed with AES-GCM in PostgreSQL, under keys from the secret store. The app's AWS role keeps read-only access to Secrets Manager, and the code stays free of cloud libraries. |
+| Admin API hosting (14 Nov) | Built and tested on this machine and in the pipeline now; hosted on AWS with the console (M9), behind a company identity-provider registration. |
 
 ### Still open
 

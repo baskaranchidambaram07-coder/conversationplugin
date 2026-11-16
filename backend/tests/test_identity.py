@@ -102,8 +102,9 @@ def test_a_good_host_token_gives_the_hosts_user_id():
 
 
 def test_clock_differences_up_to_the_tolerance_are_accepted():
-    assert check(host_token(iat=now - 400, exp=now - LEEWAY + 5)) == "resident-42"
-    assert check(host_token(nbf=now + LEEWAY - 5)) == "resident-42"
+    at = int(time.time())  # not the module's `now`: 5 seconds of margin must not depend on how long the run took
+    assert check(host_token(iat=at - 400, exp=at - LEEWAY + 5)) == "resident-42"
+    assert check(host_token(nbf=at + LEEWAY - 5)) == "resident-42"
 
 
 def test_during_a_secret_rotation_both_secrets_are_accepted_named_or_not():

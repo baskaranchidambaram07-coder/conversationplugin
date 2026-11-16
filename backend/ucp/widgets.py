@@ -248,7 +248,8 @@ async def run(store: Store | None, argv: list[str]) -> list[str]:
         return [f"{r.version}  {r.published_at:%Y-%m-%d %H:%M} UTC  {r.published_by or 'unknown'}" for r in rows]
     entries = await store.audit_entries(args.widget, args.limit)
     return [
-        f"{e.at:%Y-%m-%d %H:%M:%S} UTC  {e.actor}  {e.action}  {e.widget_id} version {e.version}"
+        f"{e.at:%Y-%m-%d %H:%M:%S} UTC  {e.actor}  {e.action}  "
+        + (f"{e.widget_id} version {e.version}" if e.widget_id else f"{e.tenant_id} {json.dumps(e.detail)}")
         + (f"  (as version {e.detail['to_version']})" if e.detail and "to_version" in e.detail else "")
         for e in entries
     ]

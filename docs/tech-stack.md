@@ -14,7 +14,7 @@ Status: 12 November 2026. Everything marked "verified" was run on that date, on 
 | Container image | Verified in the pipeline: it builds, with the loader and chat inside, and answers | Nothing |
 | Local database | PostgreSQL 17 runs while a test command runs, then stops | Your decision on running it as a Windows service |
 | Infrastructure tool | Terraform 1.17.2 builds the dev environment (`infra/aws`); Trivy 0.76.2 checks it | Nothing |
-| AWS access for development | Verified: 14 needed actions allowed, 8 forbidden ones refused (deployer policy version 2) | Nothing |
+| AWS access for development | Verified: 14 needed actions allowed, 8 forbidden ones refused (deployer policy version 2) | An administrator to publish the deployer policy's Cognito statements, for the hosted console (`infra/aws/iam`) |
 | Dev environment on AWS | Built and proven on 13 November 2026, run on demand (`infra/aws/README.md`) | Production in London |
 | Purple Fabric staging | Verified by live capture | Remaining questions in `pf-capability-sheet.md` |
 | Production in London | Not started | Account access and web addresses |
@@ -54,11 +54,12 @@ The gateway reads its settings from the environment when it starts:
 | Runtime and packages | Node with npm workspaces | 24.11 / 11.6 | Already on the build machine; no extra package manager |
 | Language | TypeScript | 7.0 | Strict mode throughout |
 | Chat interface | React | 19.3 | Your stated preference |
+| Admin console | React and Vite, as the chat (`web/console`) | 19.3 / 8.3 | Served by the admin app; signs in at the company provider with PKCE in a few lines, so it needs no sign-in library |
 | Build | Vite | 8.3 | Builds the chat; also runs the unit tests |
 | Loader build | esbuild | 0.28 | Produces one small file with no dependencies |
 | Unit tests | Vitest with Testing Library and jsdom | 5.1 / 16.3 / 29.1 | Component tests without a browser |
 | Browser tests | Playwright | 1.65 | Chromium 158, Firefox 159, WebKit 27.2, plus phone emulation |
-| Accessibility checks | axe-core for Playwright | 4.14 | A WCAG 2.2 AA scan of every chat state and the launcher; serious or critical findings fail |
+| Accessibility checks | axe-core for Playwright | 4.14 | A WCAG 2.2 AA scan of every chat state, the launcher and every console screen; serious or critical findings fail |
 | Chat typeface | Nunito, self-hosted (`@fontsource-variable/nunito`) | 5.3 | Open licence; served from our origin, so visitors' addresses never go to a font host |
 | Message format types | json-schema-to-typescript | 16.0 | Turns the schema the backend exports into TypeScript types (`protocol/src/v1.ts`) |
 | Schema checks in tests | Ajv with ajv-formats | 8.20 / 3.0 | Checks the shared example files against the schema, so the TypeScript side reaches the same verdict as the Python models |
@@ -100,20 +101,21 @@ Region `us-east-1`, built with Terraform 1.17.2. Every resource name starts with
 | Service | Purpose |
 |---|---|
 | VPC across two zones, with public and private subnets and security groups | The gateway in a public subnet with no NAT (your choice for dev), reachable only from the load balancer; the database private, with no route out |
-| CloudFront | HTTPS on an address AWS provides; caches the chat's files; stays while asleep and answers that the environment is asleep |
+| CloudFront | HTTPS on an address AWS provides; caches the chat's files; stays while asleep and answers that the environment is asleep. The admin console has an address of its own |
 | Application load balancer | Only CloudFront's addresses with its secret header get in; holds long streamed replies open; removed while asleep |
-| ECS on Fargate | The gateway, one task of 1 vCPU and 2 GB; it serves the loader and the chat as well as the API; removed while asleep |
+| ECS on Fargate | The gateway, one task of 1 vCPU and 2 GB; it serves the loader and the chat as well as the API. The admin API and console run beside it in the same task. Removed while asleep |
+| Cognito | The console's administrators: a user pool with no self sign-up and an authenticator app required, on Cognito's own sign-in pages |
 | RDS for PostgreSQL 17 | Conversation history and configuration; encrypted, seven days of point-in-time backups; stopped while asleep |
 | ECR | The gateway's images, scanned on push, commit tags fixed |
-| Secrets Manager | The database connection, session keys, host secrets and the PF profile, under `ucp-dev/` |
+| Secrets Manager | The database connection, session keys, host secrets, the PF profile and the key that seals what administrators set, under `ucp-dev/` (an environment's name elsewhere) |
 | CloudWatch Logs and two alarms | The gateway's logs; alarms for server errors and no healthy gateway |
 | IAM roles under a permissions boundary | What the running service and the pipeline may do |
 | GitHub sign-in to AWS | Lets the pipeline deploy without stored access keys |
 | S3 | Terraform's state only (the gateway serves the loader and chat itself) |
 
-The environment runs on demand: `python infra/aws/dev.py wake` and `sleep`. My estimate is about US$0.11 an hour awake and about US$5 a month asleep, from memory of list prices and not checked against the pricing pages.
+The environment runs on demand: `python infra/aws/stack.py wake` and `sleep`. My estimate is about US$0.11 an hour awake and about US$5 a month asleep, from memory of list prices and not checked against the pricing pages.
 
-Not part of the base version: a web application firewall, our own web addresses with certificates, scheduled jobs. Production in London is a second run of the same Terraform with different parameters.
+Not part of the base version: a web application firewall, our own web addresses with certificates, scheduled jobs. Production in London is a second run of the same Terraform with different parameters. A customer's own AWS account is too: the bundle (`infra/aws/bundle.py`, guide `infra/aws/SETUP.md`) runs the image that a version tag publishes to GitHub's container registry.
 
 ## 6. What was put on the build machine
 
@@ -169,6 +171,10 @@ After `npm install` on this Windows machine, check `package-lock.json` before co
 | A new widget ID; a new shared secret (`id:secret`) | `cd backend && uv run python -m ucp.widgets new-id`, `new-secret [--id k2]` |
 | Test the connection to PF with each profile in `UCP_AGENT_PROFILES` | `cd backend && UCP_AGENT_PROFILES=... uv run python -m ucp.pf check [profile …]` |
 | Regenerate the API description after changing a route | `cd backend && uv run python -m ucp.gateway.openapi` |
+| Run the admin API (M8), on its own | `cd backend && uv run uvicorn ucp.admin.app:create_app --factory --port 8201` (with `UCP_DATABASE_URL`, `UCP_ADMIN_ISSUER`, `UCP_ADMIN_AUDIENCE`, `UCP_SECRETS_KEY`) |
+| Make the first platform administrator | `cd backend && uv run python -m ucp.admin first-administrator SUBJECT [--label NAME]` (with `UCP_DATABASE_URL`, `UCP_ADMIN_ISSUER`) |
+| A new key to seal secrets set through the admin API | `cd backend && uv run python -m ucp.vault new-key` (put it first in `UCP_SECRETS_KEY`) |
+| Regenerate the admin API's description | `cd backend && uv run python -m ucp.admin.openapi` |
 | Check the token-signing snippets this machine can run (the pipeline runs all six) | `cd backend && uv run python ../examples/token-signing/check.py` |
 | Regenerate the message format after changing `backend/ucp/protocol.py` | `cd backend && uv run python -m ucp.protocol && cd .. && npm run generate --workspace @ucp/protocol` |
 | Run the fake PF on port 8100 (behaviours are listed in `backend/fakepf/app.py`) | `cd backend && uv run uvicorn fakepf.app:app --port 8100` |
@@ -176,7 +182,9 @@ After `npm install` on this Windows machine, check `package-lock.json` before co
 | Install or update the test browsers | `PLAYWRIGHT_BROWSERS_PATH="$PWD/.tools/ms-playwright" npx playwright install` |
 | Terraform | `.tools/terraform/terraform.exe` |
 | Check AWS access | `bash infra/aws/iam/verify-access.sh` |
-| The dev environment: wake, sleep, status; build or tear down from code | `python infra/aws/dev.py wake` (`sleep`, `status`, `build`, `teardown`, `plan`) |
+| The dev environment: wake, sleep, status; build or tear down from code | `python infra/aws/stack.py wake` (`sleep`, `status`, `build`, `teardown`, `plan`) |
+| Another environment, such as a customer's (settings in `infra/aws/environments/NAME.tfvars.json`) | `python infra/aws/stack.py --env NAME up` (`policies`, `bootstrap`, `status`, `admin EMAIL`, `sleep`, `teardown`) |
+| The bundle a customer installs from, after the tag `vVERSION` has published the image (`infra/aws/README.md`) | `python infra/aws/bundle.py VERSION` |
 | Release to dev by hand, or roll back to an earlier commit's image | `python infra/aws/deploy.py --image <commit> --by <name>` |
 | The dev environment's address | `python infra/aws/deploy.py --url` |
 | The College's samples, as we host them | `python infra/aws/deploy.py --samples-url` |

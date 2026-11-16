@@ -24,11 +24,13 @@ correlation: ContextVar[str] = ContextVar("correlation", default="r_none")
 
 type Code = Literal[
     "invalid_request",
+    "sign_in_required",
     "session_expired",
     "forbidden",
     "site_not_allowed",
     "not_found",
     "turn_in_progress",
+    "conflict",
     "rate_limited",
     "assistant_unavailable",
     "internal_error",
@@ -37,11 +39,13 @@ type Code = Literal[
 # Our wording and HTTP status for each code. The chat shows its own words; these are for API users and support.
 CODES: dict[str, tuple[int, str]] = {
     "invalid_request": (400, "The request is not valid."),
+    "sign_in_required": (401, "Sign in to continue."),  # the admin API (M8)
     "session_expired": (401, "The session has ended. Start a new one."),
     "forbidden": (403, "This is not allowed."),
     "site_not_allowed": (403, "This site may not show this assistant."),
     "not_found": (404, "Not found."),
     "turn_in_progress": (409, "An answer is still on its way in this conversation."),
+    "conflict": (409, "Someone else changed this first. Reload it, then try again."),  # the admin API (M8)
     "rate_limited": (429, "Too many requests. Wait a moment, then try again."),
     "assistant_unavailable": (503, "The assistant is not available just now. Try again shortly."),
     "internal_error": (500, "Something went wrong on our side."),

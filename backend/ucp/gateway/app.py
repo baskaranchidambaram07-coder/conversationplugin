@@ -17,6 +17,7 @@ from ucp.sessions import Keys, Limiter
 from ucp.settings import Settings
 from ucp.store import Store
 from ucp.turns import Turns
+from ucp.vault import Sealed, Vault
 from ucp.widgets import Widgets
 
 
@@ -36,6 +37,8 @@ def create_app(settings: Settings | None = None) -> FastAPI:
                 app.state.store = Store(engine)
                 app.state.widgets = Widgets(app.state.store)
                 app.state.turns = Turns(app.state.store)
+                if settings.secrets_key:  # secrets set through the admin API (M8), opened only here
+                    app.state.sealed = Sealed(app.state.store, Vault(settings.secrets_key))
             # One client for every PF call. PF stays quiet for seconds before the first word, so reads wait 60 s.
             client = await stack.enter_async_context(
                 httpx2.AsyncClient(timeout=httpx2.Timeout(10, read=60), limits=httpx2.Limits(max_connections=500))
@@ -43,6 +46,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
             profiles = json.loads(settings.agent_profiles or "{}")
             app.state.connectors = {name: PfConnector(PfProfile(**value), client) for name, value in profiles.items()}
             app.state.provider_keys = ProviderKeys(client)
+            app.state.client = client
             yield
             # Answers still being written finish and are stored before the connections they need close.
             running = getattr(app.state, "turns", None) and app.state.turns.tasks
@@ -62,6 +66,8 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     pipeline.install(app)
     app.state.keys = Keys(settings.session_keys) if settings.session_keys else None
     app.state.limiter = Limiter()
+    app.state.sealed = None
+    app.state.tenant_connectors = {}
     app.state.host_secrets = {
         name: Keys(value).keys for name, value in json.loads(settings.host_secrets or "{}").items()
     }
