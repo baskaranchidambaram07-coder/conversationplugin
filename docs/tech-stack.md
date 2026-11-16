@@ -83,7 +83,7 @@ GitHub Actions runs eight jobs on every pull request and on every push to `main`
 | Web checks, builds and browser tests | Type checks, unit tests, both builds, the loader size limit, then Playwright on all four targets |
 | Gateway journeys and load | Runs the real chat against the real gateway, with PostgreSQL and the fake PF, on three browser engines. Then runs the API journey script and the load test, which checks the gateway adds at most 150 ms to the first word at the 95th percentile. It runs 10 visitors at once, since more would measure the shared runner rather than the gateway, and judges the median of three runs' 95th percentiles; 25 and more are certified on the deployed stack (M14) |
 | Sign-in through a real identity provider | Starts Keycloak in a container and signs users in through the gateway with its tokens, including a signing-key rotation (`backend/tests/test_keycloak.py`) |
-| Token-signing snippets | Installs Java, .NET, Go and PHP beside Python and Node, runs all six snippets, and checks every token with the gateway's own code |
+| Token-signing snippets | Installs Java, .NET, Go and PHP beside Python and Node, runs all six snippets, and checks every token with the gateway's own code. Then builds the nine language sample sites and checks each page (`examples/sites.py --all`; the runner already has Ruby, GCC and G++) |
 | Container image builds and starts | Builds the gateway image from the repository root (a Node stage builds the loader and chat into it), checks that it answers, sends no server header and serves the loader |
 | Infrastructure code checks | Terraform's format and validity, and a Trivy misconfiguration scan of the dev environment asleep and awake; accepted findings carry their reason inline |
 | Secret scan | Runs gitleaks over the whole history |
@@ -128,6 +128,8 @@ Nothing was installed system-wide and no service was registered. Everything the 
 | `.tools\pgdata\` | The local database files |
 | `.tools\pg-superuser.txt`, `.tools\pg-app.txt` | Generated database passwords |
 | `.tools\ms-playwright\` | The Playwright browsers |
+| `.tools\php\`, `jdk\`, `dotnet\`, `ruby\`, `go\`, `mingw64\` | For the language sample sites (`examples/sites.py`): PHP 8.5.12, Temurin JDK 21.0.13, .NET SDK 8.0.428, Ruby 4.0.9 (RubyInstaller, no devkit), Go 1.27.4, GCC 16.2.0 for C and C++ (WinLibs MinGW-w64). Not on the PATH; the script adds them |
+| `.tools\home\` | Those toolchains' caches: the script points their home and app-data folders here |
 | `backend\.venv\`, `node_modules\` | Python and Node packages |
 
 The download caches of uv and npm stay where those tools keep them, in the user profile.
@@ -188,6 +190,7 @@ After `npm install` on this Windows machine, check `package-lock.json` before co
 | Release to dev by hand, or roll back to an earlier commit's image | `python infra/aws/deploy.py --image <commit> --by <name>` |
 | The dev environment's address | `python infra/aws/deploy.py --url` |
 | The College's samples, as we host them | `python infra/aws/deploy.py --samples-url` |
+| The language sample sites: build and check all nine; upload them beside the College's samples (the address is printed) | `python examples/sites.py --all`, `python examples/sites.py --publish` |
 | Smoke-test the dev environment | `cd backend && uv run python smoke.py "$(python ../infra/aws/deploy.py --url)" w_smoke` |
 | Set the PF profile, rotate session keys, or make a customer's shared secret | `cd backend && uv run --env-file ../.env python ../infra/aws/secret_store.py agent-profiles` (`session-keys`, `host-secret NAME [--rotate]`) |
 | Proofs on the deployed stack | `uv run python ../infra/aws/latency.py`, `rollout_check.py`, `python infra/aws/restore_rehearsal.py`, `npm run e2e:deployed` |

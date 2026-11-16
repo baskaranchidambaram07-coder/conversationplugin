@@ -25,3 +25,7 @@ Universal Conversational Embed SDK Architecture.png
 infra/aws/environments/*.backend.hcl
 infra/aws/iam/out/
 infra/aws/stack/release.auto.tfvars.json
+
+# The language samples: what `dotnet run` builds (examples/sites.py).
+examples/**/bin/
+examples/**/obj/

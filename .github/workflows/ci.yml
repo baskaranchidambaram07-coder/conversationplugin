@@ -178,6 +178,8 @@ jobs:
       # Every snippet signs tokens with the shared test settings; each is checked exactly as the gateway checks it.
       - run: uv run python ../examples/token-signing/check.py --all
         working-directory: backend
+      # The language sample sites: each of the nine writes its page, and every page carries the assistant's script tag.
+      - run: python examples/sites.py --all
 
   image:
     name: Container image builds and starts
