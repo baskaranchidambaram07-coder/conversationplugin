@@ -1,0 +1,22 @@
+<?php
+// The site's one page. The build renders it once (php index.php > php.html) and S3 serves the result;
+// on a PHP server the same file works as it is.
+?>
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Built with PHP (sample)</title>
+<link rel="stylesheet" href="site.css">
+</head>
+<body>
+<p class="sample">Sample page. It is not a customer website.</p>
+<main>
+<h1>Built with PHP</h1>
+<p>PHP wrote this page when the site was built, and S3 serves it as plain HTML. It has no assistant yet. To add one, put the script tag from the admin console at the end of the page.</p>
+<p class="made">Made by <code>php index.php</code> on PHP <?= PHP_VERSION ?>.</p>
+</main>
+<!-- The assistant's script tag from the admin console goes here. -->
+</body>
+</html>
