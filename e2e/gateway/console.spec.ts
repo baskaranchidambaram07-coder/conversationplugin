@@ -546,13 +546,13 @@ test("home shows where things stand: the figures, an organisation's widgets, and
   await expect(page.getByRole("link", { name: "Home" })).toHaveAttribute("aria-current", "page");
   await expect(page.getByLabel("At a glance")).toContainText("Organisations");
 
-  const organisations = page.getByRole("region", { name: "Organisations" });
+  const organisations = page.locator(".panel", { has: page.getByRole("heading", { name: "Organisations" }) });
   await expect(organisations.getByRole("link", { name: "New organisation" })).toBeVisible();
   await page.getByRole("combobox", { name: "Organisation" }).selectOption({ label: "t_e2e" }); // the open one always shows
   await expect(page.getByRole("heading", { level: 1, name: "t_e2e" })).toBeVisible();
   await expect(organisations.getByRole("button", { name: /^t_e2e/ })).toHaveAttribute("aria-current", "true");
   await expect(organisations.getByRole("button", { name: /^t_e2e/ })).toContainText(/\d+ live/);
-  const widgets = page.getByRole("region", { name: "Widgets in t_e2e" });
+  const widgets = page.locator(".panel", { has: page.getByRole("heading", { name: "Widgets in t_e2e" }) });
   await widgets.getByRole("link", { name: /Ask the College/ }).click();
   await expect(page.getByRole("heading", { level: 1, name: "Ask the College" })).toBeVisible();
   await page.getByRole("link", { name: "UCP Console" }).click(); // the name in the bar goes home too

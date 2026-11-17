@@ -70,10 +70,10 @@ export function Home(props: {
       </dl>
 
       <div className="panels">
-        <section className="panel" aria-labelledby="home-widgets">
-          <header>
-            <h2 id="home-widgets">{t.widgetsIn(name)}</h2>
-          </header>
+        <div className="panel">
+          <div className="panel-head">
+            <h2>{t.widgetsIn(name)}</h2>
+          </div>
           {rows.length ? (
             <ul className="widgets">
               {rows.map((row) => (
@@ -91,17 +91,17 @@ export function Home(props: {
               {t.noWidgets} {canEdit && t.firstWidget}
             </p>
           )}
-        </section>
+        </div>
 
         {platform && (
-          <section className="panel" aria-labelledby="home-organisations">
-            <header>
-              <h2 id="home-organisations">{t.organisations}</h2>
+          <div className="panel">
+            <div className="panel-head">
+              <h2>{t.organisations}</h2>
               <a className="primary" href="/organisations/new" onClick={onRoute("/organisations/new")}>
                 <Glyph path={ICON.plus} />
                 {t.newOrganisation}
               </a>
-            </header>
+            </div>
             <p className="legend" aria-hidden="true">
               {STATES.map((state) => (
                 <span key={state}>
@@ -138,7 +138,7 @@ export function Home(props: {
                 {t.showAllOrganisations(ranked.length)}
               </button>
             )}
-          </section>
+          </div>
         )}
       </div>
       {children}
