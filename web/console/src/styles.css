@@ -21,6 +21,9 @@
   --warn: #b54708;
   --shadow: 0 1px 2px rgb(16 24 40 / 0.05);
   --field: #ffffff;
+  --live: #079455;
+  --waiting: #dc6803;
+  --setup: #7b86ad;
   --chevron: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%236b7280' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9.5l6 6 6-6'/%3E%3C/svg%3E");
   color-scheme: light;
 }
@@ -45,6 +48,12 @@
     --warn: #fdb022;
     --shadow: 0 0 #0000; /* none, but still a valid entry in a shadow list */
     --field: #15171a;
+  --live: #079455;
+  --waiting: #dc6803;
+  --setup: #6b78a6;
+    --live: #079455;
+    --waiting: #dc6803;
+    --setup: #6b78a6;
     --chevron: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%239aa1a9' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9.5l6 6 6-6'/%3E%3C/svg%3E");
     color-scheme: dark;
   }
@@ -255,6 +264,9 @@ button {
   font-weight: 600;
   font-size: 15px;
   letter-spacing: -0.01em;
+  color: inherit;
+  text-decoration: none;
+  border-radius: 6px;
 }
 
 .mark span {
@@ -267,7 +279,7 @@ button {
   flex-wrap: wrap;
   align-items: center;
   gap: 8px;
-  margin-inline-start: 16px;
+  margin-inline-start: auto; /* the organisation, the theme and the profile sit together at the bar's end */
   font-size: 14px;
   font-weight: 500;
 }
@@ -289,22 +301,11 @@ button {
   background: var(--surface) var(--chevron) no-repeat right 10px center / 16px;
 }
 
-.who {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  margin-block: 0;
-  margin-inline-start: auto;
-  color: var(--muted);
-  font-size: 14px;
-  overflow-wrap: anywhere;
-}
 
 /* System, Light or Dark: a small segmented control at the bar's end, before who is signed in. */
 .theme {
   display: inline-flex;
   gap: 2px;
-  margin-inline-start: auto;
   padding: 2px;
   border-radius: 8px;
   box-shadow: inset 0 0 0 1px var(--line);
@@ -327,8 +328,58 @@ button {
   color: var(--accent-text);
 }
 
-.theme + .who {
-  margin-inline-start: 0;
+/* The profile: a round button at the bar's end, opening who is signed in and Sign out. */
+.profile {
+  position: relative;
+}
+
+.avatar {
+  display: grid;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: var(--accent-soft);
+  color: var(--accent-text);
+}
+
+.avatar:hover,
+.avatar[aria-expanded="true"] {
+  box-shadow: 0 0 0 2px var(--surface), 0 0 0 4px var(--accent-ring);
+}
+
+.avatar .glyph {
+  width: 18px;
+  height: 18px;
+}
+
+.menu {
+  position: absolute;
+  inset-block-start: calc(100% + 8px);
+  inset-inline-end: 0;
+  z-index: 10;
+  display: grid;
+  gap: 12px;
+  justify-items: start;
+  width: max-content;
+  max-width: min(340px, calc(100vw - 32px));
+  padding: 14px;
+  border-radius: 10px;
+  background: var(--surface);
+  box-shadow: 0 0 0 1px var(--line), 0 12px 32px -12px rgb(0 0 0 / 0.3);
+}
+
+.menu[hidden] {
+  display: none; /* the grid above would otherwise outweigh the attribute */
+}
+
+.menu .who {
+  margin: 0;
+  color: var(--ink);
+  font-size: 13.5px;
+  overflow-wrap: anywhere;
 }
 
 .shell {
@@ -341,6 +392,24 @@ button {
   padding: 20px 12px;
   background: var(--surface);
   border-inline-end: 1px solid var(--line);
+}
+
+.column a.home-link {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-block-end: 14px;
+  font-weight: 500;
+}
+
+.home-link .glyph {
+  width: 18px;
+  height: 18px;
+  color: var(--muted);
+}
+
+.home-link[aria-current="page"] .glyph {
+  color: var(--accent-text);
 }
 
 .column h2 {
@@ -466,6 +535,225 @@ button {
 }
 
 /* The track: a stepper of six stations, each with its minutes; the time left signed at its end. */
+
+/* Home: the organisation's figures in one strip split by hairlines, then its widgets and, for platform
+   administrators, every organisation's widgets by state. */
+.home {
+  display: grid;
+  gap: 0;
+}
+
+.figures {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 1px;
+  margin: 0 0 24px;
+  overflow: hidden;
+  border-radius: 12px;
+  background: var(--line);
+  box-shadow: 0 0 0 1px var(--line), var(--shadow);
+}
+
+.figure {
+  display: grid;
+  gap: 6px;
+  padding: 16px 20px;
+  background: var(--surface);
+}
+
+.figure dt {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.figure dd {
+  margin: 0;
+  font-size: 28px;
+  font-weight: 600;
+  line-height: 1.1;
+  letter-spacing: -0.02em;
+  font-variant-numeric: tabular-nums;
+}
+
+.panels {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 20px;
+  align-items: start;
+  margin-block-end: 28px;
+}
+
+.panel {
+  display: grid;
+  gap: 14px;
+  padding: 20px;
+  border-radius: 12px;
+  background: var(--surface);
+  box-shadow: 0 0 0 1px var(--line), var(--shadow);
+}
+
+.panel-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.panel h2 {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.panel .note {
+  margin: 0;
+}
+
+.panel > .quiet {
+  justify-self: start;
+  margin-inline-start: -10px;
+}
+
+.widgets,
+.organisations {
+  display: grid;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.widgets li + li,
+.organisations li + li {
+  border-block-start: 1px solid var(--line);
+}
+
+.widgets a {
+  display: grid;
+  grid-template-columns: 10px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 8px;
+  border-radius: 8px;
+  color: inherit;
+  text-decoration: none;
+}
+
+.widgets a:hover,
+.organisations button:hover {
+  background: var(--hover);
+}
+
+.widgets b {
+  font-weight: 500;
+  overflow-wrap: anywhere;
+}
+
+.widgets small {
+  color: var(--muted);
+  font-size: 12.5px;
+}
+
+.state {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--setup);
+}
+
+.state.live,
+.swatch-live {
+  background: var(--live);
+}
+
+.state.waiting,
+.swatch-waiting {
+  background: var(--waiting);
+}
+
+.swatch-setup {
+  background: var(--setup);
+}
+
+.legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 16px;
+  margin: 0;
+  color: var(--muted);
+  font-size: 12.5px;
+}
+
+.legend span {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.legend i,
+.figure dt i {
+  width: 10px;
+  height: 10px;
+  border-radius: 3px;
+}
+
+.organisations button {
+  display: grid;
+  grid-template-columns: minmax(0, 11rem) minmax(0, 1fr);
+  grid-template-areas: "name bar" "name counts";
+  align-items: center;
+  gap: 4px 16px;
+  width: 100%;
+  padding: 10px 8px;
+  border: 0;
+  border-radius: 8px;
+  background: none;
+  text-align: start;
+}
+
+.organisations button[aria-current="true"] {
+  background: var(--accent-soft);
+}
+
+.organisations b {
+  grid-area: name;
+  font-weight: 500;
+  overflow-wrap: anywhere;
+}
+
+/* A stacked bar of the organisation's widgets by state, its length against the largest organisation: 8px tall,
+   rounded ends, a 2px gap of the panel between states. */
+.bar {
+  grid-area: bar;
+  display: flex;
+  gap: 2px;
+  min-inline-size: 4px;
+  height: 8px;
+  overflow: hidden;
+  border-radius: 4px;
+}
+
+.bar:empty {
+  background: var(--line);
+}
+
+.bar i {
+  flex-basis: 0;
+  min-width: 3px;
+}
+
+.organisations small {
+  grid-area: counts;
+  color: var(--muted);
+  font-size: 12.5px;
+}
+
+.organisations button[aria-current="true"] small {
+  color: color-mix(in srgb, var(--ink) 72%, var(--accent-soft));
+}
 
 /* The track and, at its end, the time left (or the live version), set off by a hairline. */
 .journey {
@@ -1025,6 +1313,12 @@ legend {
   color: var(--accent-text);
 }
 
+@media (max-width: 1099.98px) {
+  .panels {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
 @media (max-width: 1199.98px) {
   .beside {
     grid-template-columns: minmax(0, 1fr);
@@ -1270,19 +1564,33 @@ code {
 
   .theme {
     order: 1;
-    margin-inline-start: 0;
+  }
+
+  .profile {
+    order: 2;
   }
 
   .tenant {
-    order: 2;
-    flex-basis: 100%;
-  }
-
-  .who {
     order: 3;
     flex-basis: 100%;
-    justify-content: space-between;
-    font-size: 13px;
+    margin-inline-start: 0;
+  }
+
+  .tenant select {
+    flex: 1;
+  }
+
+  .organisations button {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-areas: "name" "bar" "counts";
+  }
+
+  .figures {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .figure:last-child:nth-child(odd) {
+    grid-column: 1 / -1; /* no empty cell under an odd count */
   }
 
   .column {
