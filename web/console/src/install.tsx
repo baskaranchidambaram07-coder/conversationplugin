@@ -141,7 +141,7 @@ export function Install(props: { widgetId: string; gateway: string | null; docum
       <section>
         <h3>{t.policyTitle}</h3>
         <p className="hint">{t.policyHint}</p>
-        <Snippet label={t.policyLabel} code={`script-src ${gateway}\nframe-src ${gateway}\nconnect-src ${gateway}`} />
+        <Snippet label={t.policyLabel} code={`script-src ${gateway}\nframe-src ${gateway}\nconnect-src ${gateway}\nimg-src ${gateway}`} />
       </section>
       <section>
         <h3>{t.checkTitle}</h3>

@@ -1,14 +1,16 @@
-/* The chat, in the world of DESIGN.md. Logical properties throughout, so a right-to-left language mirrors. */
-/* Each colour has a light and a dark value; the widget's color_scheme, stamped on <html> by the gateway, picks. */
+/* The chat: a calm AI chat window in the manner of the familiar assistants, wearing the customer's colour on what
+   can be pressed and their picture beside each answer. Logical properties throughout, so a right-to-left language
+   mirrors. Each colour has a light and a dark value; the widget's color_scheme, stamped on <html>, picks. */
 :root {
-  --ground: light-dark(#fbf3ea, #1c1815);
-  --sand: light-dark(#e7dacb, #3b332d);
-  --ink: light-dark(#2b241f, #f2e9df);
-  --umber: light-dark(#6f625a, #b5a69a);
-  --paper: light-dark(#ffffff, #27211d);
-  --shade: light-dark(#2b241f, #000000);
+  --ground: light-dark(#fcfcfb, #262624);
+  --line: light-dark(#e6e4e0, #3e3e3a);
+  --ink: light-dark(#1f1e1d, #f5f4ef);
+  --muted: light-dark(#6b6a68, #b0aea5);
+  --surface: light-dark(#ffffff, #30302e);
+  --bubble: light-dark(#f0efeb, #393936);
+  --shade: #000000;
   --brand: var(--ink);
-  --on-brand: var(--paper);
+  --on-brand: var(--surface);
   --gutter: 16px;
   --mono: ui-monospace, "Cascadia Mono", "SF Mono", Menlo, Consolas, monospace;
   color-scheme: light;
@@ -36,13 +38,14 @@ body,
 body {
   background: var(--ground);
   color: var(--ink);
-  font: 400 16px/1.55 "Nunito Variable", "Nunito", system-ui, sans-serif;
+  font: 400 16px/1.6 "Inter Variable", "Inter", system-ui, sans-serif;
+  font-feature-settings: "cv11", "ss01";
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
 }
 
 ::selection {
-  background: var(--sand);
+  background: color-mix(in srgb, var(--ink) 16%, transparent);
   color: var(--ink);
 }
 
@@ -94,8 +97,8 @@ button {
   width: 28px;
   height: 28px;
   border-radius: 50%;
-  border: 3px solid var(--sand);
-  border-block-start-color: var(--umber);
+  border: 3px solid var(--line);
+  border-block-start-color: var(--muted);
   animation: turn 0.9s linear infinite;
 }
 
@@ -108,39 +111,56 @@ button {
 .head {
   display: flex;
   align-items: center;
-  gap: 12px;
-  padding: 20px 14px 10px 20px;
-  padding-inline: 20px 14px;
+  gap: 10px;
+  min-height: 60px;
+  padding-block: 10px;
+  padding-inline: var(--gutter) 8px;
 }
 
-.logo {
+/* Who answers: the assistant's picture, round; else the customer's logo, on a small white tile; else the title's
+   initials on the bubble's grey (the brand colour stays on what can be pressed). The same mark heads the chat, opens an empty one and sits beside every answer. */
+.mark {
+  --size: 32px;
   display: grid;
   place-items: center;
   flex: none;
-  width: 40px;
-  height: 40px;
+  width: var(--size);
+  height: var(--size);
   overflow: hidden;
-  border-radius: 12px;
-  background: var(--paper);
-  box-shadow: 0 0 0 1px var(--sand);
-  font-weight: 800;
-  font-size: 15px;
-  letter-spacing: 0.02em;
+  border-radius: 50%;
+  background: var(--bubble);
+  color: var(--ink);
+  font-size: calc(var(--size) * 0.38);
+  font-weight: 650;
+  letter-spacing: 0.01em;
+  user-select: none;
 }
 
-.logo img {
+.mark img {
   width: 100%;
   height: 100%;
+  object-fit: cover;
+}
+
+.mark.logo {
+  border-radius: 8px;
+  background: #ffffff; /* logos are drawn for white */
+  box-shadow: inset 0 0 0 1px var(--line);
+}
+
+.mark.logo img {
   object-fit: contain;
+  padding: 3px;
 }
 
 h1 {
   flex: 1;
   min-width: 0;
   margin: 0;
-  font-size: 20px;
+  font-size: 16px;
   font-weight: 600;
-  line-height: 1.25;
+  line-height: 1.3;
+  letter-spacing: -0.01em;
   overflow-wrap: anywhere;
 }
 
@@ -148,16 +168,23 @@ h1 {
   display: grid;
   place-items: center;
   flex: none;
-  width: 44px;
-  height: 44px;
+  width: 40px;
+  height: 40px;
   border: 0;
-  border-radius: 50%;
+  border-radius: 10px;
   background: transparent;
-  transition: background-color 0.15s ease-out;
+  color: var(--muted);
+  transition: background-color 0.15s ease-out, color 0.15s ease-out;
 }
 
 .icon:hover {
-  background: color-mix(in srgb, var(--ink) 7%, transparent);
+  background: color-mix(in srgb, var(--ink) 6%, transparent);
+  color: var(--ink);
+}
+
+.icon .glyph {
+  width: 20px;
+  height: 20px;
 }
 
 .actions {
@@ -176,56 +203,84 @@ h1 {
   flex: 1;
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 24px;
   overflow-y: auto;
   overscroll-behavior: contain;
-  padding: 4px var(--gutter) 16px;
+  padding: 8px var(--gutter) 20px;
   scrollbar-width: thin;
-  scrollbar-color: var(--sand) transparent;
+  scrollbar-color: var(--line) transparent;
   /* Long answers slide softly under the header and into the composer instead of being cut at either edge. */
   mask-image: linear-gradient(transparent, var(--ink) 14px, var(--ink) calc(100% - 14px), transparent);
 }
 
-.notice {
-  margin: 0 4px 4px;
-  text-wrap: pretty;
-  font-size: 14px;
-  color: var(--umber);
-}
-
-.card {
-  margin: 0;
-  padding: 14px 16px;
-  border-radius: 18px;
-  background: var(--paper);
-  box-shadow: 0 0 0 1px var(--sand); /* keeps the white card distinct from the ground on a bright screen */
-  overflow-wrap: anywhere;
-  text-wrap: pretty;
+/* The AI notice, always in sight under the composer, with the credit. */
+.notice,
+.credit {
+  margin: 0 var(--gutter);
+  font-size: 12px;
+  line-height: 1.45;
+  text-align: center;
+  text-wrap: balance;
+  color: var(--muted);
 }
 
 .turn {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 24px;
 }
 
+/* The visitor's own words: a soft bubble at the end of the line. */
 .mine {
   align-self: flex-end;
   max-width: 85%;
   margin: 0;
-  padding: 10px 14px;
-  border-radius: 18px;
-  background: var(--sand);
+  padding: 10px 16px;
+  border-radius: 20px;
+  background: var(--bubble);
   white-space: pre-wrap;
   overflow-wrap: anywhere;
 }
 
-.answer {
+/* An answer is the page's own text, beside the assistant's mark: no bubble, no card. The welcome reads as the
+   assistant's first answer. */
+.answer,
+.intro {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: start;
+  column-gap: 12px;
+}
+
+.answer > .mark,
+.intro > .mark {
+  --size: 28px;
+  margin-block-start: -1px;
+}
+
+.said {
   display: flex;
   flex-direction: column;
   align-items: flex-start;
   gap: 10px;
-  min-height: 52px;
+  min-height: 28px;
+  min-width: 0;
+  overflow-wrap: anywhere;
+  text-wrap: pretty;
+}
+
+.welcome {
+  margin: 0;
+  padding-block-start: 2px;
+  overflow-wrap: anywhere;
+  text-wrap: pretty;
+}
+
+/* Under a finished answer: its actions, quiet until wanted. */
+.acts {
+  display: flex;
+  gap: 2px;
+  margin-inline-start: -8px;
 }
 
 .text {
@@ -239,7 +294,7 @@ h1 {
 .meta {
   margin: 0;
   font-size: 14px;
-  color: var(--umber);
+  color: var(--muted);
 }
 
 .dots {
@@ -252,7 +307,7 @@ h1 {
   width: 7px;
   height: 7px;
   border-radius: 50%;
-  background: var(--umber);
+  background: var(--muted);
   animation: breathe 1.2s ease-in-out infinite;
 }
 
@@ -310,8 +365,7 @@ h1 {
 }
 
 .md :is(h4, h5, h6) {
-  font-size: 15px;
-  color: var(--umber);
+  font-size: 15px; /* a step by size; never lighter than the words it introduces */
 }
 
 .md :is(ul, ol) {
@@ -322,7 +376,7 @@ h1 {
 }
 
 .md li::marker {
-  color: var(--umber);
+  color: var(--muted);
 }
 
 /* A task's box hangs where a bullet would, so its words line up with the rest of the list. */
@@ -344,7 +398,7 @@ h1 {
 .md blockquote {
   padding: 10px 14px;
   border-radius: 12px;
-  background: var(--ground);
+  background: var(--bubble);
 }
 
 .md a {
@@ -362,14 +416,14 @@ h1 {
   padding: 1px 6px;
   border-radius: 6px;
   background: var(--ground);
-  box-shadow: 0 0 0 1px var(--sand);
+  box-shadow: 0 0 0 1px var(--line);
   font: 0.9em var(--mono);
 }
 
 .md hr {
   width: 100%;
   border: 0;
-  border-block-start: 1px solid var(--sand);
+  border-block-start: 1px solid var(--line);
 }
 
 .code,
@@ -381,7 +435,7 @@ h1 {
   margin: 0;
   overflow: hidden;
   border-radius: 12px;
-  box-shadow: 0 0 0 1px var(--sand);
+  box-shadow: 0 0 0 1px var(--line);
 }
 
 .code {
@@ -400,10 +454,10 @@ h1 {
   justify-content: space-between;
   white-space: nowrap;
   padding-inline-start: 14px;
-  border-block-end: 1px solid var(--sand);
+  border-block-end: 1px solid var(--line);
   font-size: 13px;
   font-weight: 650;
-  color: var(--umber);
+  color: var(--muted);
 }
 
 .code pre,
@@ -442,11 +496,11 @@ h1 {
     radial-gradient(farthest-side at 0 50%, color-mix(in srgb, var(--shade) 22%, transparent), transparent) left / 12px 100% no-repeat scroll,
     radial-gradient(farthest-side at 100% 50%, color-mix(in srgb, var(--shade) 22%, transparent), transparent) right / 12px 100% no-repeat scroll,
     var(--edge);
-  scrollbar-color: color-mix(in srgb, var(--umber) 60%, transparent) transparent;
+  scrollbar-color: color-mix(in srgb, var(--muted) 60%, transparent) transparent;
 }
 
 .table .scroll {
-  --edge: var(--paper);
+  --edge: var(--surface);
 }
 
 /* A diagram keeps its own light sheet in either scheme: its source's colours assume one. */
@@ -465,7 +519,7 @@ h1 {
 .table,
 .diagram,
 .chart {
-  background: var(--paper);
+  background: var(--surface);
 }
 
 /* A diagram fills the card's width while its words stay readable, and scrolls sideways beyond that. Its code, when
@@ -481,7 +535,7 @@ h1 {
 }
 
 .diagram pre {
-  border-block-start: 1px solid var(--sand);
+  border-block-start: 1px solid var(--line);
 }
 
 /* A chart (M3-T6). Its series take the validated categorical palette in its fixed order, each colour stepped for
@@ -524,7 +578,7 @@ h1 {
   list-style: none;
   font-size: 13px;
   line-height: 1.5;
-  color: var(--umber);
+  color: var(--muted);
 }
 
 .chart .legend li,
@@ -543,11 +597,11 @@ h1 {
   max-width: 70%;
   padding: 6px 10px;
   border-radius: 10px;
-  background: var(--paper);
-  box-shadow: 0 0 0 1px var(--sand);
+  background: var(--surface);
+  box-shadow: 0 0 0 1px var(--line);
   font-size: 13px;
   line-height: 1.4;
-  color: var(--umber);
+  color: var(--muted);
   font-variant-numeric: tabular-nums;
   pointer-events: none;
 }
@@ -600,7 +654,7 @@ h1 {
 }
 
 .chart .grid {
-  stroke: var(--sand);
+  stroke: var(--line);
 }
 
 .chart .base {
@@ -608,7 +662,7 @@ h1 {
 }
 
 .chart .tick {
-  fill: var(--umber);
+  fill: var(--muted);
   font-size: 12px;
   font-variant-numeric: tabular-nums;
 }
@@ -633,7 +687,7 @@ h1 {
 .chart .dot,
 .chart .slice {
   fill: currentColor;
-  stroke: var(--paper); /* the surface ring and the gap between slices */
+  stroke: var(--surface); /* the surface ring and the gap between slices */
   stroke-width: 2;
 }
 
@@ -675,7 +729,7 @@ h1 {
   position: sticky;
   inset-block-start: 0;
   padding: 8px 12px;
-  background: var(--sand);
+  background: var(--line);
   font-weight: 700;
   text-align: start;
   white-space: nowrap;
@@ -688,12 +742,12 @@ h1 {
 .table td {
   min-width: 8ch;
   padding: 8px 12px;
-  border-block-start: 1px solid var(--sand);
+  border-block-start: 1px solid var(--line);
   vertical-align: top;
 }
 
 .table :is(th, td) + :is(th, td) {
-  border-inline-start: 1px solid var(--sand);
+  border-inline-start: 1px solid var(--line);
 }
 
 .folded tbody tr:nth-child(n + 11) {
@@ -702,10 +756,10 @@ h1 {
 
 .tools {
   flex-wrap: wrap;
-  border-block-start: 1px solid var(--sand);
+  border-block-start: 1px solid var(--line);
 }
 
-/* Suggested questions: pressable, so they carry the customer's colour (the Pressable Colour Rule). */
+/* Suggested questions: outlined chips, the brand colour only on their edge under the pointer. */
 
 .prompts {
   display: flex;
@@ -717,22 +771,24 @@ h1 {
 }
 
 .prompts button {
-  min-height: 44px;
-  padding: 10px 16px;
-  border: 0;
-  border-radius: 999px;
-  background: var(--brand);
-  color: var(--on-brand);
-  font-size: 15px;
-  font-weight: 650;
-  line-height: 1.3;
+  min-height: 40px;
+  padding: 8px 14px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: var(--surface);
+  font-size: 14px;
+  line-height: 1.35;
   text-align: start;
-  transition: transform 0.4s cubic-bezier(.34, 1.56, .64, 1);
+  transition: border-color 0.15s ease-out, background-color 0.15s ease-out;
 }
 
-.prompts button:active {
-  transform: scale(0.96);
-  transition: transform 0.08s ease-out;
+.prompts button:hover:not(:disabled) {
+  border-color: color-mix(in srgb, var(--brand) 55%, var(--line));
+  background: color-mix(in srgb, var(--brand) 5%, var(--surface));
+}
+
+.prompts button:disabled {
+  cursor: default;
 }
 
 .quiet,
@@ -740,18 +796,22 @@ h1 {
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  min-height: 36px;
-  border-radius: 999px;
-  font-size: 14px;
-  font-weight: 650;
+  min-height: 32px;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 500;
 }
 
 .quiet {
   margin-inline-start: -8px;
-  padding: 6px 10px;
+  padding: 6px 8px;
   border: 0;
   background: transparent;
-  color: var(--umber);
+  color: var(--muted);
+}
+
+.acts .quiet {
+  margin: 0;
 }
 
 .quiet:hover {
@@ -760,8 +820,8 @@ h1 {
 }
 
 .quiet .glyph {
-  width: 18px;
-  height: 18px;
+  width: 16px;
+  height: 16px;
 }
 
 .problem {
@@ -776,35 +836,36 @@ h1 {
 }
 
 .problem p:first-child {
-  font-weight: 650;
+  font-weight: 600;
 }
 
-/* The world's secondary action: an ink outline at rest, a sand fill under the pointer. */
+/* A secondary action: a hairline outline at rest, a light fill under the pointer. */
 .secondary {
-  padding: 8px 16px;
-  border: 1.5px solid var(--ink);
-  background: var(--paper);
+  padding: 6px 12px;
+  border: 1px solid var(--line);
+  background: var(--surface);
+  color: var(--ink);
   transition: background-color 0.15s ease-out;
 }
 
 .secondary:hover {
-  background: var(--sand);
+  background: var(--bubble);
 }
 
 .latest {
   align-self: center;
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  margin-block: -52px 8px;
+  display: grid;
+  place-items: center;
+  margin-block: -52px 10px;
   position: relative;
-  padding: 8px 14px;
-  border: 0;
-  border-radius: 999px;
-  background: var(--paper);
-  font-size: 14px;
-  font-weight: 650;
-  box-shadow: 0 10px 24px -12px color-mix(in srgb, var(--shade) 45%, transparent), 0 0 0 1px var(--sand);
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  border: 1px solid var(--line);
+  border-radius: 50%;
+  background: var(--surface);
+  color: var(--ink);
+  box-shadow: 0 6px 16px -8px color-mix(in srgb, var(--shade) 35%, transparent);
 }
 
 .latest .glyph {
@@ -812,40 +873,45 @@ h1 {
   height: 18px;
 }
 
-/* The composer, the jump back and the credit: one landmark at the foot */
+/* The composer, the jump back, the notice and the credit: one landmark at the foot */
 
 .foot {
   display: flex;
   flex-direction: column;
+  gap: 4px;
+  padding-block-end: 10px;
 }
-
 
 .compose {
   display: flex;
   align-items: flex-end;
   gap: 8px;
-  margin: 4px var(--gutter) 6px;
-  padding: 6px;
-  padding-inline-start: 18px;
-  border-radius: 24px;
-  background: var(--paper);
-  box-shadow: 0 10px 24px -14px color-mix(in srgb, var(--shade) 40%, transparent), 0 0 0 1px var(--sand);
+  margin: 0 var(--gutter) 6px;
+  padding: 8px;
+  padding-inline-start: 16px;
+  border: 1px solid var(--line);
+  border-radius: 20px;
+  background: var(--surface);
+  box-shadow: 0 8px 24px -16px color-mix(in srgb, var(--shade) 40%, transparent);
+  transition: border-color 0.15s ease-out;
 }
 
 .compose:focus-within {
-  box-shadow: 0 10px 24px -14px color-mix(in srgb, var(--shade) 40%, transparent), 0 0 0 2px var(--ink);
+  border-color: color-mix(in srgb, var(--ink) 40%, var(--line));
+  box-shadow: 0 8px 24px -16px color-mix(in srgb, var(--shade) 40%, transparent),
+    0 0 0 3px color-mix(in srgb, var(--ink) 8%, transparent);
 }
 
 textarea {
   flex: 1;
   min-width: 0;
   max-height: 160px;
-  padding: 10px 0;
+  padding: 6px 0;
   border: 0;
   background: transparent;
   resize: none;
   line-height: 1.5;
-  caret-color: var(--ink);
+  caret-color: var(--brand);
 }
 
 textarea:focus-visible {
@@ -853,7 +919,7 @@ textarea:focus-visible {
 }
 
 textarea::placeholder {
-  color: var(--umber);
+  color: var(--muted);
   opacity: 1;
 }
 
@@ -861,36 +927,33 @@ textarea::placeholder {
   display: grid;
   place-items: center;
   flex: none;
-  width: 44px;
-  height: 44px;
+  width: 36px;
+  height: 36px;
   border: 0;
-  border-radius: 50%;
+  border-radius: 10px;
   background: var(--brand);
   color: var(--on-brand);
-  transition: transform 0.4s cubic-bezier(.34, 1.56, .64, 1);
+  transition: transform 0.12s ease-out, opacity 0.15s ease-out;
+}
+
+.send .glyph {
+  width: 18px;
+  height: 18px;
 }
 
 .send:active:not(:disabled) {
-  transform: scale(0.92);
-  transition: transform 0.08s ease-out;
+  transform: scale(0.94);
 }
 
 .send:disabled {
   cursor: default;
-  opacity: 0.35;
+  opacity: 0.3;
 }
 
 .count {
-  margin: 0 calc(var(--gutter) + 18px);
-  font-size: 13px;
-  color: var(--umber);
-}
-
-.credit {
-  margin: 2px 0 10px;
+  margin: -2px calc(var(--gutter) + 16px) 2px;
   font-size: 12px;
-  text-align: center;
-  color: var(--umber);
+  color: var(--muted);
 }
 
 /* Earlier chats (M2-T8): in place of the conversation on narrow frames, beside it from 720px */
@@ -936,13 +999,13 @@ textarea::placeholder {
   padding: 0;
   list-style: none;
   overflow: hidden;
-  border-radius: 18px;
-  background: var(--paper);
-  box-shadow: 0 0 0 1px var(--sand);
+  border-radius: 12px;
+  background: var(--surface);
+  box-shadow: 0 0 0 1px var(--line);
 }
 
 .chats li + li {
-  border-block-start: 1px solid var(--sand);
+  border-block-start: 1px solid var(--line);
 }
 
 .chats button {
@@ -950,8 +1013,8 @@ textarea::placeholder {
   flex-direction: column;
   gap: 2px;
   width: 100%;
-  min-height: 60px;
-  padding: 10px 16px;
+  min-height: 56px;
+  padding: 9px 14px;
   border: 0;
   background: transparent;
   text-align: start;
@@ -963,7 +1026,7 @@ textarea::placeholder {
 }
 
 .chats button[aria-current="true"] {
-  background: var(--sand);
+  background: var(--bubble);
 }
 
 .chats button:focus-visible {
@@ -976,18 +1039,19 @@ textarea::placeholder {
   -webkit-box-orient: vertical;
   -webkit-line-clamp: 2;
   line-clamp: 2;
-  font-weight: 650;
+  font-size: 15px;
+  font-weight: 500;
   line-height: 1.35;
   overflow-wrap: anywhere;
 }
 
 .chats time {
-  font-size: 14px;
-  color: var(--umber);
+  font-size: 13px;
+  color: var(--muted);
 }
 
 [aria-current="true"] time {
-  color: var(--ink); /* Muted Umber on Soft Sand is 4.2:1, short of AA for small text */
+  color: var(--ink); /* the muted ink on the current row's fill is short of AA for small text */
 }
 
 /* While the list loads: rows sketched in sand, breathing like the working dots */
@@ -1001,7 +1065,7 @@ textarea::placeholder {
   height: 12px;
   width: 72%;
   border-radius: 6px;
-  background: var(--sand);
+  background: var(--line);
   animation: breathe 1.2s ease-in-out infinite;
 }
 
@@ -1027,8 +1091,7 @@ textarea::placeholder {
 }
 
 /* Wide frames (the chat filling a page, or the window): a conversation app. The list of chats runs the full height
-   at the start; the conversation, the composer, the AI notice and the credit share one centred column; answers sit
-   on the page itself rather than on cards. */
+   at the start; the conversation, the composer, the AI notice and the credit share one centred column. */
 .chat.split {
   display: grid;
   grid-template:
@@ -1047,10 +1110,10 @@ textarea::placeholder {
   overflow-y: auto;
   padding-block: 22px 16px;
   padding-inline: 12px;
-  border-inline-end: 1px solid var(--sand);
-  background: color-mix(in srgb, var(--sand) 35%, var(--ground));
+  border-inline-end: 1px solid var(--line);
+  background: color-mix(in srgb, var(--bubble) 45%, var(--ground));
   scrollbar-width: thin;
-  scrollbar-color: var(--sand) transparent;
+  scrollbar-color: var(--line) transparent;
 }
 
 .split .log {
@@ -1068,33 +1131,19 @@ textarea::placeholder {
 .page .compose,
 .page .count,
 .page .foot .prompts,
-.page .foot .notice {
+.page .foot .notice,
+.page .foot .credit {
   margin-inline: max(var(--gutter), (100% - 760px) / 2);
 }
 
 .page .compose {
-  padding: 8px;
-  padding-inline-start: 20px;
+  padding: 10px;
+  padding-inline-start: 18px;
+  border-radius: 24px;
 }
 
 .page .mine {
   max-width: 75%;
-}
-
-/* An answer is the page's own text, as in a conversation app: no card, the same width as the column. */
-.page .answer,
-.page .welcome {
-  padding: 2px 4px;
-  border-radius: 0;
-  background: none;
-  box-shadow: none;
-}
-
-/* The AI notice stays in sight under the composer, beside the credit. */
-.page .foot .notice {
-  margin-block: 2px 0;
-  text-align: center;
-  font-size: 13px;
 }
 
 /* In the list beside the conversation, chats are rows on the column's own ground. */
@@ -1115,20 +1164,45 @@ textarea::placeholder {
   border-radius: 12px;
 }
 
-/* An empty chat: the welcome above the middle, the composer at it, the suggested questions under it. */
-.page.empty .log {
-  justify-content: flex-end;
+/* An empty chat: the assistant's mark and welcome in the middle, larger, the suggested questions under them. On a
+   wide frame the welcome sits above the middle, the composer at it and the suggestions under it. */
+.empty .log {
+  justify-content: center;
   mask-image: none;
 }
 
-.page.empty .welcome {
-  align-self: center;
-  max-width: 30ch;
-  font-size: 24px;
-  font-weight: 650;
-  line-height: 1.3;
+.empty .intro {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
   text-align: center;
+}
+
+.empty .intro > .mark {
+  --size: 52px;
+  margin: 0;
+}
+
+.empty .welcome {
+  max-width: 28ch;
+  font-size: 20px;
+  font-weight: 600;
+  line-height: 1.35;
+  letter-spacing: -0.015em;
   text-wrap: balance;
+}
+
+.empty .log > .prompts {
+  justify-content: center;
+}
+
+.page.empty .log {
+  justify-content: flex-end;
+}
+
+.page.empty .welcome {
+  font-size: 26px; /* the wide frame's step: the welcome leads a whole page there */
 }
 
 .page.empty .foot {
@@ -1192,7 +1266,6 @@ textarea::placeholder {
 
 @media (forced-colors: active) {
   .compose,
-  .card,
   .mine,
   .prompts button,
   .send,

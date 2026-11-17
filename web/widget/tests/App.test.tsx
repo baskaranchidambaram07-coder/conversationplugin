@@ -74,21 +74,26 @@ test("the chat shows the configured title, the AI notice, the welcome, the sugge
   expect(screen.getByText(CONFIG.welcome_message)).toBeTruthy();
   expect(screen.getAllByRole("button", { name: /library|guest room/ })).toHaveLength(2);
   expect(screen.getByText(t.credit)).toBeTruthy();
-  expect(screen.getByText("AT")).toBeTruthy(); // initials stand in for a missing logo
+  expect(screen.getAllByText("AT").length).toBeGreaterThan(0); // initials stand in for a missing logo
 });
 
-test("a logo that fails to load gives way to the title's initials", async () => {
+const AVATAR = "9f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08";
+
+test("the assistant's picture marks the chat, a logo stands in when it fails, and the initials after that", async () => {
   gatewayAnswering(() => new Response());
-  vi.stubGlobal(
-    "fetch",
-    vi.fn(async () => Response.json({ ...CONFIG, logo_url: "https://example.org/missing.svg" })),
-  );
+  const logo = "https://example.org/missing.svg";
+  vi.stubGlobal("fetch", vi.fn(async () => Response.json({ ...CONFIG, logo_url: logo, avatar: AVATAR })));
   const { container } = render(<App widgetId="w_1" />);
   await screen.findByRole("heading", { name: "Ask the College" });
-  fireEvent.error(container.querySelector(".logo img") as HTMLImageElement);
+  const pictures = () => Array.from(container.querySelectorAll<HTMLImageElement>(".mark img"));
 
-  expect(container.querySelector(".logo img")).toBeNull();
-  expect(screen.getByText("AT")).toBeTruthy();
+  expect(pictures().map((image) => image.getAttribute("src"))).toEqual([`/v1/images/${AVATAR}`, `/v1/images/${AVATAR}`]);
+  for (const image of pictures()) fireEvent.error(image);
+  expect(pictures().map((image) => image.getAttribute("src"))).toEqual([logo, logo]);
+  expect(container.querySelectorAll(".mark.logo")).toHaveLength(2);
+  for (const image of pictures()) fireEvent.error(image);
+  expect(pictures()).toEqual([]);
+  expect(screen.getAllByText("AT")).toHaveLength(2); // the header's mark and the empty chat's
 });
 
 test("a configuration that cannot load shows a plain problem and a retry that loads it", async () => {
@@ -107,17 +112,19 @@ test("a configuration that cannot load shows a plain problem and a retry that lo
 test("configuration values are read safely", () => {
   expect(
     readConfig({ title: "  ", brand_color: "purple", logo_url: "javascript:alert(1)", suggested_prompts: ["", "Hi", 5] as never }),
-  ).toMatchObject({ title: "Chat", color: "#2b241f", logo: null, prompts: ["Hi"], notice: t.notice });
+  ).toMatchObject({ title: "Chat", color: "#1f1e1d", logo: null, picture: null, prompts: ["Hi"], notice: t.notice });
+  expect(readConfig({ avatar: "https://evil.example/x.png" }).picture).toBeNull();
+  expect(readConfig({ avatar: AVATAR }).picture).toBe(`/v1/images/${AVATAR}`);
 });
 
-test("on the dark ground a brand keeps its colour unless it nearly vanishes there", () => {
-  expect(["#7C3AED", "#5B2A86", "#1e3a8a", "#2b241f", "#000000", "#333333"].map(forDark)).toEqual([
-    "#7C3AED",
-    "#5B2A86",
-    "#1e3a8a",
-    "#f2e9df",
-    "#f2e9df",
-    "#f2e9df",
+test("on the dark composer a brand keeps its colour only where it stands out, at 3:1 or more", () => {
+  expect(["#F59E0B", "#60A5FA", "#7C3AED", "#5B2A86", "#000000", "#333333"].map(forDark)).toEqual([
+    "#F59E0B",
+    "#60A5FA",
+    "#f5f4ef", // 2.3:1, a violet that would not stand out as a control
+    "#f5f4ef",
+    "#f5f4ef",
+    "#f5f4ef",
   ]);
 });
 
