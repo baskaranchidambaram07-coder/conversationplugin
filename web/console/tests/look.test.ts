@@ -1,6 +1,6 @@
 import { expect, test } from "vitest";
 
-import { colourNotes } from "./look";
+import { colourNotes } from "../src/look";
 
 test("a button colour is read out with the text on it, and warned about where it would not stand out", () => {
   expect(colourNotes("#5B2A86")).toEqual({ text: "Text on it: white, 9.9 : 1", warnings: [] });

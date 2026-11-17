@@ -1,6 +1,6 @@
 import { expect, test } from "vitest";
 
-import { changes } from "./golive";
+import { changes } from "../src/golive";
 
 test("only the settings that differ are listed, by their dotted path; lists compare whole", () => {
   const live = { public: { title: "One", suggested_prompts: ["a"] }, allowed_domains: ["https://a.example"], sign_in: "anonymous" };

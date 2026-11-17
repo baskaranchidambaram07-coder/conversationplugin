@@ -2,10 +2,10 @@
 import { cleanup, render, screen } from "@testing-library/react";
 import { afterEach, expect, test, vi } from "vitest";
 
-import { BlockView } from "./registry";
+import { BlockView } from "../../src/render/registry";
 
 // The Markdown renderer breaks on one particular answer, as a renderer bug might.
-vi.mock("./Markdown", () => ({
+vi.mock("../../src/render/Markdown", () => ({
   default: ({ text }: { text: string }) => {
     if (text.includes("breaks")) throw new Error("renderer bug");
     return <p>rendered: {text}</p>;

@@ -1,11 +1,11 @@
 // @vitest-environment jsdom
-import { cleanup, fireEvent, render, screen, within } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { afterEach, expect, test, vi } from "vitest";
 
-import gallery from "./gallery/diagrams.md?raw";
-import Diagram from "./Diagram";
-import Markdown from "./Markdown";
-import { fromDrawio, fromExcalidraw } from "./scene";
+import gallery from "../../src/render/gallery/diagrams.md?raw";
+import Diagram from "../../src/render/Diagram";
+import Markdown from "../../src/render/Markdown";
+import { fromDrawio, fromExcalidraw } from "../../src/render/scene";
 
 afterEach(cleanup);
 
@@ -96,4 +96,23 @@ test("its code can be shown and hidden, and copied to open in draw.io", async ()
   fireEvent.click(screen.getByRole("button", { name: "Copy for draw.io" }));
   expect(writeText).toHaveBeenCalledWith(drawio);
   expect(await screen.findByRole("button", { name: "Copied" })).toBeTruthy();
+});
+
+test("a Mermaid flowchart is drawn once its fence has closed, and copied to open in Mermaid", async () => {
+  render(<Markdown text={gallery} />);
+
+  const figure = (await screen.findByRole("region", { name: "Diagram from Mermaid" })).closest("figure")!;
+  expect(within(figure).getByRole("img", { name: "Diagram: 7 shapes and 6 lines" })).toBeTruthy(); // six nodes and a frame
+  expect(within(figure).getByRole("img").querySelector("desc")?.textContent).toContain("Visitor to Gateway: asks.");
+  expect(within(figure).getByRole("button", { name: "Copy for Mermaid" })).toBeTruthy();
+});
+
+test.each([
+  ["a flowchart still arriving, its fence not closed", "Here it is:\n\n```mermaid\nflowchart TB\n  A --> B\n"],
+  ["a sequence diagram", "```mermaid\nsequenceDiagram\n  A->>B: Hi\n```"],
+  ["a flowchart that does not read", "```mermaid\nflowchart TB\n```"],
+])("%s is shown as code", async (_, text) => {
+  const { container } = render(<Markdown text={text} />);
+  await waitFor(() => expect(container.querySelector("figure.code pre")).not.toBeNull());
+  expect(container.querySelector("figure.diagram")).toBeNull();
 });
