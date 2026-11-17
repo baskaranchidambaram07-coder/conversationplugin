@@ -212,12 +212,21 @@ test("the look is edited beside the chat itself, which shows each change at once
   await expect(chat.getByRole("heading", { name: "Ask the Riverside desk" })).toBeVisible();
   await page.getByLabel("Suggested question 2").fill("Where do I park?");
   await expect(chat.getByRole("button", { name: "Where do I park?" })).toBeVisible();
+  // The assistant's picture: even an SVG with only a viewBox goes up as a 256 px square of plain pixels, and the
+  // preview shows it at once.
+  const svg = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><rect width="64" height="64" fill="#1F6F5C"/></svg>';
+  await page.getByLabel("Assistant picture").setInputFiles({ name: "eva.svg", mimeType: "image/svg+xml", buffer: Buffer.from(svg) });
+  await expect(page.getByRole("button", { name: "Remove" })).toBeVisible();
+  const picture = chat.locator(".head .mark img");
+  await expect(picture).toHaveAttribute("src", /^\/v1\/images\/[0-9a-f]{64}$/);
+  await expect.poll(() => picture.evaluate((image: HTMLImageElement) => image.naturalWidth)).toBe(256);
+  await page.getByLabel("Greeting").fill("Hi, I'm Riverside. Ask me anything.");
   await page.getByLabel("Colour of buttons").fill("#2B241F");
-  await expect(page.getByText("On dark screens this colour gives way to cream, so the buttons stay visible.")).toBeVisible();
+  await expect(page.getByText("On dark screens this colour gives way to a light grey, so the buttons stay visible.")).toBeVisible();
   await page.getByLabel("Colour of buttons").fill("#5B2A86");
   await expect(page.getByText("Text on it: white, 9.9 : 1")).toBeVisible();
-  const pill = chat.getByRole("button", { name: "Where do I park?" });
-  await expect.poll(() => pill.evaluate((button) => getComputedStyle(button).backgroundColor)).toBe("rgb(91, 42, 134)");
+  const send = chat.getByRole("button", { name: "Send" }); // the brand colour is on what visitors press
+  await expect.poll(() => send.evaluate((button) => getComputedStyle(button).backgroundColor)).toBe("rgb(91, 42, 134)");
 
   await page.getByRole("radio", { name: "Dark" }).check();
   await expect.poll(() => chat.locator("html").getAttribute("data-scheme")).toBe("dark");

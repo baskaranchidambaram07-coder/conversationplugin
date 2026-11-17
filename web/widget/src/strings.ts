@@ -9,7 +9,7 @@ export const strings = {
   you: "You:",
   answer: "Answer:",
   input: "Your question",
-  placeholder: "Type your question",
+  placeholder: "Ask anything",
   previewPlaceholder: "Preview: questions are not sent",
   send: "Send",
   stop: "Stop the answer",

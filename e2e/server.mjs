@@ -8,8 +8,12 @@ import { createServer } from "node:http";
 import { runInNewContext } from "node:vm";
 
 const root = new URL("../", import.meta.url);
-const example = JSON.parse(await readFile(new URL("protocol/examples/v1/WidgetConfig/valid/full.json", root), "utf8"));
+// The example without its picture and greeting, which only w_greet shows, so the other widgets look as they always have.
+const { avatar, greeting, ...example } = JSON.parse(
+  await readFile(new URL("protocol/examples/v1/WidgetConfig/valid/full.json", root), "utf8"),
+);
 const configs = {
+  w_greet: { ...example, widget_id: "w_greet", avatar, greeting },
   w_test: { ...example, widget_id: "w_test" },
   w_left: { ...example, widget_id: "w_left", launcher_position: "bottom-left" },
   w_chat: { ...example, widget_id: "w_chat" },
@@ -19,6 +23,10 @@ const configs = {
 };
 // These widgets open the stand-in chat (e2e/chat-stub.html), which lets the loader be tested on its own.
 const STAND_IN = new Set(["w_test", "w_left"]);
+// The picture w_greet's avatar names, as the gateway serves uploaded images: by digest, to any site.
+const PICTURE =
+  '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><rect width="64" height="64" fill="#5B2A86"/>' +
+  '<circle cx="32" cy="26" r="12" fill="#f3d9c4"/><path d="M10 64c2-14 11-20 22-20s20 6 22 20z" fill="#f3d9c4"/></svg>';
 const types = {
   html: "text/html; charset=utf-8",
   js: "text/javascript; charset=utf-8",
@@ -55,6 +63,7 @@ const policyFor = (widget) =>
 
 async function file(path) {
   if (path === "/loader.js") return [200, types.js, await readFile(new URL("web/loader/dist/loader.js", root))];
+  if (path === `/v1/images/${avatar}`) return [200, "image/svg+xml", PICTURE];
   const config = path.match(/^\/v1\/widgets\/([\w-]+)\/config$/);
   if (config) {
     const body = configs[config[1]];
@@ -234,7 +243,9 @@ createServer(async (request, response) => {
   if (path.startsWith("/portal/")) return portalBackend(url, response);
   if (path === "/widget-token") return collegeBackend(request, response);
   if (path === "/demo-token") return demoSignIn(url, response);
-  if (path.startsWith("/v1/") && !path.endsWith("/config")) return gateway(request, response, path);
+  if (path.startsWith("/v1/") && !path.endsWith("/config") && !path.startsWith("/v1/images/")) {
+    return gateway(request, response, path);
+  }
   const [status, type, body, headers] = await file(path).catch(() => [404, "text/plain", "not found"]);
   // The configuration is public and read from the customer's page, so any origin may read it, without cookies.
   response.writeHead(status, {

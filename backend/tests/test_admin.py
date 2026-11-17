@@ -3,6 +3,7 @@ audit entry for every change. Against PostgreSQL and a stand-in identity provide
 runs against a real Keycloak in the pipeline (tests/test_keycloak.py)."""
 
 import asyncio
+import hashlib
 import json
 import secrets
 import time
@@ -559,6 +560,43 @@ def test_sealed_secrets_open_only_where_they_were_sealed_and_with_a_key_held():
     for bad in ("", "k1", "k1:short", "k1:" + "!" * 43):
         with pytest.raises(ValueError):
             Vault(bad)
+
+
+PNG = b"\x89PNG\r\n\x1a\n"  # the opening bytes are all the check reads
+
+
+def upload(world, who: str, tenant_id: str, data: bytes, kind: str):
+    headers = {**bearer(world, who), "content-type": kind}
+    return world.post(f"/admin/v1/tenants/{tenant_id}/images", content=data, headers=headers)
+
+
+def test_images_are_uploaded_to_ones_own_tenant_checked_kept_once_and_served_to_any_page(world, database_url):
+    a, b = f"t_a{world.tag}", f"t_b{world.tag}"
+    data = PNG + secrets.token_bytes(32)
+
+    assert [upload(world, who, a, data, "image/png").status_code for who in ROLES] == [201, 201, 403]
+    assert upload(world, "admin_a", b, data, "image/png").status_code == 404
+    refused = [
+        (b"<svg onload='alert(1)'/>", "image/svg+xml"),  # can carry script
+        (b"<svg onload='alert(1)'/>", "image/png"),  # says it is a picture, is not
+        (PNG + bytes(8), "image/jpeg"),  # a picture, not the kind it says
+        (b"RIFF\x00\x00\x00\x00AVI LIST", "image/webp"),
+        (PNG + bytes(64 * 1024), "image/png"),  # over the limit
+    ]
+    assert [upload(world, "admin_a", a, body, kind).status_code for body, kind in refused] == [400] * 5
+    digest = upload(world, "admin_a", a, data, "image/png").json()["digest"]
+    assert digest == hashlib.sha256(data).hexdigest()
+    entries = world.get(f"/admin/v1/audit?tenant={a}", headers=bearer(world, "platform")).json()
+    assert [e["detail"]["digest"] for e in entries if e["action"] == "image.add"] == [digest]  # kept once
+
+    with TestClient(gateway(Settings(database_url=database_url))) as chat:
+        served = chat.get(f"/v1/images/{digest}")
+        assert (served.content, served.headers["content-type"]) == (data, "image/png")
+        assert served.headers["cache-control"] == "public, max-age=31536000, immutable"
+        assert served.headers["cross-origin-resource-policy"] == "cross-origin"  # the launcher shows it on any site
+        assert chat.get(f"/v1/images/{'0' * 64}").status_code == 404
+        assert chat.get("/v1/images/not-a-digest").status_code == 400
+    assert world.get(f"/v1/images/{digest}").content == data  # the console's preview, on the console's address
 
 
 def test_the_admin_api_description_file_matches_the_routes():

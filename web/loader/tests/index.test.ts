@@ -163,9 +163,9 @@ test("the loader stores nothing on the visitor's device", async () => {
 
 test.each([
   [{ title: "  Ask the College  ", brand_color: "#5B2A86", launcher_position: "bottom-left", color_scheme: "dark" }, "Ask the College", "#5B2A86", true, "dark"],
-  [{ title: "", brand_color: "purple" }, "Chat", "#2b241f", false, "light"],
-  [{ title: "x".repeat(200), brand_color: "#5B2A86\n", color_scheme: "auto" }, "x".repeat(80), "#2b241f", false, "auto"],
-  [{ title: 42, brand_color: "red;background:url(x)", launcher_position: "top-right", color_scheme: "dark x" }, "Chat", "#2b241f", false, "light"],
+  [{ title: "", brand_color: "purple" }, "Chat", "#1f1e1d", false, "light"],
+  [{ title: "x".repeat(200), brand_color: "#5B2A86\n", color_scheme: "auto" }, "x".repeat(80), "#1f1e1d", false, "auto"],
+  [{ title: 42, brand_color: "red;background:url(x)", launcher_position: "top-right", color_scheme: "dark x" }, "Chat", "#1f1e1d", false, "light"],
 ])("configuration %j is read safely", (config, title, color, left, scheme) => {
   expect(settings(config as never)).toMatchObject({ title, color, left, scheme });
 });
@@ -217,6 +217,88 @@ test("a title is never read as markup", async () => {
 
   expect(root().querySelector("img")).toBeNull();
   expect(launcher().getAttribute("aria-label")).toBe('<img src=x onerror="alert(1)">');
+});
+
+const AVATAR = "9f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08";
+
+test.each([
+  [{ avatar: AVATAR, greeting: "  Hi, I'm Eva.  " }, AVATAR, "Hi, I'm Eva."],
+  [{ avatar: "https://evil.example/x.png", greeting: "   " }, null, null],
+  [{ avatar: AVATAR.toUpperCase(), greeting: "g".repeat(200) }, null, "g".repeat(120)],
+  [{ avatar: 7, greeting: ["Hi"] }, null, null],
+])("the picture and greeting in %j are read safely", (config, avatar, greeting) => {
+  expect(settings(config as never)).toMatchObject({ avatar, greeting });
+});
+
+test("an avatar fills the launcher from our own origin, and the chat glyph comes back if it cannot load", async () => {
+  serve(async () => Response.json({ ...CONFIG, avatar: AVATAR }));
+  start(script({ "data-widget-id": "w_1" }), host);
+  await settle();
+  const picture = launcher().querySelector("img") as HTMLImageElement;
+
+  expect([picture.src, picture.alt]).toEqual([`${ORIGIN}/v1/images/${AVATAR}`, ""]);
+  expect(launcher().getAttribute("aria-label")).toBe("Ask us"); // the name stays the title
+  expect(root().querySelector(".w")?.classList.contains("pictured")).toBe(true);
+  picture.dispatchEvent(new Event("error"));
+  expect(launcher().querySelector("img")).toBeNull();
+  expect(root().querySelector(".w")?.classList.contains("pictured")).toBe(false);
+});
+
+test("the greeting appears a moment after the launcher, as text; it opens the chat, or goes when dismissed", async () => {
+  serve(async () => Response.json({ ...CONFIG, greeting: '<b onmouseover="x()">Hi</b>' }));
+  vi.useFakeTimers({ toFake: ["setTimeout", "clearTimeout"] });
+  try {
+    start(script({ "data-widget-id": "w_1" }), host);
+    await vi.waitFor(() => expect(launcher()).toBeTruthy(), { interval: 1 });
+    const greet = () => root().querySelector(".greet");
+    expect(greet()).toBeNull(); // not with the launcher, a moment after it
+    vi.advanceTimersByTime(1_200);
+    const [say, bye] = Array.from(greet()?.querySelectorAll("button") ?? []);
+    expect(say?.textContent).toBe('<b onmouseover="x()">Hi</b>');
+    expect(greet()?.querySelector("b")).toBeNull();
+    expect(bye?.getAttribute("aria-label")).toBe("Dismiss");
+
+    bye?.click();
+    expect(greet()).toBeNull();
+    expect(root().activeElement).toBe(launcher());
+  } finally {
+    vi.useRealTimers();
+  }
+
+  api()("unmount");
+  serve(async () => Response.json({ ...CONFIG, greeting: "Hi" }));
+  vi.useFakeTimers({ toFake: ["setTimeout", "clearTimeout"] });
+  try {
+    api()("mount", { widgetId: "w_1" });
+    await vi.waitFor(() => expect(launcher()).toBeTruthy());
+    vi.advanceTimersByTime(1_200);
+    (root().querySelector(".greet .say") as HTMLButtonElement).click();
+    expect(launcher().getAttribute("aria-expanded")).toBe("true");
+    expect(root().querySelector(".greet")).toBeNull();
+  } finally {
+    vi.useRealTimers();
+  }
+});
+
+test("no greeting once the chat was opened, nor on an inline chat", async () => {
+  vi.useFakeTimers({ toFake: ["setTimeout", "clearTimeout"] });
+  try {
+    serve(async () => Response.json({ ...CONFIG, greeting: "Hi" }));
+    start(script({ "data-widget-id": "w_1" }), host);
+    await vi.waitFor(() => expect(launcher()).toBeTruthy());
+    launcher().click();
+    vi.advanceTimersByTime(5_000);
+    expect(root().querySelector(".greet")).toBeNull();
+
+    api()("unmount");
+    document.body.innerHTML = '<div id="here"></div>';
+    api()("mount", { widgetId: "w_1", target: "#here" });
+    await vi.waitFor(() => expect(root().querySelector(".panel")).toBeTruthy());
+    vi.advanceTimersByTime(5_000);
+    expect(root().querySelector(".greet")).toBeNull();
+  } finally {
+    vi.useRealTimers();
+  }
 });
 
 test("the chat page is requested only when the visitor first opens the chat, and kept when it closes", async () => {

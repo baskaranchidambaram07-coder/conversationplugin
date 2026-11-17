@@ -133,7 +133,7 @@ export function AgentEditor(props: {
     <div className="editor">
       <fieldset disabled={readOnly}>
         <legend>{t.chooseConnection}</legend>
-        {secrets && !connections.length && <p className="note">{t.noConnections}</p>}
+        {secrets && !connections.length && <p className="note">{value ? t.platformConnections : t.noConnections}</p>}
         <ul className="choices">
           {connections.map((connection) => (
             <li key={connection.name} className={value === connection.name ? "chosen" : undefined}>

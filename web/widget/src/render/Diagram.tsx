@@ -38,7 +38,7 @@ function wrapped(label: string, width: number, size: number, wrap: boolean): str
 function Words(props: { lines: string[]; x: number; y: number; size: number; color: string; bold?: boolean; align: Shape["align"] }) {
   const { lines, x, y, size, color, bold, align } = props;
   return (
-    <text x={x} fontSize={size} fill={color === "none" ? "#2b241f" : color} fontWeight={bold ? 700 : 400} textAnchor={align} dominantBaseline="central">
+    <text x={x} fontSize={size} fill={color === "none" ? "#1f1e1d" : color} fontWeight={bold ? 700 : 400} textAnchor={align} dominantBaseline="central">
       {lines.map((line, i) => (
         <tspan key={i} x={x} y={y + i * size * LEADING}>
           {line}

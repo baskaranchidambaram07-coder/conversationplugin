@@ -10,6 +10,7 @@ import { type Look, LookEditor, Preview } from "./look";
 import { Deletion, NewOrganisation } from "./organisations";
 import { begin, finish, type Provider, signOut, token } from "./signIn";
 import { strings as t } from "./strings";
+import { applyTheme, storedTheme, type Theme } from "./theme";
 import { type Station, type StationId, stations, timeLeft } from "./track";
 
 type Me = { subject: string; role: "platform" | "tenant" | "viewer"; tenant_id: string | null; gateway: string | null };
@@ -32,6 +33,37 @@ const PLUS = "M12 5v14M5 12h14";
 export function go(to: string) {
   history.pushState(null, "", to);
   dispatchEvent(new PopStateEvent("popstate"));
+}
+
+const THEMES: Record<Theme, string> = {
+  system: "M4 5h16v11H4zM8 20h8M12 16v4",
+  light: "M12 3v1.5M12 19.5V21M4.6 4.6l1.1 1.1M18.3 18.3l1.1 1.1M3 12h1.5M19.5 12H21M4.6 19.4l1.1-1.1M18.3 5.7l1.1-1.1M12 8a4 4 0 1 0 0 8 4 4 0 0 0 0-8z",
+  dark: "M20 14.5A8 8 0 0 1 9.5 4a8 8 0 1 0 10.5 10.5z",
+};
+
+/** System, Light or Dark, in the top bar. */
+function ThemeSwitch() {
+  const [theme, setTheme] = useState(storedTheme);
+  return (
+    <div className="theme" role="group" aria-label={t.theme}>
+      {(Object.keys(THEMES) as Theme[]).map((one) => (
+        <button
+          key={one}
+          type="button"
+          className="quiet"
+          aria-pressed={theme === one}
+          aria-label={t.themes[one]}
+          title={t.themes[one]}
+          onClick={() => {
+            setTheme(one);
+            applyTheme(one, true);
+          }}
+        >
+          <Glyph path={THEMES[one]} />
+        </button>
+      ))}
+    </div>
+  );
 }
 
 function Glyph({ path }: { path: string }) {
@@ -244,6 +276,7 @@ function Console({ me, route, onEnded }: { me: Me; route: string; onEnded: () =>
             </a>
           )}
         </div>
+        <ThemeSwitch />
         <p className="who">
           <span>
             {me.subject} · {t.role[me.role]}
@@ -276,7 +309,7 @@ function Console({ me, route, onEnded }: { me: Me; route: string; onEnded: () =>
                     }}
                   >
                     <b>{one.title}</b>
-                    <small>{standing(one)}</small>
+                    <small className={one.version === null ? undefined : one.unpublished ? "warn" : "good"}>{standing(one)}</small>
                   </a>
                 </li>
               ))}
@@ -401,7 +434,6 @@ function Track(props: {
   const { track, shown, sign, reachable, onOpen } = props;
   return (
     <section className="journey" aria-label={t.track}>
-      <p className="sign">{sign}</p>
       <ol className="track">
         {track.map((one, index) => (
           <li key={one.id} className={`station ${one.state}`}>
@@ -415,12 +447,16 @@ function Track(props: {
             >
               <span className="dot">{one.state === "done" ? <Glyph path={CHECK} /> : index + 1}</span>
               <span className="name">{t.station[one.id]}</span>
-              <small>{one.state === "done" ? t.done : t.minutes(one.minutes)}</small>
+              <small>
+                {t.minutes(one.minutes)}
+                {one.state === "done" && ` · ${t.done}`}
+              </small>
               {one.id === shown && <span className="hidden">{t.openNow}</span>}
             </button>
           </li>
         ))}
       </ol>
+      <p className={track.every((one) => one.state === "done") ? "sign live" : "sign"}>{sign}</p>
     </section>
   );
 }
@@ -452,6 +488,7 @@ function StationEditor(props: {
     return (
       <LookEditor
         value={document.public as Look}
+        tenant={tenant}
         signedIn={document.sign_in !== "anonymous"}
         onChange={(look) => onChange({ ...document, public: look })}
         readOnly={readOnly}
@@ -574,7 +611,7 @@ function Widget(props: {
       <Track
         track={track}
         shown={shown}
-        sign={row.version !== null ? standing(row) : t.timeLeft(left)}
+        sign={row.version !== null ? `${standing(row)} · ${t.setUpIn(track.reduce((sum, one) => sum + one.minutes, 0))}` : t.timeLeft(left)}
         reachable={() => true}
         onOpen={openStation}
       />

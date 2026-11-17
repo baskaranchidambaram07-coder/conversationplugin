@@ -7,24 +7,22 @@ related_targets: []
 
 # Surface brief: the chat inside the panel (module M2)
 
-Scope: the chat page served at /embed/{widgetId} inside the loader's panel, or filling the screen on phones, or inline in a host element. Mode: Operate. It inherits the world in DESIGN.md ("Warm Consumer App") and the composition of the decision sketch the user picked (.impeccable/mocks/decision/challenger-warm-app.html). Visitors: public visitors and signed-in residents equally; many on phones, many reading English as a second language. Task: read the notice, ask (by typing or a suggested question), watch the answer arrive, act on it, close.
+Scope: the chat page served at /embed/{widgetId} inside the loader's panel, or filling the screen on phones, or inline in a host element. Mode: Operate. Visitors: public visitors and signed-in residents equally; many on phones, many reading English as a second language. Task: read the notice, ask (by typing or a suggested question), watch the answer arrive, act on it, close.
 
-Constraints: 100 KB compressed first load for script and styles; Nunito self-hosted (no third-party font host); everything sent to or shown in the browser built from the allow-listed message format (R13); the one "Powered by Purple Fabric" note at the foot.
+Constraints: 100 KB compressed first load for script and styles; Inter self-hosted (no third-party font host); everything sent to or shown in the browser built from the allow-listed message format (R13); the one "Powered by Purple Fabric" note at the foot.
 
-Unresolved: whether the credit links anywhere and whether a customer may hide it; dark mode (the configuration's color_scheme is ignored in the base version).
+Unresolved: whether the credit links anywhere and whether a customer may hide it; regenerating a finished answer (only a failed one can be retried).
 
 ## Direction contract
 
-THESIS: The chat is the friendly app the visitor already knows: a calm warm page with answers on white cards, their own words in quiet sand bubbles, and the customer's colour only on what can be pressed (suggested questions, send). It refuses a coloured header bar, an avatar, and brand-coloured message bubbles.
+THESIS: The familiar AI chat window, played straight with Claude's as the bar, wearing the customer's identity: their assistant's picture beside every answer and their colour on what can be pressed. It refuses answer cards, brand-filled suggestion pills, a coloured header bar and rounded playful type.
 
-OWN-WORLD: DESIGN.md's warm ground (#fbf3ea), white answer cards at 18px radius, visitor messages on Soft Sand (#e7dacb) at 18px, Warm Ink text (#2b241f) and Muted Umber secondary (#6f625a). Brand-filled pills for suggested questions and a round brand send button, their text and glyphs in white or black by contrast. Nunito, 16px body at 1.55, 20px semibold title. Ink-tinted long soft shadow only under the composer.
+OWN-WORLD: Near-white ground #fcfcfb (charcoal #262624 in the dark), ink #1f1e1d, muted #6b6a68, hairlines #e6e4e0, the visitor's bubble #f0efeb, white surfaces for the composer and chips. Inter, 16px at 1.6. Answers as plain text beside a 28px round mark; outlined 12px-radius suggestion chips; a 20px-radius composer card with a 36px rounded-square send in the brand colour.
 
-STORY: The visitor reads who they are talking to and that it is an AI assistant, taps a suggested question or types one, sees a working state within a moment, watches the answer arrive on a white card, can stop it, copy it or try again, and closes the chat from its own header.
+STORY: The visitor sees who they are talking to, asks by typing or tapping a suggestion, watches the answer flow in beside the assistant's picture, copies it or stops it, and closes.
 
-FIRST VIEWPORT: Header: logo tile (40px, white, 12px radius; initials when no logo) beside the title, and at the end a group of 44px round icon buttons, 2px apart: New chat (plus; once there is a conversation to leave, narrow frames only), Your chats / Back to the chat (list glyph becoming a chevron mirrored in right-to-left; signed-in visitors on widgets with history on, narrow frames only), and Close (floating panel only, absent inline); under 340px, when all three would show, the header's New chat is hidden and stays in the list. From 720px with history on, the header spans a 288px Your chats column and the conversation. Below, the AI notice in Muted Umber. Then the welcome text and the suggested questions as brand pills, wrapping. The composer sits at the foot: a white rounded field that grows to five lines with the round send button inside it; under it, the credit. From 280px wide the same order holds with tighter padding.
+FIRST VIEWPORT: Header: the mark (picture, else logo, else initials) and the title, its actions at the end. An empty chat centres the 52px mark, the welcome at 20px (26px on wide frames, where it leads a page) and the suggestion chips; the composer sits at the foot (on wide frames at the middle, suggestions under it), with the AI notice and the credit under it.
 
-Signature interaction and motion grammar: while waiting for the first word, three quiet dots breathe on an empty white card; words then land into the same card without layout jumps; the send button turns into a stop button in place. Reduced motion keeps the dots still.
-
-FORM: Warm Consumer App, the world chosen by the user on the decision page, extended to the chat surface from the user-picked sketch; no new surface round. seed:a841235b66c8bebb
+FORM: The category standard, the familiar AI chat window, chosen by the user in words (Claude as the bar); the roll ran for the record and the user's pin beats it. seed:bce0d129f501fad3
 
 FINISH: unreviewed and undocumented is unfinished; this build ends with the finish review, the verdict, DESIGN.md, and every shipping raster carrying its provenance
