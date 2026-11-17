@@ -1,6 +1,6 @@
 import { expect, test } from "vitest";
 
-import { safeHref } from "./links";
+import { safeHref } from "../../src/render/links";
 
 test.each([
   ["https://college.example/library", "https://college.example/library"],
