@@ -43,8 +43,8 @@ Add one script tag, anywhere in the page:
 That is all. The chat button appears in a bottom corner of the page, and the chat opens in its own frame, so it does not
 touch your page's styles or scripts.
 
-If your pages set a content security policy, add the assistant's address to three directives, and to nothing else:
-`script-src`, `frame-src` and `connect-src`. The samples carry such a policy, so you can see it in place. The
+If your pages set a content security policy, add the assistant's address to four directives, and to nothing else:
+`script-src`, `frame-src`, `connect-src` and `img-src` (for the launcher's picture). The samples carry such a policy, so you can see it in place. The
 assistant needs no inline scripts or styles, and works with Trusted Types enforced.
 
 ## 2. A portal page

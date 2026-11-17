@@ -214,6 +214,14 @@ export interface WidgetConfig {
   ai_notice: string | null;
   brand_color: string;
   logo_url: string | null;
+  /**
+   * The assistant's picture, uploaded through the admin API: the SHA-256 of an image served at /v1/images/{avatar}. The launcher and the chat show it; null shows the chat glyph.
+   */
+  avatar?: string | null;
+  /**
+   * A short line shown once beside the closed launcher, such as "Hi, I'm Eva."
+   */
+  greeting?: string | null;
   color_scheme: "light" | "dark" | "auto";
   launcher_position: "bottom-right" | "bottom-left";
   history_enabled: boolean;

@@ -201,6 +201,14 @@ class WidgetConfig(_Model):
     )
     brand_color: Annotated[str, Field(pattern=r"^#[0-9A-Fa-f]{6}$")]
     logo_url: Annotated[str, Field(pattern=r"^https://[!-~]+$", max_length=2048)] | None
+    avatar: Annotated[str, Field(pattern=r"^[0-9a-f]{64}$")] | None = Field(
+        default=None,
+        description="The assistant's picture, uploaded through the admin API: the SHA-256 of an image served at "
+        "/v1/images/{avatar}. The launcher and the chat show it; null shows the chat glyph.",
+    )
+    greeting: Annotated[str, Field(min_length=1, max_length=120)] | None = Field(
+        default=None, description='A short line shown once beside the closed launcher, such as "Hi, I\'m Eva."'
+    )
     color_scheme: Literal["light", "dark", "auto"]
     launcher_position: Literal["bottom-right", "bottom-left"]
     history_enabled: bool

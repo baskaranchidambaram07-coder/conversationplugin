@@ -21,6 +21,7 @@ import logging
 from contextlib import AsyncExitStack, asynccontextmanager
 from dataclasses import dataclass
 from datetime import UTC, datetime
+from hashlib import sha256
 from pathlib import Path
 from secrets import token_hex, token_urlsafe
 from typing import Annotated, Literal
@@ -35,7 +36,7 @@ from sqlalchemy.ext.asyncio import create_async_engine
 from ucp.admin import install
 from ucp.admin.records import Records
 from ucp.connector import AgentError
-from ucp.gateway import pipeline
+from ucp.gateway import pipeline, public
 from ucp.gateway.api import visitor_address
 from ucp.gateway.pipeline import CODES, Problem, api_error
 from ucp.identity import Identity, ProviderKeys, verify_provider_token
@@ -527,6 +528,35 @@ async def new_host_secret(tenant_id: Id, name: Id, admin: Signed, kept: Kept, re
     return {"name": name, "key_id": key_id, "secret": secret}
 
 
+IMAGE_KINDS = ("image/png", "image/jpeg", "image/webp")  # never SVG, which can carry script
+
+
+def _is_image(kind: str, data: bytes) -> bool:
+    """The body really is what its type says: the format's own opening bytes."""
+    return {
+        "image/png": data[:8] == b"\x89PNG\r\n\x1a\n",
+        "image/jpeg": data[:3] == b"\xff\xd8\xff",
+        "image/webp": data[:4] == b"RIFF" and data[8:12] == b"WEBP",
+    }.get(kind, False)
+
+
+@router.post(
+    "/tenants/{tenant_id}/images",
+    status_code=201,
+    summary="Upload an image (PNG, JPEG or WebP, at most 64 KB) as the body; answers its digest",
+    openapi_extra={"requestBody": {"required": True, "content": {kind: {} for kind in IMAGE_KINDS}}},
+)
+async def add_image(tenant_id: Id, admin: Signed, kept: Kept, request: Request) -> dict:
+    admin.reach(tenant_id, write=True)
+    kind = request.headers.get("content-type", "").split(";")[0].strip().lower()
+    data = await request.body()  # the pipeline refuses anything over 64 KB
+    if not _is_image(kind, data):
+        raise Problem("invalid_request")
+    digest = sha256(data).hexdigest()
+    await kept.put_image(tenant_id, digest, kind, data, admin.subject)
+    return {"digest": digest}
+
+
 @router.delete("/widgets/{widget_id}", status_code=204, summary="Delete a widget: no longer served; its history stays")
 async def delete_widget(widget_id: Id, admin: Signed, kept: Kept) -> Response:
     tenant_id = await _widget(kept, admin, widget_id, write=True)
@@ -641,6 +671,8 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     app.state.limiter = Limiter()
     app.state.visitor_address_header = settings.visitor_address_header
     app.include_router(router)
+    # The console's preview is the chat on this address, so it reads uploaded images from here too.
+    app.add_api_route("/v1/images/{digest}", public.image, include_in_schema=False)
 
     @app.get("/healthz")
     async def healthz() -> dict[str, str]:
