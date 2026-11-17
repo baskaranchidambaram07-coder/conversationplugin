@@ -40,7 +40,10 @@ test("an administrator signs in with the company provider and lands where they w
   await signIn(page, "/widgets/w_gateway/look", operator);
   await expect(page).toHaveURL(`${CONSOLE}/widgets/w_gateway/look`);
   await expect(page.getByRole("heading", { level: 1, name: "Ask the College" })).toBeVisible();
+  await page.getByRole("button", { name: "Account" }).click(); // who is signed in, behind the profile button
   await expect(page.getByText(`${operator} · platform administrator`)).toBeVisible();
+  await page.keyboard.press("Escape");
+  await expect(page.getByRole("button", { name: "Account" })).toBeFocused();
   await expect(page.getByRole("button", { name: /Look.*, open/ })).toBeVisible();
   await expect(page.getByLabel("Colour of buttons")).toHaveValue("#5B2A86");
   await expect(page.getByText("Live · version 1").first()).toBeVisible();
@@ -52,6 +55,7 @@ test("an administrator signs in with the company provider and lands where they w
   await page.goBack();
   await expect(page.getByRole("button", { name: /Look.*, open/ })).toBeVisible();
 
+  await page.getByRole("button", { name: "Account" }).click();
   await page.getByRole("button", { name: "Sign out" }).click();
   await expect(page.getByRole("heading", { name: "Sign in to set up your assistant" })).toBeVisible();
 });
@@ -170,6 +174,7 @@ test("an existing widget's settings are edited and saved; a viewer sees them but
   await expect(page.getByText("Saved. Visitors see it once you publish.")).toBeVisible();
   await expect(page.getByText("2 sites allowed")).toBeVisible();
 
+  await page.getByRole("button", { name: "Account" }).click();
   await page.getByRole("button", { name: "Sign out" }).click();
   await signIn(page, `/widgets/${widget}/agent`, viewer);
   await expect(page.getByText("You can look, but not change anything here.")).toBeVisible();
@@ -347,6 +352,7 @@ test("a new administrator onboards a widget from the console alone, and a visito
   const started = Date.now();
 
   await signIn(page, "/", newcomer);
+  await page.getByRole("button", { name: "Account" }).click();
   await expect(page.getByText(`${newcomer} · administrator`)).toBeVisible();
   await page.getByRole("link", { name: "New widget" }).click();
   await page.getByLabel("Title visitors will see").fill(`Ask Riverside ${run.slice(-4)}`);
@@ -512,7 +518,7 @@ test("an organisation is made in the console; its widget and then the organisati
   await expect(page.getByText("To delete this organisation, first delete its widget, each from its Go live step.")).toBeVisible();
   await expect(page.getByRole("button", { name: "Delete the organisation" })).toHaveCount(0);
 
-  await page.getByRole("link", { name: new RegExp(`Ask ${name}`) }).click();
+  await page.getByRole("navigation", { name: "Widgets" }).getByRole("link", { name: new RegExp(`Ask ${name}`) }).click();
   await page.getByRole("button", { name: /Go live/ }).click();
   await page.getByRole("button", { name: "Delete the widget" }).click();
   const confirm = page.getByRole("button", { name: `Yes, delete “Ask ${name}”` });
@@ -533,4 +539,23 @@ test("an organisation is made in the console; its widget and then the organisati
   await expect(page.getByRole("option", { name })).toHaveCount(0);
   const kept = (await api("GET", "/tenants")) as { tenant_id: string }[];
   expect(kept.map((one) => one.tenant_id)).not.toContain(tenant);
+});
+
+test("home shows where things stand: the figures, an organisation's widgets, and every organisation by state", async ({ page }) => {
+  await signIn(page, "/", await platformAdministrator(page, "overview"));
+  await expect(page.getByRole("link", { name: "Home" })).toHaveAttribute("aria-current", "page");
+  await expect(page.getByLabel("At a glance")).toContainText("Organisations");
+
+  const organisations = page.getByRole("region", { name: "Organisations" });
+  await expect(organisations.getByRole("link", { name: "New organisation" })).toBeVisible();
+  await page.getByRole("combobox", { name: "Organisation" }).selectOption({ label: "t_e2e" }); // the open one always shows
+  await expect(page.getByRole("heading", { level: 1, name: "t_e2e" })).toBeVisible();
+  await expect(organisations.getByRole("button", { name: /^t_e2e/ })).toHaveAttribute("aria-current", "true");
+  await expect(organisations.getByRole("button", { name: /^t_e2e/ })).toContainText(/\d+ live/);
+  const widgets = page.getByRole("region", { name: "Widgets in t_e2e" });
+  await widgets.getByRole("link", { name: /Ask the College/ }).click();
+  await expect(page.getByRole("heading", { level: 1, name: "Ask the College" })).toBeVisible();
+  await page.getByRole("link", { name: "UCP Console" }).click(); // the name in the bar goes home too
+  await expect(page.getByRole("heading", { level: 1, name: "t_e2e" })).toBeVisible();
+  expect(await serious(page)).toEqual([]);
 });

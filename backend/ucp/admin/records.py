@@ -170,16 +170,18 @@ class Records:
 
     # Widgets and their drafts
 
-    async def widgets(self, tenant_id: str) -> list[dict]:
-        """A tenant's widgets: each one's title, live version (if published), draft (if one is being edited) and
-        whether the draft holds changes not yet published."""
+    async def widgets(self, tenant_id: str | None) -> list[dict]:
+        """A tenant's widgets (every tenant's, given None): each one's tenant, title, live version (if published),
+        draft (if one is being edited) and whether the draft holds changes not yet published."""
         live = (
-            select(widgets.c.widget_id, widgets.c.version, widgets.c.document)
-            .where(widgets.c.tenant_id == tenant_id, widgets.c.widget_id.not_in(select(deleted_widgets.c.widget_id)))
+            select(widgets.c.widget_id, widgets.c.tenant_id, widgets.c.version, widgets.c.document)
+            .where(widgets.c.widget_id.not_in(select(deleted_widgets.c.widget_id)))
             .ext(distinct_on(widgets.c.widget_id))
             .order_by(widgets.c.widget_id, widgets.c.version.desc())
         )
-        editing = select(drafts).where(drafts.c.tenant_id == tenant_id)
+        editing = select(drafts)
+        if tenant_id:
+            live, editing = live.where(widgets.c.tenant_id == tenant_id), editing.where(drafts.c.tenant_id == tenant_id)
         async with self.engine.connect() as db:
             published = {row.widget_id: row for row in await db.execute(live)}
             edited = {row.widget_id: row for row in await db.execute(editing)}
@@ -190,6 +192,7 @@ class Records:
             found.append(
                 {
                     "widget_id": widget_id,
+                    "tenant_id": (draft or current).tenant_id,
                     "title": (document.get("public") or {}).get("title", widget_id),
                     "version": current.version if current else None,
                     "draft": draft
