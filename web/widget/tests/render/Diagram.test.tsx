@@ -2,10 +2,10 @@
 import { cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { afterEach, expect, test, vi } from "vitest";
 
-import gallery from "./gallery/diagrams.md?raw";
-import Diagram from "./Diagram";
-import Markdown from "./Markdown";
-import { fromDrawio, fromExcalidraw } from "./scene";
+import gallery from "../../src/render/gallery/diagrams.md?raw";
+import Diagram from "../../src/render/Diagram";
+import Markdown from "../../src/render/Markdown";
+import { fromDrawio, fromExcalidraw } from "../../src/render/scene";
 
 afterEach(cleanup);
 

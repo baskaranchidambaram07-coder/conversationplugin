@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, expect, test, vi } from "vitest";
 
-import { ApiProblem, call } from "./api";
-import { begin, finish, type Provider, signOut, token } from "./signIn";
+import { ApiProblem, call } from "../src/api";
+import { begin, finish, type Provider, signOut, token } from "../src/signIn";
 
 const PROVIDER: Provider = {
   client_id: "ucp-console",

@@ -1,6 +1,6 @@
 import { expect, test } from "vitest";
 
-import { stations, timeLeft } from "./track";
+import { stations, timeLeft } from "../src/track";
 
 const states = (track: ReturnType<typeof stations>) => track.map((station) => `${station.id}:${station.state}`);
 

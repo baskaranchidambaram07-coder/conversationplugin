@@ -1,6 +1,6 @@
 import { expect, test, vi } from "vitest";
 
-import { Failure, gateway } from "./api";
+import { Failure, gateway } from "../../src/chat/api";
 
 const expired = () =>
   Response.json(

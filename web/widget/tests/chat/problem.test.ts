@@ -1,7 +1,7 @@
 import { expect, test } from "vitest";
 
-import { Failure } from "./api";
-import { problemOf } from "./problem";
+import { Failure } from "../../src/chat/api";
+import { problemOf } from "../../src/chat/problem";
 
 const failure = (status: number, code?: string) =>
   new Failure(

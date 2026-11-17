@@ -2,9 +2,9 @@
 import { cleanup, render, screen } from "@testing-library/react";
 import { afterEach, expect, test } from "vitest";
 
-import { safeHref } from "./links";
-import corpus from "./gallery/injection.json?raw";
-import Markdown from "./Markdown";
+import { safeHref } from "../../src/render/links";
+import corpus from "../../src/render/gallery/injection.json?raw";
+import Markdown from "../../src/render/Markdown";
 
 afterEach(cleanup);
 

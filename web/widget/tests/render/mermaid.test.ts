@@ -1,7 +1,7 @@
 import { expect, test } from "vitest";
 
-import { fromMermaid, readFlowchart } from "./mermaid";
-import type { Point, Shape } from "./scene";
+import { fromMermaid, readFlowchart } from "../../src/render/mermaid";
+import type { Point, Shape } from "../../src/render/scene";
 
 const MACHINES = `flowchart TB
     SKF["Shared Knowledge Foundation"]
