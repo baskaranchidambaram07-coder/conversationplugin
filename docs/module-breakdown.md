@@ -1,6 +1,6 @@
 # Universal Conversation Platform — Requirements Exploration and Module Breakdown
 
-Status: draft for discussion, 12 November 2026. Updated the same day with your answers and the PF integration snippet; section 12 lists what is now settled. No code has been written.
+Status: begun as a draft for discussion on 12 November 2026 and kept up to date as the modules were built. Section 0 gives every module's status on 17 November 2026; each module's own section keeps its dated record, and section 12 lists what is settled.
 
 Companion document: `government-readiness.md` (UK first).
 
@@ -10,6 +10,7 @@ Sources: `universal_conversation_platform_internal_discussion.docx` (v0.1), `Uni
 
 ## Contents
 
+0. Status of each module, 17 November 2026
 1. What we are building
 2. Requirements and what each one implies
 3. Findings from the source material
@@ -24,6 +25,31 @@ Sources: `universal_conversation_platform_internal_discussion.docx` (v0.1), `Uni
 12. Decisions: settled and still open
 13. Repository and branching
 14. Base version for 22 November 2026
+
+## 0. Status of each module, 17 November 2026
+
+Every module of the base version is built, merged into `develop` and deployed to the dev environment on AWS. The two second-release modules have not been started. On 17 November 2026, before the environment was put to sleep, the deployed suite passed 5 of 5 against it (`npm run e2e:deployed`): the hosted console behind Cognito, the hosted public page answered from PF staging, the hosted portal's sign-in and its chat kept across signing out and in, a refused name, and the R13 leak search in a real conversation. The pipeline's eight checks pass on `develop` (81de18d).
+
+| Module | Status | Built | Still open |
+|---|---|---|---|
+| M0 Foundations and contracts | Done | PF discovery and the capability sheet; toolchain and pipeline; message format v1 with shared examples; the fake PF; the local environment; decisions and the threat model. On 17 November each front-end package's unit tests moved into its own `tests` folder (#113). | Nothing. |
+| M1 Embed loader | Base version done | Script-tag start-up; configuration; the Shadow DOM launcher; floating, inline and full-page panels; the bridge and token hand-off; fail-safe and debug modes; `mount`, `unmount`, `open`, `close`, `toggle`. On 17 November: the assistant's picture on the launcher and a greeting beside it (#116). | `on` and `off` events and host typings (T6); route-change tests (T8); the script-free iframe snippet (T9); versioned loader addresses with an integrity hash (T11). Through CloudFront the loader arrives as 6,186 bytes of gzip, 42 bytes over its 6 KB budget (the build's own check measures 4,718): serve it with Brotli, or precompressed. |
+| M2 Conversation UI | Base version done | Start-up; theming with light, dark and system schemes; layouts from 280 px to a full page; the composer; streaming; following the newest message; the history panel (T8, with M7); session renewal; accessibility; English strings; every error state; the AI notice and the credit. On 17 November: redesigned as the familiar AI chat window, with Claude's as the bar (#117). | The five configurable scroll settings; feedback buttons; the privacy and consent slot; a help link; transcript download; regenerating a finished answer; visual-regression baselines; real devices. |
+| M3 Response rendering engine | Base version done | The renderer registry; safe Markdown with its security corpus; code and tables in their own scrolling frames, tables copied as CSV; charts (bar, line, area, pie, scatter); diagrams from draw.io, Excalidraw and, since 16 November, Mermaid flowcharts (#110). | Syntax highlighting (T4); Mermaid diagrams other than flowcharts, shown as code; media and files (T8); a shared full-screen viewer (T9). |
+| M4 Conversation gateway | Done | The service and its request pipeline; the public configuration and pages; sessions; conversations and streamed turns, one at a time; the configuration cache; time limits and the circuit breaker; a load test within the latency budget. On 17 November: uploaded pictures served at `/v1/images/{digest}`. | The feedback endpoint (T10); deleting a conversation, with the purge policy. |
+| M5 Identity and session | Done | Session tokens; anonymous mode; host-signed tokens; identity-provider tokens; identity mapping; renewal through `getToken`; token-signing snippets in six languages. | Anonymous history across page loads (best effort). |
+| M6 PF connector | Done | The agent-connector interface; PF sign-in; the conversation lifecycle; the stream adapter; conversion from an allow-list; error translation; test connection; recorded samples and the fake PF; proven against PF staging. | Sources and citations, and structured output, as agreed. Test connection checks sign-in only, not that the agent answers (found on 16 November). |
+| M7 History and persistence | Done | The data model and its PostgreSQL repository; migrations `0001` to `0007`; tenant enforcement; the conformance and cross-tenant suites; one turn at a time under racing questions; the restore rehearsal (with M14). | Retention, deletion and purging, until the purge policy is set. |
+| M8 Control plane API | Done | The admin API: company sign-in with three roles scoped to tenants; drafts, publish, rollback and compare; sealed connection profiles and shared secrets; an append-only audit log; operator commands; the onboarding journey. On 16 November: a connection edited field by field and read back without its secrets. On 17 November: picture uploads and `GET /admin/v1/overview`. | Feature switches and retention (second release and the purge policy); re-sealing secrets under a new key; self-service sign-up, usage and billing. |
+| M9 Admin console | Done | Hosted on AWS behind Cognito; organisations; each widget's six-station track (Agent, Sites, Sign-in, Look, Install, Go live) with a live preview; versions and rollback; deleting widgets and organisations; onboarding from the console alone. On 16 November: continue buttons and connection editing. On 17 November: a light and a Graphite dark theme, the picture upload and greeting, a home page with figures and every organisation by state, and a profile menu (#117, #120). | Feature and layout settings (T4, with the second release); the iframe-only snippet; validation generated from the server's schema; screenshot comparison; a screen to manage people (your decision). |
+| M10 Attachments | Not started | — | The whole module, in the second release. |
+| M11 Voice | Not started | — | The whole module, in the second release. |
+| M12 Security and compliance | Partly, as it runs through every module | The threat model, kept current (T21 added on 17 November); strict content policies for every page; rate limits; secrets in AWS Secrets Manager or sealed in the database; dependency, code, secret and container scanning in the pipeline; the R13 browser leak test, passing on dev. | The web application firewall (T3); the privacy inventory, retention and export (T7); security-event alerts (T8); the evidence pack (T9); an independent penetration test (T10); image signing. |
+| M13 Observability and analytics | Partly | Structured logs with a correlation ID and nothing sensitive; the gateway's own share of each first word logged; two CloudWatch alarms (errors, unhealthy targets); a smoke test after every release. | OpenTelemetry traces and metrics (T2); browser telemetry (T3); dashboards (T4); usage counts per tenant (T5); a scheduled scripted conversation (T6); operating guides (T7). |
+| M14 Cloud platform and deployment | Done for dev | The dev environment from Terraform, woken and put to sleep on demand; the delivery pipeline with a smoke test; rebuilt from the code alone (the done condition, 13 November); the restore rehearsal; a bundle for a customer's own AWS account, with its image on GitHub's container registry (v1.0.0, 15 November). | Production in London: private subnets and NAT, a database across two zones, our own domains and certificates, a web application firewall; budget alerts and autoscaling (need an AWS administrator); image signing; pinned loader releases. |
+| M15 Developer experience and onboarding | Partly | The College's sample pages and sandbox guide, and copies hosted on our side; the timed onboarding procedure; a full-page sample; nine language sample sites, each on an address of its own (#104, #105); the SCL site's chat. | The College's shared secret and sandbox addresses (with the College); the first timed onboarding run, which is the done condition; framework samples; the loader API reference (T4); the versioning policy (T5); the console's documentation. |
+
+Before 22 November, what remains for the base version is the College's own set-up (its shared secret and sandbox addresses) and the first timed onboarding run with an engineer new to the product.
 
 ---
 
@@ -283,6 +309,13 @@ State on 12 November 2026 (pull requests 12 to 15 into `module/m01-embed-loader`
 
 **Done when** all host-matrix pages pass on three browser engines and the loader is within its size limit.
 
+State on 17 November 2026 (pull request 116, into `develop` with 118):
+
+- **The assistant's picture on the launcher.** An administrator uploads a picture in the console's Look station. The console crops it to a 256 px square and sends it as WebP or JPEG, so even an SVG arrives as plain pixels. The admin API checks that it really is a PNG, JPEG or WebP, at most 64 KB, and stores it once under its SHA-256. The gateway serves it at `/v1/images/{digest}`, cached for ever, to any site. The picture fills the launcher; if it cannot load, the chat glyph returns.
+- **A greeting beside the launcher.** A short line appears a moment after each page loads, until the visitor opens the chat or dismisses it. The loader still stores nothing on the visitor's device, so the greeting returns on the next page.
+- Widget settings gained the optional `avatar` (the picture's digest) and `greeting`. A host's content policy needs the chat's address in `img-src` for the picture.
+- The panel frame takes the chat's new neutrals (pull request 117), and the launcher's press settles without the old overshoot.
+
 ---
 
 ### M2 — Conversation UI
@@ -332,6 +365,13 @@ State on 12 November 2026 (pull requests 17 to 20 into `module/m02-conversation-
 
 **Done when** the end-to-end and accessibility suites pass on the support list and the visual baseline is approved.
 
+State on 17 November 2026 (pull request 117, into `develop` with 119). At your request the chat was redesigned as the familiar AI chat window, with Claude's as the bar; the warm cream world described above is retired, and `DESIGN.md` was rewritten from the build:
+
+- Answers are plain text beside the assistant's picture (else the logo, else the title's initials). The visitor's words sit in soft bubbles, suggestions are outlined chips, and one rounded composer carries a square send button in the brand colour. The AI notice and the credit stay under the composer.
+- Inter replaces Nunito; the grounds are near-white #fcfcfb and charcoal #262624.
+- The brand colour is only on what can be pressed. On the dark composer a brand under 3:1 gives way to the light ink, replacing the old rule of 1.5:1 against the ground.
+- Two independent finish reviews were run, with verdict passes, and their fixes made.
+
 ---
 
 ### M3 — Response rendering engine
@@ -379,6 +419,8 @@ State on 12 November 2026 (pull requests 22 to 24 into `module/m03-rendering-eng
 - Deployment: renderer files cached permanently; a new renderer file works with the previous UI release.
 
 **Done when** the example gallery passes on all engines and the security corpus is clean.
+
+State on 16 November 2026 (pull request 110, into `develop` with 112): Mermaid flowcharts are drawn in answers (`web/widget/src/render/mermaid.ts`), laid out in layers, with subgraphs as frames. Click, style and class lines are ignored, and a chart larger than 200 nodes, or any other kind of Mermaid diagram, is shown as code.
 
 ---
 
@@ -887,6 +929,18 @@ State on 14 November 2026, later (pull requests 98 to 100; 99 into `develop`):
     - versions, the audit trail and visitors' conversations stay until the purge policy.
   - Tests: the role matrix gains the three deletions; two behaviour tests; a console journey on three engines.
 - **Found and fixed:** `dev.py wake` straight after a sleep failed while the database was still stopping. It now waits.
+
+State on 17 November 2026 (pull requests 106 to 109, 117 and 120; into `develop` with 107, 111, 119 and 121):
+
+- **Connections:** continue buttons lead from a saved station to the next. A saved PF connection can be edited one field at a time, and its settings are shown when it is edited, never its API key or password.
+- **A new look:** the category standard in light (white cards, cool grey, one indigo accent) and a Graphite dark theme (graphite ground, panels split by hairlines, one blue accent), chosen with a System, Light or Dark switch kept in the browser. The track ends in a cell with the time left, or the live version and the setup time, and Live is green everywhere.
+- **Look:** the assistant's picture is uploaded here and the launcher's greeting is set.
+- **Home:** "UCP Console" links home, and Home heads the widget column. The home page shows the organisation's figures in one strip, its widgets, and, for platform administrators, every organisation's widgets by state as small bars, with New organisation. `GET /admin/v1/overview` gives the counts in one call.
+- **Top bar:** the organisation picker, the theme switch and a profile button holding the account, its role and Sign out.
+- **Found and fixed:**
+  - Firefox crashed its page in the accessibility check when a section named by `aria-labelledby` was on the home page, so the panels are headed containers.
+  - On Windows, npm had dropped two packages that only Linux installs from the lock file, so the pipeline's clean install refused it.
+- Tests: 45 console journeys on three engines, including a picture upload and the home page, and the role matrix with the overview.
 
 ---
 
