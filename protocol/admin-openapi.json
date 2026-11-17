@@ -938,6 +938,58 @@
         }
       }
     },
+    "/admin/v1/tenants/{tenant_id}/images": {
+      "post": {
+        "summary": "Upload an image (PNG, JPEG or WebP, at most 64 KB) as the body; answers its digest",
+        "operationId": "add_image_admin_v1_tenants__tenant_id__images_post",
+        "parameters": [
+          {
+            "name": "tenant_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^[A-Za-z0-9_-]{1,64}$",
+              "description": "Our opaque ID. Never a PF ID.",
+              "title": "Tenant Id"
+            },
+            "description": "Our opaque ID. Never a PF ID."
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true,
+                  "title": "Response Add Image Admin V1 Tenants  Tenant Id  Images Post"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "image/png": {},
+            "image/jpeg": {},
+            "image/webp": {}
+          }
+        }
+      }
+    },
     "/admin/v1/widgets/{widget_id}": {
       "delete": {
         "summary": "Delete a widget: no longer served; its history stays",

@@ -142,7 +142,7 @@ The clock starts when the customer has a published PF conversation agent and its
 What can still break the hour, and what we do about it:
 
 - **The site's own change-control process.** No technology fixes this. The script-free iframe embed is the lowest-friction option to offer.
-- **Strict browser security policy on the host.** One origin serves the loader, the chat page and the API, so the host adds that one origin to `script-src`, `frame-src` and `connect-src` (the loader fetches the widget configuration). Decided at the start of M1.
+- **Strict browser security policy on the host.** One origin serves the loader, the chat page and the API, so the host adds that one origin to `script-src`, `frame-src` and `connect-src` (the loader fetches the widget configuration), and to `img-src` when the launcher shows an uploaded picture. Decided at the start of M1.
 - **Debugging a failed setup.** The loader has a debug mode that prints a checklist: configuration loaded, site allowed, iframe connected, token accepted, PF reachable.
 - **Writing the token endpoint.** Tested snippets in Python, Node, Java, .NET, PHP and Go.
 - **Self-hosted deployments.** The hour covers integrating a widget, not installing the platform in a customer's cloud account.
@@ -267,7 +267,7 @@ State on 12 November 2026 (pull requests 12 to 15 into `module/m01-embed-loader`
 - Built for the base version: T1, T2, T3, T4 (floating and inline; full-page mode deferred), T5, T7, T10, the `mount`, `unmount`, `open`, `close` and `toggle` part of T6, and the `unmount` part of T8. The loader is under 4 KB compressed.
 - Deferred: `on`/`off` events and host typings (rest of T6); route-change tests and import during server rendering (rest of T8); the script-free iframe snippet (T9, needs M2's page); versioned and updating URLs with an integrity hash (T11, with M14); full-page mode; the microphone permission (voice is release 2); two widgets on one page; a host that is itself framed; framework host pages (M15's samples); real devices.
 - Visual world: "Warm Consumer App", chosen by you through the impeccable skill. `PRODUCT.md` and `DESIGN.md` at the repository root hold the product truth and the design system; M2 inherits both. One small "Powered by Purple Fabric" note belongs inside the open chat (M2).
-- One origin serves the loader, the chat page and the API (`GET /v1/widgets/{id}/config` and `/embed/{id}`). A host's content policy needs that origin in `script-src`, `frame-src` and `connect-src`, and nothing else: the loader uses no inline style or markup, so it works under a strict policy with Trusted Types.
+- One origin serves the loader, the chat page and the API (`GET /v1/widgets/{id}/config` and `/embed/{id}`). A host's content policy needs that origin in `script-src`, `frame-src` and `connect-src`, and in `img-src` for a launcher picture (`/v1/images/{digest}`), and nothing else: the loader uses no inline style or markup, so it works under a strict policy with Trusted Types.
 - For M4: the configuration response must allow any origin (`Access-Control-Allow-Origin: *`) and needs no cookies; the chat page lives at `/embed/{id}`.
 - For M2: the chat must speak the chat's half of `protocol/src/bridge.ts` (send `ready`; pin the parent's origin from `init`; ask `get-token` when `signedIn`; focus its input on `shown`); post `close` from a close button in its own header (the launcher is covered when the chat is full screen) and on Escape. In Playwright's WebKit on Windows a cross-origin chat's own `focus()` is ignored; check input focus on real Safari.
 

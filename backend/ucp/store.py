@@ -119,6 +119,17 @@ sealed_secrets = Table(
     Column("updated_by", Text, nullable=False),
 )
 
+images = Table(
+    "images",
+    metadata,
+    Column("digest", Text, primary_key=True),  # SHA-256 of the bytes, so a stored image never changes
+    Column("tenant_id", Text, ForeignKey("tenants.tenant_id"), nullable=False),
+    Column("content_type", Text, nullable=False),
+    Column("data", LargeBinary, nullable=False),
+    Column("created_at", DateTime(timezone=True), nullable=False, server_default=func.now()),
+    Column("created_by", Text, nullable=False),
+)
+
 conversations = Table(
     "conversations",
     metadata,
@@ -321,6 +332,12 @@ class Store:
         query = select(found.key_id, found.nonce, found.sealed).where(
             (found.tenant_id == tenant_id) & (found.kind == kind) & (found.name == name)
         )
+        async with self.engine.connect() as db:
+            return (await db.execute(query)).first()
+
+    async def image(self, digest: str):
+        """An uploaded image: (content_type, data), or None."""
+        query = select(images.c.content_type, images.c.data).where(images.c.digest == digest)
         async with self.engine.connect() as db:
             return (await db.execute(query)).first()
 
