@@ -2,8 +2,10 @@
 chat files. One origin serves them all, so a customer's content policy needs only that origin."""
 
 from pathlib import Path
+from typing import Annotated
 
 from fastapi import APIRouter, Request
+from fastapi import Path as InPath
 from fastapi.responses import FileResponse, JSONResponse, Response
 
 from ucp.gateway.pipeline import Problem, problem_response
@@ -50,6 +52,21 @@ async def config(widget_id: Id, request: Request) -> Response:
     return JSONResponse(
         widget.config.model_dump(mode="json"), headers={**shared, "cache-control": "public, max-age=60"}
     )
+
+
+@router.get(
+    "/v1/images/{digest}",
+    responses={200: {"content": {"image/png": {}, "image/jpeg": {}, "image/webp": {}}}, 404: {"model": ApiError}},
+    summary="An image uploaded through the admin API, such as a widget's avatar, by its SHA-256",
+)
+async def image(digest: Annotated[str, InPath(pattern=r"^[0-9a-f]{64}$")], request: Request) -> Response:
+    store = getattr(request.app.state, "store", None)  # none on a gateway run without a database
+    found = store and await store.image(digest)
+    if not found:
+        raise Problem("not_found")
+    # The digest names the bytes, so they never change. Shown on customers' pages too, so any site may embed it.
+    headers = {"cache-control": "public, max-age=31536000, immutable", "cross-origin-resource-policy": "cross-origin"}
+    return Response(found.data, media_type=found.content_type, headers=headers)
 
 
 def files(web_dir: Path) -> APIRouter:

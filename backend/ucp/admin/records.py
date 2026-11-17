@@ -25,7 +25,7 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncEngine
 
 from ucp.gateway.pipeline import Problem
-from ucp.store import Store, audit, deleted_widgets, metadata, tenants, widgets
+from ucp.store import Store, audit, deleted_widgets, images, metadata, tenants, widgets
 from ucp.store import sealed_secrets as secrets
 from ucp.vault import Vault, place
 
@@ -284,6 +284,15 @@ class Records:
         )
         async with self.engine.connect() as db:
             return (await db.execute(query)).first() is not None
+
+    async def put_image(self, tenant_id: str, digest: str, content_type: str, data: bytes, actor: str) -> None:
+        """Stores an image under its digest. The same bytes uploaded again keep the first copy."""
+        row = {"digest": digest, "tenant_id": tenant_id, "content_type": content_type, "data": data}
+        row["created_by"] = actor
+        query = pg_insert(images).values(row).on_conflict_do_nothing().returning(images.c.digest)
+        async with self.engine.begin() as db:
+            if (await db.execute(query)).first():
+                await _record(db, actor, "image.add", tenant_id, detail={"digest": digest, "bytes": len(data)})
 
     async def put_secret(self, vault: Vault, tenant_id: str, kind: str, name: str, value, actor: str, detail) -> None:
         """Seals and stores a secret, replacing any of that name. `value` is the new value, or a function of the

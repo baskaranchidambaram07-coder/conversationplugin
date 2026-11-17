@@ -3,11 +3,11 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <!-- If your site sets a content policy, the assistant needs its address in three places, and nothing else:
-         script-src, frame-src and connect-src. -->
+    <!-- If your site sets a content policy, the assistant needs its address in four places, and nothing else:
+         script-src, frame-src, connect-src and img-src (for the launcher's picture). -->
     <meta
       http-equiv="Content-Security-Policy"
-      content="default-src 'self'; script-src 'self' {{GATEWAY}}; frame-src {{GATEWAY}}; connect-src 'self' {{GATEWAY}}"
+      content="default-src 'self'; script-src 'self' {{GATEWAY}}; frame-src {{GATEWAY}}; connect-src 'self' {{GATEWAY}}; img-src 'self' {{GATEWAY}}"
     />
     <title>A public page with the assistant</title>
   </head>

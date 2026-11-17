@@ -57,6 +57,57 @@
         }
       }
     },
+    "/v1/images/{digest}": {
+      "get": {
+        "summary": "An image uploaded through the admin API, such as a widget's avatar, by its SHA-256",
+        "operationId": "image_v1_images__digest__get",
+        "parameters": [
+          {
+            "name": "digest",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^[0-9a-f]{64}$",
+              "title": "Digest"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              },
+              "image/png": {},
+              "image/jpeg": {},
+              "image/webp": {}
+            }
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/v1/sessions": {
       "post": {
         "summary": "Start a session for a visitor of a widget",
@@ -913,6 +964,33 @@
               }
             ],
             "title": "Logo Url"
+          },
+          "avatar": {
+            "anyOf": [
+              {
+                "type": "string",
+                "pattern": "^[0-9a-f]{64}$"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Avatar",
+            "description": "The assistant's picture, uploaded through the admin API: the SHA-256 of an image served at /v1/images/{avatar}. The launcher and the chat show it; null shows the chat glyph."
+          },
+          "greeting": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 120,
+                "minLength": 1
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Greeting",
+            "description": "A short line shown once beside the closed launcher, such as \"Hi, I'm Eva.\""
           },
           "color_scheme": {
             "type": "string",

@@ -148,3 +148,32 @@ test("inline placement fills the element the page names, with no launcher", asyn
   expect(await box(page, "#help iframe")).toEqual({ x: help.x + 1, y: help.y + 1, width: help.width - 2, height: help.height - 2 });
   expect(await page.getByRole("button").count()).toBe(0);
 });
+
+test("a widget with a picture shows it in the launcher, then its greeting beside it, which opens the chat", async ({
+  page,
+}) => {
+  await page.goto(`${HOST}/greet.html`);
+  const button = launcher(page);
+  const picture = button.locator("img");
+  await expect(picture).toBeVisible();
+  expect(await picture.evaluate((image: HTMLImageElement) => image.naturalWidth > 0)).toBe(true);
+  const greeting = page.getByRole("button", { name: "Hi, I'm Eva. Ask me anything." });
+
+  await expect(greeting).toBeVisible();
+  const [line, round] = [(await greeting.boundingBox())!, (await button.boundingBox())!];
+  expect(line.y + line.height).toBeLessThan(round.y); // above the launcher, never over it
+  await greeting.click();
+  await expect(panel(page)).toBeVisible(); // on a phone it covers the screen, launcher and all
+  await expect(greeting).toBeHidden();
+});
+
+test("the greeting can be dismissed from the keyboard, and focus goes back to the launcher", async ({ page }) => {
+  await page.goto(`${HOST}/greet.html`);
+  const dismiss = page.getByRole("button", { name: "Dismiss" });
+  await expect(dismiss).toBeVisible();
+
+  await dismiss.focus();
+  await page.keyboard.press("Enter");
+  await expect(page.getByRole("button", { name: "Hi, I'm Eva. Ask me anything." })).toBeHidden();
+  await expect(launcher(page)).toBeFocused();
+});

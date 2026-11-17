@@ -717,6 +717,33 @@
             }
           ]
         },
+        "avatar": {
+          "anyOf": [
+            {
+              "pattern": "^[0-9a-f]{64}$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "The assistant's picture, uploaded through the admin API: the SHA-256 of an image served at /v1/images/{avatar}. The launcher and the chat show it; null shows the chat glyph."
+        },
+        "greeting": {
+          "anyOf": [
+            {
+              "maxLength": 120,
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "A short line shown once beside the closed launcher, such as \"Hi, I'm Eva.\""
+        },
         "color_scheme": {
           "enum": [
             "light",

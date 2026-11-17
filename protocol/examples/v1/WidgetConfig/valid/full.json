@@ -10,6 +10,8 @@
   "ai_notice": "You are chatting with an AI assistant. It can make mistakes.",
   "brand_color": "#5B2A86",
   "logo_url": "https://example.org/logo.svg",
+  "avatar": "9f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08",
+  "greeting": "Hi, I'm Eva. Ask me anything.",
   "color_scheme": "auto",
   "launcher_position": "bottom-right",
   "history_enabled": true
