@@ -22,7 +22,7 @@ const configs = {
   w_light: { ...example, widget_id: "w_light", color_scheme: "light" },
 };
 // These widgets open the stand-in chat (e2e/chat-stub.html), which lets the loader be tested on its own.
-const STAND_IN = new Set(["w_test", "w_left", "w_greet"]);
+const STAND_IN = new Set(["w_test", "w_left"]);
 // The picture w_greet's avatar names, as the gateway serves uploaded images: by digest, to any site.
 const PICTURE =
   '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><rect width="64" height="64" fill="#5B2A86"/>' +

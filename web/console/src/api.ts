@@ -18,10 +18,12 @@ export class ApiProblem extends Error {
 export async function call<T>(method: "GET" | "POST" | "PUT" | "PATCH" | "DELETE", path: string, body?: unknown): Promise<T> {
   const signed = token();
   if (!signed) throw new ApiProblem(401, { code: "sign_in_required", message: "Sign in to continue.", reference: "" });
+  const raw = body instanceof Blob; // an uploaded picture goes as it is, with its own type
+  const kind = raw ? body.type : "application/json";
   const reply = await fetch(`/admin/v1${path}`, {
     method,
-    headers: { authorization: `Bearer ${signed}`, ...(body === undefined ? {} : { "content-type": "application/json" }) },
-    body: body === undefined ? undefined : JSON.stringify(body),
+    headers: { authorization: `Bearer ${signed}`, ...(body === undefined ? {} : { "content-type": kind }) },
+    body: body === undefined ? undefined : raw ? body : JSON.stringify(body),
   });
   if (reply.status === 204) return undefined as T;
   const answer = await reply.json().catch(() => null);

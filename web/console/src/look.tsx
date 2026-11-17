@@ -4,6 +4,7 @@
 import { contrast, inkOn, isColor } from "@ucp/protocol/brand";
 import { useEffect, useRef, useState } from "react";
 
+import { call } from "./api";
 import { Field } from "./editors";
 import { strings as t } from "./strings";
 
@@ -14,14 +15,54 @@ export type Look = {
   ai_notice?: string | null;
   brand_color?: string;
   logo_url?: string | null;
+  avatar?: string | null;
+  greeting?: string | null;
   color_scheme?: "light" | "dark" | "auto";
   launcher_position?: "bottom-right" | "bottom-left";
   history_enabled?: boolean;
 };
 
-const CREAM = "#fbf3ea"; // the chat's light ground
-const NIGHT = "#1c1815"; // its dark ground (DESIGN.md, Dark scheme)
+const LIGHT = "#ffffff"; // the chat's composer, where the send button sits, in the light scheme
+const NIGHT = "#30302e"; // and in the dark
 const QUESTIONS = 4;
+const SIDE = 256; // px: the picture as stored, twice the largest place it is shown
+
+/** A picture as the launcher shows it: cropped to a centred square, SIDE px, as WebP where the browser can make it
+ *  (JPEG elsewhere). Drawn on a canvas, so whatever was chosen, even an SVG, is sent as plain pixels. */
+export async function squared(file: File): Promise<Blob> {
+  let read = await new Promise<string>((done, fail) => {
+    const reader = new FileReader(); // a data: address, which the console's content policy allows for images
+    reader.onload = () => done(String(reader.result));
+    reader.onerror = () => fail(reader.error);
+    reader.readAsDataURL(file);
+  });
+  if (file.type === "image/svg+xml") {
+    // An SVG with only a viewBox has no size of its own, so it is given SIDE square to draw at.
+    const sized = (await file.text()).replace(/<svg\b([^>]*)>/, (whole, attributes: string) =>
+      /\swidth=/.test(attributes) ? whole : `<svg width="${SIDE}" height="${SIDE}"${attributes}>`,
+    );
+    read = `data:image/svg+xml;charset=utf-8,${encodeURIComponent(sized)}`;
+  }
+  const image = new Image();
+  image.src = read;
+  await image.decode();
+  const [width, height] = [image.naturalWidth || SIDE, image.naturalHeight || SIDE];
+  const side = Math.min(width, height);
+  const canvas = document.createElement("canvas");
+  canvas.width = canvas.height = SIDE;
+  canvas.getContext("2d")?.drawImage(image, (width - side) / 2, (height - side) / 2, side, side, 0, 0, SIDE, SIDE);
+  const as = (type: string, quality: number) => new Promise<Blob | null>((done) => canvas.toBlob(done, type, quality));
+  const webp = await as("image/webp", 0.86);
+  const picture = webp?.type === "image/webp" ? webp : await as("image/jpeg", 0.88);
+  if (!picture) throw new Error("the picture could not be drawn");
+  return picture;
+}
+
+/** Uploads a picture to the tenant's images; answers its digest. */
+export async function upload(tenant: string, file: File): Promise<string> {
+  const { digest } = await call<{ digest: string }>("POST", `/tenants/${tenant}/images`, await squared(file));
+  return digest;
+}
 
 /** What the button colour does on the chat: the text on it, and how it stands out in each scheme. */
 export function colourNotes(colour: string): { text: string; warnings: string[] } {
@@ -29,13 +70,20 @@ export function colourNotes(colour: string): { text: string; warnings: string[] 
   const ink = inkOn(colour);
   const text = t.textOn(ink === "#ffffff" ? t.white : t.black, contrast(colour, ink).toFixed(1));
   const warnings = [];
-  if (contrast(colour, CREAM) < 1.5) warnings.push(t.faintOnLight);
-  if (contrast(colour, NIGHT) < 1.5) warnings.push(t.creamOnDark);
+  if (contrast(colour, LIGHT) < 3) warnings.push(t.faintOnLight); // WCAG's line for a control
+  if (contrast(colour, NIGHT) < 3) warnings.push(t.creamOnDark);
   return { text, warnings };
 }
 
-export function LookEditor(props: { value: Look; signedIn: boolean; onChange: (look: Look) => void; readOnly: boolean }) {
-  const { value, signedIn, onChange, readOnly } = props;
+export function LookEditor(props: {
+  value: Look;
+  tenant: string;
+  signedIn: boolean;
+  onChange: (look: Look) => void;
+  readOnly: boolean;
+}) {
+  const { value, tenant, signedIn, onChange, readOnly } = props;
+  const [picturing, setPicturing] = useState<"sending" | "failed" | null>(null);
   const change = (changes: Look) => onChange({ ...value, ...changes });
   const questions = [...(value.suggested_prompts ?? [])];
   const slots = questions.length < QUESTIONS ? [...questions, ""] : questions;
@@ -87,7 +135,7 @@ export function LookEditor(props: { value: Look; signedIn: boolean; onChange: (l
             <input
               type="color"
               aria-label={t.colourPicker}
-              value={isColor(colour) ? colour.toLowerCase() : "#2b241f"}
+              value={isColor(colour) ? colour.toLowerCase() : "#1f1e1d"}
               onChange={(event) => change({ brand_color: event.target.value.toUpperCase() })}
             />
             <input
@@ -120,6 +168,56 @@ export function LookEditor(props: { value: Look; signedIn: boolean; onChange: (l
             placeholder="https://"
             value={value.logo_url ?? ""}
             onChange={(event) => change({ logo_url: event.target.value.trim() || null })}
+          />
+        )}
+      </Field>
+      <Field label={t.picture} hint={t.pictureHint}>
+        {(id) => (
+          <div className="inline picture">
+            <span className="avatar" aria-hidden="true">
+              {value.avatar && <img src={`/v1/images/${value.avatar}`} alt="" />}
+            </span>
+            <input
+              id={id}
+              type="file"
+              className="hidden"
+              accept="image/png,image/jpeg,image/webp,image/svg+xml"
+              onChange={(event) => {
+                const file = event.target.files?.[0];
+                event.target.value = ""; // the same file can be chosen again
+                if (!file) return;
+                setPicturing("sending");
+                upload(tenant, file).then(
+                  (avatar) => {
+                    setPicturing(null);
+                    change({ avatar });
+                  },
+                  () => setPicturing("failed"),
+                );
+              }}
+            />
+            <label htmlFor={id} className="secondary">
+              {value.avatar ? t.replacePicture : t.choosePicture}
+            </label>
+            {value.avatar && (
+              <button type="button" className="quiet" onClick={() => change({ avatar: null })}>
+                {t.removePicture}
+              </button>
+            )}
+            <p className={picturing === "failed" ? "problem" : "hint"} role="status">
+              {picturing === "sending" ? t.sendingPicture : picturing === "failed" ? t.pictureFailed : ""}
+            </p>
+          </div>
+        )}
+      </Field>
+      <Field label={t.greeting} hint={t.greetingHint}>
+        {(id) => (
+          <input
+            id={id}
+            type="text"
+            maxLength={120}
+            value={value.greeting ?? ""}
+            onChange={(event) => change({ greeting: event.target.value || null })}
           />
         )}
       </Field>

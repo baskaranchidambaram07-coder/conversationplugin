@@ -2,7 +2,16 @@
 // (web/widget/.impeccable/surfaces/src-app-tsx.md).
 import { contrast, inkOn, isColor } from "@ucp/protocol/brand";
 import type { Block, Conversation, WidgetConfig } from "@ucp/protocol/v1";
-import { type CSSProperties, type KeyboardEvent, type Ref, useEffect, useLayoutEffect, useRef, useState } from "react";
+import {
+  type CSSProperties,
+  type KeyboardEvent,
+  type ReactNode,
+  type Ref,
+  useEffect,
+  useLayoutEffect,
+  useRef,
+  useState,
+} from "react";
 
 import { type Api, Failure, gateway } from "./chat/api";
 import { type Bridge, connect, type Mode } from "./chat/bridge";
@@ -16,15 +25,17 @@ import { strings as t } from "./strings";
 
 const LIMIT = 4000;
 const WARN_AT = 3600; // the character count appears only near the limit
-const INK = "#2b241f";
+const INK = "#1f1e1d";
 
-/** The brand on the dark ground: one that nearly vanishes there (under 1.5:1, a near-black) gives way to the cream ink. */
-export const forDark = (color: string) => (contrast(color, "#1c1815") >= 1.5 ? color : "#f2e9df");
+/** The brand on the dark composer: a colour under 3:1 against it (WCAG's line for a control) gives way to the light
+ *  ink, so the send button always stands out. */
+export const forDark = (color: string) => (contrast(color, "#30302e") >= 3 ? color : "#f5f4ef");
 
 type Settings = {
   title: string;
   color: string;
   logo: string | null;
+  picture: string | null;
   welcome: string | null;
   prompts: string[];
   notice: string;
@@ -50,6 +61,8 @@ export function readConfig(config: Partial<WidgetConfig>): Settings {
     title: text(config.title, 80) || "Chat",
     color: isColor(config.brand_color) ? config.brand_color : INK,
     logo: typeof config.logo_url === "string" && /^https:\/\/[!-~]+$/.test(config.logo_url) ? config.logo_url : null,
+    // The assistant's picture, uploaded through the admin API and served on this address by its SHA-256.
+    picture: typeof config.avatar === "string" && /^[0-9a-f]{64}$/.test(config.avatar) ? `/v1/images/${config.avatar}` : null,
     welcome: text(config.welcome_message, 1000) || null,
     prompts: prompts.map((prompt) => text(prompt, 200)).filter(Boolean).slice(0, 4),
     notice: text(config.ai_notice, 500) || t.notice,
@@ -87,7 +100,6 @@ export function App({ widgetId, win = window, preview = false }: { widgetId: str
   const follow = useRef(true); // a new question always brings the view down
   const followed = useRef(0); // the content height the view last kept up with
   const [shown, setShown] = useState(0); // how often the loader has shown the chat
-  const [logoFailed, setLogoFailed] = useState(false);
   const [paused, setPaused] = useState(false); // the panel is closed: nothing animates (DESIGN.md)
   const input = useRef<HTMLTextAreaElement>(null);
   const log = useRef<HTMLElement>(null);
@@ -415,10 +427,10 @@ export function App({ widgetId, win = window, preview = false }: { widgetId: str
   // A wide frame (the chat filling a page, or the window) is laid out as a conversation app; an empty chat there
   // holds its welcome, composer and suggested questions in the middle of the screen.
   const empty = turns.length === 0 && !opening && !openFailed && !browsing;
-  const classes = ["chat", side && "split", wide && "page", wide && empty && "empty", paused && "paused"]
+  const classes = ["chat", side && "split", wide && "page", empty && "empty", paused && "paused"]
     .filter(Boolean)
     .join(" ");
-  const notice = <p className="notice">{settings.notice}</p>;
+  const mark = <Mark settings={settings} />;
   const prompts = turns.length === 0 && settings.prompts.length > 0 && (
     <ul className="prompts">
       {settings.prompts.map((prompt) => (
@@ -433,13 +445,7 @@ export function App({ widgetId, win = window, preview = false }: { widgetId: str
   return (
     <div className={classes} style={theme}>
       <header className="head">
-        <span className="logo" aria-hidden="true">
-          {settings.logo && !logoFailed ? (
-            <img src={settings.logo} alt="" onError={() => setLogoFailed(true)} />
-          ) : (
-            initials(settings.title)
-          )}
-        </span>
+        {mark}
         <h1>{settings.title}</h1>
         <div className="actions">
           {!side && !browsing && (turns.length > 0 || current) && (
@@ -491,11 +497,13 @@ export function App({ widgetId, win = window, preview = false }: { widgetId: str
           setAway(box.scrollHeight - box.scrollTop - box.clientHeight >= 48);
         }}
       >
-        {!wide && notice}
-        {settings.welcome && (
-          <p className="card welcome" dir="auto">
-            {settings.welcome}
-          </p>
+        {(settings.welcome || empty) && (
+          <div className="intro">
+            {mark}
+            <p className="welcome" dir="auto">
+              {settings.welcome ?? settings.title}
+            </p>
+          </div>
         )}
         {!(wide && empty) && prompts}
         {opening && turns.length === 0 && <div className="ring" role="status" aria-label={t.opening} />}
@@ -514,6 +522,7 @@ export function App({ widgetId, win = window, preview = false }: { widgetId: str
           <TurnView
             key={turn.key}
             turn={turn}
+            mark={mark}
             onRetry={ended || !turn.question ? undefined : () => void ask(turn.question, turn.key)}
           />
         ))}
@@ -526,10 +535,10 @@ export function App({ widgetId, win = window, preview = false }: { widgetId: str
           <button
             type="button"
             className="latest"
+            aria-label={t.latest}
             onClick={() => log.current?.scrollTo({ top: log.current.scrollHeight })}
           >
             <Icon path="M12 5v14M6 13l6 6 6-6" />
-            {t.latest}
           </button>
         )}
 
@@ -573,7 +582,7 @@ export function App({ widgetId, win = window, preview = false }: { widgetId: str
           </p>
         )}
         {wide && empty && prompts}
-        {wide && notice}
+        <p className="notice">{settings.notice}</p>
         <p className="credit">{t.credit}</p>
         <div className="hidden" role="status" aria-live="polite">
           {heard}
@@ -583,11 +592,25 @@ export function App({ widgetId, win = window, preview = false }: { widgetId: str
   );
 }
 
+/** Who answers: the assistant's picture, else the customer's logo, else the title's initials. An
+ *  image that cannot load gives way to the next. */
+function Mark({ settings }: { settings: Settings }) {
+  const [failed, setFailed] = useState<string[]>([]);
+  const source = [settings.picture, settings.logo].find((url) => url && !failed.includes(url));
+  return (
+    <span className={source && source === settings.logo ? "mark logo" : "mark"} aria-hidden="true">
+      {source ? <img src={source} alt="" onError={() => setFailed([...failed, source])} /> : initials(settings.title)}
+    </span>
+  );
+}
+
 function TurnView({
   turn,
+  mark,
   onRetry,
 }: {
   turn: Turn;
+  mark: ReactNode;
   onRetry?: () => void;
 }) {
   const { answer, problem } = turn;
@@ -600,25 +623,30 @@ function TurnView({
           {turn.question}
         </p>
       )}
-      <article className="card answer" aria-busy={answer.status === "pending" || answer.status === "streaming"}>
-        <span className="hidden">{t.answer}</span>
-        {working && (
-          <span className="dots" role="img" aria-label={t.working}>
-            <span />
-            <span />
-            <span />
-          </span>
-        )}
-        {answer.blocks.map((block, index) =>
-          block ? <BlockView key={index} block={block} /> : null,
-        )}
-        {answer.status === "stopped" && <p className="meta">{t.stopped}</p>}
-        {answer.status === "failed" && problem && (
-          <ProblemNote problem={problem} action={onRetry && problem.retryable ? t.retry : undefined} onAction={onRetry} />
-        )}
-        {answer.status === "complete" && (
-          <CopyButton text={plain(answer.blocks)} label={t.copy} />
-        )}
+      <article className="answer" aria-busy={answer.status === "pending" || answer.status === "streaming"}>
+        {mark}
+        <div className="said">
+          <span className="hidden">{t.answer}</span>
+          {working && (
+            <span className="dots" role="img" aria-label={t.working}>
+              <span />
+              <span />
+              <span />
+            </span>
+          )}
+          {answer.blocks.map((block, index) =>
+            block ? <BlockView key={index} block={block} /> : null,
+          )}
+          {answer.status === "stopped" && <p className="meta">{t.stopped}</p>}
+          {answer.status === "failed" && problem && (
+            <ProblemNote problem={problem} action={onRetry && problem.retryable ? t.retry : undefined} onAction={onRetry} />
+          )}
+          {answer.status === "complete" && (
+            <div className="acts">
+              <CopyButton text={plain(answer.blocks)} label={t.copy} />
+            </div>
+          )}
+        </div>
       </article>
     </div>
   );

@@ -1,4 +1,4 @@
-import "@fontsource-variable/nunito";
+import "@fontsource-variable/inter";
 import "./styles.css";
 
 import { StrictMode } from "react";

@@ -1,361 +1,334 @@
 ---
 name: Conversation Plugin
-description: A warm, polite chat widget that wears the customer's brand on someone else's page.
+description: The familiar AI chat window wearing the customer's identity, and the calm admin console that sets it up.
 colors:
-  warm-ground: "#fbf3ea"
-  soft-border: "#e7dacb"
-  ink: "#2b241f"
-  secondary-ink: "#6f625a"
-  paper-white: "#ffffff"
-  night-ground: "#1c1815"
-  night-border: "#3b332d"
-  cream-ink: "#f2e9df"
-  light-umber: "#b5a69a"
-  night-paper: "#27211d"
-  column-tint: "#f4eadf"
-  problem-red: "#9b2c1f"
-  good-green: "#2f6b3a"
-  warn-amber: "#8a4b12"
+  chat-ground: "#fcfcfb"
+  chat-surface: "#ffffff"
+  chat-bubble: "#f0efeb"
+  chat-line: "#e6e4e0"
+  chat-ink: "#1f1e1d"
+  chat-muted: "#6b6a68"
+  chat-ground-dark: "#262624"
+  chat-surface-dark: "#30302e"
+  chat-bubble-dark: "#393936"
+  chat-line-dark: "#3e3e3a"
+  chat-ink-dark: "#f5f4ef"
+  chat-muted-dark: "#b0aea5"
+  chart-blue: "#2a78d6"
+  chart-orange: "#eb6834"
+  chart-aqua: "#1baf7a"
+  chart-yellow: "#eda100"
+  chart-magenta: "#e87ba4"
+  chart-green: "#008300"
+  chart-violet: "#6250d6"
+  chart-red: "#e34948"
+  console-ground: "#f9fafb"
+  console-surface: "#ffffff"
+  console-line: "#e5e7eb"
+  console-ink: "#111827"
+  console-muted: "#6b7280"
+  console-accent: "#4f46e5"
+  console-accent-hover: "#4338ca"
+  console-accent-soft: "#eef2ff"
+  console-problem: "#b42318"
+  console-good: "#067647"
+  console-good-soft: "#ecfdf3"
+  console-warn: "#b54708"
+  graphite-ground: "#111315"
+  graphite-surface: "#1b1e21"
+  graphite-field: "#15171a"
+  graphite-line: "#2a2e33"
+  graphite-ink: "#e6e8ea"
+  graphite-muted: "#9aa1a9"
+  graphite-accent: "#4f8cff"
+  graphite-accent-hover: "#6b9dff"
+  graphite-on-accent: "#0b1220"
+  graphite-accent-text: "#8fb4ff"
+  graphite-problem: "#f97066"
+  graphite-good: "#47cd89"
+  graphite-warn: "#fdb022"
 typography:
-  title:
-    fontFamily: "Nunito Variable, Nunito, system-ui, sans-serif"
-    fontSize: "20px"
-    fontWeight: 600
-    lineHeight: 1.25
-  body:
-    fontFamily: "Nunito Variable, Nunito, system-ui, sans-serif"
+  chat-body:
+    fontFamily: "Inter Variable, Inter, system-ui, sans-serif"
     fontSize: "16px"
     fontWeight: 400
-    lineHeight: 1.55
-  label:
-    fontFamily: "Nunito Variable, Nunito, system-ui, sans-serif"
-    fontSize: "15px"
-    fontWeight: 650
+    lineHeight: 1.6
+    fontFeature: "\"cv11\", \"ss01\""
+  chat-title:
+    fontFamily: "Inter Variable, Inter, system-ui, sans-serif"
+    fontSize: "16px"
+    fontWeight: 600
     lineHeight: 1.3
-  label-small:
-    fontFamily: "Nunito Variable, Nunito, system-ui, sans-serif"
-    fontSize: "14px"
-    fontWeight: 650
-  meta:
-    fontFamily: "Nunito Variable, Nunito, system-ui, sans-serif"
-    fontSize: "14px"
-    fontWeight: 400
-  caption:
-    fontFamily: "Nunito Variable, Nunito, system-ui, sans-serif"
-    fontSize: "13px"
-    fontWeight: 400
-  credit:
-    fontFamily: "Nunito Variable, Nunito, system-ui, sans-serif"
-    fontSize: "12px"
-    fontWeight: 400
+    letterSpacing: "-0.01em"
+  chat-welcome:
+    fontFamily: "Inter Variable, Inter, system-ui, sans-serif"
+    fontSize: "20px"
+    fontWeight: 600
+    lineHeight: 1.35
+    letterSpacing: "-0.015em"
+  chat-welcome-wide:
+    fontFamily: "Inter Variable, Inter, system-ui, sans-serif"
+    fontSize: "26px"
+    fontWeight: 600
+    lineHeight: 1.35
+    letterSpacing: "-0.015em"
   answer-heading:
-    fontFamily: "Nunito Variable, Nunito, system-ui, sans-serif"
+    fontFamily: "Inter Variable, Inter, system-ui, sans-serif"
     fontSize: "18px"
     fontWeight: 700
     lineHeight: 1.3
   answer-subheading:
-    fontFamily: "Nunito Variable, Nunito, system-ui, sans-serif"
+    fontFamily: "Inter Variable, Inter, system-ui, sans-serif"
     fontSize: "16px"
     fontWeight: 700
     lineHeight: 1.3
   answer-minor-heading:
-    fontFamily: "Nunito Variable, Nunito, system-ui, sans-serif"
+    fontFamily: "Inter Variable, Inter, system-ui, sans-serif"
     fontSize: "15px"
     fontWeight: 700
     lineHeight: 1.3
-  code-label:
-    fontFamily: "Nunito Variable, Nunito, system-ui, sans-serif"
+  chat-label:
+    fontFamily: "Inter Variable, Inter, system-ui, sans-serif"
+    fontSize: "14px"
+    fontWeight: 400
+    lineHeight: 1.35
+  chat-action:
+    fontFamily: "Inter Variable, Inter, system-ui, sans-serif"
     fontSize: "13px"
-    fontWeight: 650
+    fontWeight: 500
+  chat-caption:
+    fontFamily: "Inter Variable, Inter, system-ui, sans-serif"
+    fontSize: "12px"
+    fontWeight: 400
+    lineHeight: 1.45
   table:
-    fontFamily: "Nunito Variable, Nunito, system-ui, sans-serif"
+    fontFamily: "Inter Variable, Inter, system-ui, sans-serif"
     fontSize: "14.5px"
     fontWeight: 400
     lineHeight: 1.45
-    fontFeature: "tnum"
-  table-header:
-    fontFamily: "Nunito Variable, Nunito, system-ui, sans-serif"
-    fontSize: "14.5px"
-    fontWeight: 700
-    lineHeight: 1.45
-    fontFeature: "tnum"
-  list-heading:
-    fontFamily: "Nunito Variable, Nunito, system-ui, sans-serif"
-    fontSize: "16px"
-    fontWeight: 700
-    lineHeight: 1.3
-  list-title:
-    fontFamily: "Nunito Variable, Nunito, system-ui, sans-serif"
-    fontSize: "16px"
-    fontWeight: 650
-    lineHeight: 1.35
+    fontFeature: "\"tnum\""
   code:
     fontFamily: "ui-monospace, Cascadia Mono, SF Mono, Menlo, Consolas, monospace"
     fontSize: "13.5px"
     fontWeight: 400
     lineHeight: 1.6
-  code-inline:
-    fontFamily: "ui-monospace, Cascadia Mono, SF Mono, Menlo, Consolas, monospace"
-    fontSize: "0.9em"
-  console-body:
-    fontFamily: "Nunito Variable, Nunito, system-ui, sans-serif"
+  greeting:
+    fontFamily: "system-ui, -apple-system, Segoe UI, sans-serif"
     fontSize: "15px"
     fontWeight: 400
-    lineHeight: 1.5
-  console-page-title:
-    fontFamily: "Nunito Variable, Nunito, system-ui, sans-serif"
-    fontSize: "26px"
-    fontWeight: 700
-    lineHeight: 1.25
-  console-station-title:
-    fontFamily: "Nunito Variable, Nunito, system-ui, sans-serif"
-    fontSize: "18px"
-    fontWeight: 700
-  console-section-title:
-    fontFamily: "Nunito Variable, Nunito, system-ui, sans-serif"
-    fontSize: "16px"
-    fontWeight: 700
-  console-mark:
-    fontFamily: "Nunito Variable, Nunito, system-ui, sans-serif"
-    fontSize: "16px"
-    fontWeight: 800
-  console-action:
-    fontFamily: "Nunito Variable, Nunito, system-ui, sans-serif"
-    fontSize: "15px"
-    fontWeight: 650
-  console-field-label:
-    fontFamily: "Nunito Variable, Nunito, system-ui, sans-serif"
+    lineHeight: 1.4
+  console-body:
+    fontFamily: "Inter Variable, Inter, system-ui, sans-serif"
     fontSize: "14px"
-    fontWeight: 650
+    fontWeight: 400
+    lineHeight: 1.55
+    fontFeature: "\"cv11\", \"ss01\", \"tnum\""
+  console-page-title:
+    fontFamily: "Inter Variable, Inter, system-ui, sans-serif"
+    fontSize: "24px"
+    fontWeight: 600
+    lineHeight: 1.25
+    letterSpacing: "-0.02em"
+  console-card-title:
+    fontFamily: "Inter Variable, Inter, system-ui, sans-serif"
+    fontSize: "17px"
+    fontWeight: 600
+  console-section-title:
+    fontFamily: "Inter Variable, Inter, system-ui, sans-serif"
+    fontSize: "16px"
+    fontWeight: 700
+  console-label:
+    fontFamily: "Inter Variable, Inter, system-ui, sans-serif"
+    fontSize: "14px"
+    fontWeight: 500
   console-hint:
-    fontFamily: "Nunito Variable, Nunito, system-ui, sans-serif"
-    fontSize: "13.5px"
+    fontFamily: "Inter Variable, Inter, system-ui, sans-serif"
+    fontSize: "13px"
     fontWeight: 400
   console-small:
-    fontFamily: "Nunito Variable, Nunito, system-ui, sans-serif"
-    fontSize: "13px"
+    fontFamily: "Inter Variable, Inter, system-ui, sans-serif"
+    fontSize: "12.5px"
     fontWeight: 400
-  console-sign:
-    fontFamily: "Nunito Variable, Nunito, system-ui, sans-serif"
-    fontSize: "13px"
-    fontWeight: 650
+  console-group-label:
+    fontFamily: "Inter Variable, Inter, system-ui, sans-serif"
+    fontSize: "12px"
+    fontWeight: 600
+    letterSpacing: "0.04em"
   console-snippet:
     fontFamily: "ui-monospace, Cascadia Mono, SF Mono, Menlo, Consolas, monospace"
     fontSize: "13px"
     fontWeight: 400
     lineHeight: 1.6
 rounded:
-  panel: "24px"
-  card: "18px"
-  tile: "12px"
   inline: "6px"
-  pill: "999px"
+  control: "8px"
+  icon: "10px"
+  card: "12px"
+  greeting: "16px"
+  panel: "20px"
+  composer-wide: "24px"
   full: "50%"
+  chip: "999px"
 spacing:
-  gap: "16px"
-  edge: "24px"
   gutter: "16px"
   gutter-narrow: "10px"
-  stack: "12px"
+  block: "10px"
+  turn: "24px"
+  form: "18px"
+  edge: "24px"
+  chats-column: "288px"
+  conversation-column: "760px"
+  console-column: "280px"
 components:
   launcher:
     rounded: "{rounded.full}"
     size: "56px"
-  launcher-unbranded:
-    backgroundColor: "{colors.ink}"
-    textColor: "{colors.paper-white}"
-    rounded: "{rounded.full}"
-    size: "56px"
   panel:
-    backgroundColor: "{colors.warm-ground}"
+    backgroundColor: "{colors.chat-ground}"
     rounded: "{rounded.panel}"
     width: "400px"
     height: "640px"
-  logo-tile:
-    backgroundColor: "{colors.paper-white}"
-    textColor: "{colors.ink}"
-    rounded: "{rounded.tile}"
-    size: "40px"
-  answer-card:
-    backgroundColor: "{colors.paper-white}"
-    textColor: "{colors.ink}"
-    typography: "{typography.body}"
-    rounded: "{rounded.card}"
-    padding: "14px 16px"
-  visitor-bubble:
-    backgroundColor: "{colors.soft-border}"
-    textColor: "{colors.ink}"
-    typography: "{typography.body}"
-    rounded: "{rounded.card}"
-    padding: "10px 14px"
-  suggestion-pill:
-    typography: "{typography.label}"
-    rounded: "{rounded.pill}"
-    padding: "10px 16px"
-    height: "44px"
-  send-button:
-    rounded: "{rounded.full}"
-    size: "44px"
-  button-secondary:
-    backgroundColor: "{colors.paper-white}"
-    textColor: "{colors.ink}"
-    typography: "{typography.label-small}"
-    rounded: "{rounded.pill}"
-    padding: "8px 16px"
-    height: "36px"
-  button-secondary-hover:
-    backgroundColor: "{colors.soft-border}"
-  button-quiet:
-    textColor: "{colors.secondary-ink}"
-    typography: "{typography.label-small}"
-    rounded: "{rounded.pill}"
-    padding: "6px 10px"
-    height: "36px"
-  button-quiet-hover:
-    textColor: "{colors.ink}"
-  composer:
-    backgroundColor: "{colors.paper-white}"
-    textColor: "{colors.ink}"
-    typography: "{typography.body}"
-    rounded: "{rounded.panel}"
-    padding: "6px 6px 6px 18px"
-  code-inline:
-    backgroundColor: "{colors.warm-ground}"
-    textColor: "{colors.ink}"
-    typography: "{typography.code-inline}"
-    rounded: "{rounded.inline}"
-    padding: "1px 6px"
-  blockquote:
-    backgroundColor: "{colors.warm-ground}"
-    textColor: "{colors.ink}"
-    rounded: "{rounded.tile}"
-    padding: "10px 14px"
-  code-panel:
-    backgroundColor: "{colors.warm-ground}"
-    textColor: "{colors.ink}"
-    typography: "{typography.code}"
-    rounded: "{rounded.tile}"
-    padding: "12px 14px"
-  code-caption:
-    textColor: "{colors.secondary-ink}"
-    typography: "{typography.code-label}"
-    padding: "4px 6px 4px 14px"
-  table-frame:
-    backgroundColor: "{colors.paper-white}"
-    textColor: "{colors.ink}"
-    typography: "{typography.table}"
-    rounded: "{rounded.tile}"
-  table-header:
-    backgroundColor: "{colors.soft-border}"
-    textColor: "{colors.ink}"
-    typography: "{typography.table-header}"
-    padding: "8px 12px"
-  table-cell:
-    typography: "{typography.table}"
-    padding: "8px 12px"
-  header-icon-button:
-    textColor: "{colors.ink}"
-    rounded: "{rounded.full}"
-    size: "44px"
-  chat-list:
-    backgroundColor: "{colors.paper-white}"
-    textColor: "{colors.ink}"
-    rounded: "{rounded.card}"
-  chat-list-column:
-    width: "288px"
-  chat-row:
-    textColor: "{colors.ink}"
-    typography: "{typography.list-title}"
-    padding: "10px 16px"
-    height: "60px"
-  chat-row-current:
-    backgroundColor: "{colors.soft-border}"
-    textColor: "{colors.ink}"
-  chat-row-date:
-    textColor: "{colors.secondary-ink}"
-    typography: "{typography.meta}"
-  chat-row-sketch:
-    backgroundColor: "{colors.soft-border}"
-    rounded: "{rounded.inline}"
-    height: "12px"
-  console-top-bar:
-    backgroundColor: "{colors.warm-ground}"
-    textColor: "{colors.ink}"
-    padding: "10px 28px"
-    height: "64px"
-  console-column:
-    backgroundColor: "{colors.column-tint}"
-    padding: "20px 16px"
-    width: "280px"
-  console-widget-row:
-    textColor: "{colors.ink}"
-    rounded: "{rounded.tile}"
-    padding: "11px 12px"
-  console-widget-row-current:
-    backgroundColor: "{colors.soft-border}"
-    textColor: "{colors.ink}"
-  console-button-primary:
-    backgroundColor: "{colors.ink}"
-    textColor: "{colors.warm-ground}"
-    typography: "{typography.console-action}"
-    rounded: "{rounded.pill}"
-    padding: "10px 22px"
-    height: "44px"
-  console-sign:
-    backgroundColor: "{colors.ink}"
-    textColor: "{colors.warm-ground}"
-    typography: "{typography.console-sign}"
-    rounded: "{rounded.pill}"
-    padding: "5px 12px"
-  console-station-dot:
-    backgroundColor: "{colors.paper-white}"
-    textColor: "{colors.secondary-ink}"
+  greeting:
+    backgroundColor: "{colors.chat-surface}"
+    textColor: "{colors.chat-ink}"
+    typography: "{typography.greeting}"
+    rounded: "{rounded.greeting}"
+    padding: "12px 4px 12px 16px"
+  chat-mark:
+    backgroundColor: "{colors.chat-bubble}"
+    textColor: "{colors.chat-ink}"
     rounded: "{rounded.full}"
     size: "28px"
-  console-station-dot-now:
-    backgroundColor: "{colors.paper-white}"
-    textColor: "{colors.ink}"
+  header-icon-button:
+    textColor: "{colors.chat-muted}"
+    rounded: "{rounded.icon}"
+    size: "40px"
+  visitor-bubble:
+    backgroundColor: "{colors.chat-bubble}"
+    textColor: "{colors.chat-ink}"
+    typography: "{typography.chat-body}"
+    rounded: "{rounded.panel}"
+    padding: "10px 16px"
+  suggestion-chip:
+    backgroundColor: "{colors.chat-surface}"
+    textColor: "{colors.chat-ink}"
+    typography: "{typography.chat-label}"
+    rounded: "{rounded.card}"
+    padding: "8px 14px"
+    height: "40px"
+  composer:
+    backgroundColor: "{colors.chat-surface}"
+    textColor: "{colors.chat-ink}"
+    typography: "{typography.chat-body}"
+    rounded: "{rounded.panel}"
+    padding: "8px 8px 8px 16px"
+  composer-wide:
+    rounded: "{rounded.composer-wide}"
+    padding: "10px 10px 10px 18px"
+  send-button:
+    rounded: "{rounded.icon}"
+    size: "36px"
+  button-quiet:
+    textColor: "{colors.chat-muted}"
+    typography: "{typography.chat-action}"
+    rounded: "{rounded.control}"
+    padding: "6px 8px"
+    height: "32px"
+  button-quiet-hover:
+    textColor: "{colors.chat-ink}"
+  button-secondary:
+    backgroundColor: "{colors.chat-surface}"
+    textColor: "{colors.chat-ink}"
+    typography: "{typography.chat-action}"
+    rounded: "{rounded.control}"
+    padding: "6px 12px"
+    height: "32px"
+  button-secondary-hover:
+    backgroundColor: "{colors.chat-bubble}"
+  code-panel:
+    backgroundColor: "{colors.chat-ground}"
+    textColor: "{colors.chat-ink}"
+    typography: "{typography.code}"
+    rounded: "{rounded.card}"
+    padding: "12px 14px"
+  code-inline:
+    backgroundColor: "{colors.chat-ground}"
+    rounded: "{rounded.inline}"
+    padding: "1px 6px"
+  table-frame:
+    backgroundColor: "{colors.chat-surface}"
+    typography: "{typography.table}"
+    rounded: "{rounded.card}"
+  table-header:
+    backgroundColor: "{colors.chat-line}"
+    textColor: "{colors.chat-ink}"
+    padding: "8px 12px"
+  chats-row:
+    textColor: "{colors.chat-ink}"
+    padding: "9px 14px"
+    height: "56px"
+  chats-row-current:
+    backgroundColor: "{colors.chat-bubble}"
+  console-primary:
+    backgroundColor: "{colors.console-accent}"
+    textColor: "{colors.console-surface}"
+    typography: "{typography.console-label}"
+    rounded: "{rounded.control}"
+    padding: "8px 16px"
+    height: "38px"
+  console-primary-hover:
+    backgroundColor: "{colors.console-accent-hover}"
+  console-secondary:
+    backgroundColor: "{colors.console-surface}"
+    textColor: "{colors.console-ink}"
+    typography: "{typography.console-label}"
+    rounded: "{rounded.control}"
+    padding: "7px 14px"
+    height: "36px"
+  console-secondary-hover:
+    backgroundColor: "{colors.console-ground}"
+  console-quiet:
+    textColor: "{colors.console-muted}"
+    typography: "{typography.console-label}"
+    rounded: "{rounded.control}"
+    padding: "7px 10px"
+    height: "36px"
+  console-field:
+    backgroundColor: "{colors.console-surface}"
+    textColor: "{colors.console-ink}"
+    typography: "{typography.console-body}"
+    rounded: "{rounded.control}"
+    padding: "8px 12px"
+    height: "38px"
+  console-card:
+    backgroundColor: "{colors.console-surface}"
+    rounded: "{rounded.card}"
+    padding: "24px"
+  console-choice:
+    backgroundColor: "{colors.console-surface}"
+    rounded: "{rounded.icon}"
+    padding: "10px 12px"
+  console-choice-chosen:
+    backgroundColor: "{colors.console-accent-soft}"
+  console-widget-row:
+    rounded: "{rounded.control}"
+    padding: "9px 10px"
+  console-widget-row-current:
+    backgroundColor: "{colors.console-accent-soft}"
+  console-station-dot:
+    backgroundColor: "{colors.console-surface}"
+    textColor: "{colors.console-muted}"
     rounded: "{rounded.full}"
     size: "28px"
   console-station-dot-done:
-    backgroundColor: "{colors.ink}"
-    textColor: "{colors.warm-ground}"
+    backgroundColor: "{colors.console-accent}"
+    textColor: "{colors.console-surface}"
     rounded: "{rounded.full}"
     size: "28px"
-  console-station-card:
-    backgroundColor: "{colors.paper-white}"
-    textColor: "{colors.ink}"
-    rounded: "{rounded.card}"
-    padding: "24px"
-  console-preview:
-    backgroundColor: "{colors.warm-ground}"
-    rounded: "{rounded.panel}"
-    width: "400px"
-  console-field:
-    backgroundColor: "{colors.paper-white}"
-    textColor: "{colors.ink}"
-    typography: "{typography.console-body}"
-    rounded: "{rounded.tile}"
-    padding: "10px 14px"
-    height: "44px"
-  console-choice-tile:
-    textColor: "{colors.ink}"
-    rounded: "{rounded.tile}"
-    padding: "10px 12px"
-  console-snippet:
-    backgroundColor: "{colors.warm-ground}"
-    textColor: "{colors.ink}"
-    typography: "{typography.console-snippet}"
-    rounded: "{rounded.tile}"
-    padding: "12px 14px"
-  console-check-row:
-    backgroundColor: "{colors.warm-ground}"
-    rounded: "{rounded.tile}"
-    padding: "8px 12px"
   console-chip:
-    backgroundColor: "{colors.ink}"
-    textColor: "{colors.warm-ground}"
-    rounded: "{rounded.pill}"
+    backgroundColor: "{colors.console-good-soft}"
+    textColor: "{colors.console-good}"
+    rounded: "{rounded.chip}"
     padding: "1px 10px"
 ---
 
@@ -363,381 +336,192 @@ components:
 
 ## Overview
 
-**Creative North Star: "The Polite Guest"**
+**Creative North Star: "The Familiar Window, Their Face"**
 
-The widget is a friendly consumer app sitting on someone else's page. It arrives as one small round button in the customer's colour and opens into a soft, warm-grounded panel that looks like an app the visitor already knows how to use. It does not dress up the host page or compete with it: the host's design comes first, the customer's colour comes second, and the world's own materials (a warm cream ground, a soft sand border, a deep warm ink) stay quiet underneath.
+Three surfaces share one record. The **chat** is the familiar AI chat window, played straight with Claude's as the bar: a near-white page (charcoal in the dark), answers set as plain text beside the assistant's round mark, the visitor's words in a soft grey bubble, a white composer card at the foot. It wears the customer's identity in two places only: their assistant's picture (or logo, or initials) beside every answer, and their colour on what can be pressed. It refuses answer cards, brand-filled suggestion pills, a coloured header bar and rounded playful type.
 
-Inside, the chat is a calm warm page: answers on white cards, the visitor's own words in quiet sand bubbles, and the customer's colour only on suggested questions and the send button. Type is a rounded humanist sans, self-hosted, set in plain short sentences. Rich answers (headings, lists, code and tables) are made from the same materials: code sits on the cream ground, tables on paper, both framed by a sand edge, and anything too wide scrolls inside its own frame rather than stretching the conversation.
+The **launcher and panel frame** sit on someone else's page and take the least room they can: a 56px circle in the brand colour or filled with the assistant's picture, an optional greeting bubble beside it, and a 20px-rounded panel in the chat's own ground that rises a short way and fades in. The **admin console** is the category-standard admin at the craft of the Stripe Dashboard and Linear's settings: white cards on cool grey with one indigo accent in Light, and Graphite in Dark (panels a step above a graphite ground, split by hairline seams instead of shadows, one blue accent). The administrator chooses System, Light or Dark; System follows the computer.
 
-Depth is long, soft and low-contrast, tinted with the world's ink rather than grey. Motion is small and physical: a press that settles back with a slight overshoot, a panel that rises a short way and fades in without bouncing, three dots that breathe while an answer is on its way, and sketch rows that breathe the same way while the list of chats loads. Under reduced motion every movement goes; only the fade stays, and the dots and sketch rows hold still.
-
-The world refuses the category default for chat widgets: no coloured header bar, no avatar, no brand-coloured message bubbles. The customer's colour appears only on things that can be pressed.
-
-The admin console (`web/console`) is a second surface in the same world, calmer and tuned for forms and tables. Administrators take each widget along a track of six stations to go-live (Agent, Sites, Sign-in, Look, Install, Go live), each signed with its minutes, the time left signed at the track's end. It uses the chat's ground, sand, ink and umber, white cards with a sand edge and round pills, and draws no customer colour of its own: the brand appears only inside the chat's own preview. It is flat apart from that preview, which floats on the chat's Panel shadow.
+Everything is Inter, self-hosted, at modest sizes and weights; depth is hairlines first, shadow only where something floats.
 
 **Key Characteristics:**
-- Warm tinted ground, soft border and warm ink; never pure grey.
-- The customer's brand colour fills only actionable elements: the launcher, suggested questions, send and stop.
-- Generous, friendly corners: 24px panel and composer, 18px cards and bubbles, fully round launcher, pills and send.
-- Long, soft, ink-tinted shadows; surfaces inside the chat are separated by a 1px sand edge instead.
-- A press spring on release, a short rise-and-fade on open, no entry bounce.
-- Full screen on small windows; a floating panel anchored to the launcher's corner elsewhere.
-- Code and tables in their own 12px frames that scroll sideways, with a soft ink cue at an edge only while more lies that way.
-- Earlier chats as rows on one white, sand-edged card: in place of the conversation on narrow frames, a 288px column beside it from 720px.
-- The admin console: the same materials, flat, with Warm Ink as its only action colour and the six-station track as its signature.
+- Warm near-neutrals in the chat (#fcfcfb ground, #1f1e1d ink), cool greys in the console; neither carries an accent of its own except the console's one indigo or blue.
+- The customer's colour on the launcher and the send button only, giving way to light ink on the dark composer when under 3:1.
+- Answers are text, not cards; rich content (code, tables, diagrams, charts) sits in 12px hairline frames that scroll sideways inside themselves.
+- Inter throughout, 16px at 1.6 in the chat and 14px at 1.55 with tabular figures in the console.
+- Hairline rings (1px) do the separating; only the composer, the jump pill, the launcher, the greeting and the panel lift.
+- Every colour has a light and a dark value; the chat picks by the widget's scheme, the console by the administrator's.
+- Logical properties throughout, so a right-to-left language mirrors.
 
 ## Colors
 
-A warm, low-chroma neutral family built around one hue (around 55 to 70 degrees in OKLCH), with the customer's brand colour as the only accent.
+Two neutral families and one accent each: warm near-neutrals with the customer's colour for the chat, cool greys with indigo (Light) or blue (Graphite) for the console.
 
 ### Primary
-- **Customer Brand** (per-widget configuration, applied as the `--brand` custom property): not a fixed token of this world. Every customer sets its own; test pages use a labelled sample. It fills the launcher, the suggested-question pills and the send/stop button, and nothing else. When the configuration has no valid six-digit hex colour, the launcher and the chat fall back to Warm Ink.
-- **Ink on brand** (`--on-brand`, a runtime choice of Paper White or pure black, whichever contrasts more with the brand colour): the colour of the launcher glyph, the pill text and the send glyph. This is how no brand can make them unreadable. It is computed, never configured.
+- **Customer Brand** (runtime `--brand`, no fixed value): set per widget as `#` and six digits; the launcher falls back to Chat Ink when it is not valid. Its glyph and the send glyph take white or black, whichever contrasts more (`inkOn`, computed, never configured).
+- **Console Indigo** (console-accent) / **Graphite Blue** (graphite-accent): the console's one accent. Primary actions, done stations and the track's rail under them, focus outlines, the field's focus ring, radios and checkboxes, the loading arc. Its soft tint (console-accent-soft, or blue at 14% in Graphite) fills the current widget row, the chosen choice tile, pressed toggles, selected tabs and selection; text on that tint takes the deeper accent text (console-accent-hover, graphite-accent-text). In Graphite the accent carries dark text (graphite-on-accent).
+
+### Tertiary (data and state)
+- **Chart series** (chart-blue to chart-red, in that fixed order: blue, orange, aqua, yellow, magenta, green, violet, red): the validated categorical palette, each stepped for the dark card (`#3987e5`, `#d95926`, `#199e70`, `#c98500`, `#d55181`, `#008300`, `#9085e9`, `#e66767`). Data colours only; text never wears them.
+- **Console state** (console-good, console-warn, console-problem, and their Graphite values): green for live and passing, amber for live-with-unpublished-changes and the colour warnings, red for problems and failing checks. Faults and failing checks sit on an 8% tint of the red over the surface; the shown-once secret on a 9% amber tint with a 30% amber hairline; the Live chip on console-good-soft.
 
 ### Neutral
-- **Warm Cream Ground** (warm-ground): the panel's surface, and the ground of the whole chat. Inside an answer card it returns as the fill of code panels, blockquotes and inline code, so code reads as set into the page.
-- **Soft Sand Border** (soft-border): the panel's 1px edge; the 1px edge drawn around cards, the logo tile, the composer, inline code, code panels and table frames; the fill of the visitor's message bubbles, of a table's header row and of a secondary action under the pointer; the rule under a code caption and above a table's tools; table row hairlines and vertical cell rules; the answer's horizontal rule; the conversation's thin scrollbar; text selection; the resting track of the loading mark. In the list of chats: the card's edge, the 1px hairlines between rows, the fill of the open chat's row, the bars of the loading sketch, and the chats column's 1px rule and thin scrollbar.
-- **Warm Ink** (ink): the world's text colour, links in answers included; the chat's focus outline and the composer's focus ring; the secondary action's outline; the outer band of the two-tone focus ring; the brand fallback; the tint of every shadow (as `rgba(43,36,31,…)`), of the scroll-edge cue (22%) and of hover washes on quiet controls and chat rows (5 to 7%); the date on the open chat's row.
-- **Muted Umber** (secondary-ink): secondary ink: the AI notice, meta lines (chat dates and the empty-list line among them), the placeholder, the character count, the credit, the quiet action, the working dots and the moving arc of the loading mark; in answers, list markers, the minor headings (h4 to h6) and the code panel's language label; at 60% (`rgba(111,98,90,.6)`) the scrollbar thumb of code panels and tables, dark enough to notice.
-- **Paper White** (paper-white): answer and welcome cards, the list of chats, the composer, the logo tile, table frames, the secondary action at rest; the inner band of the two-tone focus ring and the light option for ink on brand.
-
-### Dark scheme
-The widget's `color_scheme` setting picks light, dark, or the visitor's own system (`auto`). The gateway stamps it on the chat page, so the first paint is already in it, and the loader's panel follows it. Each neutral keeps its role and takes a dark value of the same warm hue (`light-dark()` on the root tokens):
-- **Night Ground** (night-ground) for Warm Cream Ground, **Night Paper** (night-paper) for Paper White, so cards sit one step above the ground.
-- **Night Border** (night-border) for Soft Sand Border.
-- **Cream Ink** (cream-ink) for Warm Ink, and **Light Umber** (light-umber) for Muted Umber: 6.7:1 on Night Paper.
-- Hover washes mix from the ink, so in the dark they lighten. Shadows mix from pure black, since a warm tint cannot be seen there.
-
-### Admin console
-The console uses the light neutrals only (`color-scheme: light`; it has no dark scheme). Ground, Paper White, Soft Sand, Warm Ink and Muted Umber keep their chat roles; Warm Ink also fills the primary action, the track's sign, done stations and the "Live" chip, with Warm Cream Ground as the text on it.
-- **Column Tint** (column-tint): the widget column, the ground mixed with 35% Soft Sand (`color-mix(in srgb, var(--sand) 35%, var(--ground))` in the source), the same mix as the chat's wide "Your chats" column.
-- **Problem Red** (problem-red): problem lines (650), the faults block (text on an 8% tint of itself over Paper White), a failing install check, and a field's 2px invalid ring.
-- **Good Green** (good-green): a connection that tested "Connected", the text-on-colour line under the colour field, and a passing install check.
-- **Warn Amber** (warn-amber): the colour field's warnings (a colour that hardly stands out on the cream, or gives way to cream on dark).
-- **Tints by mixing:** the secret-shown-once block is Soft Sand 55% over Paper White; hover washes are Warm Ink at 5% (widget rows) and 6% (quiet actions); the primary's hover is Warm Ink 88% into the ground.
+- **Chat Ground** (chat-ground / chat-ground-dark): the page, the panel frame before the chat loads, code panels and inline code.
+- **Chat Surface** (chat-surface / chat-surface-dark): the composer, suggestion chips, the secondary action, table, diagram and chart cards, the list of chats, the greeting bubble.
+- **Bubble Grey** (chat-bubble / chat-bubble-dark): the visitor's bubble, blockquotes, the initials mark, the open chat's row, the secondary action's hover; mixed 45% into the ground for the wide chats column.
+- **Hairline** (chat-line / chat-line-dark): every 1px edge and rule, the table's header fill, the loading sketch bars and the ring's track.
+- **Chat Ink** (chat-ink / chat-ink-dark): text, links, the focus outline, hover washes (5 to 6%), the composer's focus ring (8%) and the brand fallback.
+- **Muted** (chat-muted / chat-muted-dark): the AI notice, credit, placeholder, meta lines, quiet actions, header icons at rest, list markers, axis numbers, the working dots.
+- **Console Ground, Surface, Line, Ink, Muted** and their Graphite counterparts take the same roles in the console. Graphite adds a separate field fill (graphite-field) a step below the panel.
 
 ### Named Rules
-**The Pressable Colour Rule.** The customer's brand colour appears only on things that can be pressed. Never on a header bar, a background, a border or a message surface.
+**The Pressable Colour Rule.** The customer's colour sits only on what can be pressed: the launcher and the send button. Elsewhere it appears only as a trace under the pointer (a suggestion chip's edge at 55% and fill at 5%) and as the caret. Never on a header, a bubble, a background or the mark.
 
-**The Warm Neutral Rule.** Every neutral, including shadow tint, comes from the world's warm ink family. No cool or pure greys. The one exception is the dark scheme's shadow, which is black.
+**The 3:1 Rule.** On the dark composer (#30302e) a brand colour under 3:1 gives way to Chat Ink Dark, and the ink on it is recomputed (`forDark`). The console's colour notes use the same line: they warn when the colour is under 3:1 against the light composer (#ffffff) or the dark one, and state the text-on-colour ratio.
 
-**The Vanishing Brand Rule.** On Night Ground a brand colour under 1.5:1 against it (a near-black) gives way to Cream Ink, with ink on brand recomputed. Any other brand keeps its colour. The launcher sits on the customer's page, not on our ground, so it always keeps the brand.
+**The State-Only Rule.** In the console, green, amber and red mean state (live, unpublished, problem) and nothing else.
 
-**The Light Sheet Rule.** A diagram keeps a Paper White sheet in both schemes, because its source's colours assume a light page. Its tools below stay in the scheme.
-
-**The Ink Action Rule.** The console has no brand of its own: Warm Ink fills its primary action, and the customer's colour appears only inside the chat preview and the colour field's own swatch.
+**The Light Sheet Rule.** A diagram keeps a white sheet in both schemes, because its source's colours assume a light page.
 
 ## Typography
 
-**Body Font:** Nunito Variable, self-hosted with the page (with Nunito, system-ui, sans-serif). No third-party font host.
-**Mono Font:** the platform's own monospace (`--mono`: ui-monospace, Cascadia Mono, SF Mono, Menlo, Consolas, monospace), used only for code. Nothing is downloaded for it.
+**Body Font:** Inter Variable, self-hosted (with Inter, system-ui, sans-serif), features `cv11` and `ss01`; the console adds `tnum`.
+**Mono Font:** the platform's own monospace (ui-monospace, Cascadia Mono, SF Mono, Menlo, Consolas), used only for code and the hex field. Nothing is downloaded for it.
+**Greeting Font:** the host's system face (system-ui), because the greeting is drawn on the customer's page where Inter is not loaded.
 
-**Character:** A rounded humanist sans used at modest sizes and weights; the chat reads as a familiar app, not a headline. Words are plain, short and literal, for readers with English as a second language. The loader itself draws no text; its only words are the launcher's spoken name and the iframe title.
+**Character:** One neutral grotesque at modest sizes; hierarchy by weight before size, the familiar tools' register rather than a headline's.
 
 ### Hierarchy
-- **Title** (600, 20px, 1.25): the widget title in the chat header. Wraps anywhere rather than overflowing.
-- **Body** (400, 16px, 1.55): answer text, welcome text, visitor messages and the composer field (1.5 in the field).
-- **Label** (650, 15px, 1.3): suggested-question pills.
-- **List heading** (700, 16px, 1.3): "Your chats", the heading of the list of chats.
-- **List title** (650, 16px, 1.35): a chat's title in its row, clamped to two lines and wrapping anywhere.
-- **Label small** (650, 14px): the secondary action, the quiet action and the jump-to-latest pill. The first line of a problem note uses 650 at body size.
-- **Meta** (400, 14px): the AI notice, "You stopped this answer", the reference line, unrenderable parts of an answer; a chat's date in its row ("9:05", "Yesterday", a weekday, "2 Nov") and the empty-list line "Chats you start will appear here."
-- **Caption** (400, 13px): the character count, shown only near the limit.
-- **Credit** (400, 12px): the one "Powered by Purple Fabric" line, centred at the foot.
-
-The logo tile's fallback initials are 15px at 800 with 0.02em tracking; they are the only heavy weight in the chat.
-
-### Answer hierarchy
-The chat's title is the page's only h1, so headings in an answer are shifted down one level: a Markdown h1 renders as h2, h2 as h3, and so on, with h5 and h6 both rendering as h6. An answer never carries an h1. Headings share weight 700 and line-height 1.3, set `text-wrap: balance`, and stand 6px further from what precedes them (not at the top of an answer).
-- **Answer heading** (700, 18px, 1.3): an answer's h2; the one size step above body inside an answer.
-- **Answer subheading** (700, 16px, 1.3): h3. A step by weight alone, deliberately below the h2 and at body size.
-- **Answer minor heading** (700, 15px, 1.3, Muted Umber): h4 to h6.
-- **Code label** (650, 13px): the language label in a code panel's caption, in Muted Umber, on one line, cut with an ellipsis when tight.
-- **Code** (400, 13.5px, 1.6, mono): the code panel body, tabs at 2 spaces.
-- **Inline code** (mono at 0.9em of the surrounding text).
-- **Table** (400, 14.5px, 1.45, tabular figures): table cells; header cells at 700 and kept on one line.
-
-### Console hierarchy
-The console's body is 15px (one step under the chat's), at 400 and 1.5.
-- **Console page title** (700, 26px, 1.25, balanced): the widget's name, "New widget", or the empty state's line. The page's one h1.
-- **Console station title** (700, 18px): the open station's h2 in its card.
-- **Console section title** (700, 16px): h3 inside a station (the parts of Install and Go live, "Add a connection").
-- **Console mark** (800, 16px): "Conversation Plugin", followed by "console" at 600 in Muted Umber.
-- **Console action** (650, 15px): the primary action. Secondary and quiet actions are 650 at 14px, as the chat's Label small.
-- **Console field label** (650, 14px): field labels, legends, the organisation pill and the checkbox label.
-- **Console hint** (400, 13.5px, Muted Umber, pretty wrap): hints under labels, the second line of a choice tile, a version's published line; the colour notes take 650.
-- **Console small** (400, 13px, Muted Umber): a station's minutes, a widget's state line, the "Widgets" heading (700), the preview caption.
-- **Console sign** (650, 13px): the track's sign; the "Live" chip is 650 at 12.5px.
-- **Console snippet** (mono, 13px, 1.6): code to copy. The changes table and the install checks use 14.5px, the chat's table size.
+- **Chat welcome** (600, 20px, 1.35, -0.015em, balanced, at most 28ch; 26px on wide frames): an empty chat's first line, centred under the 52px mark.
+- **Chat title** (600, 16px, 1.3, -0.01em): the header; wraps anywhere.
+- **Chat body** (400, 16px, 1.6): answers, the visitor's words, the composer (1.5 in the field).
+- **Answer headings** (700, 1.3, balanced): h2 18px, h3 16px, h4 to h6 15px. A Markdown h1 renders as h2: the chat's title is the only h1.
+- **Chat label** (400, 14px, 1.35): suggestion chips, meta and "unknown part" lines.
+- **Chat action** (500, 13px): quiet and secondary actions; the code caption is 650 at 13px in Muted.
+- **Chat caption** (400, 12px, 1.45, centred, balanced): the AI notice, the credit and the character count.
+- **Table** (400, 14.5px, 1.45, tabular figures), header cells 700. **Code** (mono, 13.5px, 1.6, tabs at 2).
+- **Console page title** (600, 24px, 1.25, -0.02em; 21px on phones). **Card title** (600, 17px). **Section title** (h3, 16px).
+- **Console body** (400, 14px, 1.55). **Label** (500, 14px): field labels, legends, buttons. **Hint** (13px, Muted). **Small** (12.5px, Muted): state lines, minutes, table head cells. **Group label** (600, 12px, 0.04em, uppercase, Muted): the "Widgets" heading of the column only.
 
 ### Named Rules
-**The Pretty Wrap Rule.** Running text (the notice, cards and answer text) sets `text-wrap: pretty`, and anything user- or customer-supplied wraps anywhere rather than overflowing the panel. Code and tables are the exception: code never wraps and table cells wrap only between words (header cells not at all); both scroll sideways inside their own frame instead.
+**The Pretty Wrap Rule.** Running text sets `text-wrap: pretty` and anything the customer or visitor supplies wraps anywhere. Code never wraps and table cells wrap only between words; both scroll sideways inside their own frame.
 
 ## Layout
 
-The widget has two layouts on the host page, chosen by window size.
+**Loader, chosen by window and host.**
+- **Floating** (600px wide and 520px tall or more): the launcher 24px from the configured bottom corner (right by default, left by configuration), never inside the safe-area inset. The panel is `min(400px, 100vw - 48px)` by `min(640px, 100dvh - 120px)`, on the same side, 16px above the launcher; the open launcher becomes the close button. The greeting sits 12px above the closed launcher, at most 280px wide, and hides once the chat opens.
+- **Full screen** (under 600px wide or 520px tall): the panel fills the viewport, no border, no radius; the launcher steps aside and the host page's scroll locks.
+- **Expanded** (on the visitor's request, larger than a phone): the panel fills the window, no border or radius; closing returns to the panel.
+- **Inline** (a host element): fills the target, at least 480px tall, no launcher, no shadow, no motion, no close button. From 720px of container width it drops border and radius.
 
-- **Floating (600px wide and 520px tall or larger):** the launcher sits 24px (edge) from the configured bottom corner, right by default or left by configuration, and never closer than the device safe-area inset on that side. The panel is 400 x 640, shrunk to `min(400px, 100vw - 48px)` by `min(640px, 100dvh - 120px)`, aligned to the same side and 16px (gap) above the launcher. The open launcher stays in place and becomes the close button.
-- **Full screen (under 600px wide or under 520px tall):** the panel fills the viewport with no border and no radius, the launcher steps aside, and the host page's scroll is locked while it is open. The chat's own header carries the close control.
-- **Expanded (floating, on a window larger than a phone, on the visitor's request):** the panel fills the window with no border and no radius, the launcher steps aside, and the host page's scroll is locked. "Exit full screen" goes back to the panel; closing the chat does too, so it always opens as a panel.
-- **Inline (host-chosen target element):** the panel fills the target, at least 480px tall, with no launcher, no shadow and no motion. The chat shows no close button. From 720px wide it runs edge to edge, with no border and no radius, as the conversation app it then is: a page that is the assistant fills the window with it.
+**Chat.** One column: header (mark, title, actions), the scrolling conversation, then one foot landmark (composer, count, notice, credit). Gutter 16px, 10px under 340px wide, where the visitor's bubble may widen from 85% to 92% and the header's New chat hides when three actions would show. Turns stack 24px apart; rendered Markdown 10px; list items 4px with a 1.35em indent. The conversation fades over its top and bottom 14px (a mask, not an overlay). A "Go to the latest message" circle appears centred above the composer when the visitor scrolls up.
+- **Wide frames (720px and wider):** the conversation, composer, notice and credit share one centred column of at most 760px; the visitor's bubble at most 75%. With history on, a 288px "Your chats" column runs the full height at the inline start on Bubble Grey 45% into the ground, its chats as 12px-rounded rows with no card. An empty chat holds the welcome above the middle, the composer at the middle, the suggestions centred under it.
+- **Narrow frames:** "Your chats" swaps the list in for the conversation in the same scrolling region, with no motion.
 
-Inside the panel the chat is one column, top to bottom: the header (logo tile, title, then its actions: New chat, Your chats and close, each only where it applies), the scrolling conversation, the composer, then the credit. The side gutter is 16px, or 10px when the frame is under 340px wide, where visitor bubbles may also widen from 85% to 92%. The same order holds down to 280px wide. Items in the conversation stack 12px apart. The conversation fades out over its top and bottom 14px as it scrolls under the header and into the composer (a CSS mask, not an overlay), and its scrollbar is thin, in Soft Sand. When the visitor scrolls up, a "Go to the latest message" pill appears centred above the composer.
+**The Own Frame Rule.** Content wider than the column (code, tables, diagrams) scrolls sideways inside its own 12px frame, never the conversation. Each scroll region takes keyboard focus with its ring drawn inset. A soft shade shows at an inline edge only while more lies that way (a fixed radial of black at 22%, 12px, covered at each end by a 28px gradient of the frame's fill that scrolls with the content). Rows past the tenth fold behind "Show all N rows"; an expanded table scrolls vertically within `min(70vh, 560px)` with its header held.
 
-**Earlier chats.** On widgets with history on, signed-in visitors see their earlier chats.
-- **Narrow frames (under 720px):** "Your chats" in the header swaps the list in for the conversation and the composer, inside the same scrolling region, with 10px top padding so the 14px top fade clears the list. The credit stays. Opening and closing the list is an immediate swap, with no motion.
-- **Wide frames (720px and wider: the chat expanded, or filling a page inline): a conversation app.**
-  - **Your chats:** a 288px column runs the full height at the inline start, on the ground mixed with 35% Soft Sand, with its own thin scrollbar and a 1px Soft Sand rule at its inline end. Its chats are rows on that ground (12px radius, no card or hairlines), the open one filled with Soft Sand.
-  - **The rest:** the header across the top of the conversation; the conversation, the composer, the AI notice and the credit share one centred column of at most 760px.
-  - **Answers sit on the page**, as the page's own text: no card, no edge, 2px 4px padding. Visitor bubbles stay Soft Sand, at most 75% wide.
-  - **The AI notice** moves under the composer, centred at 13px, so it is always in sight.
-  - **An empty chat** holds the welcome (24px, 650, centred, balanced, at most 30ch) just above the middle of the screen, the composer at the middle, and the suggested questions centred under it. The first question brings the usual order back.
-- **A reopened chat:** a quiet "Show earlier messages", centred above the first turn, loads older messages above without moving the view.
-
-Inside an answer card, rendered Markdown stacks its blocks 10px apart; list items sit 4px apart with a 1.35em inline-start indent. Code panels and table frames stretch to the card's full width and never widen it.
-
-**The Own Frame Rule.** Content wider than the card (code, tables) scrolls sideways inside its own frame, never the card or the conversation. Each scroll region is reachable by keyboard and named for assistive technology. A table scrolls vertically only after the visitor has expanded it, and then within `min(70vh, 560px)`, so a short table never traps a thumb inside the conversation.
-
-### Admin console
-- **Wide (900px and wider):** a top bar across (at least 64px, 10px 28px padding, a 1px Soft Sand rule under it), then a grid of the 280px widget column (20px 16px padding, a 1px Soft Sand rule at its inline end) and the work area (28px 36px 56px padding).
-- **Work area:** the widget's name (h1), a Muted Umber line of its sites and who may chat (30px below it), the track (26px below it), then the open station's card.
-- **Station card:** on the four form stations (Agent, Sites, Sign-in, Look) a two-column grid, the form at `minmax(0, 1fr)` and the chat's preview at 400px, 28px apart, top-aligned; the preview sticks 16px from the top as the form scrolls. Install and Go live use the card's full width with no preview. Forms stack 18px apart; field grids auto-fit columns of at least 240px, 16px by 20px apart.
-- **Under 1200px:** the preview stacks under the form, at most 400px wide, and shows only on Look.
-- **Under 900px:** the widget column moves above the work area with a 1px Soft Sand rule under it, its widgets in a row of tiles (at least 200px each) that scrolls sideways; work padding 22px 16px 48px; top bar padding 16px at the sides.
-- **Under 640px (phones):** the sign drops into the flow above the track, and the track turns vertical: the dot in a 28px column, name and minutes beside it, the rail running down through the dots' centres. Read-only facts fold to one column.
-
-Placement is direction-neutral: left and right are configuration, not assumptions, and the chat uses logical properties throughout so a right-to-left language mirrors.
+**Console.** A top bar (at least 64px, 10px 28px, hairline under it), then a 280px widget column beside the work area (28px 40px 56px). The work area: page title, sites line, the six-station track with its sign at the end, then the station's card. On the four form stations the form sits beside the chat's live preview at 400px, 28px apart, the preview sticky 16px from the top. Forms stack 18px apart; field grids auto-fit columns of at least 240px. Under 1200px the preview stacks under the form and shows only on Look. Under 900px the column moves above the work, its widgets in a sideways-scrolling row of 200px tiles. Under 640px the bar becomes three rows, the track shows six dots with only the open station named, and facts fold to one column.
 
 ## Elevation & Depth
 
-The system is lifted, not flat: the launcher and the panel float above the host page on long, soft, low-contrast shadows tinted with Warm Ink. Each shadow pairs a long diffuse spread with a short contact shadow. The inline panel sits in the host's flow and carries no shadow. Inside the chat, cards and the logo tile are flat and separated from the ground by a 1px Soft Sand edge drawn as a box-shadow; only the composer and the jump-to-latest pill lift.
-
-The admin console is flat. Its cards, fields, choice tiles, snippets and the changes table are separated by the 1px Sand edge; the only lifted thing is the chat preview, which carries the Panel shadow because it is the chat's panel.
+Hairlines first. Inside the chat and the console, surfaces separate from the ground by a 1px ring in the line colour (drawn as a box-shadow so it never shifts layout). Only what floats lifts: in the chat, the composer and the jump circle; on the host page, the launcher, the greeting and the panel; in the console, the chat preview. Chat and loader shadows mix from pure black so they read in both schemes. The console's Light theme adds a 1px whisper under controls and cards; Graphite has no shadow at all and relies on seams.
 
 ### Shadow Vocabulary
-- **Launcher rest** (`box-shadow: 0 10px 24px -10px rgba(43,36,31,.55), 0 2px 6px -2px rgba(43,36,31,.3)`): the closed launcher at rest.
-- **Launcher hover** (`box-shadow: 0 14px 30px -10px rgba(43,36,31,.6), 0 3px 8px -2px rgba(43,36,31,.32)`): on pointer hover only, paired with a 2px lift.
-- **Panel** (`box-shadow: 0 24px 60px -24px rgba(43,36,31,.45), 0 8px 20px -12px rgba(43,36,31,.25)`): the floating panel.
-- **Composer** (`box-shadow: 0 10px 24px -14px rgba(43,36,31,.4), 0 0 0 1px #e7dacb`): the composer at rest; the sand edge becomes a 2px Warm Ink ring while it holds focus.
-- **Jump pill** (`box-shadow: 0 10px 24px -12px rgba(43,36,31,.45), 0 0 0 1px #e7dacb`): the "Go to the latest message" pill floating over the conversation.
-- **Sand edge** (`box-shadow: 0 0 0 1px #e7dacb`): cards, the list of chats, the logo tile, inline code, code panels and table frames; keeps white distinct from the ground on a bright screen, and frames rich content inside a card without lifting it.
-- **Scroll-edge cue** (`radial-gradient(farthest-side at 0 50%, rgba(43,36,31,.22), transparent)`, 12px wide, mirrored at the other inline edge): inside a sideways-scrolling code panel or table, a soft ink shade at an inline edge only while more content lies that way. It is a fixed background covered at each end by a 28px gradient of the frame's own fill that scrolls with the content, so it disappears once the visitor reaches that end. It is a cue, not elevation.
+- **Composer** (`box-shadow: 0 8px 24px -16px rgb(0 0 0 / .4)`, plus `0 0 0 3px` ink at 8% on focus-within): the composer card.
+- **Jump** (`box-shadow: 0 6px 16px -8px rgb(0 0 0 / .35)`): the "latest message" circle.
+- **Launcher** (`0 10px 24px -10px rgba(0,0,0,.45), 0 2px 6px -2px rgba(0,0,0,.25)`; on hover `0 14px 30px -10px rgba(0,0,0,.5), 0 3px 8px -2px rgba(0,0,0,.28)` with a 2px lift).
+- **Greeting** (`0 12px 32px -12px rgba(0,0,0,.35), 0 2px 6px -2px rgba(0,0,0,.12)`).
+- **Panel** (`0 24px 60px -24px rgba(0,0,0,.4), 0 8px 20px -12px rgba(0,0,0,.2)`): the floating panel; the console preview uses the same at .35 and .2.
+- **Console whisper** (`0 1px 2px rgb(16 24 40 / .05)`): Light theme primary, secondary, fields and cards; none in Graphite.
 
 ### Named Rules
-**The Long Soft Shadow Rule.** Shadows are long, soft, negatively spread and ink-tinted. No hard edges, no offsets without blur, no neutral black.
+**The Seam Rule.** Graphite separates panels by 1px seams, never shadows.
 
 ## Shapes
 
-Generous, friendly corners. The panel is gently rounded (24px) and clips its content; the launcher is a full circle (56px). A single 1px Soft Sand border defines the panel edge. In full-screen mode the panel drops both radius and border so it reads as the screen itself.
-
-Inside the chat: the composer shares the panel's 24px; answer cards, the welcome card and visitor bubbles are 18px; the list of chats is one 18px card that clips its rows; the logo tile, code panels, table frames and blockquotes are 12px (code panels and table frames clip their content to it); inline code and the bars of the list's loading sketch are 6px; pills and the secondary, quiet and jump actions are fully round (999px); send/stop and the header's icon buttons are circles (44px). Glyphs are inline SVG on a 24 grid, 2px round-capped strokes in `currentColor`, drawn at 22px (18px inside small actions).
-
-The console keeps the same corners: station cards and the sign-in card 18px; fields, choice tiles, widget rows, snippets, check rows, the faults and secret blocks, the add-connection panel and the changes table 12px; the colour swatch 6px, the secret's code 8px; actions, the organisation pill, the sign and the chip fully round; station dots circles (28px); the preview panel 24px with a 1px Soft Sand border.
+Soft, unshowy corners on a small scale. Chat: the panel, composer and visitor bubble 20px (the composer 24px on wide frames); suggestion chips, code, table, diagram and chart frames, blockquotes and the list of chats 12px; header icons, send and the chart tip 10px; quiet and secondary actions and the logo tile 8px; inline code and sketch bars 6px; the mark, launcher and jump circle round. The greeting is 16px with its corner nearest the launcher pinched to 4px (mirrored when the launcher is on the left). Console: controls 8px, cards 12px, choice tiles, snippets, faults, the add panel and the changes table 10px, the theme segment's buttons 6px, the swatch 4px, the Live chip fully round, station dots round. Glyphs are inline SVG on a 24 grid, 2px round strokes in `currentColor`.
 
 ## Components
 
 ### Launcher
-Small, round and out of the way; the customer's colour and nothing else.
-- **Shape:** full circle (56px), with a 26px stroke glyph: a rounded chat bubble when closed, a cross when open.
-- **Colour:** brand background; glyph in white or black, whichever contrasts more. Falls back to Warm Ink with a white glyph.
-- **Hover (pointer devices only):** lifts 2px and deepens its shadow.
-- **Press:** sinks to 92% scale over 80ms ease-out, then springs back on release with `cubic-bezier(.34,1.56,.64,1)` over 400ms (a slight overshoot).
-- **Focus:** a two-tone ring that holds on any host page and any brand: a 3px white outline 2px off the button, wrapped in a 7px Warm Ink band.
-- **Name:** icon-only, with a spoken name taken from the widget title (default "Chat").
-- **Forced colours:** gains a 2px `ButtonText` border.
+- **Shape:** a 56px circle with a 26px chat-bubble glyph (a cross when open) in white or black by contrast. With an assistant's picture it fills the circle inside a 2px white inner ring; if the picture fails, the glyph returns.
+- **Hover (pointer only):** lifts 2px, deeper shadow. **Press:** 92% over 80ms ease-out; returns on `cubic-bezier(.16,1,.3,1)` over 200ms.
+- **Focus:** a two-tone ring that holds on any page and any brand: 3px white outline 2px off, wrapped in a 7px Chat Ink band. The greeting's buttons share it.
+- **Forced colours:** a 2px `ButtonText` border.
+
+### Greeting
+A short line (at most 120 characters) beside the closed launcher: Chat Surface with a hairline, the line itself a button that opens the chat, and a 32px dismiss with a 16px cross in Muted. Rises 8px and fades over 400ms; still under reduced motion.
 
 ### Panel
-A warm frame that holds the chat iframe.
-- **Corner Style:** 24px, clipped; none when full screen.
-- **Background:** Warm Cream Ground with a 1px Soft Sand border.
-- **Shadow Strategy:** the Panel shadow (see Elevation & Depth).
-- **Entry:** rises 12px and fades in over 200ms with `cubic-bezier(.16,1,.3,1)`; no bounce. Leaves the same way, then becomes hidden.
-- **Loading mark:** until the chat page loads, a quiet 28px ring is centred in the panel: a 3px Soft Sand track with a Muted Umber arc, turning once every 0.9s, linear. It spins only while the panel is open. The chat page shows the same ring while its configuration loads.
-- **Reduced motion:** the rise, lift, press and spin are removed; only the 200ms fade stays.
-- **Forced colours:** a 1px `CanvasText` border.
+20px, clipped, Chat Ground with a 1px hairline, the Panel shadow. Opens by rising 12px and fading over 200ms on `cubic-bezier(.16,1,.3,1)`. Until the chat loads, a 28px ring (3px hairline track, Muted arc, 0.9s linear) turns at its centre, only while open.
 
-### Chat header
-Who the visitor is talking to, and a way out; no colour bar.
-- **Logo tile:** 40px, Paper White, 12px radius, 1px Soft Sand edge; the customer's logo contained inside it, or the title's initials when there is no logo or it fails to load.
-- **Title:** the Title style, beside the tile.
-- **Actions:** a group of 44px round icon buttons at the end, 2px apart, transparent, each with a faint ink wash (7%) on hover. In order:
-  - **New chat:** a plus glyph, shown once there is a conversation to leave, on narrow frames only.
-  - **Your chats / Back to the chat:** a list glyph that becomes a chevron (mirrored in right-to-left). Shown only to signed-in visitors on widgets with history on, on narrow frames only; the two states share one place beside Close.
-  - **Open full screen / Exit full screen:** a four-arrow glyph pointing out, or in. Shown only in the floating panel, and only when the loader says the window is larger than a phone.
-  - **Close:** shown only in the floating panel.
-- **Under 340px:** when all three would show, the header's New chat is hidden so the title keeps its room; New chat stays in the list.
+### Chat header and mark
+- **Mark:** who answers. The assistant's picture, round; else the customer's logo contained on an 8px white tile with an inset hairline; else the title's initials (650, 38% of the size) on Bubble Grey. 32px in the header, 28px beside each answer, 52px over an empty chat.
+- **Actions:** 40px icons, 10px radius, Muted, 20px glyphs, 2px apart; on hover a 6% ink wash and Chat Ink. New chat, Your chats / Back (mirrored chevron in right-to-left), Open / Exit full screen, Close, each only where it applies.
 
-### Cards and bubbles
-- **Answer and welcome cards:** Paper White, 18px, a 1px Soft Sand edge, 14px 16px padding, full width. Answers carry their actions inside the card.
-- **Visitor bubbles:** Soft Sand fill, 18px, 10px 14px padding, aligned to the end, at most 85% wide.
-- **Working state:** while an answer has no words yet, three 7px Muted Umber dots breathe on the empty card (opacity 0.25 to 1, 1.2s ease-in-out, staggered 0.15s). Under reduced motion they hold still at 60% opacity. Words then land in the same card.
-- **Problem note:** a short plain sentence (its first line at 650), an optional reference line in Meta, and an optional secondary action.
-
-### Your chats
-The visitor's earlier chats, on paper, ruled in sand.
-- **Heading row:** "Your chats" in the List heading style, with the secondary "New chat" (an 18px plus glyph) on the same row; it wraps when tight.
-- **List:** one Paper White card, 18px radius, the Sand edge, a 1px Soft Sand hairline between rows.
-- **Row:** a full-width button, at least 60px tall, 10px 16px padding: the title in the List title style above its date in Meta (Muted Umber).
-- **Hover:** a faint ink wash (5%).
-- **Open chat** (the current row): Soft Sand fill, its date in Warm Ink, because Muted Umber on Soft Sand is 4.2:1, short of AA for small text.
-- **Focus:** the chat's 3px Warm Ink outline drawn inset (offset -3px), since the card clips its rows.
-- **Loading:** three sketched rows of Soft Sand bars (72% and 32% wide, 12px tall, 6px radius), breathing like the working dots; under reduced motion they hold still at 60%.
-- **Empty:** a single Meta line, "Chats you start will appear here."
-- **More:** a quiet "Show older chats", centred under the list.
+### Answers and the visitor's words
+- **Answer:** text on the page beside the 28px mark, 12px apart: no card, no edge. Finished answers carry quiet actions underneath ("Copy answer").
+- **Visitor bubble:** Bubble Grey, 20px, 10px 16px, at the end of the line.
+- **Working:** three 7px Muted dots breathe (opacity .25 to 1, 1.2s, staggered .15s).
+- **Problem:** a short sentence (its first line at 600), an optional Meta reference, an optional secondary action.
 
 ### Buttons
-- **Suggested-question pill (brand):** brand fill, `--on-brand` text in the Label style, fully round, at least 44px tall, 10px 16px padding; they wrap. Press: sinks to 96% over 80ms, springs back on the launcher's release curve.
-- **Send / stop (brand):** a 44px circle inside the composer, brand fill, 22px glyph in `--on-brand`: an up arrow, which becomes a filled square stop while an answer arrives. Press: sinks to 92%, springs back on release. Disabled (nothing to send) at 35% opacity.
-- **Secondary ("Try again", "Start a new chat", the list's "New chat"):** Paper White with a 1.5px Warm Ink outline, Label small, fully round, at least 36px tall, 8px 16px padding; fills with Soft Sand on hover.
-- **Quiet ("Copy answer", "Copy code", "Copy as CSV", "Copy for draw.io", "Show code", "Show all N rows", "Show older chats", "Show earlier messages"):** text and an 18px glyph in Muted Umber, no fill, fully round, at least 36px; inside code and table frames the label never wraps. On hover a faint ink wash (6%) and Warm Ink text. A copy action says "Copied" with a check for 2 seconds only when the copy worked, and "Could not copy" (keeping the copy glyph) when the browser refuses.
-- **Jump to latest:** Paper White pill with a down-arrow glyph, Label small, the Jump pill shadow.
-- **Focus (everything inside the chat):** a 3px Warm Ink outline 2px off the element; the chat's ground is known, so one tone is enough.
-
-### Rendered answers
-An answer's words are Markdown drawn in the world's own materials, inside the answer card.
-- **Lists:** native bullets and numbers with Muted Umber markers.
-- **Links:** Warm Ink with a 1px underline 3px below the text, thickening to 2px on hover; they open in a new tab. An image is never fetched: it becomes a link reading "Image: [description]".
-- **Blockquote:** Warm Cream Ground, 12px radius, 10px 14px padding, no rule at the side.
-- **Inline code:** mono at 0.9em on Warm Cream Ground with a 1px Soft Sand ring, 6px radius, 1px 6px padding.
-- **Horizontal rule:** a 1px Soft Sand line across the card.
-
-### Code panel
-Code set into the page, labelled and copyable, never interpreted.
-- **Frame:** Warm Cream Ground, 1px Soft Sand edge, 12px radius, full card width, clipped.
-- **Caption row:** the language label in the Code label style ("Code" when none is given, "Diagram source" for mermaid) and a quiet "Copy code" action at the end, over a 1px Soft Sand rule; 4px 6px padding, 14px at the start.
-- **Body:** the Code style, 12px 14px padding; long lines scroll sideways with the scroll-edge cue and a thin Muted Umber (60%) scrollbar.
-- **Highlighting:** none in the base version; code is one colour, Warm Ink.
-
-### Table
-Data on paper, ruled in sand.
-- **Frame:** Paper White, 1px Soft Sand edge, 12px radius, full card width, clipped.
-- **Header row:** Soft Sand fill, bold, start-aligned, 8px 12px padding, held in place (sticky) while the table scrolls.
-- **Cells:** the Table style with tabular figures, 8px 12px padding, top-aligned, at least 8ch wide; a 1px Soft Sand hairline between rows and a 1px Soft Sand rule between columns. No zebra striping.
-- **Width:** cells wrap between words; a table too wide for that scrolls sideways with the scroll-edge cue and a thin Muted Umber (60%) scrollbar.
-- **Length:** rows past the tenth fold away behind a quiet "Show all N rows" action. Once expanded, the table scrolls vertically within `min(70vh, 560px)`.
-- **Tools row:** under a 1px Soft Sand rule, a quiet "Copy as CSV" and the show-all action; it wraps when narrow.
-- **Open:** the sticky header row shows no edge cue, because its solid Soft Sand fill covers the shade beneath it.
-
-### Diagram
-A draw.io or Excalidraw diagram in an answer, drawn rather than shown as code; data on paper, like a table.
-- **Frame:** Paper White, 1px Soft Sand edge, 12px radius, full card width, clipped. The drawing scrolls sideways inside it with the scroll-edge cue and a thin Muted Umber (60%) scrollbar.
-- **Size:** as wide as the frame and never larger than drawn, but never so small that the diagram's usual label falls under 10px; past that the frame scrolls. On a 960px frame a typical diagram shows whole; in the 400px panel it scrolls.
-- **Drawing:** the diagram's own fills, strokes and dashes, kept only when they are plain colours (`#rgb`, `#rrggbb` or a colour name). Where it sets none, boxes are Paper White with a Warm Ink stroke and words are Warm Ink, in the chat's Nunito. A line's label sits on a Paper White patch. Nothing is fetched, linked or run.
-- **Tools row:** under a 1px Soft Sand rule, a quiet "Copy for draw.io" (or "Copy for Excalidraw") and "Show code" with a code glyph, which shows the source under the drawing on the cream ground, as a code panel's body; it wraps when narrow.
-- **Spoken:** the drawing is an image named with its counts ("Diagram: 6 shapes and 7 lines") and described by every label and every line's ends and label.
-- **While arriving, or unreadable:** the code panel, until the diagram is complete and readable.
-
-### Chart
-A bar, line, area, pie or scatter chart in an answer, drawn from data the agent sends; data on paper, like a table.
-- **Frame:** as a diagram's: Paper White, 1px Soft Sand edge, 12px radius, full card width. The title leads in 15px semibold Warm Ink; a legend follows for two or more series (or a pie's slices), Muted Umber 13px names, each after its key: a 10px square for bars and areas, a 14px stroke for lines, a dot for a scatter.
-- **Series colours:** the data-visualisation method's validated categorical palette in its fixed order (blue, orange, aqua, yellow, magenta, green, violet, red), stepped separately for the light and dark card. They are data colours, never the brand's (the Pressable Colour Rule), and text never wears them.
-- **Marks:** bars at most 24px thick, 2px apart, square at the baseline and rounded 4px at their value; lines 2px with round joins, breaking where a value is missing; areas a 10% wash under the line; dots 8px with a 2px Paper ring; pie slices as a donut, 2px Paper gaps between them, the read slice 4px larger.
-- **Chrome:** 1px Soft Sand gridlines at round values, the zero line in Warm Ink at 30%, axis numbers in Muted Umber 12px with even figures, compact past ten thousand (20K). Category names thin out rather than overlap.
-- **Reading:** pointer or arrow keys pick a category, slice or dot. A band wash (bars) or a crosshair (lines) marks it, and a tip in the chart's top corner away from it lists each value in Warm Ink semibold before its series name: Paper White, 1px Soft Sand ring, 10px radius. It floats, so a reading never moves the layout under the pointer.
-- **Spoken:** the chart is a focusable group named by kind and title, described by each series' lowest and highest point (a pie: each slice's share), with how to use the arrow keys; a polite live region speaks each reading.
-- **Tools row:** "Show as table", with a table glyph, which opens the same numbers as a table under the chart (numbers right-aligned, Copy as CSV).
-- **While arriving, or unreadable:** the code panel.
-
-### Scroll regions
-Code bodies and table scroll areas take keyboard focus. Their focus ring is the chat's 3px Warm Ink outline drawn inset (offset -3px), so the frame's clipping never hides it.
+- **Send / stop:** a 36px rounded square (10px) at the composer's end, brand fill, an 18px glyph in the computed ink; an up arrow, a filled square while an answer arrives. Press 94% over 120ms. Disabled at 30% opacity.
+- **Suggestion chip:** outlined, Chat Surface with a hairline, 12px, 8px 14px, at least 40px, Chat label, start-aligned, wrapping. Hover: edge brand 55% into the line, fill brand 5% into the surface.
+- **Secondary:** Chat Surface, hairline, 8px, Chat action, at least 32px; Bubble Grey on hover.
+- **Quiet:** Muted text and a 16px glyph, no fill, 8px; 6% ink wash and Chat Ink on hover. A copy says "Copied" only when it worked.
+- **Focus (inside the chat):** a 3px Chat Ink outline 2px off.
 
 ### Composer
-- **Style:** a Paper White field, 24px radius, the Composer shadow with its Soft Sand edge, 18px inline-start padding; the text field grows to 160px (about five lines) with the send button inside at the end.
-- **Focus:** a 2px Warm Ink ring around the whole composer; the text field itself shows no outline.
-- **Placeholder:** Muted Umber. Under it, the character count in Caption appears only in the last 400 of 4000 characters, and the credit sits below that.
-- **Disabled:** when the chat session has ended, the field and send are disabled.
+Chat Surface, 20px, a hairline and the Composer shadow; the field grows to 160px. Focus: the edge darkens to ink 40% into the line and gains a 3px ink 8% halo; the field itself shows no outline. The caret is the brand.
 
-### Forced colours (chat)
-The composer, cards, bubbles, pills, send, code panels, table frames and the list of chats each gain a 1px `CanvasText` border, since their sand edge is a box-shadow that this mode removes. The open chat's row gains a 2px `Highlight` outline drawn inset, since its Soft Sand fill goes too.
+### Rendered answers
+Links in Chat Ink, 1px underline 3px below, 2px on hover. Blockquote on Bubble Grey, 12px, 10px 14px, no side rule. Inline code mono 0.9em on Chat Ground with a hairline ring. Horizontal rule a hairline. Task items hang their 18px box where the bullet would be.
+- **Code panel:** Chat Ground, hairline ring, 12px, clipped; a caption row (language in 650 13px Muted, quiet Copy) over a hairline; the body in Code, 12px 14px.
+- **Table:** Chat Surface frame; header row filled with the hairline colour, 700, sticky; cells 8px 12px, at least 8ch, top-aligned, hairlines between rows and columns, no striping; a tools row (Copy as CSV, Show all) under a hairline.
+- **Diagram:** a white sheet in both schemes; the source's own plain colours kept; tools to copy it or show its code.
+- **Chart:** title 650 15px; legend Muted 13px, each name after its key (10px square, 14px stroke, or dot); series in the fixed palette; 1px hairline grid, the zero line at ink 30%, 12px Muted ticks in even figures; lines 2px round, areas a 10% wash, dots and slices ringed and gapped by the surface; a floating tip (surface, hairline, 10px) with values in ink 650 before their names. "Show as table" opens the numbers right-aligned.
 
-### Console: top bar and widget column
-- **Top bar:** on the ground. The mark, then the organisation: a pill (Paper White, Sand edge, at least 36px, 650, with an ink chevron) that is a select for a platform administrator with more than one organisation and plain text otherwise. At the inline end, who is signed in and their role in 14px Muted Umber, then a quiet "Sign out". It wraps when tight.
-- **Widget column:** a nav named "Widgets", headed in Console small at 700. Each widget is a link row (12px radius, 11px 12px padding): its title at 650, wrapping anywhere, over its state line in Console small ("Not live yet", "Live · version 2", "Live · version 2 · changes not published"). Hover: a 5% ink wash. The current widget (`aria-current="page"`): Soft Sand fill, its state line in Warm Ink, because Muted Umber on Soft Sand is under 4.5:1. Under the list, a secondary "New widget" with an 18px plus glyph.
-
-### Console: the track
-The signature: six stations to go-live, each signed with its minutes.
-- **Track:** a section named "Steps to go live" holding an ordered list in six equal columns, with 48px clear above it for the sign.
-- **Rail:** a 3px bar through the dots' centres, Soft Sand, Warm Ink under done stations; it starts at the first dot and ends at the last.
-- **Station:** a full-width button: the dot, the name at 650, then "about N min" (or "Done") in Console small. Minutes: Agent 5, Sites 2, Sign-in 3 (8 with sign-in), Look 4, Install 3 (20 with sign-in), Go live 2.
-- **Dots (28px circles):** done is Warm Ink with an 18px check glyph in the ground's cream; now is Paper White with a 3px Warm Ink ring and its number in ink, and carries `aria-current="step"`; next is Paper White with a 2px Soft Sand ring and its number (800, 13px) in Muted Umber.
-- **Open station:** its name is underlined, 2px, 5px below (the same underline on hover), and its accessible name gains a hidden ", open".
-- **Not yet reachable** (a new widget's later stations): shown, but `aria-disabled`, its name in Muted Umber, a not-allowed cursor, and the title "Finish the step before this one first."
-- **Sign:** a Warm Ink pill at the track's top inline end: "About 19 minutes to live" until the first publish, then the widget's state ("Live · version 2").
-
-### Console: station card
-- **Card:** Paper White, 18px, the Sand edge, 24px padding, parts 18px apart. Named by `aria-label` with the station's name, not `aria-labelledby`, because Firefox crashes when axe scans a section named by `aria-labelledby`.
-- **Header:** the station's name (h2, Console station title) and one sentence of what it is for, in Muted Umber.
-- **Form stations:** the form at left ends with its actions row: the primary ("Save", disabled until something changed; "Continue", then "Create the draft", for a new widget), then a polite note ("Saved. Visitors see it once you publish."). A viewer sees "You can look, but not change anything here." and no actions.
-- **Preview:** the chat's own component in an iframe (out of the tab order), in a 24px Warm Cream Ground panel with a 1px Soft Sand border and the Panel shadow, `min(560px, 70vh)` tall. A Console small caption, "Preview · nothing is published", carries a Light / Dark pair of quiet toggles (`aria-pressed`, pressed filled with Soft Sand) when the scheme follows the visitor's device.
-
-### Console: fields and choices
-- **Field:** label (Console field label), an optional hint, then the input, 4px apart. Inputs are Paper White, 12px, the Sand edge, at least 44px, 10px 14px padding; textareas resize vertically.
-- **Focus:** a 2px Warm Ink ring (a box-shadow) with a transparent 2px outline that forced colours make visible.
-- **Invalid:** a 2px Problem Red ring, with the reason under the field, linked by `aria-describedby`.
-- **Inline row:** a field and its secondary action ("Add", "Check") on one row that wraps.
-- **Colour:** a 44px native picker tile beside a hex field in mono, with notes beside them: the text-on-colour line in Good Green, warnings in Warn Amber.
-- **Choice tiles:** radio choices as a list of tiles 6px apart (12px, the Sand edge, 10px 12px padding): an 18px ink-accented radio, the choice at 650, an optional Console hint line. The chosen tile takes a 2px Warm Ink ring. A tile may carry a quiet action ("Test") and a polite result ("Connected" in Good Green).
-- **Lists to edit:** allowed sites as rows on the cream ground (12px), the site in code and a quiet "Remove" named for its site. A new connection opens in a cream panel (12px, 18px padding) with its own h3.
-- **Checkbox:** 18px, ink-accented, its label at 650 14px.
+### Your chats
+One Chat Surface card, 12px, hairlines between rows (rows on the column's ground, 12px each, on wide frames). Rows at least 56px: the topic at 500 15px clamped to two lines over its time in 13px Muted. Hover 5% ink wash; the current row Bubble Grey, its time in ink. Loading: sketched hairline-colour bars breathing like the dots.
 
 ### Console: actions
-- **Primary:** Warm Ink fill, Warm Cream Ground text, Console action, fully round, at least 44px, 10px 22px padding. Hover: ink 88% into the ground. One per form, ending it.
-- **Secondary:** as the chat's (Paper White, a 1.5px Warm Ink outline, 14px 650, at least 36px, 8px 16px), Soft Sand on hover.
-- **Quiet:** Muted Umber text, 14px 650, no fill, at least 36px, 8px 12px, never wrapping; a 6% ink wash and Warm Ink on hover. Selected tabs and pressed toggles take a Soft Sand fill.
-- **Disabled:** primary and secondary at 45% opacity.
-- **In a form,** a button keeps the width of its words.
+- **Primary:** accent fill, 8px, 500 14px, at least 38px, 8px 16px, the whisper; accent-hover on hover. One per form, at its foot.
+- **Secondary:** Surface with an inset hairline, at least 36px, 7px 14px; Ground on hover. Destructive actions are secondary and set apart below a hairline, confirmed by typing the name back.
+- **Quiet:** Muted, no fill, 7px 10px, never wrapping; `--hover` wash and ink on hover.
+- **Disabled:** 45% opacity. **Focus:** a 2px accent outline 2px off.
 
-### Console: snippets and the install check
-- **Snippet:** code to copy in a frame of Warm Cream Ground, 12px, the Sand edge, clipped. A caption row (Muted Umber, 13px 650, 4px 6px 4px 14px padding, a 1px Soft Sand rule under it) names it and ends with a quiet "Copy", which reads "Copied" for 2 seconds. The code is Console snippet, 12px 14px padding, at most 320px tall, scrolling inside its frame with a thin Muted Umber (60%) scrollbar; it takes keyboard focus, with the ring drawn inset.
-- **Languages:** a tab list of quiet buttons picks the language of the endpoint code.
-- **Install check:** a page address and a secondary "Check", then a polite list of rows (cream ground, 12px, 8px 12px, 14.5px), one per question ("Does the page answer?", "Is the chat's script tag on it?", "Does its content policy let the chat in?") with a bold Yes or No. A Yes row is Good Green text; a No row is Problem Red on its 8% tint.
+### Console: shell, track and cards
+- **Top bar:** Surface. "Conversation Plugin" at 600 15px with its suffix in Muted 400; the organisation select (8px, hairline, chevron); the theme segment (three 32px icon buttons in an 8px inset-hairline group, pressed on accent-soft in accent text); who is signed in, in Muted; Sign out.
+- **Widget column:** Surface with an inline-end hairline. Rows 8px, 9px 10px: title at 500 over a 12.5px state line (Muted; green when live, amber with unpublished changes). Hover the wash; current on accent-soft with its state in accent text.
+- **Track:** six equal stations on a 2px rail through 28px dots, the rail accent under done stations. Dots: next Surface with a 1.5px line ring and the number in Muted 600 12.5px; done accent with a check in on-accent; now and open ringed `0 0 0 2px surface, 0 0 0 4px accent, 0 0 0 8px accent-ring`. Names 500 (600 when open), minutes under them in Small. Not-yet-reachable stations show a Muted name and a not-allowed cursor. The **sign** at the end, set off by a hairline: 600 13px in accent text, green once live.
+- **Card:** Surface, 12px, hairline ring and whisper, 24px padding; header (card title and one Muted sentence) then parts 18px apart.
+- **Preview:** the chat itself in an iframe, 20px, hairline, the Panel shadow, `min(560px, 70vh)` tall, captioned in 13px Muted with Light/Dark toggles when the scheme follows the device.
 
-### Console: changes and versions
-- **Changes table:** full width, the Sand edge, 12px, clipped, 14.5px. A Soft Sand header row at 700; each row headed by its setting at 650; 8px 12px cells, top-aligned, wrapping anywhere; a 1px Soft Sand hairline between rows and no rule between columns.
-- **Versions:** an ordered list of divided rows (12px padding, a 1px Soft Sand rule under each but the last, none above the first): "Version N" in bold, the live one with a "Live" chip (Warm Ink pill, 1px 10px), and "published by …, 14 Nov, 10:05" in Console hint. Earlier versions carry a quiet "Compare with live" (`aria-expanded`, opening a changes table under the row) and a quiet "Make this live again", which asks once more with a secondary "Yes, make version N live again" and a quiet "Cancel".
-
-### Console: organisations and deleting
-- **New organisation:** for platform administrators, a quiet "+ New organisation" beside the organisation switcher. Its page is a station card holding one field, Name, with the primary "Create the organisation"; the new organisation is then chosen and its page opens.
-- **An organisation's page** (the console's home): its name as the page title, "N widgets · ID t_…" as the sub line, and what to do next. A platform administrator also sees how to delete it: while it has widgets, a hint saying to delete them first; once it has none, the deletion block.
-- **Deletion block:** set apart at the end of its page (Go live for a widget, the organisation's page for an organisation) by a 1px Soft Sand rule, with an h3 ("Delete this widget"), what goes and what stays in Console hint, and a secondary "Delete the widget". That opens the name to type back ("Type “Ask the College” to confirm", 420px at most) and the primary "Yes, delete “Ask the College”", enabled only once the name matches, beside a quiet "Cancel". The action stays Warm Ink, as every action does (the Ink Action Rule): typing the name back is the safeguard, not a red button. Afterwards the organisation's page says "“Ask the College” is deleted." in a polite live region. Viewers see none of it.
-
-### Console: messages
-- **Problem line:** Problem Red at 650.
-- **Faults:** a block (12px, 12px 16px padding) of Problem Red on its 8% tint: "This cannot be saved yet:" over a list; `role="alert"`.
-- **Secret shown once:** a block of Soft Sand 55% over Paper White (12px, 14px 16px): "Copy this now: it will not be shown again." in bold, the secret as code on Paper White (8px radius), and a quiet "Copy". Once the station is left it is never shown again.
-- **Loading:** the chat's 28px ring, still under reduced motion.
-
-### Console: focus and forced colours
-- **Focus:** a 3px Warm Ink outline 2px off everything; fields use the 2px ink ring above; snippet bodies draw the outline inset.
-- **Forced colours:** cards, station dots, the organisation pill, fields, question and hex fields, primary and secondary actions, the sign, the Live chip, the changes table, choice tiles and snippets gain a 1px `CanvasText` border, since their edges are box-shadows; the chosen tile's and the now station's dot are 3px, so the next decision still stands out.
-
-### Console: voice and access
-- **Voice:** plain British English (organisation, colour), sentence case, short literal sentences. Stations are one word. Times are "about N min". Install checks are questions answered Yes or No. A refusal says what to do next.
-- **Access:** WCAG 2.2 AA, with every journey possible by keyboard. When a station opens, its heading takes focus. Saves and checks speak politely; faults speak as alerts. Secrets are sent sealed and shown once. Logical properties throughout, so a right-to-left language mirrors.
+### Console: fields
+Label (500 14px), optional hint, input 4px apart. Inputs on the field fill, 8px, hairline ring and whisper, at least 38px, 8px 12px, accent caret. Focus: `0 0 0 1px accent, 0 0 0 4px accent-ring` with a transparent outline for forced colours. Invalid: a 2px problem ring with the reason linked. Choice tiles: Surface, 10px, hairline, 10px 12px; chosen on accent-soft with a 1.5px accent ring, its muted text softened ink so it holds 4.5:1. The colour field: a 38px picker tile, a mono hex field, and polite notes (text-on ratio in green, 3:1 warnings in amber). Snippets: Ground, 10px, hairline, caption row over a hairline, mono 13px body at most 320px tall.
 
 ## Do's and Don'ts
 
 ### Do:
-- **Do** keep the brand colour on pressable things only (launcher, suggested questions, send/stop), and pick the text and glyph colour on it (white or black) by contrast at runtime.
-- **Do** tint every shadow with Warm Ink (`rgba(43,36,31,…)`) and keep it long and soft.
-- **Do** use the two-tone focus ring (3px white outline, 7px Warm Ink band) on anything the widget draws over the host page, and the 3px Warm Ink outline 2px off inside the chat.
-- **Do** put answers on Paper White cards with a 1px Soft Sand edge, and the visitor's words on Soft Sand bubbles, both at 18px.
-- **Do** keep tap targets for pressable things at least 44px (36px for secondary and quiet actions inside a card).
-- **Do** open with a 12px rise and a 200ms fade on `cubic-bezier(.16,1,.3,1)`, and keep only the fade under reduced motion.
-- **Do** spring only on release (`cubic-bezier(.34,1.56,.64,1)`), never on entry.
-- **Do** go full screen under 600px wide or 520px tall, with no radius and no border.
-- **Do** self-host the chat's font.
-- **Do** let wide code and tables scroll sideways inside their own 12px frame, with the soft ink edge cue, never widening the card or the conversation.
+- **Do** keep the customer's colour on the launcher and send only, with white or black on it by contrast, and let it give way to light ink on the dark composer under 3:1.
+- **Do** set answers as plain text beside the assistant's mark, and the visitor's words in a 20px Bubble Grey bubble.
+- **Do** separate surfaces with 1px hairline rings; lift only what floats (composer, jump circle, launcher, greeting, panel, preview).
+- **Do** give every chat colour a light and a dark value, and every console colour a Light and a Graphite value.
+- **Do** let wide code, tables and diagrams scroll inside their own 12px frame with the edge shade, never widening the conversation.
 - **Do** start an answer's headings at h2 (18px, 700); the chat's title is the only h1.
-- **Do** sign every station of the console's track with its minutes, and the time left at the track's end.
-- **Do** end each console form with its one Warm Ink primary action, with the chat's own preview at 400px beside the four form stations.
+- **Do** go full screen under 600px wide or 520px tall, with no radius and no border.
+- **Do** use the two-tone ring (3px white, 7px ink band) on anything drawn over the host page.
+- **Do** keep the console's green, amber and red for state alone.
+- **Do** stop every animation while the panel is closed, and under reduced motion remove the rise, lift, press, spin and greeting animation, keeping only the fade; the dots and sketch bars hold still at 60%.
+- **Do** give every edge drawn as a box-shadow a 1px `CanvasText` border under forced colours, and mark the current chat's row with a 2px `Highlight` outline.
+- **Do** use logical properties, and mirror directional glyphs in right-to-left.
 
 ### Don't:
-- **Don't** use a coloured header bar, an avatar, or brand-coloured message bubbles.
-- **Don't** fill backgrounds, borders or message surfaces with the brand colour; a brand outline is a border and is not allowed.
-- **Don't** use cool or pure greys for neutrals or shadows.
-- **Don't** run any animation while the widget is closed.
-- **Don't** bounce the panel on entry.
-- **Don't** stripe table rows; rows are separated by Soft Sand hairlines.
-- **Don't** use the customer's colour anywhere in the console outside the chat preview and the colour field.
-- **Don't** name a console section by `aria-labelledby`; use `aria-label` (Firefox crashes when axe scans it).
+- **Don't** put answers on cards, fill suggestion chips with the brand, or colour the chat's header.
+- **Don't** put the customer's colour on a bubble, background, header, mark or border at rest.
+- **Don't** use rounded playful type or pill buttons in the console; it is 8px controls and 12px cards.
+- **Don't** add shadows in Graphite; seams separate its panels.
+- **Don't** let text wear a chart's series colours; a series is named by its key.
+- **Don't** stripe table rows.
+- **Don't** bounce anything on entry.

@@ -44,7 +44,7 @@ export type Line = {
 
 export type Scene = { kind: "draw.io" | "Excalidraw" | "Mermaid"; shapes: Shape[]; lines: Line[] };
 
-export const INK = "#2b241f";
+export const INK = "#1f1e1d";
 const PAPER = "#ffffff";
 const MAX_ITEMS = 500;
 

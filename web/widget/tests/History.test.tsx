@@ -104,7 +104,7 @@ async function open(signedIn = true, config = CONFIG) {
   return { fetcher, win };
 }
 
-const texts = () => screen.queryAllByRole("article").map((article) => article.textContent);
+const texts = () => screen.queryAllByRole("article").map((article) => article.querySelector(".said")?.textContent);
 
 afterEach(() => {
   cleanup();
