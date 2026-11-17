@@ -1,7 +1,7 @@
 import type { StreamEvent } from "@ucp/protocol/v1";
 import { expect, test } from "vitest";
 
-import { apply, pending } from "./state";
+import { apply, pending } from "../../src/chat/state";
 
 const envelope = { v: 1, conversation_id: "c_1", message_id: "m_1", correlation_id: "r_1" } as const;
 const started = (seq: number) => ({ ...envelope, seq, type: "message.started" }) as StreamEvent;

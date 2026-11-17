@@ -7,22 +7,22 @@
 <link rel="stylesheet" href="site.css">
 </head>
 <body>
-<p class="sample">Sample pages. They show the assistant on sites built in different languages. They are not customer websites.</p>
+<p class="sample">Sample pages, for adding the assistant to sites built in different languages. They are not customer websites.</p>
 <main>
 <h1>Built with plain HTML</h1>
-<p>This page is a file written by hand, and S3 serves it as it is. The one script tag at the end adds the assistant: open it from the button in the corner.</p>
-<p>The same assistant, on a page that each language wrote:</p>
+<p>This page is a file written by hand, and S3 serves it as it is. It has no assistant yet. To add one, put the script tag from the admin console at the end of the page.</p>
+<p>The same page, written by each language, each on a site of its own:</p>
 <ul class="languages">
-<li><a href="php.html">PHP</a></li>
-<li><a href="java.html">Java</a></li>
-<li><a href="dotnet.html">.NET</a></li>
-<li><a href="ruby.html">Ruby</a></li>
-<li><a href="node.html">Node</a></li>
-<li><a href="go.html">Go</a></li>
-<li><a href="c.html">C</a></li>
-<li><a href="cpp.html">C++</a></li>
+<li><a href="{{php}}">PHP</a></li>
+<li><a href="{{java}}">Java</a></li>
+<li><a href="{{dotnet}}">.NET</a></li>
+<li><a href="{{ruby}}">Ruby</a></li>
+<li><a href="{{node}}">Node</a></li>
+<li><a href="{{go}}">Go</a></li>
+<li><a href="{{c}}">C</a></li>
+<li><a href="{{cpp}}">C++</a></li>
 </ul>
 </main>
-<script async src="{{GATEWAY}}/loader.js" data-widget-id="{{WIDGET}}"></script>
+<!-- The assistant's script tag from the admin console goes here. -->
 </body>
 </html>

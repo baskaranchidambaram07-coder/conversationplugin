@@ -5,7 +5,7 @@ from pydantic import ValidationError
 
 from ucp.protocol import ADAPTERS, KNOWN_BLOCK_TYPES, SCHEMA_FILE, json_schema, schema_text
 
-# Shared with the TypeScript tests (protocol/src/examples.test.ts): the folder names the type and the verdict.
+# Shared with the TypeScript tests (protocol/tests/examples.test.ts): the folder names the type and the verdict.
 EXAMPLES = SCHEMA_FILE.parents[1] / "examples" / "v1"
 FILES = sorted(EXAMPLES.glob("*/*/*.json"))
 

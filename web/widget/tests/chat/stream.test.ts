@@ -1,7 +1,7 @@
 import type { StreamEvent } from "@ucp/protocol/v1";
 import { expect, test, vi } from "vitest";
 
-import { eventReader } from "./stream";
+import { eventReader } from "../../src/chat/stream";
 
 const envelope = { v: 1, conversation_id: "c_1", message_id: "m_1", correlation_id: "r_1" } as const;
 const EVENTS = [

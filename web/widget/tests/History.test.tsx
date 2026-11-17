@@ -1,8 +1,8 @@
 import { act, cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { afterEach, expect, test, vi } from "vitest";
 
-import { App } from "./App";
-import { strings as t } from "./strings";
+import { App } from "../src/App";
+import { strings as t } from "../src/strings";
 
 // The history panel (M2-T8): a signed-in visitor's earlier chats, opened, carried on, and a new chat for everyone.
 const LOADER = "https://college.example";

@@ -15,7 +15,7 @@ export class ApiProblem extends Error {
 }
 
 /** Calls the admin API. Throws ApiProblem for any refusal; `sign_in_required` when the session has ended. */
-export async function call<T>(method: "GET" | "POST" | "PUT" | "DELETE", path: string, body?: unknown): Promise<T> {
+export async function call<T>(method: "GET" | "POST" | "PUT" | "PATCH" | "DELETE", path: string, body?: unknown): Promise<T> {
   const signed = token();
   if (!signed) throw new ApiProblem(401, { code: "sign_in_required", message: "Sign in to continue.", reference: "" });
   const reply = await fetch(`/admin/v1${path}`, {

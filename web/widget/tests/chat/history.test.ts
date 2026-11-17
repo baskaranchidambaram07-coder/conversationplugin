@@ -1,7 +1,7 @@
 import type { Message } from "@ucp/protocol/v1";
 import { expect, test } from "vitest";
 
-import { turnsOf, when } from "./history";
+import { turnsOf, when } from "../../src/chat/history";
 
 const at = "2026-11-12T10:00:00Z";
 const question = (id: string, text: string): Message => ({

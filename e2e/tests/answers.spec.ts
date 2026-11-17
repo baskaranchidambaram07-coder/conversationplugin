@@ -30,7 +30,7 @@ const EXAMPLES = [
   { name: "formatting", question: "[gallery:formatting]", parts: ":is(h2, h3, h4, h5, h6)", count: 6 },
   { name: "code", question: "[gallery:code]", parts: "figure.code", count: 6 },
   { name: "tables", question: "[gallery:tables]", parts: "figure.table", count: 2 },
-  { name: "diagrams", question: "[gallery:diagrams]", parts: "figure.diagram svg[role=img]", count: 2 },
+  { name: "diagrams", question: "[gallery:diagrams]", parts: "figure.diagram svg[role=img]", count: 3 },
   { name: "charts", question: "[gallery:charts]", parts: "figure.chart .plot svg", count: 5 },
   { name: "Purple Fabric's recorded long", question: "[long]", parts: "figure", count: 3 },
 ];
@@ -128,7 +128,7 @@ test("in a 400px panel a wide diagram keeps its words readable, scrolls inside i
   await page.keyboard.press("ArrowRight");
   await expect.poll(() => frame.evaluate((element) => element.scrollLeft)).toBeGreaterThan(0);
   await page.getByRole("button", { name: "Show code" }).first().click();
-  await expect(page.getByRole("region", { name: "Diagram source" })).toContainText("<mxGraphModel");
+  await expect(page.getByRole("region", { name: "Diagram source" }).first()).toContainText("<mxGraphModel");
 });
 
 test("charts fit the narrowest chat, and their values read by pointer, by keyboard and as a table", async ({ page }) => {

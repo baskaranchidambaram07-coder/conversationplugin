@@ -2,10 +2,10 @@
 import { cleanup, fireEvent, render, screen, within } from "@testing-library/react";
 import { afterEach, expect, test } from "vitest";
 
-import Chart from "./Chart";
-import gallery from "./gallery/charts.md?raw";
-import Markdown from "./Markdown";
-import { chartOf, plotOf, rowsOf, ticks } from "./plot";
+import Chart from "../../src/render/Chart";
+import gallery from "../../src/render/gallery/charts.md?raw";
+import Markdown from "../../src/render/Markdown";
+import { chartOf, plotOf, rowsOf, ticks } from "../../src/render/plot";
 
 afterEach(cleanup);
 

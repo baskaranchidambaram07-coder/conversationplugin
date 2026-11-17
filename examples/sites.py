@@ -1,14 +1,17 @@
-"""The language samples: one small site per language (examples/html, php, java, dotnet, ruby, node, go, c, cpp), each
-page carrying the assistant's script tag. S3 cannot run code, so each language writes its page as plain HTML when the
-site is built, as a static site generator does, and the pages go to the hosted samples' bucket under sites/.
+"""The language samples: one small site per language (examples/html, php, java, dotnet, ruby, node, go, c, cpp). S3
+cannot run code, so each language writes its page as plain HTML when the site is built, as a static site generator
+does. Each site has a CloudFront address of its own (infra/aws/sites, apart from the stack: it neither sleeps nor
+wakes), so a widget allowed on one site is refused on the others. No page carries the assistant, so each can be
+onboarded by hand: put the script tag from the admin console where the page's comment says, then publish.
 
 python examples/sites.py               build with the languages this machine has, and check every page
 python examples/sites.py --all         all nine, or fail (the pipeline)
-python examples/sites.py --publish     all nine for the dev stack, uploaded; prints the address to open
+python examples/sites.py --publish     make the bucket and the nine addresses if missing, upload all nine sites,
+                                       print each site's address (the addresses stay the same on every publish)
+python examples/sites.py --delete      remove the bucket and the nine addresses, after a demonstration
 
-Toolchains come from .tools on the build machine, else from the PATH. Publishing uses the AWS command line and puts
-the pages beside the College's samples (infra/aws/stack/samples.tf), so they share that site's address; a rebuilt
-stack has a new address and an empty bucket, so publish again after one.
+Toolchains come from .tools on the build machine, else from the PATH. Publishing and deleting use Terraform and the
+AWS command line, signed in as the deploying identity, with the state in the dev stack's state bucket.
 """
 
 import argparse
@@ -24,7 +27,6 @@ from pathlib import Path
 HERE = Path(__file__).resolve().parent
 ROOT = HERE.parent
 TOOLS = ROOT / ".tools"
-SCRIPT = '<script async src="{gateway}/loader.js" data-widget-id="{widget}"></script>'
 # Each language's commands, run in examples/; the last one prints the page. {work} is a folder for compiled programs.
 LANGUAGES = {
     "php": [["php", "php/index.php"]],
@@ -38,8 +40,8 @@ LANGUAGES = {
 }
 
 
-def environment(gateway: str, widget: str) -> dict[str, str]:
-    env = {**os.environ, "UCP_GATEWAY": gateway, "UCP_WIDGET_ID": widget}
+def environment() -> dict[str, str]:
+    env = dict(os.environ)
     if TOOLS.exists():  # the build machine: portable toolchains, and every cache they write kept inside .tools
         home = TOOLS / "home"
         roaming, local = home / "AppData/Roaming", home / "AppData/Local"
@@ -52,14 +54,14 @@ def environment(gateway: str, widget: str) -> dict[str, str]:
     return env
 
 
-def build(work: Path, gateway: str, widget: str, every: bool) -> Path:
-    """Writes the site into work/site and checks every page; returns the folder."""
-    site = work / "site"
-    site.mkdir()
-    shutil.copy(HERE / "html/site.css", site)
+def build(work: Path, addresses: dict[str, str], every: bool) -> Path:
+    """Writes each site into work/site/NAME, its page as index.html beside the stylesheet, and checks every page;
+    returns work/site. The hub's {{NAME}} links become the sites' addresses."""
     hub = (HERE / "html/index.html").read_text(encoding="utf-8")
-    (site / "index.html").write_text(hub.replace("{{GATEWAY}}", gateway).replace("{{WIDGET}}", widget), "utf-8")
-    env = environment(gateway, widget)
+    if every and set(re.findall(r"\{\{([a-z]+)\}\}", hub)) != set(LANGUAGES):
+        sys.exit("the hub page must link to every language's site, and only to those")
+    pages = {"html": re.sub(r"\{\{([a-z]+)\}\}", lambda link: addresses[link[1]], hub)}
+    env = environment()
     missing = []
     for language, commands in LANGUAGES.items():
         if not shutil.which(commands[0][0], path=env["PATH"]):
@@ -71,48 +73,65 @@ def build(work: Path, gateway: str, widget: str, every: bool) -> Path:
             done = subprocess.run(run, cwd=HERE, env=env, capture_output=True, encoding="utf-8", timeout=600)  # noqa: S603
             if done.returncode:
                 sys.exit(f"{language}: {(done.stdout + done.stderr).strip()[-800:]}")  # dotnet reports on stdout
-        (site / f"{language}.html").write_text(done.stdout, "utf-8")
+        pages[language] = done.stdout
         print(f"built {language}")
     if missing:
         print("no toolchain here for " + ", ".join(missing))
         if every:
             sys.exit(1)
-    tag = SCRIPT.format(gateway=gateway, widget=widget)
-    for page in site.glob("*.html"):
-        text = page.read_text(encoding="utf-8")
-        if not text.lstrip().startswith("<!doctype html>") or tag not in text or 'href="site.css"' not in text:
-            sys.exit(f"{page.name} is not a whole page with the stylesheet and the assistant's script tag")
-    if every:
-        linked = set(re.findall(r'href="([a-z]+\.html)"', hub))
-        if linked != {f"{language}.html" for language in LANGUAGES}:
-            sys.exit("the hub page must link to every language's page, and only to those")
+    site = work / "site"
+    for name, text in pages.items():
+        if not text.lstrip().startswith("<!doctype html>") or 'href="site.css"' not in text:
+            sys.exit(f"{name}: not a whole page with the stylesheet")
+        (site / name).mkdir(parents=True)
+        (site / name / "index.html").write_text(text, "utf-8")
+        shutil.copy(HERE / "html/site.css", site / name)
     return site
+
+
+def terraform(*args: str, capture: bool = False) -> str:
+    """The sites' own Terraform (infra/aws/sites), its state beside the dev stack's in the same state bucket."""
+    environments = ROOT / "infra/aws/environments"
+    data = environments / ".terraform" / "sites"
+    env = {**os.environ, "TF_DATA_DIR": str(data), "TF_IN_AUTOMATION": "1"}
+    local = TOOLS / "terraform" / ("terraform.exe" if os.name == "nt" else "terraform")
+    if TOOLS.exists():
+        (TOOLS / "terraform-plugins").mkdir(exist_ok=True)
+        env["TF_PLUGIN_CACHE_DIR"] = str(TOOLS / "terraform-plugins")
+    command = [str(local) if local.exists() else "terraform", f"-chdir={ROOT / 'infra/aws/sites'}"]
+    if not (data / "terraform.tfstate").exists():  # first run on this machine: point it at the state bucket
+        backend = environments / "dev.backend.hcl"
+        if not backend.exists():
+            sys.exit(f"no settings for the state bucket: {backend} (infra/aws/SETUP.md)")
+        init = ["init", "-input=false", f"-backend-config={backend}", "-backend-config=key=sites/dev.tfstate"]
+        subprocess.run([*command, *init], env=env, check=True, stdout=subprocess.DEVNULL)  # noqa: S603
+    done = subprocess.run([*command, *args], env=env, check=True, text=True, capture_output=capture)  # noqa: S603
+    return done.stdout if capture else ""
 
 
 def main() -> None:
     arguments = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     arguments.add_argument("--all", action="store_true", help="fail unless every language builds")
-    arguments.add_argument("--publish", action="store_true", help="build all nine for the dev stack and upload them")
+    arguments.add_argument("--publish", action="store_true", help="make the nine addresses if missing, upload")
+    arguments.add_argument("--delete", action="store_true", help="remove the bucket and the nine addresses")
     args = arguments.parse_args()
-    gateway, widget = "https://assistant.example", "w_sample"
-    if args.publish:
-        sys.path.insert(0, str(ROOT / "infra/aws"))
-        import deploy  # noqa: PLC0415 - the environment's names and addresses, only when publishing
-
-        gateway = deploy.public_url()
-        widgets = json.loads((ROOT / "backend/deploy/widgets.dev.json").read_text(encoding="utf-8"))["widgets"]
-        # The widget the College's public sample uses (samples.tf): anonymous chat, allowed on the samples' address.
-        widget = next(id_ for id_, w in widgets.items() if w.get("identity", {}).get("secret") == "college")
+    if args.delete:
+        terraform("destroy", "-auto-approve", "-input=false")
+        return
+    names = ["html", *LANGUAGES]
+    addresses = {name: f"https://{name}.example" for name in names}
+    if args.publish:  # the addresses first: the hub links to them
+        terraform("apply", "-auto-approve", "-input=false")
+        out = json.loads(terraform("output", "-json", capture=True))
+        addresses = out["urls"]["value"]
     with tempfile.TemporaryDirectory() as work:
-        site = build(Path(work), gateway, widget, args.all or args.publish)
+        site = build(Path(work), addresses, args.all or args.publish)
         if args.publish:
-            buckets = deploy.aws("s3api", "list-buckets", "--prefix", f"{deploy.NAME}-samples-").get("Buckets", [])
-            if len(buckets) != 1:
-                sys.exit("no hosted samples bucket: the stack must be up with its samples (infra/aws/stack.py)")
-            target = f"s3://{buckets[0]['Name']}/sites"
-            sync = ["aws", "s3", "sync", str(site), target, "--cache-control", "no-store", "--only-show-errors"]
-            subprocess.run([*sync, "--region", deploy.REGION], check=True)  # noqa: S603, S607
-            print(f"{deploy.public_url('UCP_SAMPLES_ORIGIN')}/sites/index.html")
+            target = f"s3://{out['bucket']['value']}"  # --delete: the bucket holds only what this script writes
+            sync = ["aws", "s3", "sync", str(site), target, "--delete", "--cache-control", "no-store"]
+            subprocess.run([*sync, "--only-show-errors", "--region", "us-east-1"], check=True)  # noqa: S603, S607
+            for name in names:
+                print(f"{name:7} {addresses[name]}")
 
 
 if __name__ == "__main__":

@@ -2,8 +2,8 @@
 import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { afterEach, expect, test, vi } from "vitest";
 
-import Markdown from "./Markdown";
-import { toCsv } from "./Table";
+import Markdown from "../../src/render/Markdown";
+import { toCsv } from "../../src/render/Table";
 
 afterEach(() => {
   cleanup();

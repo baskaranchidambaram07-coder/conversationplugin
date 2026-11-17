@@ -3,7 +3,7 @@ import { afterEach, beforeEach, expect, test, vi } from "vitest";
 
 import { contrast } from "@ucp/protocol/brand";
 
-import { fullScreen, settings, start, VERSION } from "./index";
+import { fullScreen, settings, start, VERSION } from "../src/index";
 
 type Host = Window & { UCP?: unknown };
 const host = window as Host;
