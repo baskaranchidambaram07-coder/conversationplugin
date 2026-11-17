@@ -1,6 +1,6 @@
 import { expect, test } from "vitest";
 
-import { fromChat, fromLoader } from "./bridge";
+import { fromChat, fromLoader } from "../src/bridge";
 
 test.each([
   { ucp: 1, type: "ready" },

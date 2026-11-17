@@ -1,8 +1,8 @@
 import { cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { afterEach, beforeEach, expect, test, vi } from "vitest";
 
-import { App, forDark, readConfig } from "./App";
-import { strings as t } from "./strings";
+import { App, forDark, readConfig } from "../src/App";
+import { strings as t } from "../src/strings";
 
 const CONFIG = {
   v: 1,

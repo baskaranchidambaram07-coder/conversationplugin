@@ -1,6 +1,6 @@
 import { expect, test, vi } from "vitest";
 
-import { connect } from "./bridge";
+import { connect } from "../../src/chat/bridge";
 
 const LOADER = "https://college.example";
 

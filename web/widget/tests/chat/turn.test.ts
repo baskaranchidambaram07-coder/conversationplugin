@@ -1,8 +1,8 @@
 import type { Message } from "@ucp/protocol/v1";
 import { afterEach, beforeEach, expect, test, vi } from "vitest";
 
-import { type Api, Failure } from "./api";
-import { STALL_MS, runTurn } from "./turn";
+import { type Api, Failure } from "../../src/chat/api";
+import { STALL_MS, runTurn } from "../../src/chat/turn";
 
 const envelope = { v: 1, conversation_id: "c_1", message_id: "m_1", correlation_id: "r_1" };
 const started = { ...envelope, seq: 0, type: "message.started" };

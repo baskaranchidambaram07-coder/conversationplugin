@@ -1,16 +1,16 @@
 // @vitest-environment jsdom
-// The example gallery (M3 UI tests): our examples in ./gallery and the answers Purple Fabric gave in the recordings
+// The example gallery (M3 UI tests): our examples in src/render/gallery and the answers Purple Fabric gave in the recordings
 // each render whole, and at every point a stream could have reached, without error.
 import { cleanup, render } from "@testing-library/react";
 import { afterEach, expect, test } from "vitest";
 
-import { safeHref } from "./links";
-import Markdown from "./Markdown";
-import { BlockView, tooHeavy } from "./registry";
+import { safeHref } from "../../src/render/links";
+import Markdown from "../../src/render/Markdown";
+import { BlockView, tooHeavy } from "../../src/render/registry";
 
 afterEach(cleanup);
 
-const ours = import.meta.glob<string>("./gallery/*.md", { query: "?raw", import: "default", eager: true });
+const ours = import.meta.glob<string>("../../src/render/gallery/*.md", { query: "?raw", import: "default", eager: true });
 const recordings = import.meta.glob<string>("../../../../backend/fakepf/recordings/*.sse", {
   query: "?raw",
   import: "default",
