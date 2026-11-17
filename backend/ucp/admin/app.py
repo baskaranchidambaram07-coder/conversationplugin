@@ -171,6 +171,19 @@ async def list_tenants(admin: Signed, kept: Kept) -> list[dict]:
     return [_tenant(row) for row in await kept.tenants(None if admin.role == "platform" else admin.tenant_id)]
 
 
+@router.get("/overview", summary="Each tenant's widgets counted by state: live, changes waiting, in setup")
+async def overview(admin: Signed, kept: Kept) -> list[dict]:
+    """The console's home in one call, however many tenants there are: every tenant for a platform administrator,
+    one's own for anyone else."""
+    mine = None if admin.role == "platform" else admin.tenant_id
+    counts = {row.tenant_id: {"live": 0, "waiting": 0, "setup": 0} for row in await kept.tenants(mine)}
+    for widget in await kept.widgets(mine):
+        state = "setup" if widget["version"] is None else "waiting" if widget["unpublished"] else "live"
+        if widget["tenant_id"] in counts:  # a deleted tenant's widgets are not counted
+            counts[widget["tenant_id"]][state] += 1
+    return [{"tenant_id": tenant_id, **each} for tenant_id, each in counts.items()]
+
+
 @router.post("/tenants", status_code=201, summary="A new tenant (platform administrators only)")
 async def create_tenant(body: NewTenant, admin: Signed, kept: Kept) -> dict:
     admin.platform()

@@ -106,6 +106,30 @@
         }
       }
     },
+    "/admin/v1/overview": {
+      "get": {
+        "summary": "Each tenant's widgets counted by state: live, changes waiting, in setup",
+        "description": "The console's home in one call, however many tenants there are: every tenant for a platform administrator,\none's own for anyone else.",
+        "operationId": "overview_admin_v1_overview_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "additionalProperties": true,
+                    "type": "object"
+                  },
+                  "type": "array",
+                  "title": "Response Overview Admin V1 Overview Get"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/admin/v1/tenants/{tenant_id}": {
       "delete": {
         "summary": "Delete a tenant with no widgets left (platform administrators only); its people and secrets go too",

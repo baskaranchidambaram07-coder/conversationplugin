@@ -2,13 +2,23 @@
 import type { StationId } from "./track";
 
 export const strings = {
-  product: "Conversation Plugin",
+  product: "UCP",
   console: "Console",
   signInTitle: "Sign in to set up your assistant",
   signInBody: "Use your company account. Nothing here is shown to your visitors.",
   signIn: "Sign in",
   signingIn: "Signing you in",
   signOut: "Sign out",
+  account: "Account",
+  home: "Home",
+  atAGlance: "At a glance",
+  organisations: "Organisations",
+  widgetsIn: (name: string) => `Widgets in ${name}`,
+  showAllOrganisations: (n: number) => `Show all ${n} organisations`,
+  zeroWidgets: "0 widgets",
+  states: { live: "Live", waiting: "Changes waiting", setup: "In setup" },
+  stateCount: (n: number, state: "live" | "waiting" | "setup") =>
+    `${n} ${{ live: "live", waiting: "with changes waiting", setup: "in setup" }[state]}`,
   theme: "Theme",
   themes: { system: "System theme", light: "Light theme", dark: "Dark theme" },
   signInFailed: "The sign-in did not complete. Please try again.",

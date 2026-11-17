@@ -237,6 +237,20 @@ def test_the_role_matrix(world, role):
     assert got == {name: statuses[ROLES.index(role)] for name, statuses in EXPECTED.items()}
 
 
+def test_the_overview_counts_each_tenants_widgets_by_state_and_shows_people_only_their_own(world):
+    a, b, platform = world.a, world.b, bearer(world, "platform")
+    world.post(f"/admin/v1/tenants/{a}/widgets", json={"document": document(tenant_id=a)}, headers=platform)  # in setup
+    changed = {"revision": 0, "document": document(tenant_id=b, public={**PUBLIC, "title": "Changed"})}
+    world.put(f"/admin/v1/widgets/w_{b}/draft", json=changed, headers=platform)  # live, with changes waiting
+
+    seen = {row["tenant_id"]: row for row in world.get("/admin/v1/overview", headers=platform).json()}
+    assert {key: seen[a][key] for key in ("live", "waiting", "setup")} == {"live": 1, "waiting": 0, "setup": 1}
+    assert {key: seen[b][key] for key in ("live", "waiting", "setup")} == {"live": 0, "waiting": 1, "setup": 0}
+    assert seen[f"t_c{world.tag}"] == {"tenant_id": f"t_c{world.tag}", "live": 0, "waiting": 0, "setup": 0}
+    theirs = world.get("/admin/v1/overview", headers=bearer(world, "viewer_a")).json()
+    assert [row["tenant_id"] for row in theirs] == [a]
+
+
 def test_a_tenants_people_see_only_their_own_tenant_and_audit(world):
     a, b = f"t_a{world.tag}", f"t_b{world.tag}"
 
