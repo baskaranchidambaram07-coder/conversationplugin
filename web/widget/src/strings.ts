@@ -5,7 +5,7 @@ export const strings = {
   close: "Close chat",
   expand: "Open full screen",
   shrink: "Exit full screen",
-  notice: "You are chatting with an AI assistant. It can make mistakes.",
+  notice: "AI assistant. It can make mistakes.", // short enough to share one line with the credit in a phone's chat
   you: "You:",
   answer: "Answer:",
   input: "Your question",
