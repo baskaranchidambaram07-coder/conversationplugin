@@ -19,13 +19,13 @@ export type Protocol =
   | Filing
   | Pin
   | PinPage;
-export type Block = TextBlock | MarkdownBlock | UnknownBlock;
-export type StreamEvent =
-  MessageStarted | ContentBlockStarted | ContentBlockDelta | ContentBlockCompleted | MessageCompleted | MessageFailed;
+export type Block = TextBlock | MarkdownBlock | FileBlock | UnknownBlock;
 /**
  * Our opaque ID. Never a PF ID.
  */
 export type Id = string;
+export type StreamEvent =
+  MessageStarted | ContentBlockStarted | ContentBlockDelta | ContentBlockCompleted | MessageCompleted | MessageFailed;
 export type Index = number;
 /**
  * Opaque. Pass it as `before` for the next page.
@@ -45,6 +45,25 @@ export interface TextBlock {
 export interface MarkdownBlock {
   type: "markdown";
   text: string;
+}
+/**
+ * A file the visitor attached to a question (M10), downloaded from
+ * GET /v1/conversations/{id}/files/{file id}. Also the reply to an upload.
+ */
+export interface FileBlock {
+  type: "file";
+  id: Id;
+  name: string;
+  /**
+   * Bytes.
+   */
+  size: number;
+  content_type:
+    | "application/pdf"
+    | "image/png"
+    | "image/jpeg"
+    | "application/msword"
+    | "application/vnd.openxmlformats-officedocument.wordprocessingml.document";
 }
 /**
  * A block type this version does not know, sent by a newer gateway. Shown as its `text`, if it has one.
@@ -244,6 +263,10 @@ export interface WidgetConfig {
   color_scheme: "light" | "dark" | "auto";
   launcher_position: "bottom-right" | "bottom-left";
   history_enabled: boolean;
+  /**
+   * Visitors may attach doc, docx, pdf, jpg, jpeg and png files to a question.
+   */
+  attachments_enabled?: boolean;
 }
 /**
  * Body of POST /v1/sessions. A signed-in visitor brings the token the host signed for them; anyone else, null.
@@ -274,6 +297,12 @@ export interface SendMessage {
    * Our opaque ID. Never a PF ID.
    */
   client_message_id: string;
+  /**
+   * Files uploaded to this conversation, sent with the question: at most 5.
+   *
+   * @maxItems 5
+   */
+  attachments?: Id[];
 }
 /**
  * Body of PUT /v1/conversations/{id}/messages/{id}/feedback: the visitor's rating of an answer.

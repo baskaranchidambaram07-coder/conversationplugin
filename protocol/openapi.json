@@ -640,6 +640,126 @@
         }
       }
     },
+    "/v1/conversations/{conversation_id}/files": {
+      "post": {
+        "summary": "Attach a file (doc, docx, pdf, jpg, jpeg or png, at most 10 MB) as the body, named in `name`; send its ID with the question",
+        "operationId": "upload_v1_conversations__conversation_id__files_post",
+        "parameters": [
+          {
+            "name": "conversation_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^[A-Za-z0-9_-]{1,64}$",
+              "description": "Our opaque ID. Never a PF ID.",
+              "title": "Conversation Id"
+            },
+            "description": "Our opaque ID. Never a PF ID."
+          },
+          {
+            "name": "name",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 255,
+              "title": "Name"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FileBlock"
+                }
+              }
+            }
+          },
+          "4XX": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            },
+            "description": "Client Error"
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/pdf": {},
+            "image/png": {},
+            "image/jpeg": {},
+            "application/msword": {},
+            "application/vnd.openxmlformats-officedocument.wordprocessingml.document": {}
+          }
+        }
+      }
+    },
+    "/v1/conversations/{conversation_id}/files/{file_id}": {
+      "get": {
+        "summary": "A file attached to a question, always as a download",
+        "operationId": "download_v1_conversations__conversation_id__files__file_id__get",
+        "parameters": [
+          {
+            "name": "conversation_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^[A-Za-z0-9_-]{1,64}$",
+              "description": "Our opaque ID. Never a PF ID.",
+              "title": "Conversation Id"
+            },
+            "description": "Our opaque ID. Never a PF ID."
+          },
+          {
+            "name": "file_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^[A-Za-z0-9_-]{1,64}$",
+              "description": "Our opaque ID. Never a PF ID.",
+              "title": "File Id"
+            },
+            "description": "Our opaque ID. Never a PF ID."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              },
+              "application/pdf": {},
+              "image/png": {},
+              "image/jpeg": {},
+              "application/msword": {},
+              "application/vnd.openxmlformats-officedocument.wordprocessingml.document": {}
+            }
+          },
+          "4XX": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            },
+            "description": "Client Error"
+          }
+        }
+      }
+    },
     "/v1/pins": {
       "get": {
         "summary": "The visitor's pinned answers, the newest pin first",
@@ -978,6 +1098,9 @@
             "$ref": "#/components/schemas/MarkdownBlock"
           },
           {
+            "$ref": "#/components/schemas/FileBlock"
+          },
+          {
             "$ref": "#/components/schemas/UnknownBlock"
           }
         ]
@@ -1096,6 +1219,52 @@
         ],
         "title": "Feedback",
         "description": "Body of PUT /v1/conversations/{id}/messages/{id}/feedback: the visitor's rating of an answer."
+      },
+      "FileBlock": {
+        "properties": {
+          "type": {
+            "type": "string",
+            "const": "file",
+            "title": "Type"
+          },
+          "id": {
+            "$ref": "#/components/schemas/Id"
+          },
+          "name": {
+            "type": "string",
+            "maxLength": 200,
+            "minLength": 1,
+            "title": "Name"
+          },
+          "size": {
+            "type": "integer",
+            "minimum": 1.0,
+            "title": "Size",
+            "description": "Bytes."
+          },
+          "content_type": {
+            "type": "string",
+            "enum": [
+              "application/pdf",
+              "image/png",
+              "image/jpeg",
+              "application/msword",
+              "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+            ],
+            "title": "Content Type"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "type",
+          "id",
+          "name",
+          "size",
+          "content_type"
+        ],
+        "title": "FileBlock",
+        "description": "A file the visitor attached to a question (M10), downloaded from\nGET /v1/conversations/{id}/files/{file id}. Also the reply to an upload."
       },
       "Filing": {
         "properties": {
@@ -1405,6 +1574,15 @@
           "client_message_id": {
             "$ref": "#/components/schemas/Id",
             "description": "Chosen by the chat. Sending again with the same ID returns the same reply."
+          },
+          "attachments": {
+            "items": {
+              "$ref": "#/components/schemas/Id"
+            },
+            "type": "array",
+            "maxItems": 5,
+            "title": "Attachments",
+            "description": "Files uploaded to this conversation, sent with the question: at most 5."
           }
         },
         "additionalProperties": false,
@@ -1495,7 +1673,8 @@
             "not": {
               "enum": [
                 "text",
-                "markdown"
+                "markdown",
+                "file"
               ]
             },
             "type": "string",
@@ -1679,6 +1858,12 @@
           "history_enabled": {
             "type": "boolean",
             "title": "History Enabled"
+          },
+          "attachments_enabled": {
+            "type": "boolean",
+            "title": "Attachments Enabled",
+            "description": "Visitors may attach doc, docx, pdf, jpg, jpeg and png files to a question.",
+            "default": false
           }
         },
         "additionalProperties": false,

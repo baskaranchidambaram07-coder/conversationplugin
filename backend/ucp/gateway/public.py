@@ -20,7 +20,7 @@ ASSET_TYPES = {".js": "text/javascript; charset=utf-8", ".css": "text/css; chars
 def chat_policy(widget: Widget) -> str:
     """The chat needs only its own origin, plus the host of the widget's logo. Only the widget's allowed sites may
     frame it; the browser refuses to show it anywhere else (threat model T3)."""
-    images = " ".join(filter(None, ["'self'", widget.logo_origin]))
+    images = " ".join(filter(None, ["'self'", "blob:", widget.logo_origin]))  # blob: a picture the visitor attached
     return (
         "default-src 'none'; script-src 'self'; style-src 'self'; font-src 'self'; connect-src 'self'; "
         f"img-src {images}; base-uri 'none'; form-action 'none'; "

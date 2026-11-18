@@ -50,6 +50,7 @@ export async function runTurn(
   key: string,
   signal: AbortSignal,
   onAnswer: (answer: Answer) => void,
+  attachments: string[] = [],
 ): Promise<Answer> {
   let answer = pending();
   const show = (next: Answer) => {
@@ -68,7 +69,8 @@ export async function runTurn(
   };
 
   try {
-    const reply = await api.send(conversationId, { text: question, client_message_id: key }, stream.signal);
+    const body = { text: question, client_message_id: key, ...(attachments.length ? { attachments } : {}) };
+    const reply = await api.send(conversationId, body, stream.signal);
     const feed = eventReader((event) => show(apply(answer, event)), alive);
     const reader = (reply.body as ReadableStream<Uint8Array>).getReader();
     for (let chunk = await reader.read(); !chunk.done; chunk = await reader.read()) feed(chunk.value);

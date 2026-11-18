@@ -3,6 +3,7 @@ access log without secrets, and one error format. Every error the gateway sends 
 nothing from PF, the framework or a stack trace reaches the browser (R13)."""
 
 import logging
+import re
 import secrets
 import sys
 import time
@@ -20,6 +21,8 @@ log = logging.getLogger("ucp.gateway")
 access = logging.getLogger("ucp.access")
 
 MAX_BODY = 64 * 1024  # a question is at most 4,000 characters and a host token 8 KB
+UPLOAD = re.compile(r"/v1/conversations/[A-Za-z0-9_-]{1,64}/files")
+MAX_UPLOAD = 10 * 1024 * 1024  # an attachment (ucp.files); only its upload route takes more than MAX_BODY
 correlation: ContextVar[str] = ContextVar("correlation", default="r_none")
 
 type Code = Literal[
@@ -110,12 +113,14 @@ class Pipeline:
         started, status, received = time.perf_counter(), 500, 0
         scope.setdefault("state", {})["received"] = started  # for the gateway's own share of a first word (ucp.turns)
         response_started = False
+        uploading = scope["method"] == "POST" and UPLOAD.fullmatch(scope["path"])
+        limit = MAX_UPLOAD if uploading else MAX_BODY
 
         async def limited_receive():
             nonlocal received
             message = await receive()
             received += len(message.get("body", b""))
-            if received > MAX_BODY:
+            if received > limit:
                 raise _TooLarge
             return message
 
@@ -131,7 +136,7 @@ class Pipeline:
 
         declared = dict(scope["headers"]).get(b"content-length")
         try:
-            if declared and declared.isdigit() and int(declared) > MAX_BODY:
+            if declared and declared.isdigit() and int(declared) > limit:
                 raise _TooLarge
             await self.app(scope, limited_receive, secured_send)
         except _TooLarge:

@@ -12,11 +12,12 @@ What PF does that shapes this code:
 import asyncio
 import json
 import time
+from collections.abc import Sequence
 
 import httpx2
 from pydantic import BaseModel, ConfigDict, SecretStr
 
-from ucp.connector import Accepted, AgentError, AgentEvent, Failed, Final, Text
+from ucp.connector import Accepted, AgentError, AgentEvent, AgentFile, Failed, Final, Text
 from ucp.gateway.pipeline import correlation
 
 API = "/magicplatform/v1/genai/conversation"
@@ -120,13 +121,16 @@ class PfConnector:
             "x-request-id": correlation.get(),  # our reference, so one question can be followed into PF's logs
         }
 
-    async def _call(self, method: str, path: str, body: dict | None = None) -> httpx2.Response:
-        """A plain call, logging in again once if PF refuses the token."""
+    async def _call(self, method: str, path: str, body: dict | None = None, **raw) -> httpx2.Response:
+        """A plain call, logging in again once if PF refuses the token. `raw` sends bytes instead of a JSON body:
+        content, params and a content_type."""
         token = await self._login()
+        kind = raw.pop("content_type", None)
         for attempt in (1, 2):
+            headers = self._headers(token) | ({"content-type": kind} if kind else {})
             try:
                 reply = await self.client.request(
-                    method, f"{self.profile.base_url}{path}", json=body, headers=self._headers(token)
+                    method, f"{self.profile.base_url}{path}", json=body, headers=headers, **raw
                 )
             except httpx2.HTTPError as error:
                 raise AgentError("assistant_unavailable", True, f"{method} {path}: {type(error).__name__}") from error
@@ -151,10 +155,34 @@ class PfConnector:
         except (ValueError, KeyError, TypeError) as error:
             raise AgentError("assistant_unavailable", False, "create: unexpected reply") from error
 
-    async def send(self, conversation_id: str, text: str):
+    async def _upload(self, conversation_id: str, file: AgentFile) -> str:
+        """PF's ID for one attached file, which the question then names in `ref_file_ids` (a field of PF's message
+        record). shortcut: a provisional call (the bytes as the body, the name in the address) until PF's attach API
+        is confirmed; the fake PF mirrors it. PF's real call replaces this function alone."""
+        reply = await self._call(
+            "POST",
+            f"{API}/upload",
+            content=file.data,
+            params={"conversation_id": conversation_id, "name": file.name},
+            content_type=file.content_type,
+        )
+        if reply.status_code >= 300:
+            failure = _failure(reply.status_code, "upload")
+            raise AgentError(failure.code, failure.retryable, failure.detail)
+        try:
+            return str(reply.json()["file_id"])
+        except (ValueError, KeyError, TypeError) as error:
+            raise AgentError("assistant_unavailable", False, "upload: unexpected reply") from error
+
+    async def send(self, conversation_id: str, text: str, files: Sequence[AgentFile] = ()):
         accepted: Accepted | None = None
         try:
-            async for event in self._stream(conversation_id, text):
+            file_ids = [await self._upload(conversation_id, file) for file in files]
+        except AgentError as error:
+            yield Failed(error.code, error.retryable, error.detail)  # PF never had the question: asking again is safe
+            return
+        try:
+            async for event in self._stream(conversation_id, text, file_ids):
                 yield event
                 if isinstance(event, Accepted):
                     accepted = event
@@ -171,9 +199,9 @@ class PfConnector:
             return
         yield await self._recover(conversation_id, accepted.agent_message_id, why)
 
-    async def _stream(self, conversation_id: str, text: str):
+    async def _stream(self, conversation_id: str, text: str, file_ids: list[str]):
         token = await self._login()
-        body = {"conversation_id": conversation_id, "query": text}
+        body = {"conversation_id": conversation_id, "query": text} | ({"ref_file_ids": file_ids} if file_ids else {})
         for attempt in (1, 2):
             url = f"{self.profile.base_url}{API}/addmessage/stream"
             async with self.client.stream("POST", url, json=body, headers=self._headers(token)) as reply:

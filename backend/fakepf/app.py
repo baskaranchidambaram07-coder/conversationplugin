@@ -9,6 +9,9 @@ The message text picks the behaviour, so a test at any level (connector, gateway
     [error]         three words, then PF's ERROR event inside the HTTP 201 stream
     [seeded]        the short reply with every event carrying what PF might add one day: internal addresses,
                     sources, citations, model and tool details (all marked SEEDED), to prove the allow-list (R13)
+A message naming uploaded files in `ref_file_ids` gets its answer with a last line naming them, so a test can see
+the files arrived; an unknown file ID gets an ERROR event. The upload call (POST .../upload) is provisional, as is
+the connector's, until PF's attach API is confirmed (ucp.pf).
 Wrong credentials get PF's failed login (HTTP 200, RESULT_FAILURE). POST /_fake/expire-tokens expires every token,
 so the next call gets PF's 401. An unknown conversation or an empty message gets PF's recorded ERROR events.
 The fetch call answers IN_PROGRESS until the recorded reply would have finished, even if the caller hung up.
@@ -104,11 +107,25 @@ def _script(query):
     return name, RECORDED[name][1]
 
 
+def _with_note(events, note):
+    """A recording with one more piece of answer at its end, as if the agent had read the attached files."""
+    noted = []
+    for at, data in events:
+        event = json.loads(data)
+        if event.get("event") == "LLM_RESPONSE_STREAM" and event.get("status") == "END":
+            noted.append((at, json.dumps({**event, "status": "IN_PROGRESS", "content": note}, separators=(",", ":"))))
+        if event.get("event") == "FINAL_RESPONSE":
+            event["content"]["response"] += note
+            data = json.dumps(event, separators=(",", ":"))
+        noted.append((at, data))
+    return noted
+
+
 def create_app(time_scale: float = 1.0) -> FastAPI:
     """time_scale multiplies every recorded delay. Tests use 0 to skip the waiting."""
     app = FastAPI(docs_url=None, redoc_url=None, openapi_url=None)
     numbers = itertools.count(1)  # every ID comes from here, so a fresh app always repeats the same bytes
-    tokens, conversations, messages = set(), {}, {}
+    tokens, conversations, messages, uploads = set(), {}, {}, {}
 
     def object_id():
         return f"6f{next(numbers):022x}"
@@ -120,6 +137,7 @@ def create_app(time_scale: float = 1.0) -> FastAPI:
         content.update(message_content_id=message["content_id"], query=message["query"], status=status)
         if status == "COMPLETED":
             content.update({key: FINAL[message["recording"]][key] for key in ("response", "metrics", "context_usage")})
+            content["response"] += message["note"]
         return body
 
     def accept(body):
@@ -129,7 +147,12 @@ def create_app(time_scale: float = 1.0) -> FastAPI:
             return None, _stream_error("Conversation not found", 404)
         if not query:
             return None, _stream_error("Invalid Input. Query cannot be empty", 400)
+        attached = body.get("ref_file_ids") or []
+        if any(uploads.get(file_id, {}).get("conversation_id") != conversation_id for file_id in attached):
+            return None, _stream_error("File not found", 400)
         name, events = _script(query)
+        note = f"\n\nI read {', '.join(uploads[file_id]['name'] for file_id in attached)}." if attached else ""
+        events = _with_note(events, note) if note else events
         message = {"id": object_id(), "content_id": object_id(), "conversation_id": conversation_id, "query": query}
         header = RECORDED[name][0]
         live = {
@@ -142,6 +165,7 @@ def create_app(time_scale: float = 1.0) -> FastAPI:
         swap = re.compile("|".join(map(re.escape, live)))  # one pass, so a live value is never swapped again
         message.update(
             recording=name,
+            note=note,
             failed="[error]" in query,
             events=[(at, swap.sub(lambda found: live[found.group()], data)) for at, data in events],
             done_at=time.monotonic() + events[-1][0] * time_scale / 1000,
@@ -202,6 +226,21 @@ def create_app(time_scale: float = 1.0) -> FastAPI:
             "_id": object_id(),
         }
         return JSONResponse({"conversation_details": details}, status_code=201)
+
+    @app.post(f"{API}/upload")
+    async def upload(request: Request, conversation_id: str = "", name: str = ""):
+        if conversation_id not in conversations:
+            return JSONResponse({"message": "Conversation not found"}, status_code=404)
+        file_id = object_id()
+        data = await request.body()
+        kind = request.headers.get("content-type")
+        uploads[file_id] = {"conversation_id": conversation_id, "name": name, "size": len(data), "content_type": kind}
+        return JSONResponse({"file_id": file_id}, status_code=201)
+
+    @app.get("/_fake/uploads")
+    async def uploaded():
+        """What was uploaded, for tests: file ID to conversation, name, size and type."""
+        return uploads
 
     @app.post(f"{API}/addmessage/stream")
     async def add_message_stream(request: Request):

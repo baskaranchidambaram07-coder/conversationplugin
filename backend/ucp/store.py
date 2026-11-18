@@ -5,6 +5,7 @@ from someone else simply is not found. PF's own IDs are kept here and never leav
 """
 
 import secrets
+from collections.abc import Sequence
 from dataclasses import dataclass
 from datetime import datetime, timedelta
 
@@ -34,7 +35,8 @@ from sqlalchemy.dialects.postgresql import JSONB, distinct_on
 from sqlalchemy.dialects.postgresql import insert as pg_insert
 from sqlalchemy.ext.asyncio import AsyncEngine
 
-from ucp.protocol import ApiError, Block, Conversation, Message, Pin, Project
+from ucp.connector import AgentFile
+from ucp.protocol import ApiError, Block, Conversation, FileBlock, Message, Pin, Project
 
 metadata = MetaData()
 _BLOCK = TypeAdapter(Block)
@@ -201,6 +203,21 @@ feedback = Table(
 )
 
 
+# Files visitors attached (M10, 0011), kept with their conversation. A question's blocks name the files sent with it.
+# shortcut: bytes in PostgreSQL, unscanned; S3 behind a malware scan before production (ucp.files).
+files = Table(
+    "files",
+    metadata,
+    Column("id", Text, primary_key=True),
+    Column("conversation_id", Text, ForeignKey("conversations.id"), nullable=False),
+    Column("name", Text, nullable=False),
+    Column("content_type", Text, nullable=False),
+    Column("size", Integer, nullable=False),
+    Column("data", LargeBinary, nullable=False),
+    Column("created_at", DateTime(timezone=True), nullable=False, server_default=func.now()),
+    Index("files_by_conversation", "conversation_id"),
+)
+
 # Answers a signed-in visitor pinned to find again (0010).
 pins = Table(
     "pins",
@@ -271,6 +288,10 @@ class Turn:
 
 class TurnInProgress(Exception):
     pass
+
+
+class UnknownAttachment(Exception):
+    """A question named a file that is not in its conversation."""
 
 
 def _conversation(row) -> Conversation:
@@ -555,8 +576,11 @@ class Store:
         text: str,
         config_version: int,
         agent_version: str | None = None,
+        attachments: Sequence[str] = (),
     ) -> Turn | None:
         """Stores a question and an empty answer, in one transaction. None if the conversation is not the owner's.
+        Files named in `attachments` must have been uploaded to this conversation (else UnknownAttachment); the
+        question's blocks name them after its text.
 
         The same client_message_id again returns the turn it started (repeat). A new question while an answer
         is still in progress raises TurnInProgress. The conversation row is locked first, in a statement of its own:
@@ -593,6 +617,7 @@ class Store:
             if found.busy:  # left in progress by a gateway that stopped mid-turn: give up on it, or the chat is stuck
                 stale = {"status": "failed", "error": STALE_ERROR, "updated_at": func.now()}
                 await db.execute(update(messages).where(messages.c.id == found.busy).values(stale))
+            attached = await self._attached(db, conversation_id, attachments) if attachments else []
             question_id, answer_id = new_id("m"), new_id("m")
             shared = {"conversation_id": conversation_id, "client_message_id": None, "reply_to": None}
             shared |= {"config_version": None, "agent_version": None}
@@ -605,7 +630,7 @@ class Store:
                             "seq": found.seq + 1,
                             "role": "user",
                             "status": "complete",
-                            "blocks": [{"type": "text", "text": text}],
+                            "blocks": [{"type": "text", "text": text}, *attached],
                             "client_message_id": client_message_id,
                         },
                         {
@@ -628,6 +653,53 @@ class Store:
                 .values(updated_at=func.now(), title=func.coalesce(conversations.c.title, text[:80]))
             )
         return Turn(conversation_id, question_id, answer_id, found.agent_conversation_id, repeat=False)
+
+    # Attachments (M10)
+
+    @staticmethod
+    async def _attached(db, conversation_id: str, attachments: Sequence[str]) -> list[dict]:
+        """The file blocks for a question's attachments, in the order named; each must be in the conversation."""
+        named = list(dict.fromkeys(attachments))
+        query = select(files.c.id, files.c.name, files.c.size, files.c.content_type).where(
+            (files.c.conversation_id == conversation_id) & files.c.id.in_(named)
+        )
+        found = {row.id: row for row in await db.execute(query)}
+        if len(found) != len(named):
+            raise UnknownAttachment
+        return [{"type": "file", **found[key]._mapping} for key in named]
+
+    async def add_file(
+        self, owner: Owner, conversation_id: str, name: str, content_type: str, data: bytes
+    ) -> FileBlock | None:
+        """Keeps a checked file in one of the owner's conversations. None if the conversation is not theirs."""
+        block = FileBlock(type="file", id=new_id("f"), name=name, size=len(data), content_type=content_type)
+        mine = select(conversations.c.id).where(self._owned(owner) & (conversations.c.id == conversation_id))
+        values = {"id": block.id, "conversation_id": conversation_id, "name": name, "content_type": content_type}
+        async with self.engine.begin() as db:
+            if not (await db.execute(mine)).first():
+                return None
+            await db.execute(insert(files).values({**values, "size": len(data), "data": data}))
+        return block
+
+    async def file(self, owner: Owner, conversation_id: str, file_id: str):
+        """One of the owner's files: (name, content_type, data), or None."""
+        query = (
+            select(files.c.name, files.c.content_type, files.c.data)
+            .join(conversations, files.c.conversation_id == conversations.c.id)
+            .where(self._owned(owner) & (conversations.c.id == conversation_id) & (files.c.id == file_id))
+        )
+        async with self.engine.connect() as db:
+            return (await db.execute(query)).first()
+
+    async def file_contents(self, conversation_id: str, file_ids: Sequence[str]) -> list[AgentFile]:
+        """The files a question was sent with, in the order named, for the agent. Read after start_turn checked them."""
+        named = list(dict.fromkeys(file_ids))
+        query = select(files.c.id, files.c.name, files.c.content_type, files.c.data).where(
+            (files.c.conversation_id == conversation_id) & files.c.id.in_(named)
+        )
+        async with self.engine.connect() as db:
+            found = {row.id: row for row in await db.execute(query)}
+        return [AgentFile(found[key].name, found[key].content_type, found[key].data) for key in named if key in found]
 
     async def finish(
         self,

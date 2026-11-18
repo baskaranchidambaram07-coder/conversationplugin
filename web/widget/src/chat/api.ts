@@ -1,5 +1,6 @@
 // The chat's calls to the gateway, all on our own origin. The session token lives only in this closure:
 // never in storage, a URL or the page (D6).
+import type { FileBlock } from "../Attachments";
 import type {
   ApiError,
   Conversation,
@@ -80,8 +81,41 @@ export function gateway(widgetId: string, hostToken: () => Promise<string | null
     }
   }
 
+  /** Uploads a file to a chat, reporting its progress from 0 to 1: fetch cannot report an upload's progress. */
+  async function upload(conversationId: string, file: File, onProgress: (done: number) => void, replay = true): Promise<FileBlock> {
+    const token = await (session ?? start());
+    const reply = await new Promise<{ status: number; text: string }>((resolve) => {
+      const request = new XMLHttpRequest();
+      request.open("POST", `/v1/conversations/${conversationId}/files?name=${encodeURIComponent(file.name)}`);
+      request.setRequestHeader("authorization", `Bearer ${token}`);
+      request.setRequestHeader("content-type", file.type || "application/octet-stream");
+      request.upload.onprogress = (event) => event.lengthComputable && onProgress(event.loaded / event.total);
+      request.onload = () => resolve({ status: request.status, text: request.responseText });
+      request.onerror = () => resolve({ status: 0, text: "" });
+      request.send(file);
+    });
+    let body: unknown = null;
+    try {
+      body = JSON.parse(reply.text);
+    } catch {
+      // not JSON: reported by status alone
+    }
+    if (reply.status === 201) return body as FileBlock;
+    const error = body && typeof (body as ApiError).code === "string" ? (body as ApiError) : null;
+    if (error?.code === "session_expired" && signedIn && replay) {
+      start();
+      return upload(conversationId, file, onProgress, false);
+    }
+    throw new Failure(reply.status, error);
+  }
+
   return {
     start,
+    upload,
+    /** A file sent with a question, to show or save. */
+    async download(conversationId: string, fileId: string): Promise<Blob> {
+      return (await authorised(`/v1/conversations/${conversationId}/files/${fileId}`)).blob();
+    },
     /** A new chat, inside a project when one is named. */
     async conversation(projectId?: string): Promise<Conversation> {
       const filed = projectId ? { headers: JSON_TYPE, body: JSON.stringify({ project_id: projectId }) } : {};
