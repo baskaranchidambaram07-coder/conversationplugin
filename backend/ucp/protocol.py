@@ -40,7 +40,24 @@ class MarkdownBlock(_Model):
     text: str
 
 
-KNOWN_BLOCK_TYPES = ("text", "markdown")
+class FileBlock(_Model):
+    """A file the visitor attached to a question (M10), downloaded from
+    GET /v1/conversations/{id}/files/{file id}. Also the reply to an upload."""
+
+    type: Literal["file"]
+    id: Id
+    name: Annotated[str, Field(min_length=1, max_length=200)]
+    size: Annotated[int, Field(ge=1)] = Field(description="Bytes.")
+    content_type: Literal[
+        "application/pdf",
+        "image/png",
+        "image/jpeg",
+        "application/msword",
+        "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+    ]
+
+
+KNOWN_BLOCK_TYPES = ("text", "markdown", "file")
 
 
 class UnknownBlock(BaseModel):
@@ -60,6 +77,7 @@ def _block_tag(block: object) -> str:
 type Block = Annotated[
     Annotated[TextBlock, Tag("text")]
     | Annotated[MarkdownBlock, Tag("markdown")]
+    | Annotated[FileBlock, Tag("file")]
     | Annotated[UnknownBlock, Tag("unknown")],
     Discriminator(_block_tag),
 ]
@@ -265,6 +283,9 @@ class WidgetConfig(_Model):
     color_scheme: Literal["light", "dark", "auto"]
     launcher_position: Literal["bottom-right", "bottom-left"]
     history_enabled: bool
+    attachments_enabled: bool = Field(
+        default=False, description="Visitors may attach doc, docx, pdf, jpg, jpeg and png files to a question."
+    )
 
 
 # API requests and replies. The gateway (M4) implements them; the chat (M2) calls them.
@@ -292,6 +313,9 @@ class SendMessage(_Model):
     )
     client_message_id: Id = Field(
         description="Chosen by the chat. Sending again with the same ID returns the same reply."
+    )
+    attachments: Annotated[list[Id], Field(max_length=5)] = Field(
+        default_factory=list, description="Files uploaded to this conversation, sent with the question: at most 5."
     )
 
 

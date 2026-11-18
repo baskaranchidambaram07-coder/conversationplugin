@@ -30,6 +30,10 @@ export const pending = (): Answer => ({
   pinned: false,
 });
 
+/** A block's text, or "" for one without (a file). */
+export const textOf = (block: Block | undefined) =>
+  block && "text" in block && typeof block.text === "string" ? block.text : "";
+
 const settled = (answer: Answer) => ["complete", "failed", "stopped"].includes(answer.status);
 
 export function apply(answer: Answer, event: StreamEvent): Answer {
@@ -54,7 +58,7 @@ export function apply(answer: Answer, event: StreamEvent): Answer {
       const block = blocks[event.index];
       // A delta whose start went missing starts a Markdown block of its own (the gap flag is already set).
       blocks[event.index] =
-        block && typeof block.text === "string"
+        block && "text" in block && typeof block.text === "string"
           ? ({ ...block, text: block.text + event.text } as Block)
           : { type: "markdown", text: event.text };
       return { ...next, blocks };

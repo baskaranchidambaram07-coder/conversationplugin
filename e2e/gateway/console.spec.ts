@@ -233,6 +233,10 @@ test("the look is edited beside the chat itself, which shows each change at once
   const send = chat.getByRole("button", { name: "Send" }); // the brand colour is on what visitors press
   await expect.poll(() => send.evaluate((button) => getComputedStyle(button).backgroundColor)).toBe("rgb(91, 42, 134)");
 
+  await expect(chat.getByRole("button", { name: "Attach files" })).toHaveCount(0);
+  await page.getByLabel(/Visitors can attach files/).check(); // the paperclip appears in the preview, sending nothing
+  await expect(chat.getByRole("button", { name: "Attach files" })).toBeDisabled();
+
   await page.getByRole("radio", { name: "Dark" }).check();
   await expect.poll(() => chat.locator("html").getAttribute("data-scheme")).toBe("dark");
   await page.getByRole("button", { name: "Save" }).click();

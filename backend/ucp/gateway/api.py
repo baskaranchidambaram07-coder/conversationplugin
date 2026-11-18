@@ -6,17 +6,18 @@ import json
 import logging
 from datetime import UTC, datetime
 from typing import Annotated
+from urllib.parse import quote
 
 from fastapi import APIRouter, Depends, Query, Request
 from fastapi.responses import JSONResponse, Response, StreamingResponse
 
-from ucp import protocol
+from ucp import files, protocol
 from ucp.gateway.pipeline import Problem
 from ucp.gateway.public import widgets_of
 from ucp.identity import Identity, expiry, verify_provider_token, verify_shared_secret
 from ucp.pf import PfConnector, PfProfile
 from ucp.sessions import ANONYMOUS_SECONDS, Keys, Limiter, Session, anonymous_user
-from ucp.store import Owner, Store, TurnInProgress
+from ucp.store import Owner, Store, TurnInProgress, UnknownAttachment
 from ucp.turns import Turns
 from ucp.widgets import Widget
 
@@ -24,6 +25,8 @@ log = logging.getLogger("ucp.gateway")
 REFUSALS_PER_MINUTE = 10  # host tokens refused from one address before it must wait
 FEEDBACK_PER_MINUTE = 30  # ratings from one visitor
 CHANGES_PER_MINUTE = 30  # projects started or renamed, and answers pinned, by one visitor
+UPLOADS_PER_MINUTE = 20  # files attached by one visitor
+FILE_TYPES = {kind: {} for kind in dict.fromkeys(files.TYPES.values())}  # for the API description, in a fixed order
 
 
 def same_origin(request: Request) -> None:
@@ -278,6 +281,54 @@ async def delete_project(project_id: protocol.Id, request: Request, session: Vis
     return Response(status_code=204)
 
 
+# Attachments (M10)
+
+
+@router.post(
+    "/conversations/{conversation_id}/files",
+    status_code=201,
+    summary="Attach a file (doc, docx, pdf, jpg, jpeg or png, at most 10 MB) as the body, named in `name`; send its "
+    "ID with the question",
+    openapi_extra={"requestBody": {"required": True, "content": FILE_TYPES}},
+)
+async def upload(
+    conversation_id: protocol.Id,
+    request: Request,
+    session: Visitor,
+    name: Annotated[str, Query(min_length=1, max_length=255)],
+) -> protocol.FileBlock:
+    widget = await _widget(request, session)
+    if not widget.config.attachments_enabled:
+        raise Problem("forbidden")
+    request.app.state.limiter.check(f"files:{session.user_id}", UPLOADS_PER_MINUTE)
+    data = await request.body()  # the pipeline refuses a body over 10 MB
+    try:
+        clean, kind = files.checked(name, data)
+    except ValueError as error:
+        raise Problem("invalid_request") from error
+    block = await _store(request).add_file(owner(session), conversation_id, clean, kind, data)
+    if not block:
+        raise Problem("not_found")
+    return block
+
+
+@router.get(
+    "/conversations/{conversation_id}/files/{file_id}",
+    responses={200: {"content": FILE_TYPES}},
+    summary="A file attached to a question, always as a download",
+)
+async def download(conversation_id: protocol.Id, file_id: protocol.Id, request: Request, session: Visitor) -> Response:
+    found = await _store(request).file(owner(session), conversation_id, file_id)
+    if not found:
+        raise Problem("not_found")
+    # Saved, never shown: the browser offers it as a download, and the pipeline's policy lets nothing in it run.
+    headers = {
+        "content-disposition": f"attachment; filename*=UTF-8''{quote(found.name, safe='')}",
+        "cross-origin-resource-policy": "same-origin",
+    }
+    return Response(found.data, media_type=found.content_type, headers=headers)
+
+
 # Pinned answers (signed-in visitors)
 
 
@@ -337,6 +388,8 @@ async def send_message(
     conversation_id: protocol.Id, body: protocol.SendMessage, request: Request, session: Visitor
 ) -> Response:
     widget = await _widget(request, session)
+    if body.attachments and not widget.config.attachments_enabled:
+        raise Problem("forbidden")
     limits, profile = widget.document.limits, widget.document.agent_profile
     request.app.state.limiter.check(f"messages:{session.user_id}", limits.messages_per_minute_per_session)
     connector = await _connector(request, widget.document.tenant_id, profile)
@@ -345,13 +398,14 @@ async def send_message(
         raise Problem("assistant_unavailable", retryable=True)
     turns: Turns = request.app.state.turns
     turns.admit(widget.document.tenant_id, profile, limits.concurrent_turns)
-    mine = owner(session)
+    mine, store = owner(session), _store(request)
     try:
-        turn = await _store(request).start_turn(
-            mine, conversation_id, body.client_message_id, body.text, widget.version, connector.version
-        )
+        asked = (body.client_message_id, body.text, widget.version, connector.version, body.attachments)
+        turn = await store.start_turn(mine, conversation_id, *asked)
     except TurnInProgress as error:
         raise Problem("turn_in_progress", retryable=True, retry_after=5) from error
+    except UnknownAttachment as error:
+        raise Problem("invalid_request") from error
     if not turn:
         raise Problem("not_found")
 
@@ -363,7 +417,10 @@ async def send_message(
         stream = turns.replay(mine, turn)
     else:
         received = getattr(request.state, "received", None)
-        queue, task, timing = turns.start(turn, widget.document.tenant_id, profile, connector, body.text, received)
+        attached = await store.file_contents(conversation_id, body.attachments) if body.attachments else ()
+        queue, task, timing = turns.start(
+            turn, widget.document.tenant_id, profile, connector, body.text, received, attached
+        )
         if whole:
             await asyncio.shield(task)  # a caller who leaves does not cancel the answer
             return JSONResponse((await turns.settled(mine, turn)).model_dump(mode="json"))

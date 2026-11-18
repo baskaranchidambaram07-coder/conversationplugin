@@ -64,6 +64,9 @@
           "$ref": "#/$defs/MarkdownBlock"
         },
         {
+          "$ref": "#/$defs/FileBlock"
+        },
+        {
           "$ref": "#/$defs/UnknownBlock"
         }
       ]
@@ -313,6 +316,48 @@
         "rating"
       ],
       "title": "Feedback",
+      "type": "object"
+    },
+    "FileBlock": {
+      "additionalProperties": false,
+      "description": "A file the visitor attached to a question (M10), downloaded from\nGET /v1/conversations/{id}/files/{file id}. Also the reply to an upload.",
+      "properties": {
+        "type": {
+          "const": "file",
+          "type": "string"
+        },
+        "id": {
+          "$ref": "#/$defs/Id"
+        },
+        "name": {
+          "maxLength": 200,
+          "minLength": 1,
+          "type": "string"
+        },
+        "size": {
+          "description": "Bytes.",
+          "minimum": 1,
+          "type": "integer"
+        },
+        "content_type": {
+          "enum": [
+            "application/pdf",
+            "image/png",
+            "image/jpeg",
+            "application/msword",
+            "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+          ],
+          "type": "string"
+        }
+      },
+      "required": [
+        "type",
+        "id",
+        "name",
+        "size",
+        "content_type"
+      ],
+      "title": "FileBlock",
       "type": "object"
     },
     "Filing": {
@@ -713,6 +758,14 @@
         "client_message_id": {
           "$ref": "#/$defs/Id",
           "description": "Chosen by the chat. Sending again with the same ID returns the same reply."
+        },
+        "attachments": {
+          "description": "Files uploaded to this conversation, sent with the question: at most 5.",
+          "items": {
+            "$ref": "#/$defs/Id"
+          },
+          "maxItems": 5,
+          "type": "array"
         }
       },
       "required": [
@@ -831,7 +884,8 @@
           "not": {
             "enum": [
               "text",
-              "markdown"
+              "markdown",
+              "file"
             ]
           },
           "type": "string"
@@ -962,6 +1016,11 @@
           "type": "string"
         },
         "history_enabled": {
+          "type": "boolean"
+        },
+        "attachments_enabled": {
+          "default": false,
+          "description": "Visitors may attach doc, docx, pdf, jpg, jpeg and png files to a question.",
           "type": "boolean"
         }
       },

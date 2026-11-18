@@ -4,6 +4,7 @@ import type { Pin } from "@ucp/protocol/v1";
 import { type Ref, useState } from "react";
 
 import { when } from "./chat/history";
+import { textOf } from "./chat/state";
 import { Icon } from "./Icon";
 import { strings as t } from "./strings";
 
@@ -108,7 +109,7 @@ export function PinnedPage({
                   </span>
                 )}
                 <span className="excerpt" dir="auto">
-                  {excerpt(pin.message.blocks.map((block) => (typeof block?.text === "string" ? block.text : "")).join(" "))}
+                  {excerpt(pin.message.blocks.map(textOf).join(" "))}
                 </span>
                 <span className="where">
                   <span dir="auto">{pin.conversation.title}</span>

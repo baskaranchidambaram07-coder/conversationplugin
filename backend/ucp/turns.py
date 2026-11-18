@@ -18,11 +18,11 @@ import json
 import logging
 import time
 from collections import Counter
-from collections.abc import AsyncIterator
+from collections.abc import AsyncIterator, Sequence
 from dataclasses import dataclass
 from math import ceil
 
-from ucp.connector import Accepted, AgentConnector, AgentError, Failed, Final, Text
+from ucp.connector import Accepted, AgentConnector, AgentError, AgentFile, Failed, Final, Text
 from ucp.gateway.pipeline import Problem, api_error, correlation
 from ucp.protocol import ADAPTERS, Message
 from ucp.store import Owner, Store, Turn
@@ -101,11 +101,12 @@ class Turns:
         connector: AgentConnector,
         question: str,
         received: float | None = None,
+        files: Sequence[AgentFile] = (),
     ) -> tuple[asyncio.Queue, asyncio.Task, FirstWord]:
         queue: asyncio.Queue[str | None] = asyncio.Queue()
         timing = FirstWord(received if received is not None else time.perf_counter())
         self.active[tenant_id] += 1
-        task = asyncio.create_task(self._run(turn, tenant_id, profile, connector, question, queue, timing))
+        task = asyncio.create_task(self._run(turn, tenant_id, profile, connector, question, queue, timing, files))
         self.tasks.add(task)
         task.add_done_callback(self.tasks.discard)
         return queue, task, timing
@@ -180,6 +181,7 @@ class Turns:
         question: str,
         queue: asyncio.Queue,
         timing: FirstWord,
+        files: Sequence[AgentFile] = (),
     ) -> None:
         emit = _emitter(turn)
         answer: list[str] = []
@@ -210,7 +212,7 @@ class Turns:
                     await self.store.set_agent_conversation(turn.conversation_id, agent_conversation)
                 for attempt in (1, 2):
                     timing.asked = time.perf_counter()
-                    outcome, accepted = await self._ask(connector, agent_conversation, question, piece, ids)
+                    outcome, accepted = await self._ask(connector, agent_conversation, question, piece, ids, files)
                     if isinstance(outcome, Final) or accepted or not outcome.retryable or attempt == 2:
                         break
                     await asyncio.sleep(self.retry_wait)  # the agent never had the question, so asking again is safe
@@ -249,10 +251,10 @@ class Turns:
         finally:
             queue.put_nowait(None)
 
-    async def _ask(self, connector, agent_conversation: str, question: str, piece, ids: list[str]) -> tuple:
+    async def _ask(self, connector, agent_conversation: str, question: str, piece, ids: list[str], files=()) -> tuple:
         """One attempt: the outcome, and whether the agent got the question."""
         accepted, answering = False, False
-        events = connector.send(agent_conversation, question)
+        events = connector.send(agent_conversation, question, files)
         deadline = asyncio.get_running_loop().time() + self.first_word
         try:
             while True:

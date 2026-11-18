@@ -2,23 +2,27 @@
 // Pure, so it can be tested without a gateway.
 import type { Block, Message } from "@ucp/protocol/v1";
 
+import type { FileBlock } from "../Attachments";
 import { strings as t } from "../strings";
 import { Failure } from "./api";
 import { type Problem, problemOf } from "./problem";
-import { type Answer, pending } from "./state";
+import { type Answer, pending, textOf } from "./state";
 import { fromRecord } from "./turn";
 
-/** One question and its answer, as the chat shows them. A question can be missing at the top of a page. */
-export type Turn = { key: string; question: string; answer: Answer; problem: Problem | null };
+/** One question and its answer, as the chat shows them. A question can be missing at the top of a page. `files`:
+ *  what was attached to the question, when anything was. */
+export type Turn = { key: string; question: string; files?: FileBlock[]; answer: Answer; problem: Problem | null };
 
-const textOf = (blocks: Block[]) => blocks.map((block) => (typeof block?.text === "string" ? block.text : "")).join("\n");
+const questionOf = (blocks: Block[]) => blocks.map(textOf).filter(Boolean).join("\n");
 
 /** Stored messages, oldest first, as turns: each question with the answer stored after it. */
 export function turnsOf(messages: Message[]): Turn[] {
   const turns: Turn[] = [];
   for (const message of messages) {
     if (message.role === "user") {
-      turns.push({ key: message.id, question: textOf(message.blocks), answer: pending(), problem: null });
+      const files = message.blocks.filter((block): block is FileBlock => block?.type === "file");
+      const question = { key: message.id, question: questionOf(message.blocks), answer: pending(), problem: null };
+      turns.push(files.length ? { ...question, files } : question);
       continue;
     }
     let turn = turns[turns.length - 1];

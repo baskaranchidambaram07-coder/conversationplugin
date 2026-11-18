@@ -20,6 +20,7 @@ export type Look = {
   color_scheme?: "light" | "dark" | "auto";
   launcher_position?: "bottom-right" | "bottom-left";
   history_enabled?: boolean;
+  attachments_enabled?: boolean;
 };
 
 const LIGHT = "#ffffff"; // the chat's composer, where the send button sits, in the light scheme
@@ -264,6 +265,14 @@ export function LookEditor(props: {
           <span>{t.history}</span>
         </label>
       )}
+      <label className="check">
+        <input
+          type="checkbox"
+          checked={Boolean(value.attachments_enabled)}
+          onChange={(event) => change({ attachments_enabled: event.target.checked })}
+        />
+        <span>{t.attachments}</span>
+      </label>
     </fieldset>
   );
 }
