@@ -195,3 +195,24 @@ async def test_a_failed_upload_fails_before_the_question_is_asked_so_asking_agai
 
     assert len(events) == 1 and isinstance(events[0], Failed)
     assert (events[0].code, events[0].detail) == ("assistant_unavailable", "upload: PF status 404")
+
+
+async def test_a_file_pf_cannot_read_fails_the_turn_without_asking_and_is_not_asked_again(fake_pf, client):
+    connector = PfConnector(profile(fake_pf), client)
+    conversation = await connector.create_conversation("c_ours")
+    files = [AgentFile("unreadable scan.pdf", "application/pdf", b"%PDF-1.7")]
+
+    events = [event async for event in connector.send(conversation, "Read it", files)]
+
+    assert len(events) == 1 and isinstance(events[0], Failed)
+    assert (events[0].retryable, events[0].detail) == (False, "PF could not read a file: FILE_PROCESS_FAILED")
+
+
+async def test_files_not_read_in_time_fail_the_turn(fake_pf, client):
+    connector = PfConnector(profile(fake_pf), client, file_seconds=0, file_poll_seconds=0)
+    conversation = await connector.create_conversation("c_ours")
+    files = [AgentFile("lease.pdf", "application/pdf", b"%PDF-1.7")]
+
+    events = [event async for event in connector.send(conversation, "Read it", files)]
+
+    assert isinstance(events[-1], Failed) and events[-1].detail == "files not read within 0 s"
