@@ -118,7 +118,7 @@ test("a signed-in visitor opens the list of their chats: titled ones, newest fir
 
   const list = await screen.findByRole("navigation", { name: t.chats });
   await within(list).findByRole("button", { name: /Room bookings/ });
-  expect(within(list).getAllByRole("listitem").map((item) => item.querySelector(".topic")?.textContent)).toEqual([
+  expect([...list.querySelectorAll(".chats .topic")].map((topic) => topic.textContent)).toEqual([
     "Room bookings",
     "When does the library open?",
   ]); // a chat with no question yet has nothing to reopen

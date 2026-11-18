@@ -59,7 +59,7 @@ async function answerFor(question) {
 // is refused.
 const policyFor = (widget) =>
   "default-src 'none'; script-src 'self'; style-src 'self'; font-src 'self'; connect-src 'self'; " +
-  `img-src 'self' ${new URL(configs[widget].logo_url).origin}; base-uri 'none'; form-action 'none'`;
+  `img-src 'self' blob: ${new URL(configs[widget].logo_url).origin}; base-uri 'none'; form-action 'none'`;
 
 async function file(path) {
   if (path === "/loader.js") return [200, types.js, await readFile(new URL("web/loader/dist/loader.js", root))];

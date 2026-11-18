@@ -50,6 +50,7 @@ body {
 }
 
 button,
+input,
 textarea {
   font: inherit;
   color: inherit;
@@ -279,8 +280,76 @@ h1 {
 /* Under a finished answer: its actions, quiet until wanted. */
 .acts {
   display: flex;
+  flex-wrap: wrap;
+  align-items: center;
   gap: 2px;
   margin-inline-start: -8px;
+}
+
+/* Helpful or not: 32px icon buttons; the chosen thumb fills in ink, never the brand (the Pressable Colour Rule). */
+.acts .thumb {
+  padding: 8px;
+}
+
+.thumb[aria-pressed="true"] {
+  color: var(--ink);
+}
+
+.rated {
+  font-size: 13px;
+  color: var(--muted);
+}
+
+.rated:not(:empty) {
+  padding-inline: 8px; /* level with the answer text when it wraps under the actions */
+}
+
+/* What was good or could be better: a small card under the actions, behaving like the composer. */
+.ask {
+  flex-basis: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  max-width: 400px;
+  margin-block-start: 6px;
+  margin-inline-start: 8px; /* level with the answer text, past the actions' pull */
+  padding: 10px 12px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: var(--surface);
+  transition: border-color 0.15s ease-out;
+}
+
+.ask:focus-within {
+  outline: 2px solid transparent; /* shown by forced colours, which drop the ring below */
+  border-color: color-mix(in srgb, var(--ink) 40%, var(--line));
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--ink) 8%, transparent);
+}
+
+.ask label {
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.ask textarea {
+  padding: 2px 0;
+  font-size: 15px;
+}
+
+.ask-acts {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin-block-start: 4px;
+}
+
+.ask-acts .quiet {
+  margin: 0;
+}
+
+.secondary:disabled {
+  opacity: 0.45;
+  cursor: default;
 }
 
 .text {
@@ -1090,6 +1159,531 @@ textarea::placeholder {
   margin-block: 24px;
 }
 
+/* Projects (signed-in visitors): the places at the top of the list, the projects' own pages in the conversation's
+   place, and the control that files the chat on screen. Rows, hairline cards and quiet actions, as elsewhere. */
+
+.places {
+  display: grid;
+  gap: 2px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.places button {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  min-height: 40px;
+  padding: 8px 12px;
+  border: 0;
+  border-radius: 10px;
+  background: transparent;
+  font-size: 15px;
+  font-weight: 500;
+  text-align: start;
+  transition: background-color 0.15s ease-out;
+}
+
+.places button:hover {
+  background: color-mix(in srgb, var(--ink) 5%, transparent);
+}
+
+.places button[aria-current="page"] {
+  background: var(--bubble);
+}
+
+.places .glyph {
+  width: 18px;
+  height: 18px;
+  color: var(--muted);
+}
+
+.view {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding-block-start: 10px; /* clears the conversation's top fade, as the list of chats does */
+}
+
+.view-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px 12px;
+}
+
+.view h2 {
+  margin: 0;
+  font-size: 20px;
+  font-weight: 600;
+  line-height: 1.3;
+  letter-spacing: -0.015em;
+  overflow-wrap: anywhere;
+  text-wrap: balance;
+}
+
+.view h2:focus {
+  outline: none; /* focus lands here only so the page is announced */
+}
+
+.view-acts {
+  display: flex;
+  gap: 2px;
+}
+
+.view-acts .quiet {
+  margin: 0;
+}
+
+.back {
+  align-self: flex-start;
+  margin-block-end: -6px;
+}
+
+.projects .topic .glyph {
+  width: 16px;
+  height: 16px;
+  margin-inline-end: 8px;
+  vertical-align: -2px;
+  color: var(--muted);
+}
+
+.name-form {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.name-form label {
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.name-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+}
+
+.name-row input {
+  flex: 1 1 160px;
+  min-width: 0;
+  min-height: 40px;
+  padding: 8px 12px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: var(--surface);
+  caret-color: var(--brand);
+  transition: border-color 0.15s ease-out;
+}
+
+.name-row input:focus-visible {
+  outline: 2px solid transparent; /* invisible here, drawn by forced colours, which drop the ring below */
+  border-color: color-mix(in srgb, var(--ink) 40%, var(--line));
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--ink) 8%, transparent);
+}
+
+.name-row .secondary {
+  min-height: 40px;
+}
+
+.name-row .quiet,
+.confirm-acts .quiet {
+  margin: 0;
+}
+
+.confirm {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 12px 14px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: var(--surface);
+}
+
+.confirm p {
+  margin: 0;
+  overflow-wrap: anywhere;
+  text-wrap: pretty;
+}
+
+.confirm-acts {
+  display: flex;
+  gap: 6px;
+}
+
+.filing {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 6px;
+}
+
+.filing > .quiet span {
+  overflow-wrap: anywhere;
+}
+
+.filing-card {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  align-self: stretch;
+  max-width: 320px;
+  padding: 6px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: var(--surface);
+}
+
+.options {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.options button {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  width: 100%;
+  min-height: 40px;
+  padding: 8px 10px;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  font-size: 15px;
+  text-align: start;
+  overflow-wrap: anywhere;
+}
+
+.options button:hover {
+  background: color-mix(in srgb, var(--ink) 5%, transparent);
+}
+
+.options .glyph {
+  width: 16px;
+  height: 16px;
+}
+
+.filing-card > .quiet {
+  align-self: flex-start;
+  margin: 0;
+}
+
+.filing-card .name-form {
+  padding: 6px 4px 4px;
+}
+
+/* Pinned answers: one hairline card of rows, each the question in Muted, the start of the answer, and its chat. */
+.pins {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  overflow: hidden;
+  border-radius: 12px;
+  background: var(--surface);
+  box-shadow: 0 0 0 1px var(--line);
+}
+
+.pins li {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: start;
+}
+
+.pins li + li {
+  border-block-start: 1px solid var(--line);
+}
+
+.pin-open {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+  padding-block: 11px;
+  padding-inline: 14px 6px;
+  border: 0;
+  background: transparent;
+  text-align: start;
+  transition: background-color 0.15s ease-out;
+}
+
+.pin-open:hover {
+  background: color-mix(in srgb, var(--ink) 5%, transparent);
+}
+
+.pin-open:focus-visible {
+  outline-offset: -3px; /* the card clips its rows, so the ring is drawn inside */
+}
+
+.asked,
+.excerpt {
+  display: -webkit-box;
+  overflow: hidden;
+  -webkit-box-orient: vertical;
+  overflow-wrap: anywhere;
+}
+
+.asked {
+  -webkit-line-clamp: 1;
+  line-clamp: 1;
+  font-size: 13px;
+  color: var(--muted);
+}
+
+.excerpt {
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  font-size: 15px;
+  line-height: 1.45;
+}
+
+.where {
+  display: flex;
+  gap: 8px;
+  min-width: 0;
+  font-size: 13px;
+  color: var(--muted);
+}
+
+.where span {
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.where time {
+  flex: none;
+}
+
+.pins .thumb {
+  margin: 8px;
+  color: var(--ink);
+}
+
+.pins li > .meta {
+  grid-column: 1 / -1;
+  padding-inline: 14px;
+  padding-block-end: 10px;
+}
+
+.thumb[aria-pressed="true"] .glyph {
+  color: var(--ink);
+}
+
+/* Attachments (M10): a quiet clip at the composer's start, files as small hairline cards above the words (and
+   under a question once sent), a thin ink line while one uploads. */
+.compose {
+  flex-wrap: wrap;
+}
+
+.compose:has(.clip) {
+  padding-inline-start: 8px;
+}
+
+.clip {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  border: 0;
+  border-radius: 10px;
+  background: transparent;
+  color: var(--muted);
+  transition: background-color 0.15s ease-out, color 0.15s ease-out;
+}
+
+.clip:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--ink) 6%, transparent);
+  color: var(--ink);
+}
+
+.clip:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+
+.clip .glyph {
+  width: 20px;
+  height: 20px;
+}
+
+.compose.dropping {
+  border-style: dashed;
+  border-color: color-mix(in srgb, var(--ink) 40%, var(--line));
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--ink) 8%, transparent);
+}
+
+.files {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.compose .files {
+  flex-basis: 100%;
+  padding-block-end: 2px;
+}
+
+.files.sent {
+  justify-content: flex-end;
+  margin-block-start: -16px; /* 8px under the question they went with, not a turn's distance */
+}
+
+.file {
+  position: relative;
+  display: grid;
+  grid-template-columns: 32px minmax(0, 1fr) auto;
+  grid-template-areas: "thumb name remove" "thumb size remove";
+  align-items: center;
+  column-gap: 8px;
+  max-width: 220px;
+  padding: 6px;
+  padding-inline-end: 4px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: var(--surface);
+  text-align: start;
+}
+
+.file-open {
+  grid-template-areas: "thumb name" "thumb size";
+  grid-template-columns: 32px minmax(0, 1fr);
+  padding-inline-end: 10px;
+  transition: background-color 0.15s ease-out;
+}
+
+.file-open:hover {
+  background: var(--bubble);
+}
+
+.file > img,
+.file > .glyph {
+  grid-area: thumb;
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+}
+
+.file > img {
+  object-fit: cover;
+}
+
+.file > .glyph {
+  box-sizing: border-box;
+  padding: 7px;
+  background: var(--bubble);
+  color: var(--muted);
+}
+
+.file-name {
+  grid-area: name;
+  overflow: hidden;
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 1.3;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.file-size {
+  grid-area: size;
+  font-size: 12px;
+  line-height: 1.3;
+  color: var(--muted);
+}
+
+/* Not faded: its small reason line must keep full contrast. */
+.file.refused {
+  border-style: dashed;
+}
+
+.file.refused .file-size {
+  color: var(--ink);
+}
+
+.file-remove {
+  grid-area: remove;
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--muted);
+}
+
+.file-remove:hover {
+  background: color-mix(in srgb, var(--ink) 6%, transparent);
+  color: var(--ink);
+}
+
+.file-remove .glyph {
+  width: 16px;
+  height: 16px;
+}
+
+.file-progress {
+  position: absolute;
+  inset-inline: 10px;
+  inset-block-end: 3px;
+  height: 2px;
+  overflow: hidden;
+  border-radius: 1px;
+  background: var(--line);
+}
+
+.file-progress > span {
+  display: block;
+  height: 100%;
+  background: var(--ink);
+  transition: inline-size 0.15s linear;
+}
+
+.attach-note {
+  margin: 0 var(--gutter) 4px;
+  font-size: 13px;
+  text-wrap: pretty;
+}
+
+.page .attach-note {
+  margin-inline: max(var(--gutter), (100% - 760px) / 2);
+}
+
+/* An answer opened from the Pinned page: a soft wash that fades, so the eye finds it. */
+.answer.found {
+  scroll-margin-block-start: 24px; /* clear of the conversation's top fade */
+}
+
+.answer.found .said {
+  border-radius: 12px;
+  animation: found 2.4s ease-out;
+}
+
+@keyframes found {
+  from {
+    background: var(--bubble);
+    box-shadow: 0 0 0 8px var(--bubble);
+  }
+  to {
+    background: transparent;
+    box-shadow: 0 0 0 8px transparent;
+  }
+}
+
 /* Wide frames (the chat filling a page, or the window): a conversation app. The list of chats runs the full height
    at the start; the conversation, the composer, the AI notice and the credit share one centred column. */
 .chat.split {
@@ -1147,18 +1741,18 @@ textarea::placeholder {
 }
 
 /* In the list beside the conversation, chats are rows on the column's own ground. */
-.split .chats {
+.split > .side .chats {
   overflow: visible;
   border-radius: 0;
   background: none;
   box-shadow: none;
 }
 
-.split .chats li + li {
+.split > .side .chats li + li {
   border: 0;
 }
 
-.split .chats button {
+.split > .side .chats button {
   min-height: 52px;
   padding: 8px 12px;
   border-radius: 12px;
@@ -1273,11 +1867,19 @@ textarea::placeholder {
   .table,
   .diagram,
   .chart,
-  .chats {
+  .chats,
+  .pins {
     border: 1px solid CanvasText;
   }
 
-  .chats button[aria-current="true"] {
+  .file-progress > span {
+    forced-color-adjust: none;
+    background: CanvasText; /* the only sign a file is still on its way */
+  }
+
+  .chats button[aria-current="true"],
+  .places button[aria-current="page"],
+  .options button[aria-current="true"] {
     outline: 2px solid Highlight;
     outline-offset: -2px;
   }

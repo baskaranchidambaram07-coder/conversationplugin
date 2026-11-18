@@ -15,6 +15,7 @@
             "not_found",
             "turn_in_progress",
             "conflict",
+            "unsafe_file",
             "rate_limited",
             "assistant_unavailable",
             "internal_error"
@@ -62,6 +63,9 @@
         },
         {
           "$ref": "#/$defs/MarkdownBlock"
+        },
+        {
+          "$ref": "#/$defs/FileBlock"
         },
         {
           "$ref": "#/$defs/UnknownBlock"
@@ -227,6 +231,18 @@
         "updated_at": {
           "format": "date-time",
           "type": "string"
+        },
+        "project_id": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Id"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "The project the chat is filed under, if any."
         }
       },
       "required": [
@@ -271,6 +287,100 @@
       "description": "Opaque. Pass it as `before` for the next page.",
       "pattern": "^[A-Za-z0-9_.:+-]{1,64}$",
       "type": "string"
+    },
+    "Feedback": {
+      "additionalProperties": false,
+      "description": "Body of PUT /v1/conversations/{id}/messages/{id}/feedback: the visitor's rating of an answer.",
+      "properties": {
+        "rating": {
+          "enum": [
+            "like",
+            "dislike"
+          ],
+          "type": "string"
+        },
+        "comment": {
+          "anyOf": [
+            {
+              "maxLength": 1000,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "What could be better."
+        }
+      },
+      "required": [
+        "rating"
+      ],
+      "title": "Feedback",
+      "type": "object"
+    },
+    "FileBlock": {
+      "additionalProperties": false,
+      "description": "A file the visitor attached to a question (M10), downloaded from\nGET /v1/conversations/{id}/files/{file id}. Also the reply to an upload.",
+      "properties": {
+        "type": {
+          "const": "file",
+          "type": "string"
+        },
+        "id": {
+          "$ref": "#/$defs/Id"
+        },
+        "name": {
+          "maxLength": 200,
+          "minLength": 1,
+          "type": "string"
+        },
+        "size": {
+          "description": "Bytes.",
+          "minimum": 1,
+          "type": "integer"
+        },
+        "content_type": {
+          "enum": [
+            "application/pdf",
+            "image/png",
+            "image/jpeg",
+            "application/msword",
+            "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+          ],
+          "type": "string"
+        }
+      },
+      "required": [
+        "type",
+        "id",
+        "name",
+        "size",
+        "content_type"
+      ],
+      "title": "FileBlock",
+      "type": "object"
+    },
+    "Filing": {
+      "additionalProperties": false,
+      "description": "Body of PATCH /v1/conversations/{id}, and optionally of POST /v1/conversations: the project a chat is filed\nunder, or null for none. Signed-in visitors only.",
+      "properties": {
+        "project_id": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Id"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [
+        "project_id"
+      ],
+      "title": "Filing",
+      "type": "object"
     },
     "Id": {
       "description": "Our opaque ID. Never a PF ID.",
@@ -341,6 +451,27 @@
         "created_at": {
           "format": "date-time",
           "type": "string"
+        },
+        "feedback": {
+          "anyOf": [
+            {
+              "enum": [
+                "like",
+                "dislike"
+              ],
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "The visitor's rating of an answer."
+        },
+        "pinned": {
+          "default": false,
+          "description": "The visitor pinned this answer to find it again.",
+          "type": "boolean"
         }
       },
       "required": [
@@ -497,6 +628,123 @@
       "title": "MessageStarted",
       "type": "object"
     },
+    "Pin": {
+      "additionalProperties": false,
+      "description": "A pinned answer, with what was asked and the chat it is in.",
+      "properties": {
+        "conversation": {
+          "$ref": "#/$defs/Conversation"
+        },
+        "question": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "What the visitor asked, as typed; null if it is not stored."
+        },
+        "message": {
+          "$ref": "#/$defs/Message"
+        },
+        "pinned_at": {
+          "format": "date-time",
+          "type": "string"
+        }
+      },
+      "required": [
+        "conversation",
+        "question",
+        "message",
+        "pinned_at"
+      ],
+      "title": "Pin",
+      "type": "object"
+    },
+    "PinPage": {
+      "additionalProperties": false,
+      "description": "Reply to GET /v1/pins: the visitor's pinned answers, the newest pin first.",
+      "properties": {
+        "pins": {
+          "items": {
+            "$ref": "#/$defs/Pin"
+          },
+          "type": "array"
+        }
+      },
+      "required": [
+        "pins"
+      ],
+      "title": "PinPage",
+      "type": "object"
+    },
+    "Project": {
+      "additionalProperties": false,
+      "description": "A signed-in visitor's folder of chats.",
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/Id"
+        },
+        "name": {
+          "maxLength": 80,
+          "minLength": 1,
+          "type": "string"
+        },
+        "created_at": {
+          "format": "date-time",
+          "type": "string"
+        },
+        "updated_at": {
+          "description": "When the project or a chat in it was last active.",
+          "format": "date-time",
+          "type": "string"
+        }
+      },
+      "required": [
+        "id",
+        "name",
+        "created_at",
+        "updated_at"
+      ],
+      "title": "Project",
+      "type": "object"
+    },
+    "ProjectName": {
+      "additionalProperties": false,
+      "description": "Body of POST /v1/projects and PATCH /v1/projects/{id}.",
+      "properties": {
+        "name": {
+          "maxLength": 80,
+          "minLength": 1,
+          "pattern": "\\S",
+          "type": "string"
+        }
+      },
+      "required": [
+        "name"
+      ],
+      "title": "ProjectName",
+      "type": "object"
+    },
+    "ProjectPage": {
+      "additionalProperties": false,
+      "description": "Reply to GET /v1/projects: the visitor's projects, most recently active first.",
+      "properties": {
+        "projects": {
+          "items": {
+            "$ref": "#/$defs/Project"
+          },
+          "type": "array"
+        }
+      },
+      "required": [
+        "projects"
+      ],
+      "title": "ProjectPage",
+      "type": "object"
+    },
     "SendMessage": {
       "additionalProperties": false,
       "description": "Body of POST /v1/conversations/{id}/messages. The reply streams StreamEvent lines, with `: ping` heartbeats.",
@@ -511,6 +759,14 @@
         "client_message_id": {
           "$ref": "#/$defs/Id",
           "description": "Chosen by the chat. Sending again with the same ID returns the same reply."
+        },
+        "attachments": {
+          "description": "Files uploaded to this conversation, sent with the question: at most 5.",
+          "items": {
+            "$ref": "#/$defs/Id"
+          },
+          "maxItems": 5,
+          "type": "array"
         }
       },
       "required": [
@@ -629,7 +885,8 @@
           "not": {
             "enum": [
               "text",
-              "markdown"
+              "markdown",
+              "file"
             ]
           },
           "type": "string"
@@ -761,6 +1018,11 @@
         },
         "history_enabled": {
           "type": "boolean"
+        },
+        "attachments_enabled": {
+          "default": false,
+          "description": "Visitors may attach doc, docx, pdf, jpg, jpeg and png files to a question.",
+          "type": "boolean"
         }
       },
       "required": [
@@ -814,6 +1076,27 @@
     },
     {
       "$ref": "#/$defs/SendMessage"
+    },
+    {
+      "$ref": "#/$defs/Feedback"
+    },
+    {
+      "$ref": "#/$defs/Project"
+    },
+    {
+      "$ref": "#/$defs/ProjectName"
+    },
+    {
+      "$ref": "#/$defs/ProjectPage"
+    },
+    {
+      "$ref": "#/$defs/Filing"
+    },
+    {
+      "$ref": "#/$defs/Pin"
+    },
+    {
+      "$ref": "#/$defs/PinPage"
     }
   ]
 }

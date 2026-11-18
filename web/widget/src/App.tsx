@@ -1,9 +1,10 @@
 // The chat inside the panel (M2), in the world of DESIGN.md and the composition the user picked
 // (web/widget/.impeccable/surfaces/src-app-tsx.md).
 import { contrast, inkOn, isColor } from "@ucp/protocol/brand";
-import type { Block, Conversation, WidgetConfig } from "@ucp/protocol/v1";
+import type { Block, Conversation, Pin, Project, WidgetConfig } from "@ucp/protocol/v1";
 import {
   type CSSProperties,
+  type DragEvent,
   type KeyboardEvent,
   type ReactNode,
   type Ref,
@@ -13,13 +14,17 @@ import {
   useState,
 } from "react";
 
+import { ACCEPT, CLIP, type FileBlock, isPicture, type Pending, PendingChip, refusal, SentChip } from "./Attachments";
 import { type Api, Failure, gateway } from "./chat/api";
 import { type Bridge, connect, type Mode } from "./chat/bridge";
-import { type Turn, turnsOf, when } from "./chat/history";
+import { type Turn, turnsOf } from "./chat/history";
 import { type Problem, problemOf } from "./chat/problem";
-import { type Answer, pending } from "./chat/state";
+import { type Answer, pending, textOf } from "./chat/state";
 import { recover, runTurn } from "./chat/turn";
+import { Feedback, type Rate } from "./Feedback";
 import { CopyButton, Icon } from "./Icon";
+import { PIN, PinButton, PinnedPage } from "./Pinned";
+import { ChatRows, FOLDER, ProjectPage, ProjectPicker, ProjectsPage } from "./Projects";
 import { BlockView } from "./render/registry";
 import { strings as t } from "./strings";
 
@@ -40,9 +45,22 @@ type Settings = {
   prompts: string[];
   notice: string;
   history: boolean;
+  attachments: boolean;
 };
-type Live = { api: Api; bridge: Bridge; signedIn: boolean; conversation?: string; stop?: AbortController };
+/** `project`: where the next new chat is filed, when it is started from a project's page. */
+type Live = {
+  api: Api;
+  bridge: Bridge;
+  signedIn: boolean;
+  conversation?: string;
+  starting?: Promise<string>; // the chat being started on the gateway, shared by everyone who needs it meanwhile
+  project?: string;
+  stop?: AbortController;
+};
 type Chats = { items: Conversation[]; next: string | null; loading: boolean; loaded: boolean; problem: Problem | null };
+/** What the conversation's place holds: the chat, or (signed in) the projects, or one project. */
+type View = { kind: "chat" } | { kind: "projects" } | { kind: "project"; project: Project } | { kind: "pinned" };
+const CHAT: View = { kind: "chat" };
 
 const NO_CHATS: Chats = { items: [], next: null, loading: false, loaded: false, problem: null };
 const WIDE = "(min-width: 720px)"; // room for the list of chats beside the conversation
@@ -67,14 +85,12 @@ export function readConfig(config: Partial<WidgetConfig>): Settings {
     prompts: prompts.map((prompt) => text(prompt, 200)).filter(Boolean).slice(0, 4),
     notice: text(config.ai_notice, 500) || t.notice,
     history: config.history_enabled === true,
+    attachments: config.attachments_enabled === true,
   };
 }
 
 export const plain = (blocks: Block[]) =>
-  blocks
-    .map((block) => (typeof block?.text === "string" ? block.text : ""))
-    .filter(Boolean)
-    .join("\n\n");
+  blocks.map(textOf).filter(Boolean).join("\n\n");
 
 const initials = (title: string) =>
   title
@@ -115,10 +131,24 @@ export function App({ widgetId, win = window, preview = false }: { widgetId: str
   const [openFailed, setOpenFailed] = useState<Problem | null>(null);
   const [earlier, setEarlier] = useState<string | null>(null); // where the chat on screen continues further back
   const [earlierFailed, setEarlierFailed] = useState<Problem | null>(null);
-  const [focusTo, setFocusTo] = useState<"input" | "chats" | "list" | null>(null);
+  const [focusTo, setFocusTo] = useState<"input" | "chats" | "list" | "view" | null>(null);
   const keep = useRef<number | null>(null); // distance from the end to hold while earlier messages go in above
   const chatsButton = useRef<HTMLButtonElement>(null);
   const listTitle = useRef<HTMLHeadingElement>(null);
+  const viewTitle = useRef<HTMLHeadingElement>(null);
+  const [view, setView] = useState<View>(CHAT);
+  const [projects, setProjects] = useState<Project[] | null>(null);
+  const [projectsFailed, setProjectsFailed] = useState(false);
+  const [projectChats, setProjectChats] = useState<Conversation[] | null>(null);
+  const [projectChatsFailed, setProjectChatsFailed] = useState(false);
+  const [filed, setFiled] = useState<string | null>(null); // the project the chat on screen is filed under
+  const [pins, setPins] = useState<Pin[] | null>(null);
+  const [pinsFailed, setPinsFailed] = useState(false);
+  const [found, setFound] = useState<string | null>(null); // a pinned answer just opened: shown and focused once
+  const [attached, setAttached] = useState<Pending[]>([]); // files in the composer, for the next question
+  const [attachNote, setAttachNote] = useState<string | null>(null); // why the last file could not be attached
+  const [dropping, setDropping] = useState(false); // files are being dragged over the chat
+  const picker = useRef<HTMLInputElement>(null);
   const lastOpened = useRef<Conversation | null>(null);
 
   async function loadConfig() {
@@ -199,10 +229,16 @@ export function App({ widgetId, win = window, preview = false }: { widgetId: str
     else setBrowsing(false);
   }, [side]);
 
-  // Focus moves with the view, after it is drawn: to the list's heading, back to its button, or to the question box.
+  // A signed-in visitor's projects: their names label the chat on screen and the filing control.
+  useEffect(() => {
+    if (history) void loadProjects();
+  }, [history]);
+
+  // Focus moves with the view, after it is drawn: to the list's heading, back to its button, to a page's heading, or
+  // to the question box.
   useEffect(() => {
     if (!focusTo) return;
-    ({ input, chats: chatsButton, list: listTitle })[focusTo].current?.focus();
+    ({ input, chats: chatsButton, list: listTitle, view: viewTitle })[focusTo].current?.focus();
     setFocusTo(null);
   }, [focusTo]);
 
@@ -222,6 +258,14 @@ export function App({ widgetId, win = window, preview = false }: { widgetId: str
     followed.current = box.scrollHeight;
   }, [turns]);
 
+  // A pinned answer just opened: brought into view and focused, after the rule above has followed the newest message.
+  useLayoutEffect(() => {
+    const answer = found && log.current?.querySelector<HTMLElement>(`[data-answer="${found}"]`);
+    if (!answer) return;
+    answer.scrollIntoView?.({ block: "start" }); // a long answer is read from its top
+    answer.focus({ preventScroll: true });
+  }, [found, turns]);
+
   useLayoutEffect(() => {
     const field = input.current;
     if (!field) return;
@@ -230,6 +274,7 @@ export function App({ widgetId, win = window, preview = false }: { widgetId: str
   }, [draft, settings]);
 
   const busy = turns.some(({ answer }) => answer.status === "pending" || answer.status === "streaming");
+  const uploading = attached.some((file) => !file.block && !file.problem);
   const change = (key: string, next: (turn: Turn) => Turn) =>
     setTurns((all) => all.map((turn) => (turn.key === key ? next(turn) : turn)));
 
@@ -257,26 +302,42 @@ export function App({ widgetId, win = window, preview = false }: { widgetId: str
     }
   }
 
-  async function ask(question: string, replacing?: string) {
+  /** The chat on screen, started on the gateway first if it has no question yet (in its project, if it has one).
+   *  Files chosen together all wait for the one start, so they land in the same chat. */
+  function chatOf(session: Live): Promise<string> {
+    if (session.conversation) return Promise.resolve(session.conversation);
+    if (!session.starting) {
+      const starting: Promise<string> = session.api.conversation(session.project).then((started) => {
+        if (session.starting === starting) {
+          // still the chat on screen: the visitor has not moved on meanwhile
+          session.conversation = started.id;
+          setCurrent(started.id);
+          setFiled(started.project_id ?? null);
+        }
+        return started.id;
+      });
+      session.starting = starting;
+      void starting.catch(() => {}).finally(() => {
+        if (session.starting === starting) session.starting = undefined; // a failed start is tried again next time
+      });
+    }
+    return session.starting;
+  }
+
+  async function ask(question: string, replacing?: string, files: FileBlock[] = []) {
     const session = live.current;
     if (!session || ended) return;
     const key = newKey();
     follow.current = true;
     setTurns((all) => [
       ...all.filter((turn) => turn.key !== replacing),
-      { key, question, answer: pending(), problem: null },
+      { key, question, ...(files.length ? { files } : {}), answer: pending(), problem: null },
     ]);
     await track(session, key, async (signal) => {
-      if (!session.conversation) {
-        const { id } = await session.api.conversation();
-        if (signal.aborted) throw new DOMException("The visitor moved on", "AbortError");
-        session.conversation = id;
-        setCurrent(id);
-      }
-      const conversation = session.conversation;
-      return runTurn(session.api, conversation, question, key, signal, (next) =>
-        change(key, (turn) => ({ ...turn, answer: next })),
-      );
+      const conversation = await chatOf(session);
+      if (signal.aborted) throw new DOMException("The visitor moved on", "AbortError");
+      const ids = files.map((file) => file.id);
+      return runTurn(session.api, conversation, question, key, signal, (next) => change(key, (turn) => ({ ...turn, answer: next })), ids);
     });
   }
 
@@ -313,40 +374,60 @@ export function App({ widgetId, win = window, preview = false }: { widgetId: str
   function leave() {
     const session = live.current;
     session?.stop?.abort();
+    if (session) session.starting = undefined; // a chat still starting is not this one any more
     setTurns([]);
     setEarlier(null);
     setEarlierFailed(null);
     setOpenFailed(null);
     setBrowsing(false);
+    setView(CHAT);
+    setFound(null);
+    setAttached([]); // they were uploaded to the chat being left
+    setAttachNote(null);
     setFocusTo("input");
     return session;
   }
 
-  function newChat() {
+  /** A fresh chat; started from a project's page, it is filed there. */
+  function newChat(project?: string) {
     const session = leave();
     if (!session) return;
     // An ended session cannot carry on: a new one starts (a new anonymous visitor, or the host signs in again).
     if (ended) session.api = gateway(widgetId, () => (session.signedIn ? session.bridge.token() : Promise.resolve(null)));
     session.conversation = undefined;
+    session.project = project;
+    setFiled(project ?? null);
     setCurrent(null);
     setOpening(null);
     setEnded(null);
   }
 
-  async function openChat(chat: Conversation) {
+  /** Opens an earlier chat at its newest page; `reveal` names an answer to show (a pin), reached through earlier
+   *  pages if need be. */
+  async function openChat(chat: Conversation, reveal?: string) {
     const session = leave();
     if (!session) return;
     session.conversation = chat.id;
+    session.project = undefined;
     lastOpened.current = chat;
     setCurrent(chat.id);
+    setFiled(chat.project_id ?? null);
     setOpening(chat);
     follow.current = true;
     try {
       const page = await session.api.messages(chat.id);
+      let shown = turnsOf(page.messages);
+      let next = page.next;
+      // shortcut: at most 20 pages back (400 messages); a jump by message would replace this for longer chats
+      for (let pages = 0; reveal && next && pages < 20 && !shown.some(({ answer }) => answer.id === reveal); pages++) {
+        const older = await session.api.messages(chat.id, next);
+        shown = [...turnsOf(older.messages), ...shown];
+        next = older.next;
+      }
       if (session.conversation !== chat.id) return; // the visitor moved on meanwhile
-      const shown = turnsOf(page.messages);
       setTurns(shown);
-      setEarlier(page.next);
+      setEarlier(next);
+      setFound(reveal ?? null);
       setHeard(t.opened(chat.title ?? ""));
       const last = shown[shown.length - 1];
       const writing = last?.answer.status === "streaming" && last.answer.id;
@@ -381,11 +462,173 @@ export function App({ widgetId, win = window, preview = false }: { widgetId: str
     }
   }
 
+  /** Rating one of the answers in the chat on screen. */
+  const rater =
+    (messageId: string): Rate =>
+    async (rating, comment) => {
+      const session = live.current;
+      if (!session?.conversation) throw new Failure(0, null);
+      await session.api.rate(session.conversation, messageId, rating && { rating, comment: comment || null });
+    };
+
+  // Projects (signed-in visitors). Each change updates what is on screen from the gateway's reply.
+
+  async function loadProjects() {
+    const session = live.current;
+    if (!session) return;
+    setProjectsFailed(false);
+    try {
+      setProjects(await session.api.projects());
+    } catch {
+      setProjectsFailed(true);
+    }
+  }
+
+  function showProjects() {
+    setBrowsing(false);
+    setView({ kind: "projects" });
+    setFocusTo("view");
+    void loadProjects();
+  }
+
+  // Pinned answers (signed-in visitors)
+
+  async function showPinned() {
+    const session = live.current;
+    if (!session) return;
+    setBrowsing(false);
+    setView({ kind: "pinned" });
+    setFocusTo("view");
+    setPinsFailed(false);
+    try {
+      setPins(await session.api.pins());
+    } catch {
+      setPinsFailed(true);
+    }
+  }
+
+  async function unpinFromPage(pin: Pin) {
+    await live.current!.api.pin(pin.conversation.id, pin.message.id, false);
+    setPins((all) => all?.filter((each) => each.message.id !== pin.message.id) ?? null);
+    setHeard(t.unpinnedNow);
+    setFocusTo("view"); // its row, with the focused button, is gone: the page's heading keeps the visitor's place
+  }
+
+  /** A file sent with a question in the chat on screen. */
+  const fetchFile = async (id: string) => {
+    const session = live.current;
+    if (!session?.conversation) throw new Failure(0, null);
+    return session.api.download(session.conversation, id);
+  };
+
+  /** Pinning one of the answers in the chat on screen. */
+  const pinner = (messageId: string) => async (pinned: boolean) => {
+    const session = live.current;
+    if (!session?.conversation) throw new Failure(0, null);
+    await session.api.pin(session.conversation, messageId, pinned);
+  };
+
+  async function openProject(project: Project) {
+    const session = live.current;
+    if (!session) return;
+    setBrowsing(false);
+    setView({ kind: "project", project });
+    setFocusTo("view");
+    setProjectChats(null);
+    setProjectChatsFailed(false);
+    try {
+      const found = await session.api.projectChats(project.id);
+      setProjectChats(found.filter((chat) => chat.title)); // a chat with no question yet has nothing to reopen
+    } catch {
+      setProjectChatsFailed(true);
+    }
+  }
+
+  async function createProject(name: string) {
+    const project = await live.current!.api.createProject(name);
+    setProjects((all) => [project, ...(all ?? [])]);
+    return project;
+  }
+
+  async function renameProject(project: Project, name: string) {
+    const renamed = await live.current!.api.renameProject(project.id, name);
+    setProjects((all) => all?.map((each) => (each.id === renamed.id ? renamed : each)) ?? null);
+    setView({ kind: "project", project: renamed });
+    setFocusTo("view");
+  }
+
+  async function deleteProject(project: Project) {
+    await live.current!.api.deleteProject(project.id);
+    setProjects((all) => all?.filter((each) => each.id !== project.id) ?? null);
+    if (filed === project.id) setFiled(null);
+    showProjects();
+  }
+
+  /** Files the chat on screen under a project, or under none. */
+  async function fileChat(projectId: string | null) {
+    const session = live.current;
+    if (!session?.conversation) throw new Failure(0, null);
+    const moved = await session.api.file(session.conversation, projectId);
+    setFiled(moved.project_id ?? null);
+    setHeard(projectId ? t.filed(projects?.find((each) => each.id === projectId)?.name ?? "") : t.unfiled);
+  }
+
+  // Attachments (M10): uploaded as soon as they are chosen, into the chat on screen, then sent with the question.
+
+  const changeFile = (key: string, next: Partial<Pending>) =>
+    setAttached((all) => all.map((file) => (file.key === key ? { ...file, ...next } : file)));
+
+  async function attach(chosen: File[]) {
+    const session = live.current;
+    if (!session || ended || !chosen.length) return;
+    setAttachNote(null);
+    let count = attached.filter((file) => !file.problem).length;
+    for (const file of chosen) {
+      const refused = refusal(file, count);
+      if (refused) {
+        setAttachNote(refused);
+        continue;
+      }
+      count += 1;
+      const key = newKey();
+      const picture = isPicture(file.name) ? URL.createObjectURL(file) : null;
+      const shown: Pending = { key, name: file.name, size: file.size, picture, progress: 0, block: null, problem: null };
+      setAttached((all) => [...all, shown]);
+      void (async () => {
+        try {
+          const conversation = await chatOf(session);
+          const block = await session.api.upload(conversation, file, (progress) => changeFile(key, { progress }));
+          changeFile(key, { block, progress: 1 });
+        } catch (error) {
+          const code = error instanceof Failure ? error.error?.code : undefined;
+          const note =
+            code === "unsafe_file"
+              ? t.fileUnsafe(file.name)
+              : code === "invalid_request"
+                ? t.fileRefused(file.name)
+                : t.problems[problemOf(error).kind];
+          changeFile(key, { problem: note });
+          setAttachNote(note);
+        }
+      })();
+    }
+  }
+
+  function removeFile(key: string) {
+    setAttached((all) => all.filter((file) => file.key !== key));
+    setAttachNote(null);
+    setFocusTo("input");
+  }
+
   function send() {
     const question = draft.trim();
-    if (!question || busy) return;
+    if (!question || busy || uploading) return;
     setDraft("");
-    void ask(question);
+    const files = attached.flatMap((file) => (file.block ? [file.block] : []));
+    setAttached([]);
+    setAttachNote(null);
+    if (view.kind === "project") newChat(view.project.id); // asked on a project's page: a new chat filed there
+    void ask(question, undefined, files);
   }
 
   function enter(event: KeyboardEvent<HTMLTextAreaElement>) {
@@ -419,14 +662,18 @@ export function App({ widgetId, win = window, preview = false }: { widgetId: str
       current={current}
       titleRef={listTitle}
       onOpen={(chat) => void openChat(chat)}
-      onNew={newChat}
+      onNew={() => newChat()}
+      onProjects={showProjects}
+      onPinned={() => void showPinned()}
+      place={view.kind}
       onMore={() => void loadChats(chats.next ?? undefined)}
       onRetry={() => void loadChats()}
     />
   );
   // A wide frame (the chat filling a page, or the window) is laid out as a conversation app; an empty chat there
   // holds its welcome, composer and suggested questions in the middle of the screen.
-  const empty = turns.length === 0 && !opening && !openFailed && !browsing;
+  const chatting = view.kind === "chat";
+  const empty = chatting && turns.length === 0 && !opening && !openFailed && !browsing;
   const classes = ["chat", side && "split", wide && "page", empty && "empty", paused && "paused"]
     .filter(Boolean)
     .join(" ");
@@ -442,14 +689,33 @@ export function App({ widgetId, win = window, preview = false }: { widgetId: str
       ))}
     </ul>
   );
+  const attaching = settings.attachments && chatting && !browsing && !ended;
+  const carriesFiles = (event: DragEvent) => attaching && !preview && event.dataTransfer.types.includes("Files");
   return (
-    <div className={classes} style={theme}>
+    <div
+      className={classes}
+      style={theme}
+      onDragOver={(event) => {
+        if (!carriesFiles(event)) return;
+        event.preventDefault(); // the browser would otherwise open the file in place of the chat
+        setDropping(true);
+      }}
+      onDragLeave={(event) => {
+        if (!event.currentTarget.contains(event.relatedTarget as Node | null)) setDropping(false);
+      }}
+      onDrop={(event) => {
+        if (!carriesFiles(event)) return;
+        event.preventDefault();
+        setDropping(false);
+        void attach([...event.dataTransfer.files]);
+      }}
+    >
       <header className="head">
         {mark}
         <h1>{settings.title}</h1>
         <div className="actions">
-          {!side && !browsing && (turns.length > 0 || current) && (
-            <button type="button" className="icon new" aria-label={t.startChat} onClick={newChat}>
+          {!side && !browsing && (turns.length > 0 || current || !chatting) && (
+            <button type="button" className="icon new" aria-label={t.startChat} onClick={() => newChat()}>
               <Icon path={PLUS} />
             </button>
           )}
@@ -488,6 +754,42 @@ export function App({ widgetId, win = window, preview = false }: { widgetId: str
 
       {browsing ? (
         <main className="log">{list}</main>
+      ) : view.kind === "pinned" ? (
+        <main className="log">
+          <PinnedPage
+            pins={pins}
+            failed={pinsFailed}
+            titleRef={viewTitle}
+            onOpen={(pin) => void openChat(pin.conversation, pin.message.id)}
+            onUnpin={unpinFromPage}
+            onRetry={() => void showPinned()}
+          />
+        </main>
+      ) : view.kind === "projects" ? (
+        <main className="log">
+          <ProjectsPage
+            projects={projects}
+            failed={projectsFailed}
+            titleRef={viewTitle}
+            onOpen={(project) => void openProject(project)}
+            onCreate={async (name) => void openProject(await createProject(name))}
+            onRetry={() => void loadProjects()}
+          />
+        </main>
+      ) : view.kind === "project" ? (
+        <main className="log">
+          <ProjectPage
+            key={view.project.id}
+            project={view.project}
+            chats={projectChats}
+            failed={projectChatsFailed}
+            titleRef={viewTitle}
+            onBack={showProjects}
+            onOpenChat={(chat) => void openChat(chat)}
+            onRename={(name) => renameProject(view.project, name)}
+            onDelete={() => deleteProject(view.project)}
+          />
+        </main>
       ) : (
       <main
         className="log"
@@ -497,6 +799,14 @@ export function App({ widgetId, win = window, preview = false }: { widgetId: str
           setAway(box.scrollHeight - box.scrollTop - box.clientHeight >= 48);
         }}
       >
+        {history && current && (
+          <ProjectPicker
+            projects={projects}
+            filed={filed}
+            onChoose={fileChat}
+            onCreate={async (name) => fileChat((await createProject(name)).id)}
+          />
+        )}
         {(settings.welcome || empty) && (
           <div className="intro">
             {mark}
@@ -523,15 +833,20 @@ export function App({ widgetId, win = window, preview = false }: { widgetId: str
             key={turn.key}
             turn={turn}
             mark={mark}
-            onRetry={ended || !turn.question ? undefined : () => void ask(turn.question, turn.key)}
+            onRetry={ended || !turn.question ? undefined : () => void ask(turn.question, turn.key, turn.files)}
+            rate={turn.answer.id ? rater(turn.answer.id) : undefined}
+            pin={history && turn.answer.id ? pinner(turn.answer.id) : undefined}
+            found={turn.answer.id !== null && turn.answer.id === found}
+            say={setHeard}
+            fetchFile={fetchFile}
           />
         ))}
-        {ended && <ProblemNote problem={ended} action={ended.kind === "expired" ? t.newChat : undefined} onAction={newChat} />}
+        {ended && <ProblemNote problem={ended} action={ended.kind === "expired" ? t.newChat : undefined} onAction={() => newChat()} />}
       </main>
       )}
 
       <footer className="foot">
-        {away && !browsing && (
+        {away && !browsing && chatting && (
           <button
             type="button"
             className="latest"
@@ -542,15 +857,53 @@ export function App({ widgetId, win = window, preview = false }: { widgetId: str
           </button>
         )}
 
-        {!browsing && (
+        {attachNote && (
+          <p className="attach-note" role="alert">
+            {attachNote}
+          </p>
+        )}
+        {!browsing && (chatting || view.kind === "project") && (
         <form
-          className="compose"
+          className={dropping ? "compose dropping" : "compose"}
           onSubmit={(event) => {
             event.preventDefault();
             if (busy) live.current?.stop?.abort();
             else send();
           }}
         >
+          {attached.length > 0 && (
+            <ul className="files" aria-label={t.attached(attached.length)}>
+              {attached.map((file) => (
+                <PendingChip key={file.key} file={file} onRemove={() => removeFile(file.key)} />
+              ))}
+            </ul>
+          )}
+          {attaching && (
+            <>
+              <input
+                ref={picker}
+                type="file"
+                className="hidden"
+                tabIndex={-1}
+                aria-hidden="true"
+                accept={ACCEPT}
+                multiple
+                onChange={(event) => {
+                  void attach([...(event.target.files ?? [])]);
+                  event.target.value = ""; // the same file can be chosen again
+                }}
+              />
+              <button
+                type="button"
+                className="clip"
+                aria-label={t.attach}
+                disabled={preview}
+                onClick={() => picker.current?.click()}
+              >
+                <Icon path={CLIP} />
+              </button>
+            </>
+          )}
           <label className="hidden" htmlFor="question">
             {t.input}
           </label>
@@ -560,17 +913,25 @@ export function App({ widgetId, win = window, preview = false }: { widgetId: str
             rows={1}
             value={draft}
             maxLength={LIMIT}
-            placeholder={preview ? t.previewPlaceholder : t.placeholder}
+            placeholder={
+              preview ? t.previewPlaceholder : view.kind === "project" ? t.askInProject(view.project.name) : t.placeholder
+            }
             aria-describedby={left <= LIMIT - WARN_AT ? "left" : undefined}
             disabled={Boolean(ended) || preview}
             onChange={(event) => setDraft(event.target.value)}
             onKeyDown={enter}
+            onPaste={(event) => {
+              const pasted = [...event.clipboardData.files];
+              if (!attaching || !pasted.length) return;
+              event.preventDefault();
+              void attach(pasted);
+            }}
           />
           <button
             type="submit"
             className="send"
             aria-label={busy ? t.stop : t.send}
-            disabled={!busy && (!draft.trim() || Boolean(ended))}
+            disabled={!busy && (!draft.trim() || Boolean(ended) || uploading)}
           >
             {busy ? <Icon path="M7 7h10v10H7z" filled /> : <Icon path="M12 19V5M5 12l7-7 7 7" />}
           </button>
@@ -608,10 +969,20 @@ function TurnView({
   turn,
   mark,
   onRetry,
+  rate,
+  pin,
+  found,
+  say,
+  fetchFile,
 }: {
   turn: Turn;
   mark: ReactNode;
   onRetry?: () => void;
+  rate?: Rate;
+  pin?: (pinned: boolean) => Promise<void>;
+  found: boolean;
+  say: (text: string) => void;
+  fetchFile: (id: string) => Promise<Blob>;
 }) {
   const { answer, problem } = turn;
   const working = answer.status === "pending" || (answer.status === "streaming" && !plain(answer.blocks));
@@ -623,7 +994,19 @@ function TurnView({
           {turn.question}
         </p>
       )}
-      <article className="answer" aria-busy={answer.status === "pending" || answer.status === "streaming"}>
+      {turn.files && (
+        <ul className="files sent" aria-label={t.attached(turn.files.length)}>
+          {turn.files.map((file) => (
+            <SentChip key={file.id} block={file} fetchFile={fetchFile} />
+          ))}
+        </ul>
+      )}
+      <article
+        className={found ? "answer found" : "answer"}
+        aria-busy={answer.status === "pending" || answer.status === "streaming"}
+        data-answer={answer.id ?? undefined}
+        tabIndex={found ? -1 : undefined}
+      >
         {mark}
         <div className="said">
           <span className="hidden">{t.answer}</span>
@@ -644,6 +1027,9 @@ function TurnView({
           {answer.status === "complete" && (
             <div className="acts">
               <CopyButton text={plain(answer.blocks)} label={t.copy} />
+              {/* The pin before the thumbs: their comment card and thanks line come after, and must not split the row. */}
+              {pin && <PinButton pinned={answer.pinned} toggle={pin} say={say} />}
+              {rate && <Feedback initial={answer.feedback} rate={rate} say={say} />}
             </div>
           )}
         </div>
@@ -661,6 +1047,9 @@ function ChatList({
   onNew,
   onMore,
   onRetry,
+  onProjects,
+  onPinned,
+  place,
 }: {
   chats: Chats;
   current: string | null;
@@ -669,10 +1058,28 @@ function ChatList({
   onNew: () => void;
   onMore: () => void;
   onRetry: () => void;
+  onProjects: () => void;
+  onPinned: () => void;
+  place: View["kind"];
 }) {
   const items = chats.items.filter((chat) => chat.title); // a chat with no question yet has nothing to reopen
+  const projectsOpen = place === "projects" || place === "project";
   return (
     <nav className="side" id="chats" aria-labelledby="chats-title">
+      <ul className="places">
+        <li>
+          <button type="button" aria-current={projectsOpen ? "page" : undefined} onClick={onProjects}>
+            <Icon path={FOLDER} />
+            {t.projects}
+          </button>
+        </li>
+        <li>
+          <button type="button" aria-current={place === "pinned" ? "page" : undefined} onClick={onPinned}>
+            <Icon path={PIN} />
+            {t.pinned}
+          </button>
+        </li>
+      </ul>
       <div className="side-head">
         <h2 id="chats-title" ref={titleRef} tabIndex={-1}>
           {t.chats}
@@ -698,20 +1105,7 @@ function ChatList({
         </>
       )}
       {chats.loaded && items.length === 0 && !chats.problem && <p className="meta empty">{t.noChats}</p>}
-      {items.length > 0 && (
-        <ul className="chats">
-          {items.map((chat) => (
-            <li key={chat.id}>
-              <button type="button" aria-current={chat.id === current ? "true" : undefined} onClick={() => onOpen(chat)}>
-                <span className="topic" dir="auto">
-                  {chat.title}
-                </span>
-                <time dateTime={chat.updated_at}>{when(chat.updated_at)}</time>
-              </button>
-            </li>
-          ))}
-        </ul>
-      )}
+      {items.length > 0 && <ChatRows chats={items} current={place === "chat" ? current : null} onOpen={onOpen} />}
       {chats.problem && <ProblemNote problem={chats.problem} action={t.retry} onAction={chats.next && chats.loaded ? onMore : onRetry} />}
       {chats.next && !chats.problem && (
         <button type="button" className="quiet more" onClick={onMore} disabled={chats.loading}>

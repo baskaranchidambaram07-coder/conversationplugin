@@ -233,6 +233,10 @@ test("the look is edited beside the chat itself, which shows each change at once
   const send = chat.getByRole("button", { name: "Send" }); // the brand colour is on what visitors press
   await expect.poll(() => send.evaluate((button) => getComputedStyle(button).backgroundColor)).toBe("rgb(91, 42, 134)");
 
+  await expect(chat.getByRole("button", { name: "Attach files" })).toHaveCount(0);
+  await page.getByLabel(/Visitors can attach files/).check(); // the paperclip appears in the preview, sending nothing
+  await expect(chat.getByRole("button", { name: "Attach files" })).toBeDisabled();
+
   await page.getByRole("radio", { name: "Dark" }).check();
   await expect.poll(() => chat.locator("html").getAttribute("data-scheme")).toBe("dark");
   await page.getByRole("button", { name: "Save" }).click();
@@ -558,4 +562,43 @@ test("home shows where things stand: the figures, an organisation's widgets, and
   await page.getByRole("link", { name: "UCP Console" }).click(); // the name in the bar goes home too
   await expect(page.getByRole("heading", { level: 1, name: "t_e2e" })).toBeVisible();
   expect(await serious(page)).toEqual([]);
+});
+
+// Feedback (M10): a visitor's rating and comment, read under the widget's own Feedback tab.
+test("a visitor's rating and comment show under the widget's Feedback, with the question it was about", async ({
+  page,
+  browser,
+}, info) => {
+  const comment = `It left out the opening hours (${info.project.name} ${Date.now().toString(36)})`;
+  const visitor = await browser.newPage();
+  await visitor.goto("http://127.0.0.1:4174/hosts/gateway.html");
+  await visitor.getByRole("button", { name: "Ask the College" }).click();
+  const chat = visitor.frameLocator("[data-ucp] iframe");
+  const field = chat.getByRole("textbox", { name: "Your question" });
+  await field.fill("When is the gym open?");
+  await field.press("Enter");
+  await chat.getByRole("button", { name: "Not helpful" }).click({ timeout: 20_000 });
+  await chat.getByRole("textbox", { name: "What could be better?" }).fill(comment);
+  await chat.getByRole("button", { name: "Send feedback" }).click();
+  await expect(chat.getByRole("article").getByText("Thanks for your feedback.")).toBeVisible();
+  await visitor.close();
+
+  await signIn(page, "/widgets/w_gateway/feedback", await platformAdministrator(page, "reader"));
+  await expect(page.getByRole("heading", { level: 2, name: "Feedback" })).toBeVisible();
+  await expect(page.getByRole("navigation", { name: "This widget" }).getByRole("link", { name: "Feedback" })).toHaveAttribute(
+    "aria-current",
+    "page",
+  );
+  const entry = page.getByRole("listitem").filter({ hasText: comment });
+  await expect(entry).toContainText("Not helpful");
+  await expect(entry).toContainText("Public visitor");
+  await expect(entry).toContainText("When is the gym open?");
+  await entry.getByText("Show the answer").click();
+  await expect(entry.locator(".answer")).toBeVisible();
+  expect(await serious(page)).toEqual([]);
+
+  await page.getByRole("group", { name: "Show" }).getByRole("button", { name: "Helpful", exact: true }).click();
+  await expect(page.getByText(comment)).toHaveCount(0); // only the helpful ones now
+  await page.getByRole("navigation", { name: "This widget" }).getByRole("link", { name: "Set up" }).click();
+  await expect(page).toHaveURL(`${CONSOLE}/widgets/w_gateway`);
 });

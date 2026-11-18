@@ -148,8 +148,25 @@
     },
     "/v1/conversations": {
       "post": {
-        "summary": "Start a conversation",
+        "summary": "Start a conversation, inside a project if one is named",
         "operationId": "create_conversation_v1_conversations_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "anyOf": [
+                  {
+                    "$ref": "#/components/schemas/Filing"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "title": "Body"
+              }
+            }
+          }
+        },
         "responses": {
           "201": {
             "description": "Successful Response",
@@ -204,6 +221,22 @@
               "default": 20,
               "title": "Limit"
             }
+          },
+          {
+            "name": "project",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "$ref": "#/components/schemas/Id"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Project"
+            }
           }
         ],
         "responses": {
@@ -213,6 +246,58 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ConversationPage"
+                }
+              }
+            }
+          },
+          "4XX": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            },
+            "description": "Client Error"
+          }
+        }
+      }
+    },
+    "/v1/conversations/{conversation_id}": {
+      "patch": {
+        "summary": "File a conversation under a project, or under none",
+        "operationId": "file_conversation_v1_conversations__conversation_id__patch",
+        "parameters": [
+          {
+            "name": "conversation_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^[A-Za-z0-9_-]{1,64}$",
+              "description": "Our opaque ID. Never a PF ID.",
+              "title": "Conversation Id"
+            },
+            "description": "Our opaque ID. Never a PF ID."
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Filing"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Conversation"
                 }
               }
             }
@@ -406,6 +491,497 @@
         }
       }
     },
+    "/v1/projects": {
+      "get": {
+        "summary": "The visitor's projects, most recently active first",
+        "operationId": "list_projects_v1_projects_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProjectPage"
+                }
+              }
+            }
+          },
+          "4XX": {
+            "description": "Client Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "summary": "Start a project",
+        "operationId": "create_project_v1_projects_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ProjectName"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Project"
+                }
+              }
+            }
+          },
+          "4XX": {
+            "description": "Client Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/projects/{project_id}": {
+      "patch": {
+        "summary": "Rename a project",
+        "operationId": "rename_project_v1_projects__project_id__patch",
+        "parameters": [
+          {
+            "name": "project_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^[A-Za-z0-9_-]{1,64}$",
+              "description": "Our opaque ID. Never a PF ID.",
+              "title": "Project Id"
+            },
+            "description": "Our opaque ID. Never a PF ID."
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ProjectName"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Project"
+                }
+              }
+            }
+          },
+          "4XX": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            },
+            "description": "Client Error"
+          }
+        }
+      },
+      "delete": {
+        "summary": "Delete a project; its conversations stay, unfiled",
+        "operationId": "delete_project_v1_projects__project_id__delete",
+        "parameters": [
+          {
+            "name": "project_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^[A-Za-z0-9_-]{1,64}$",
+              "description": "Our opaque ID. Never a PF ID.",
+              "title": "Project Id"
+            },
+            "description": "Our opaque ID. Never a PF ID."
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "4XX": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            },
+            "description": "Client Error"
+          }
+        }
+      }
+    },
+    "/v1/conversations/{conversation_id}/files": {
+      "post": {
+        "summary": "Attach a file (doc, docx, pdf, jpg, jpeg or png, at most 10 MB) as the body, named in `name`; send its ID with the question",
+        "operationId": "upload_v1_conversations__conversation_id__files_post",
+        "parameters": [
+          {
+            "name": "conversation_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^[A-Za-z0-9_-]{1,64}$",
+              "description": "Our opaque ID. Never a PF ID.",
+              "title": "Conversation Id"
+            },
+            "description": "Our opaque ID. Never a PF ID."
+          },
+          {
+            "name": "name",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 255,
+              "title": "Name"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FileBlock"
+                }
+              }
+            }
+          },
+          "4XX": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            },
+            "description": "Client Error"
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/pdf": {},
+            "image/png": {},
+            "image/jpeg": {},
+            "application/msword": {},
+            "application/vnd.openxmlformats-officedocument.wordprocessingml.document": {}
+          }
+        }
+      }
+    },
+    "/v1/conversations/{conversation_id}/files/{file_id}": {
+      "get": {
+        "summary": "A file attached to a question, always as a download",
+        "operationId": "download_v1_conversations__conversation_id__files__file_id__get",
+        "parameters": [
+          {
+            "name": "conversation_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^[A-Za-z0-9_-]{1,64}$",
+              "description": "Our opaque ID. Never a PF ID.",
+              "title": "Conversation Id"
+            },
+            "description": "Our opaque ID. Never a PF ID."
+          },
+          {
+            "name": "file_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^[A-Za-z0-9_-]{1,64}$",
+              "description": "Our opaque ID. Never a PF ID.",
+              "title": "File Id"
+            },
+            "description": "Our opaque ID. Never a PF ID."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              },
+              "application/pdf": {},
+              "image/png": {},
+              "image/jpeg": {},
+              "application/msword": {},
+              "application/vnd.openxmlformats-officedocument.wordprocessingml.document": {}
+            }
+          },
+          "4XX": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            },
+            "description": "Client Error"
+          }
+        }
+      }
+    },
+    "/v1/pins": {
+      "get": {
+        "summary": "The visitor's pinned answers, the newest pin first",
+        "operationId": "list_pins_v1_pins_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PinPage"
+                }
+              }
+            }
+          },
+          "4XX": {
+            "description": "Client Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/conversations/{conversation_id}/messages/{message_id}/pin": {
+      "put": {
+        "summary": "Pin a finished answer",
+        "operationId": "pin_v1_conversations__conversation_id__messages__message_id__pin_put",
+        "parameters": [
+          {
+            "name": "conversation_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^[A-Za-z0-9_-]{1,64}$",
+              "description": "Our opaque ID. Never a PF ID.",
+              "title": "Conversation Id"
+            },
+            "description": "Our opaque ID. Never a PF ID."
+          },
+          {
+            "name": "message_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^[A-Za-z0-9_-]{1,64}$",
+              "description": "Our opaque ID. Never a PF ID.",
+              "title": "Message Id"
+            },
+            "description": "Our opaque ID. Never a PF ID."
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "4XX": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            },
+            "description": "Client Error"
+          }
+        }
+      },
+      "delete": {
+        "summary": "Unpin an answer",
+        "operationId": "unpin_v1_conversations__conversation_id__messages__message_id__pin_delete",
+        "parameters": [
+          {
+            "name": "conversation_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^[A-Za-z0-9_-]{1,64}$",
+              "description": "Our opaque ID. Never a PF ID.",
+              "title": "Conversation Id"
+            },
+            "description": "Our opaque ID. Never a PF ID."
+          },
+          {
+            "name": "message_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^[A-Za-z0-9_-]{1,64}$",
+              "description": "Our opaque ID. Never a PF ID.",
+              "title": "Message Id"
+            },
+            "description": "Our opaque ID. Never a PF ID."
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "4XX": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            },
+            "description": "Client Error"
+          }
+        }
+      }
+    },
+    "/v1/conversations/{conversation_id}/messages/{message_id}/feedback": {
+      "put": {
+        "summary": "Rate a finished answer, like or dislike, with an optional comment; a second rating replaces the first",
+        "operationId": "rate_v1_conversations__conversation_id__messages__message_id__feedback_put",
+        "parameters": [
+          {
+            "name": "conversation_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^[A-Za-z0-9_-]{1,64}$",
+              "description": "Our opaque ID. Never a PF ID.",
+              "title": "Conversation Id"
+            },
+            "description": "Our opaque ID. Never a PF ID."
+          },
+          {
+            "name": "message_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^[A-Za-z0-9_-]{1,64}$",
+              "description": "Our opaque ID. Never a PF ID.",
+              "title": "Message Id"
+            },
+            "description": "Our opaque ID. Never a PF ID."
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Feedback"
+              }
+            }
+          }
+        },
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "4XX": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            },
+            "description": "Client Error"
+          }
+        }
+      },
+      "delete": {
+        "summary": "Take back a rating",
+        "operationId": "unrate_v1_conversations__conversation_id__messages__message_id__feedback_delete",
+        "parameters": [
+          {
+            "name": "conversation_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^[A-Za-z0-9_-]{1,64}$",
+              "description": "Our opaque ID. Never a PF ID.",
+              "title": "Conversation Id"
+            },
+            "description": "Our opaque ID. Never a PF ID."
+          },
+          {
+            "name": "message_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^[A-Za-z0-9_-]{1,64}$",
+              "description": "Our opaque ID. Never a PF ID.",
+              "title": "Message Id"
+            },
+            "description": "Our opaque ID. Never a PF ID."
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "4XX": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            },
+            "description": "Client Error"
+          }
+        }
+      }
+    },
     "/healthz": {
       "get": {
         "summary": "Healthz",
@@ -468,6 +1044,7 @@
               "not_found",
               "turn_in_progress",
               "conflict",
+              "unsafe_file",
               "rate_limited",
               "assistant_unavailable",
               "internal_error"
@@ -522,6 +1099,9 @@
             "$ref": "#/components/schemas/MarkdownBlock"
           },
           {
+            "$ref": "#/components/schemas/FileBlock"
+          },
+          {
             "$ref": "#/components/schemas/UnknownBlock"
           }
         ]
@@ -551,6 +1131,17 @@
             "type": "string",
             "format": "date-time",
             "title": "Updated At"
+          },
+          "project_id": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Id"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "The project the chat is filed under, if any."
           }
         },
         "additionalProperties": false,
@@ -597,6 +1188,105 @@
         "type": "string",
         "pattern": "^[A-Za-z0-9_.:+-]{1,64}$",
         "description": "Opaque. Pass it as `before` for the next page."
+      },
+      "Feedback": {
+        "properties": {
+          "rating": {
+            "type": "string",
+            "enum": [
+              "like",
+              "dislike"
+            ],
+            "title": "Rating"
+          },
+          "comment": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 1000
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Comment",
+            "description": "What could be better."
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "rating"
+        ],
+        "title": "Feedback",
+        "description": "Body of PUT /v1/conversations/{id}/messages/{id}/feedback: the visitor's rating of an answer."
+      },
+      "FileBlock": {
+        "properties": {
+          "type": {
+            "type": "string",
+            "const": "file",
+            "title": "Type"
+          },
+          "id": {
+            "$ref": "#/components/schemas/Id"
+          },
+          "name": {
+            "type": "string",
+            "maxLength": 200,
+            "minLength": 1,
+            "title": "Name"
+          },
+          "size": {
+            "type": "integer",
+            "minimum": 1.0,
+            "title": "Size",
+            "description": "Bytes."
+          },
+          "content_type": {
+            "type": "string",
+            "enum": [
+              "application/pdf",
+              "image/png",
+              "image/jpeg",
+              "application/msword",
+              "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+            ],
+            "title": "Content Type"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "type",
+          "id",
+          "name",
+          "size",
+          "content_type"
+        ],
+        "title": "FileBlock",
+        "description": "A file the visitor attached to a question (M10), downloaded from\nGET /v1/conversations/{id}/files/{file id}. Also the reply to an upload."
+      },
+      "Filing": {
+        "properties": {
+          "project_id": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Id"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "project_id"
+        ],
+        "title": "Filing",
+        "description": "Body of PATCH /v1/conversations/{id}, and optionally of POST /v1/conversations: the project a chat is filed\nunder, or null for none. Signed-in visitors only."
       },
       "HTTPValidationError": {
         "properties": {
@@ -681,6 +1371,28 @@
             "type": "string",
             "format": "date-time",
             "title": "Created At"
+          },
+          "feedback": {
+            "anyOf": [
+              {
+                "type": "string",
+                "enum": [
+                  "like",
+                  "dislike"
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Feedback",
+            "description": "The visitor's rating of an answer."
+          },
+          "pinned": {
+            "type": "boolean",
+            "title": "Pinned",
+            "description": "The visitor pinned this answer to find it again.",
+            "default": false
           }
         },
         "additionalProperties": false,
@@ -725,6 +1437,131 @@
         "title": "MessagePage",
         "description": "Reply to GET /v1/conversations/{id}/messages: a page of messages, oldest first, and the page before it."
       },
+      "Pin": {
+        "properties": {
+          "conversation": {
+            "$ref": "#/components/schemas/Conversation"
+          },
+          "question": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Question",
+            "description": "What the visitor asked, as typed; null if it is not stored."
+          },
+          "message": {
+            "$ref": "#/components/schemas/Message"
+          },
+          "pinned_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Pinned At"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "conversation",
+          "question",
+          "message",
+          "pinned_at"
+        ],
+        "title": "Pin",
+        "description": "A pinned answer, with what was asked and the chat it is in."
+      },
+      "PinPage": {
+        "properties": {
+          "pins": {
+            "items": {
+              "$ref": "#/components/schemas/Pin"
+            },
+            "type": "array",
+            "title": "Pins"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "pins"
+        ],
+        "title": "PinPage",
+        "description": "Reply to GET /v1/pins: the visitor's pinned answers, the newest pin first."
+      },
+      "Project": {
+        "properties": {
+          "id": {
+            "$ref": "#/components/schemas/Id"
+          },
+          "name": {
+            "type": "string",
+            "maxLength": 80,
+            "minLength": 1,
+            "title": "Name"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Updated At",
+            "description": "When the project or a chat in it was last active."
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "id",
+          "name",
+          "created_at",
+          "updated_at"
+        ],
+        "title": "Project",
+        "description": "A signed-in visitor's folder of chats."
+      },
+      "ProjectName": {
+        "properties": {
+          "name": {
+            "type": "string",
+            "maxLength": 80,
+            "minLength": 1,
+            "pattern": "\\S",
+            "title": "Name"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "name"
+        ],
+        "title": "ProjectName",
+        "description": "Body of POST /v1/projects and PATCH /v1/projects/{id}."
+      },
+      "ProjectPage": {
+        "properties": {
+          "projects": {
+            "items": {
+              "$ref": "#/components/schemas/Project"
+            },
+            "type": "array",
+            "title": "Projects"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "projects"
+        ],
+        "title": "ProjectPage",
+        "description": "Reply to GET /v1/projects: the visitor's projects, most recently active first."
+      },
       "SendMessage": {
         "properties": {
           "text": {
@@ -738,6 +1575,15 @@
           "client_message_id": {
             "$ref": "#/components/schemas/Id",
             "description": "Chosen by the chat. Sending again with the same ID returns the same reply."
+          },
+          "attachments": {
+            "items": {
+              "$ref": "#/components/schemas/Id"
+            },
+            "type": "array",
+            "maxItems": 5,
+            "title": "Attachments",
+            "description": "Files uploaded to this conversation, sent with the question: at most 5."
           }
         },
         "additionalProperties": false,
@@ -828,7 +1674,8 @@
             "not": {
               "enum": [
                 "text",
-                "markdown"
+                "markdown",
+                "file"
               ]
             },
             "type": "string",
@@ -1012,6 +1859,12 @@
           "history_enabled": {
             "type": "boolean",
             "title": "History Enabled"
+          },
+          "attachments_enabled": {
+            "type": "boolean",
+            "title": "Attachments Enabled",
+            "description": "Visitors may attach doc, docx, pdf, jpg, jpeg and png files to a question.",
+            "default": false
           }
         },
         "additionalProperties": false,

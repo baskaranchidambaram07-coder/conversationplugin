@@ -40,7 +40,24 @@ class MarkdownBlock(_Model):
     text: str
 
 
-KNOWN_BLOCK_TYPES = ("text", "markdown")
+class FileBlock(_Model):
+    """A file the visitor attached to a question (M10), downloaded from
+    GET /v1/conversations/{id}/files/{file id}. Also the reply to an upload."""
+
+    type: Literal["file"]
+    id: Id
+    name: Annotated[str, Field(min_length=1, max_length=200)]
+    size: Annotated[int, Field(ge=1)] = Field(description="Bytes.")
+    content_type: Literal[
+        "application/pdf",
+        "image/png",
+        "image/jpeg",
+        "application/msword",
+        "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+    ]
+
+
+KNOWN_BLOCK_TYPES = ("text", "markdown", "file")
 
 
 class UnknownBlock(BaseModel):
@@ -60,6 +77,7 @@ def _block_tag(block: object) -> str:
 type Block = Annotated[
     Annotated[TextBlock, Tag("text")]
     | Annotated[MarkdownBlock, Tag("markdown")]
+    | Annotated[FileBlock, Tag("file")]
     | Annotated[UnknownBlock, Tag("unknown")],
     Discriminator(_block_tag),
 ]
@@ -80,6 +98,7 @@ class ApiError(_Model):
         "not_found",
         "turn_in_progress",
         "conflict",
+        "unsafe_file",
         "rate_limited",
         "assistant_unavailable",
         "internal_error",
@@ -157,6 +176,35 @@ class Conversation(_Model):
     title: str | None
     created_at: AwareDatetime
     updated_at: AwareDatetime
+    project_id: Id | None = Field(default=None, description="The project the chat is filed under, if any.")
+
+
+class Project(_Model):
+    """A signed-in visitor's folder of chats."""
+
+    id: Id
+    name: Annotated[str, Field(min_length=1, max_length=80)]
+    created_at: AwareDatetime
+    updated_at: AwareDatetime = Field(description="When the project or a chat in it was last active.")
+
+
+class ProjectName(_Model):
+    """Body of POST /v1/projects and PATCH /v1/projects/{id}."""
+
+    name: Annotated[str, Field(min_length=1, max_length=80, pattern=r"\S")]
+
+
+class ProjectPage(_Model):
+    """Reply to GET /v1/projects: the visitor's projects, most recently active first."""
+
+    projects: list[Project]
+
+
+class Filing(_Model):
+    """Body of PATCH /v1/conversations/{id}, and optionally of POST /v1/conversations: the project a chat is filed
+    under, or null for none. Signed-in visitors only."""
+
+    project_id: Id | None
 
 
 class Message(_Model):
@@ -166,6 +214,30 @@ class Message(_Model):
     blocks: list[Block]
     error: ApiError | None
     created_at: AwareDatetime
+    feedback: Literal["like", "dislike"] | None = Field(default=None, description="The visitor's rating of an answer.")
+    pinned: bool = Field(default=False, description="The visitor pinned this answer to find it again.")
+
+
+class Pin(_Model):
+    """A pinned answer, with what was asked and the chat it is in."""
+
+    conversation: Conversation
+    question: str | None = Field(description="What the visitor asked, as typed; null if it is not stored.")
+    message: Message
+    pinned_at: AwareDatetime
+
+
+class PinPage(_Model):
+    """Reply to GET /v1/pins: the visitor's pinned answers, the newest pin first."""
+
+    pins: list[Pin]
+
+
+class Feedback(_Model):
+    """Body of PUT /v1/conversations/{id}/messages/{id}/feedback: the visitor's rating of an answer."""
+
+    rating: Literal["like", "dislike"]
+    comment: Annotated[str, Field(max_length=1000)] | None = Field(default=None, description="What could be better.")
 
 
 type Cursor = Annotated[
@@ -212,6 +284,9 @@ class WidgetConfig(_Model):
     color_scheme: Literal["light", "dark", "auto"]
     launcher_position: Literal["bottom-right", "bottom-left"]
     history_enabled: bool
+    attachments_enabled: bool = Field(
+        default=False, description="Visitors may attach doc, docx, pdf, jpg, jpeg and png files to a question."
+    )
 
 
 # API requests and replies. The gateway (M4) implements them; the chat (M2) calls them.
@@ -240,6 +315,9 @@ class SendMessage(_Model):
     client_message_id: Id = Field(
         description="Chosen by the chat. Sending again with the same ID returns the same reply."
     )
+    attachments: Annotated[list[Id], Field(max_length=5)] = Field(
+        default_factory=list, description="Files uploaded to this conversation, sent with the question: at most 5."
+    )
 
 
 PUBLIC_TYPES = {
@@ -254,6 +332,13 @@ PUBLIC_TYPES = {
     "SessionRequest": SessionRequest,
     "Session": Session,
     "SendMessage": SendMessage,
+    "Feedback": Feedback,
+    "Project": Project,
+    "ProjectName": ProjectName,
+    "ProjectPage": ProjectPage,
+    "Filing": Filing,
+    "Pin": Pin,
+    "PinPage": PinPage,
 }
 ADAPTERS = {name: TypeAdapter(kind) for name, kind in PUBLIC_TYPES.items()}
 

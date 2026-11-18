@@ -7,6 +7,7 @@ import pytest
 import uvicorn
 from sqlalchemy.ext.asyncio import create_async_engine
 
+import fakescan
 from fakepf.app import create_app as fake_pf_app
 from ucp import migrate
 from ucp.store import Store
@@ -66,3 +67,9 @@ def fake_pf():
     yield f"http://127.0.0.1:{server.servers[0].sockets[0].getsockname()[1]}"
     server.should_exit = True
     thread.join(5)
+
+
+@pytest.fixture(scope="session")
+def fake_scanner():
+    """The stand-in for ClamAV (fakescan.py) on a free port, as host:port."""
+    return f"127.0.0.1:{fakescan.start()}"

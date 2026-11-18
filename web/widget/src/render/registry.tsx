@@ -4,6 +4,7 @@
 import type { Block } from "@ucp/protocol/v1";
 import { Component, type ComponentType, lazy, type ReactNode, Suspense } from "react";
 
+import { textOf } from "../chat/state";
 import { strings as t } from "../strings";
 import { Code } from "./Code";
 
@@ -62,7 +63,7 @@ class Isolated extends Component<{ fallback: ReactNode; children: ReactNode }, {
 }
 
 export function BlockView({ block }: { block: Block }) {
-  const text = typeof block.text === "string" ? block.text : "";
+  const text = textOf(block);
   if (!text && (block.type === "text" || block.type === "markdown")) return null;
   const plain = <p className="text">{text}</p>;
   if (block.type === "text" || (block.type === "markdown" && tooHeavy(text))) return plain;

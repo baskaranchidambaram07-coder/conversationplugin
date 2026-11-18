@@ -11,14 +11,21 @@ export type Protocol =
   | WidgetConfig
   | SessionRequest
   | Session
-  | SendMessage;
-export type Block = TextBlock | MarkdownBlock | UnknownBlock;
-export type StreamEvent =
-  MessageStarted | ContentBlockStarted | ContentBlockDelta | ContentBlockCompleted | MessageCompleted | MessageFailed;
+  | SendMessage
+  | Feedback
+  | Project
+  | ProjectName
+  | ProjectPage
+  | Filing
+  | Pin
+  | PinPage;
+export type Block = TextBlock | MarkdownBlock | FileBlock | UnknownBlock;
 /**
  * Our opaque ID. Never a PF ID.
  */
 export type Id = string;
+export type StreamEvent =
+  MessageStarted | ContentBlockStarted | ContentBlockDelta | ContentBlockCompleted | MessageCompleted | MessageFailed;
 export type Index = number;
 /**
  * Opaque. Pass it as `before` for the next page.
@@ -38,6 +45,25 @@ export interface TextBlock {
 export interface MarkdownBlock {
   type: "markdown";
   text: string;
+}
+/**
+ * A file the visitor attached to a question (M10), downloaded from
+ * GET /v1/conversations/{id}/files/{file id}. Also the reply to an upload.
+ */
+export interface FileBlock {
+  type: "file";
+  id: Id;
+  name: string;
+  /**
+   * Bytes.
+   */
+  size: number;
+  content_type:
+    | "application/pdf"
+    | "image/png"
+    | "image/jpeg"
+    | "application/msword"
+    | "application/vnd.openxmlformats-officedocument.wordprocessingml.document";
 }
 /**
  * A block type this version does not know, sent by a newer gateway. Shown as its `text`, if it has one.
@@ -148,6 +174,7 @@ export interface ApiError {
     | "not_found"
     | "turn_in_progress"
     | "conflict"
+    | "unsafe_file"
     | "rate_limited"
     | "assistant_unavailable"
     | "internal_error";
@@ -170,6 +197,10 @@ export interface Conversation {
   title: string | null;
   created_at: string;
   updated_at: string;
+  /**
+   * The project the chat is filed under, if any.
+   */
+  project_id?: Id | null;
 }
 export interface Message {
   id: Id;
@@ -178,6 +209,14 @@ export interface Message {
   blocks: Block[];
   error: ApiError | null;
   created_at: string;
+  /**
+   * The visitor's rating of an answer.
+   */
+  feedback?: ("like" | "dislike") | null;
+  /**
+   * The visitor pinned this answer to find it again.
+   */
+  pinned?: boolean;
 }
 /**
  * Reply to GET /v1/conversations: the visitor's conversations, most recently active first.
@@ -225,6 +264,10 @@ export interface WidgetConfig {
   color_scheme: "light" | "dark" | "auto";
   launcher_position: "bottom-right" | "bottom-left";
   history_enabled: boolean;
+  /**
+   * Visitors may attach doc, docx, pdf, jpg, jpeg and png files to a question.
+   */
+  attachments_enabled?: boolean;
 }
 /**
  * Body of POST /v1/sessions. A signed-in visitor brings the token the host signed for them; anyone else, null.
@@ -255,4 +298,69 @@ export interface SendMessage {
    * Our opaque ID. Never a PF ID.
    */
   client_message_id: string;
+  /**
+   * Files uploaded to this conversation, sent with the question: at most 5.
+   *
+   * @maxItems 5
+   */
+  attachments?: Id[];
+}
+/**
+ * Body of PUT /v1/conversations/{id}/messages/{id}/feedback: the visitor's rating of an answer.
+ */
+export interface Feedback {
+  rating: "like" | "dislike";
+  /**
+   * What could be better.
+   */
+  comment?: string | null;
+}
+/**
+ * A signed-in visitor's folder of chats.
+ */
+export interface Project {
+  id: Id;
+  name: string;
+  created_at: string;
+  /**
+   * When the project or a chat in it was last active.
+   */
+  updated_at: string;
+}
+/**
+ * Body of POST /v1/projects and PATCH /v1/projects/{id}.
+ */
+export interface ProjectName {
+  name: string;
+}
+/**
+ * Reply to GET /v1/projects: the visitor's projects, most recently active first.
+ */
+export interface ProjectPage {
+  projects: Project[];
+}
+/**
+ * Body of PATCH /v1/conversations/{id}, and optionally of POST /v1/conversations: the project a chat is filed
+ * under, or null for none. Signed-in visitors only.
+ */
+export interface Filing {
+  project_id: Id | null;
+}
+/**
+ * A pinned answer, with what was asked and the chat it is in.
+ */
+export interface Pin {
+  conversation: Conversation;
+  /**
+   * What the visitor asked, as typed; null if it is not stored.
+   */
+  question: string | null;
+  message: Message;
+  pinned_at: string;
+}
+/**
+ * Reply to GET /v1/pins: the visitor's pinned answers, the newest pin first.
+ */
+export interface PinPage {
+  pins: Pin[];
 }

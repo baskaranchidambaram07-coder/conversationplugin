@@ -13,7 +13,8 @@
         "logo_url": null,
         "color_scheme": "light",
         "launcher_position": "bottom-right",
-        "history_enabled": true
+        "history_enabled": true,
+        "attachments_enabled": true
       },
       "allowed_domains": [
         "http://127.0.0.1:4174",
@@ -68,7 +69,8 @@
         "logo_url": null,
         "color_scheme": "auto",
         "launcher_position": "bottom-right",
-        "history_enabled": true
+        "history_enabled": true,
+        "attachments_enabled": true
       },
       "allowed_domains": [
         "${UCP_SAMPLES_ORIGIN}"
@@ -95,7 +97,8 @@
         "logo_url": null,
         "color_scheme": "auto",
         "launcher_position": "bottom-right",
-        "history_enabled": true
+        "history_enabled": true,
+        "attachments_enabled": true
       },
       "allowed_domains": [
         "${UCP_SAMPLES_ORIGIN}"
@@ -123,7 +126,8 @@
         "logo_url": null,
         "color_scheme": "dark",
         "launcher_position": "bottom-right",
-        "history_enabled": true
+        "history_enabled": true,
+        "attachments_enabled": true
       },
       "allowed_domains": [
         "https://supplychain.dx57bapd1nc23.amplifyapp.com"

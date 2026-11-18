@@ -4,9 +4,18 @@ The gateway sees only these events, so nothing an agent runtime adds (its IDs, m
 errors) can reach the browser by accident (D15). Usage figures go to metering and logs, never to the visitor.
 """
 
-from collections.abc import AsyncIterator
+from collections.abc import AsyncIterator, Sequence
 from dataclasses import dataclass, field
 from typing import Literal, Protocol
+
+
+@dataclass(frozen=True)
+class AgentFile:
+    """A file the visitor sent with a question, already checked (ucp.files)."""
+
+    name: str
+    content_type: str
+    data: bytes
 
 
 @dataclass(frozen=True)
@@ -58,8 +67,9 @@ class AgentConnector(Protocol):
         """Starts a conversation on the agent's side, named with our opaque ID. Returns the agent's ID for it."""
         ...
 
-    def send(self, conversation_id: str, text: str) -> AsyncIterator[AgentEvent]:
-        """Asks a question. Ends with exactly one Final or Failed, recovering a broken stream itself."""
+    def send(self, conversation_id: str, text: str, files: Sequence[AgentFile] = ()) -> AsyncIterator[AgentEvent]:
+        """Asks a question, with any files the visitor attached. Ends with exactly one Final or Failed, recovering a
+        broken stream itself."""
         ...
 
     async def check(self) -> None:
