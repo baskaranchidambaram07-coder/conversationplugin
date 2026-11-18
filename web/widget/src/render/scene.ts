@@ -42,7 +42,7 @@ export type Line = {
   to: string;
 };
 
-export type Scene = { kind: "draw.io" | "Excalidraw" | "Mermaid"; shapes: Shape[]; lines: Line[] };
+export type Scene = { kind: "draw.io" | "Excalidraw" | "Mermaid" | "text"; shapes: Shape[]; lines: Line[] };
 
 export const INK = "#1f1e1d";
 const PAPER = "#ffffff";
