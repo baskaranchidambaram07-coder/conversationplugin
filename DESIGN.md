@@ -476,7 +476,8 @@ Two neutral families and one accent each: warm near-neutrals with the customer's
 - **Answer headings** (700, 1.3, balanced): h2 18px, h3 16px, h4 to h6 15px. A Markdown h1 renders as h2: the chat's title is the only h1.
 - **Chat label** (400, 14px, 1.35): suggestion chips, meta and "unknown part" lines.
 - **Chat action** (500, 13px): quiet and secondary actions; the code caption is 650 at 13px in Muted.
-- **Chat caption** (400, 12px, 1.45, centred, balanced): the AI notice, the credit and the character count.
+- **Chat caption** (400, 12px, 1.45, centred, balanced): the character count.
+- **Chat foot line** (400, 11px on 16px; 10.5px at 380px wide and under, 10px at 340px and under; Muted): the AI notice and the credit on one centred line, a middle dot between, whole from a 400px panel down to a 340px frame. Narrower, the credit moves under the notice; a notice too long for a line of its own ends in an ellipsis, its full text kept for screen readers and on hover.
 - **Table** (400, 14.5px, 1.45, tabular figures), header cells 700. **Code** (mono, 13.5px, 1.6, tabs at 2).
 - **Console page title** (600, 24px, 1.25, -0.02em; 21px on phones). **Card title** (600, 17px). **Section title** (h3, 16px).
 - **Console body** (400, 14px, 1.55). **Label** (500, 14px): field labels, legends, buttons. **Hint** (13px, Muted). **Small** (12.5px, Muted): state lines, minutes, table head cells. **Group label** (600, 12px, 0.04em, uppercase, Muted): the "Widgets" heading of the column only.

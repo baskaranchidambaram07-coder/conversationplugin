@@ -234,7 +234,7 @@ export const strings = {
   greeting: "Greeting",
   greetingHint: 'A short line shown beside the closed button a moment after a page loads, such as "Hi, I\'m Eva. Ask me anything." Leave it empty for none.',
   notice: "AI notice",
-  noticeHint: "Leave it empty for: You are chatting with an AI assistant. It can make mistakes.",
+  noticeHint: "Leave it empty for: AI assistant. It can make mistakes. Keep it as short: it shares one line with the credit.",
   scheme: "Light or dark",
   schemes: { light: "Light", dark: "Dark", auto: "As the visitor's device is set" },
   corner: "Corner of the round button",

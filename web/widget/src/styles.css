@@ -214,15 +214,38 @@ h1 {
   mask-image: linear-gradient(transparent, var(--ink) 14px, var(--ink) calc(100% - 14px), transparent);
 }
 
-/* The AI notice, always in sight under the composer, with the credit. */
-.notice,
-.credit {
+/* The AI notice and the credit: one quiet line, always in sight under the composer, from a 400px panel down to a
+   360px phone. Narrower still, the credit moves under the notice rather than cut it short. A notice too long for a
+   line of its own ends in an ellipsis; its whole text stays in the page for screen readers and shows on hover. */
+.notice {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0 0.4em;
   margin: 0 var(--gutter);
-  font-size: 12px;
-  line-height: 1.45;
-  text-align: center;
-  text-wrap: balance;
+  font-size: 11px;
+  line-height: 16px;
+  white-space: nowrap;
   color: var(--muted);
+}
+
+.notice > :first-child {
+  min-width: 0;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.credit::before {
+  content: "·";
+  content: "·" / "";
+  margin-inline-end: 0.4em;
+}
+
+@media (max-width: 380px) {
+  .notice {
+    font-size: 10.5px;
+  }
 }
 
 .turn {
@@ -1731,8 +1754,7 @@ textarea::placeholder {
 .page .compose,
 .page .count,
 .page .foot .prompts,
-.page .foot .notice,
-.page .foot .credit {
+.page .foot .notice {
   margin-inline: max(var(--gutter), (100% - 760px) / 2);
 }
 
@@ -1831,6 +1853,10 @@ textarea::placeholder {
 
   .mine {
     max-width: 92%;
+  }
+
+  .notice {
+    font-size: 10px;
   }
 
   /* Three header buttons leave the title too little room: New chat stays in the list of chats instead. */

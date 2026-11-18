@@ -943,8 +943,10 @@ export function App({ widgetId, win = window, preview = false }: { widgetId: str
           </p>
         )}
         {wide && empty && prompts}
-        <p className="notice">{settings.notice}</p>
-        <p className="credit">{t.credit}</p>
+        <p className="notice" title={settings.notice}>
+          <span>{settings.notice}</span>
+          <span className="credit">{t.credit}</span>
+        </p>
         <div className="hidden" role="status" aria-live="polite">
           {heard}
         </div>
