@@ -7,6 +7,8 @@ import type {
   Feedback,
   Message,
   MessagePage,
+  Pin,
+  PinPage,
   Project,
   ProjectPage,
   SendMessage,
@@ -130,6 +132,14 @@ export function gateway(widgetId: string, hostToken: () => Promise<string | null
       const path = `/v1/conversations/${conversationId}/messages/${messageId}/feedback`;
       const put = feedback && { method: "PUT", headers: JSON_TYPE, body: JSON.stringify(feedback) };
       await authorised(path, put ?? { method: "DELETE" });
+    },
+    /** Pins an answer, or unpins it. */
+    async pin(conversationId: string, messageId: string, pinned: boolean): Promise<void> {
+      const path = `/v1/conversations/${conversationId}/messages/${messageId}/pin`;
+      await authorised(path, { method: pinned ? "PUT" : "DELETE" });
+    },
+    async pins(): Promise<Pin[]> {
+      return ((await (await authorised("/v1/pins")).json()) as PinPage).pins;
     },
     /** A page of a chat, oldest first, ending with its newest message; `cursor` reaches further back. */
     async messages(conversationId: string, cursor?: string | null): Promise<MessagePage> {

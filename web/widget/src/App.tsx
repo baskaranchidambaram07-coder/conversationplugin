@@ -1,7 +1,7 @@
 // The chat inside the panel (M2), in the world of DESIGN.md and the composition the user picked
 // (web/widget/.impeccable/surfaces/src-app-tsx.md).
 import { contrast, inkOn, isColor } from "@ucp/protocol/brand";
-import type { Block, Conversation, Project, WidgetConfig } from "@ucp/protocol/v1";
+import type { Block, Conversation, Pin, Project, WidgetConfig } from "@ucp/protocol/v1";
 import {
   type CSSProperties,
   type KeyboardEvent,
@@ -21,6 +21,7 @@ import { type Answer, pending } from "./chat/state";
 import { recover, runTurn } from "./chat/turn";
 import { Feedback, type Rate } from "./Feedback";
 import { CopyButton, Icon } from "./Icon";
+import { PIN, PinButton, PinnedPage } from "./Pinned";
 import { ChatRows, FOLDER, ProjectPage, ProjectPicker, ProjectsPage } from "./Projects";
 import { BlockView } from "./render/registry";
 import { strings as t } from "./strings";
@@ -54,7 +55,7 @@ type Live = {
 };
 type Chats = { items: Conversation[]; next: string | null; loading: boolean; loaded: boolean; problem: Problem | null };
 /** What the conversation's place holds: the chat, or (signed in) the projects, or one project. */
-type View = { kind: "chat" } | { kind: "projects" } | { kind: "project"; project: Project };
+type View = { kind: "chat" } | { kind: "projects" } | { kind: "project"; project: Project } | { kind: "pinned" };
 const CHAT: View = { kind: "chat" };
 
 const NO_CHATS: Chats = { items: [], next: null, loading: false, loaded: false, problem: null };
@@ -139,6 +140,9 @@ export function App({ widgetId, win = window, preview = false }: { widgetId: str
   const [projectChats, setProjectChats] = useState<Conversation[] | null>(null);
   const [projectChatsFailed, setProjectChatsFailed] = useState(false);
   const [filed, setFiled] = useState<string | null>(null); // the project the chat on screen is filed under
+  const [pins, setPins] = useState<Pin[] | null>(null);
+  const [pinsFailed, setPinsFailed] = useState(false);
+  const [found, setFound] = useState<string | null>(null); // a pinned answer just opened: shown and focused once
   const lastOpened = useRef<Conversation | null>(null);
 
   async function loadConfig() {
@@ -248,6 +252,14 @@ export function App({ widgetId, win = window, preview = false }: { widgetId: str
     followed.current = box.scrollHeight;
   }, [turns]);
 
+  // A pinned answer just opened: brought into view and focused, after the rule above has followed the newest message.
+  useLayoutEffect(() => {
+    const answer = found && log.current?.querySelector<HTMLElement>(`[data-answer="${found}"]`);
+    if (!answer) return;
+    answer.scrollIntoView?.({ block: "start" }); // a long answer is read from its top
+    answer.focus({ preventScroll: true });
+  }, [found, turns]);
+
   useLayoutEffect(() => {
     const field = input.current;
     if (!field) return;
@@ -346,6 +358,7 @@ export function App({ widgetId, win = window, preview = false }: { widgetId: str
     setOpenFailed(null);
     setBrowsing(false);
     setView(CHAT);
+    setFound(null);
     setFocusTo("input");
     return session;
   }
@@ -364,7 +377,9 @@ export function App({ widgetId, win = window, preview = false }: { widgetId: str
     setEnded(null);
   }
 
-  async function openChat(chat: Conversation) {
+  /** Opens an earlier chat at its newest page; `reveal` names an answer to show (a pin), reached through earlier
+   *  pages if need be. */
+  async function openChat(chat: Conversation, reveal?: string) {
     const session = leave();
     if (!session) return;
     session.conversation = chat.id;
@@ -376,10 +391,18 @@ export function App({ widgetId, win = window, preview = false }: { widgetId: str
     follow.current = true;
     try {
       const page = await session.api.messages(chat.id);
+      let shown = turnsOf(page.messages);
+      let next = page.next;
+      // shortcut: at most 20 pages back (400 messages); a jump by message would replace this for longer chats
+      for (let pages = 0; reveal && next && pages < 20 && !shown.some(({ answer }) => answer.id === reveal); pages++) {
+        const older = await session.api.messages(chat.id, next);
+        shown = [...turnsOf(older.messages), ...shown];
+        next = older.next;
+      }
       if (session.conversation !== chat.id) return; // the visitor moved on meanwhile
-      const shown = turnsOf(page.messages);
       setTurns(shown);
-      setEarlier(page.next);
+      setEarlier(next);
+      setFound(reveal ?? null);
       setHeard(t.opened(chat.title ?? ""));
       const last = shown[shown.length - 1];
       const writing = last?.answer.status === "streaming" && last.answer.id;
@@ -442,6 +465,35 @@ export function App({ widgetId, win = window, preview = false }: { widgetId: str
     setFocusTo("view");
     void loadProjects();
   }
+
+  // Pinned answers (signed-in visitors)
+
+  async function showPinned() {
+    const session = live.current;
+    if (!session) return;
+    setBrowsing(false);
+    setView({ kind: "pinned" });
+    setFocusTo("view");
+    setPinsFailed(false);
+    try {
+      setPins(await session.api.pins());
+    } catch {
+      setPinsFailed(true);
+    }
+  }
+
+  async function unpinFromPage(pin: Pin) {
+    await live.current!.api.pin(pin.conversation.id, pin.message.id, false);
+    setPins((all) => all?.filter((each) => each.message.id !== pin.message.id) ?? null);
+    setHeard(t.unpinnedNow);
+  }
+
+  /** Pinning one of the answers in the chat on screen. */
+  const pinner = (messageId: string) => async (pinned: boolean) => {
+    const session = live.current;
+    if (!session?.conversation) throw new Failure(0, null);
+    await session.api.pin(session.conversation, messageId, pinned);
+  };
 
   async function openProject(project: Project) {
     const session = live.current;
@@ -529,6 +581,7 @@ export function App({ widgetId, win = window, preview = false }: { widgetId: str
       onOpen={(chat) => void openChat(chat)}
       onNew={() => newChat()}
       onProjects={showProjects}
+      onPinned={() => void showPinned()}
       place={view.kind}
       onMore={() => void loadChats(chats.next ?? undefined)}
       onRetry={() => void loadChats()}
@@ -599,6 +652,17 @@ export function App({ widgetId, win = window, preview = false }: { widgetId: str
 
       {browsing ? (
         <main className="log">{list}</main>
+      ) : view.kind === "pinned" ? (
+        <main className="log">
+          <PinnedPage
+            pins={pins}
+            failed={pinsFailed}
+            titleRef={viewTitle}
+            onOpen={(pin) => void openChat(pin.conversation, pin.message.id)}
+            onUnpin={unpinFromPage}
+            onRetry={() => void showPinned()}
+          />
+        </main>
       ) : view.kind === "projects" ? (
         <main className="log">
           <ProjectsPage
@@ -669,6 +733,8 @@ export function App({ widgetId, win = window, preview = false }: { widgetId: str
             mark={mark}
             onRetry={ended || !turn.question ? undefined : () => void ask(turn.question, turn.key)}
             rate={turn.answer.id ? rater(turn.answer.id) : undefined}
+            pin={history && turn.answer.id ? pinner(turn.answer.id) : undefined}
+            found={turn.answer.id !== null && turn.answer.id === found}
             say={setHeard}
           />
         ))}
@@ -688,7 +754,7 @@ export function App({ widgetId, win = window, preview = false }: { widgetId: str
           </button>
         )}
 
-        {!browsing && view.kind !== "projects" && (
+        {!browsing && (chatting || view.kind === "project") && (
         <form
           className="compose"
           onSubmit={(event) => {
@@ -757,12 +823,16 @@ function TurnView({
   mark,
   onRetry,
   rate,
+  pin,
+  found,
   say,
 }: {
   turn: Turn;
   mark: ReactNode;
   onRetry?: () => void;
   rate?: Rate;
+  pin?: (pinned: boolean) => Promise<void>;
+  found: boolean;
   say: (text: string) => void;
 }) {
   const { answer, problem } = turn;
@@ -775,7 +845,12 @@ function TurnView({
           {turn.question}
         </p>
       )}
-      <article className="answer" aria-busy={answer.status === "pending" || answer.status === "streaming"}>
+      <article
+        className={found ? "answer found" : "answer"}
+        aria-busy={answer.status === "pending" || answer.status === "streaming"}
+        data-answer={answer.id ?? undefined}
+        tabIndex={found ? -1 : undefined}
+      >
         {mark}
         <div className="said">
           <span className="hidden">{t.answer}</span>
@@ -797,6 +872,7 @@ function TurnView({
             <div className="acts">
               <CopyButton text={plain(answer.blocks)} label={t.copy} />
               {rate && <Feedback initial={answer.feedback} rate={rate} say={say} />}
+              {pin && <PinButton pinned={answer.pinned} toggle={pin} say={say} />}
             </div>
           )}
         </div>
@@ -815,6 +891,7 @@ function ChatList({
   onMore,
   onRetry,
   onProjects,
+  onPinned,
   place,
 }: {
   chats: Chats;
@@ -825,16 +902,24 @@ function ChatList({
   onMore: () => void;
   onRetry: () => void;
   onProjects: () => void;
+  onPinned: () => void;
   place: View["kind"];
 }) {
   const items = chats.items.filter((chat) => chat.title); // a chat with no question yet has nothing to reopen
+  const projectsOpen = place === "projects" || place === "project";
   return (
     <nav className="side" id="chats" aria-labelledby="chats-title">
       <ul className="places">
         <li>
-          <button type="button" aria-current={place === "chat" ? undefined : "page"} onClick={onProjects}>
+          <button type="button" aria-current={projectsOpen ? "page" : undefined} onClick={onProjects}>
             <Icon path={FOLDER} />
             {t.projects}
+          </button>
+        </li>
+        <li>
+          <button type="button" aria-current={place === "pinned" ? "page" : undefined} onClick={onPinned}>
+            <Icon path={PIN} />
+            {t.pinned}
           </button>
         </li>
       </ul>

@@ -196,6 +196,22 @@ class Message(_Model):
     error: ApiError | None
     created_at: AwareDatetime
     feedback: Literal["like", "dislike"] | None = Field(default=None, description="The visitor's rating of an answer.")
+    pinned: bool = Field(default=False, description="The visitor pinned this answer to find it again.")
+
+
+class Pin(_Model):
+    """A pinned answer, with what was asked and the chat it is in."""
+
+    conversation: Conversation
+    question: str | None = Field(description="What the visitor asked, as typed; null if it is not stored.")
+    message: Message
+    pinned_at: AwareDatetime
+
+
+class PinPage(_Model):
+    """Reply to GET /v1/pins: the visitor's pinned answers, the newest pin first."""
+
+    pins: list[Pin]
 
 
 class Feedback(_Model):
@@ -296,6 +312,8 @@ PUBLIC_TYPES = {
     "ProjectName": ProjectName,
     "ProjectPage": ProjectPage,
     "Filing": Filing,
+    "Pin": Pin,
+    "PinPage": PinPage,
 }
 ADAPTERS = {name: TypeAdapter(kind) for name, kind in PUBLIC_TYPES.items()}
 
