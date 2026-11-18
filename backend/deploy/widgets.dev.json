@@ -64,7 +64,7 @@
           "When does the library open?",
           "How do I book a guest room?"
         ],
-        "ai_notice": "You are chatting with an AI assistant. It can make mistakes.",
+        "ai_notice": "AI assistant. It can make mistakes.",
         "brand_color": "#2B241F",
         "logo_url": null,
         "color_scheme": "auto",
@@ -92,7 +92,7 @@
           "When does the library open?",
           "How do I book a guest room?"
         ],
-        "ai_notice": "You are chatting with an AI assistant. It can make mistakes.",
+        "ai_notice": "AI assistant. It can make mistakes.",
         "brand_color": "#2B241F",
         "logo_url": null,
         "color_scheme": "auto",
@@ -121,7 +121,7 @@
           "How can we cut empty miles in our fleet?",
           "What drives a low on-time delivery rate?"
         ],
-        "ai_notice": "You are chatting with an AI assistant. It can make mistakes.",
+        "ai_notice": "AI assistant. It can make mistakes.",
         "brand_color": "#7C3AED",
         "logo_url": null,
         "color_scheme": "dark",

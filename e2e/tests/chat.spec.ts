@@ -19,10 +19,18 @@ test("the chat opens with the College's title, the AI notice, the welcome, its s
   await openChat(page);
   const frame = chat(page);
 
-  await expect(frame.getByText("You are chatting with an AI assistant. It can make mistakes.")).toBeVisible();
+  await expect(frame.getByText("AI assistant. It can make mistakes.")).toBeVisible();
   await expect(frame.getByText("Hello. Ask me about accommodation, events or the library.")).toBeVisible();
   await expect(frame.getByRole("button", { name: "When does the library open?" })).toBeVisible();
   await expect(frame.getByText("Powered by Purple Fabric")).toBeVisible();
+
+  // The notice and the credit share one small line, whole.
+  const notice = (await frame.getByText("AI assistant. It can make mistakes.").boundingBox())!;
+  const credit = (await frame.getByText("Powered by Purple Fabric").boundingBox())!;
+  expect(Math.abs(notice.y - credit.y)).toBeLessThan(1);
+  expect(credit.x).toBeGreaterThan(notice.x + notice.width);
+  expect((await frame.locator(".notice").boundingBox())!.height).toBeLessThanOrEqual(16);
+  expect(await frame.locator(".notice > :first-child").evaluate((e) => e.scrollWidth <= e.clientWidth + 1)).toBe(true); // not cut short
 });
 
 test("a suggested question gets an answer that streams in, then can be copied", async ({ page }) => {
