@@ -49,7 +49,7 @@ test("a resident's chat comes back on their next visit, reopens exactly as it wa
   await expect(chat.getByRole("article")).toHaveCount(2);
 
   await chat.getByRole("button", { name: "Your chats" }).click();
-  const rows = chat.getByRole("navigation", { name: "Your chats" }).getByRole("listitem");
+  const rows = chat.getByRole("navigation", { name: "Your chats" }).locator(".chats > li");
   await expect(rows).toHaveCount(1); // the follow-up went into the same chat
   await expect(rows.getByRole("button")).toHaveAttribute("aria-current", "true");
 });

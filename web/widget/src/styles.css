@@ -50,6 +50,7 @@ body {
 }
 
 button,
+input,
 textarea {
   font: inherit;
   color: inherit;
@@ -345,8 +346,9 @@ h1 {
   margin: 0;
 }
 
-.ask .secondary:disabled {
+.secondary:disabled {
   opacity: 0.45;
+  cursor: default;
 }
 
 .text {
@@ -1156,6 +1158,227 @@ textarea::placeholder {
   margin-block: 24px;
 }
 
+/* Projects (signed-in visitors): the places at the top of the list, the projects' own pages in the conversation's
+   place, and the control that files the chat on screen. Rows, hairline cards and quiet actions, as elsewhere. */
+
+.places {
+  display: grid;
+  gap: 2px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.places button {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  min-height: 40px;
+  padding: 8px 12px;
+  border: 0;
+  border-radius: 10px;
+  background: transparent;
+  font-size: 15px;
+  font-weight: 500;
+  text-align: start;
+  transition: background-color 0.15s ease-out;
+}
+
+.places button:hover {
+  background: color-mix(in srgb, var(--ink) 5%, transparent);
+}
+
+.places button[aria-current="page"] {
+  background: var(--bubble);
+}
+
+.places .glyph {
+  width: 18px;
+  height: 18px;
+  color: var(--muted);
+}
+
+.view {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding-block-start: 10px; /* clears the conversation's top fade, as the list of chats does */
+}
+
+.view-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px 12px;
+}
+
+.view h2 {
+  margin: 0;
+  font-size: 20px;
+  font-weight: 600;
+  line-height: 1.3;
+  letter-spacing: -0.015em;
+  overflow-wrap: anywhere;
+  text-wrap: balance;
+}
+
+.view h2:focus {
+  outline: none; /* focus lands here only so the page is announced */
+}
+
+.view-acts {
+  display: flex;
+  gap: 2px;
+}
+
+.view-acts .quiet {
+  margin: 0;
+}
+
+.back {
+  align-self: flex-start;
+  margin-block-end: -6px;
+}
+
+.projects .topic .glyph {
+  width: 16px;
+  height: 16px;
+  margin-inline-end: 8px;
+  vertical-align: -2px;
+  color: var(--muted);
+}
+
+.name-form {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.name-form label {
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.name-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+}
+
+.name-row input {
+  flex: 1 1 160px;
+  min-width: 0;
+  min-height: 40px;
+  padding: 8px 12px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: var(--surface);
+  caret-color: var(--brand);
+  transition: border-color 0.15s ease-out;
+}
+
+.name-row input:focus-visible {
+  outline: none;
+  border-color: color-mix(in srgb, var(--ink) 40%, var(--line));
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--ink) 8%, transparent);
+}
+
+.name-row .secondary {
+  min-height: 40px;
+}
+
+.name-row .quiet,
+.confirm-acts .quiet {
+  margin: 0;
+}
+
+.confirm {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 12px 14px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: var(--surface);
+}
+
+.confirm p {
+  margin: 0;
+  overflow-wrap: anywhere;
+  text-wrap: pretty;
+}
+
+.confirm-acts {
+  display: flex;
+  gap: 6px;
+}
+
+.filing {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 6px;
+}
+
+.filing > .quiet span {
+  overflow-wrap: anywhere;
+}
+
+.filing-card {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  align-self: stretch;
+  max-width: 320px;
+  padding: 6px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: var(--surface);
+}
+
+.options {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.options button {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  width: 100%;
+  min-height: 40px;
+  padding: 8px 10px;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  font-size: 15px;
+  text-align: start;
+  overflow-wrap: anywhere;
+}
+
+.options button:hover {
+  background: color-mix(in srgb, var(--ink) 5%, transparent);
+}
+
+.options .glyph {
+  width: 16px;
+  height: 16px;
+}
+
+.filing-card > .quiet {
+  align-self: flex-start;
+  margin: 0;
+}
+
+.filing-card .name-form {
+  padding: 6px 4px 4px;
+}
+
 /* Wide frames (the chat filling a page, or the window): a conversation app. The list of chats runs the full height
    at the start; the conversation, the composer, the AI notice and the credit share one centred column. */
 .chat.split {
@@ -1213,18 +1436,18 @@ textarea::placeholder {
 }
 
 /* In the list beside the conversation, chats are rows on the column's own ground. */
-.split .chats {
+.split > .side .chats {
   overflow: visible;
   border-radius: 0;
   background: none;
   box-shadow: none;
 }
 
-.split .chats li + li {
+.split > .side .chats li + li {
   border: 0;
 }
 
-.split .chats button {
+.split > .side .chats button {
   min-height: 52px;
   padding: 8px 12px;
   border-radius: 12px;
@@ -1343,7 +1566,9 @@ textarea::placeholder {
     border: 1px solid CanvasText;
   }
 
-  .chats button[aria-current="true"] {
+  .chats button[aria-current="true"],
+  .places button[aria-current="page"],
+  .options button[aria-current="true"] {
     outline: 2px solid Highlight;
     outline-offset: -2px;
   }

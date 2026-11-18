@@ -227,6 +227,18 @@
         "updated_at": {
           "format": "date-time",
           "type": "string"
+        },
+        "project_id": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Id"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "The project the chat is filed under, if any."
         }
       },
       "required": [
@@ -301,6 +313,27 @@
         "rating"
       ],
       "title": "Feedback",
+      "type": "object"
+    },
+    "Filing": {
+      "additionalProperties": false,
+      "description": "Body of PATCH /v1/conversations/{id}, and optionally of POST /v1/conversations: the project a chat is filed\nunder, or null for none. Signed-in visitors only.",
+      "properties": {
+        "project_id": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Id"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [
+        "project_id"
+      ],
+      "title": "Filing",
       "type": "object"
     },
     "Id": {
@@ -542,6 +575,71 @@
         "correlation_id"
       ],
       "title": "MessageStarted",
+      "type": "object"
+    },
+    "Project": {
+      "additionalProperties": false,
+      "description": "A signed-in visitor's folder of chats.",
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/Id"
+        },
+        "name": {
+          "maxLength": 80,
+          "minLength": 1,
+          "type": "string"
+        },
+        "created_at": {
+          "format": "date-time",
+          "type": "string"
+        },
+        "updated_at": {
+          "description": "When the project or a chat in it was last active.",
+          "format": "date-time",
+          "type": "string"
+        }
+      },
+      "required": [
+        "id",
+        "name",
+        "created_at",
+        "updated_at"
+      ],
+      "title": "Project",
+      "type": "object"
+    },
+    "ProjectName": {
+      "additionalProperties": false,
+      "description": "Body of POST /v1/projects and PATCH /v1/projects/{id}.",
+      "properties": {
+        "name": {
+          "maxLength": 80,
+          "minLength": 1,
+          "pattern": "\\S",
+          "type": "string"
+        }
+      },
+      "required": [
+        "name"
+      ],
+      "title": "ProjectName",
+      "type": "object"
+    },
+    "ProjectPage": {
+      "additionalProperties": false,
+      "description": "Reply to GET /v1/projects: the visitor's projects, most recently active first.",
+      "properties": {
+        "projects": {
+          "items": {
+            "$ref": "#/$defs/Project"
+          },
+          "type": "array"
+        }
+      },
+      "required": [
+        "projects"
+      ],
+      "title": "ProjectPage",
       "type": "object"
     },
     "SendMessage": {
@@ -864,6 +962,18 @@
     },
     {
       "$ref": "#/$defs/Feedback"
+    },
+    {
+      "$ref": "#/$defs/Project"
+    },
+    {
+      "$ref": "#/$defs/ProjectName"
+    },
+    {
+      "$ref": "#/$defs/ProjectPage"
+    },
+    {
+      "$ref": "#/$defs/Filing"
     }
   ]
 }

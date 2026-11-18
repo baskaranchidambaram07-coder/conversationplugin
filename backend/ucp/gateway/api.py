@@ -23,6 +23,7 @@ from ucp.widgets import Widget
 log = logging.getLogger("ucp.gateway")
 REFUSALS_PER_MINUTE = 10  # host tokens refused from one address before it must wait
 FEEDBACK_PER_MINUTE = 30  # ratings from one visitor
+PROJECT_CHANGES_PER_MINUTE = 30  # projects started or renamed by one visitor
 
 
 def same_origin(request: Request) -> None:
@@ -175,17 +176,47 @@ type Visitor = Annotated[Session, Depends(visitor)]
 type Limit = Annotated[int, Query(ge=1, le=50)]
 
 
-@router.post("/conversations", status_code=201, summary="Start a conversation")
-async def create_conversation(request: Request, session: Visitor) -> protocol.Conversation:
+def signed_in(session: Session) -> Session:
+    """Projects and pins belong to a signed-in visitor; an anonymous one has nothing to come back to."""
+    if session.mode != "signed_in":
+        raise Problem("forbidden")
+    return session
+
+
+@router.post("/conversations", status_code=201, summary="Start a conversation, inside a project if one is named")
+async def create_conversation(
+    request: Request, session: Visitor, body: protocol.Filing | None = None
+) -> protocol.Conversation:
     await _widget(request, session)
-    return await _store(request).create_conversation(owner(session))
+    project_id = body.project_id if body else None
+    if project_id:
+        signed_in(session)
+    conversation = await _store(request).create_conversation(owner(session), project_id)
+    if not conversation:
+        raise Problem("not_found")
+    return conversation
+
+
+@router.patch("/conversations/{conversation_id}", summary="File a conversation under a project, or under none")
+async def file_conversation(
+    conversation_id: protocol.Id, body: protocol.Filing, request: Request, session: Visitor
+) -> protocol.Conversation:
+    signed_in(session)
+    conversation = await _store(request).file_conversation(owner(session), conversation_id, body.project_id)
+    if not conversation:
+        raise Problem("not_found")
+    return conversation
 
 
 @router.get("/conversations", summary="The visitor's conversations, most recently active first")
 async def list_conversations(
-    request: Request, session: Visitor, before: protocol.Cursor | None = None, limit: Limit = 20
+    request: Request,
+    session: Visitor,
+    before: protocol.Cursor | None = None,
+    limit: Limit = 20,
+    project: protocol.Id | None = None,
 ) -> protocol.ConversationPage:
-    found = await _store(request).conversations(owner(session), _after(before), limit + 1)
+    found = await _store(request).conversations(owner(session), _after(before), limit + 1, project)
     more = len(found) > limit
     return protocol.ConversationPage(conversations=found[:limit], next=_cursor(found[limit - 1]) if more else None)
 
@@ -213,6 +244,38 @@ async def read_message(
     if not message:
         raise Problem("not_found")
     return message
+
+
+# Projects (signed-in visitors)
+
+
+@router.get("/projects", summary="The visitor's projects, most recently active first")
+async def list_projects(request: Request, session: Visitor) -> protocol.ProjectPage:
+    return protocol.ProjectPage(projects=await _store(request).projects(owner(signed_in(session))))
+
+
+@router.post("/projects", status_code=201, summary="Start a project")
+async def create_project(body: protocol.ProjectName, request: Request, session: Visitor) -> protocol.Project:
+    request.app.state.limiter.check(f"projects:{signed_in(session).user_id}", PROJECT_CHANGES_PER_MINUTE)
+    return await _store(request).create_project(owner(session), body.name.strip())
+
+
+@router.patch("/projects/{project_id}", summary="Rename a project")
+async def rename_project(
+    project_id: protocol.Id, body: protocol.ProjectName, request: Request, session: Visitor
+) -> protocol.Project:
+    request.app.state.limiter.check(f"projects:{signed_in(session).user_id}", PROJECT_CHANGES_PER_MINUTE)
+    project = await _store(request).rename_project(owner(session), project_id, body.name.strip())
+    if not project:
+        raise Problem("not_found")
+    return project
+
+
+@router.delete("/projects/{project_id}", status_code=204, summary="Delete a project; its conversations stay, unfiled")
+async def delete_project(project_id: protocol.Id, request: Request, session: Visitor) -> Response:
+    if not await _store(request).delete_project(owner(signed_in(session)), project_id):
+        raise Problem("not_found")
+    return Response(status_code=204)
 
 
 @router.put(

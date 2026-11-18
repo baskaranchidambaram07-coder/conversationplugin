@@ -1,7 +1,7 @@
 // The chat inside the panel (M2), in the world of DESIGN.md and the composition the user picked
 // (web/widget/.impeccable/surfaces/src-app-tsx.md).
 import { contrast, inkOn, isColor } from "@ucp/protocol/brand";
-import type { Block, Conversation, WidgetConfig } from "@ucp/protocol/v1";
+import type { Block, Conversation, Project, WidgetConfig } from "@ucp/protocol/v1";
 import {
   type CSSProperties,
   type KeyboardEvent,
@@ -15,12 +15,13 @@ import {
 
 import { type Api, Failure, gateway } from "./chat/api";
 import { type Bridge, connect, type Mode } from "./chat/bridge";
-import { type Turn, turnsOf, when } from "./chat/history";
+import { type Turn, turnsOf } from "./chat/history";
 import { type Problem, problemOf } from "./chat/problem";
 import { type Answer, pending } from "./chat/state";
 import { recover, runTurn } from "./chat/turn";
 import { Feedback, type Rate } from "./Feedback";
 import { CopyButton, Icon } from "./Icon";
+import { ChatRows, FOLDER, ProjectPage, ProjectPicker, ProjectsPage } from "./Projects";
 import { BlockView } from "./render/registry";
 import { strings as t } from "./strings";
 
@@ -42,8 +43,19 @@ type Settings = {
   notice: string;
   history: boolean;
 };
-type Live = { api: Api; bridge: Bridge; signedIn: boolean; conversation?: string; stop?: AbortController };
+/** `project`: where the next new chat is filed, when it is started from a project's page. */
+type Live = {
+  api: Api;
+  bridge: Bridge;
+  signedIn: boolean;
+  conversation?: string;
+  project?: string;
+  stop?: AbortController;
+};
 type Chats = { items: Conversation[]; next: string | null; loading: boolean; loaded: boolean; problem: Problem | null };
+/** What the conversation's place holds: the chat, or (signed in) the projects, or one project. */
+type View = { kind: "chat" } | { kind: "projects" } | { kind: "project"; project: Project };
+const CHAT: View = { kind: "chat" };
 
 const NO_CHATS: Chats = { items: [], next: null, loading: false, loaded: false, problem: null };
 const WIDE = "(min-width: 720px)"; // room for the list of chats beside the conversation
@@ -116,10 +128,17 @@ export function App({ widgetId, win = window, preview = false }: { widgetId: str
   const [openFailed, setOpenFailed] = useState<Problem | null>(null);
   const [earlier, setEarlier] = useState<string | null>(null); // where the chat on screen continues further back
   const [earlierFailed, setEarlierFailed] = useState<Problem | null>(null);
-  const [focusTo, setFocusTo] = useState<"input" | "chats" | "list" | null>(null);
+  const [focusTo, setFocusTo] = useState<"input" | "chats" | "list" | "view" | null>(null);
   const keep = useRef<number | null>(null); // distance from the end to hold while earlier messages go in above
   const chatsButton = useRef<HTMLButtonElement>(null);
   const listTitle = useRef<HTMLHeadingElement>(null);
+  const viewTitle = useRef<HTMLHeadingElement>(null);
+  const [view, setView] = useState<View>(CHAT);
+  const [projects, setProjects] = useState<Project[] | null>(null);
+  const [projectsFailed, setProjectsFailed] = useState(false);
+  const [projectChats, setProjectChats] = useState<Conversation[] | null>(null);
+  const [projectChatsFailed, setProjectChatsFailed] = useState(false);
+  const [filed, setFiled] = useState<string | null>(null); // the project the chat on screen is filed under
   const lastOpened = useRef<Conversation | null>(null);
 
   async function loadConfig() {
@@ -200,10 +219,16 @@ export function App({ widgetId, win = window, preview = false }: { widgetId: str
     else setBrowsing(false);
   }, [side]);
 
-  // Focus moves with the view, after it is drawn: to the list's heading, back to its button, or to the question box.
+  // A signed-in visitor's projects: their names label the chat on screen and the filing control.
+  useEffect(() => {
+    if (history) void loadProjects();
+  }, [history]);
+
+  // Focus moves with the view, after it is drawn: to the list's heading, back to its button, to a page's heading, or
+  // to the question box.
   useEffect(() => {
     if (!focusTo) return;
-    ({ input, chats: chatsButton, list: listTitle })[focusTo].current?.focus();
+    ({ input, chats: chatsButton, list: listTitle, view: viewTitle })[focusTo].current?.focus();
     setFocusTo(null);
   }, [focusTo]);
 
@@ -269,10 +294,11 @@ export function App({ widgetId, win = window, preview = false }: { widgetId: str
     ]);
     await track(session, key, async (signal) => {
       if (!session.conversation) {
-        const { id } = await session.api.conversation();
+        const started = await session.api.conversation(session.project);
         if (signal.aborted) throw new DOMException("The visitor moved on", "AbortError");
-        session.conversation = id;
-        setCurrent(id);
+        session.conversation = started.id;
+        setCurrent(started.id);
+        setFiled(started.project_id ?? null);
       }
       const conversation = session.conversation;
       return runTurn(session.api, conversation, question, key, signal, (next) =>
@@ -319,16 +345,20 @@ export function App({ widgetId, win = window, preview = false }: { widgetId: str
     setEarlierFailed(null);
     setOpenFailed(null);
     setBrowsing(false);
+    setView(CHAT);
     setFocusTo("input");
     return session;
   }
 
-  function newChat() {
+  /** A fresh chat; started from a project's page, it is filed there. */
+  function newChat(project?: string) {
     const session = leave();
     if (!session) return;
     // An ended session cannot carry on: a new one starts (a new anonymous visitor, or the host signs in again).
     if (ended) session.api = gateway(widgetId, () => (session.signedIn ? session.bridge.token() : Promise.resolve(null)));
     session.conversation = undefined;
+    session.project = project;
+    setFiled(project ?? null);
     setCurrent(null);
     setOpening(null);
     setEnded(null);
@@ -338,8 +368,10 @@ export function App({ widgetId, win = window, preview = false }: { widgetId: str
     const session = leave();
     if (!session) return;
     session.conversation = chat.id;
+    session.project = undefined;
     lastOpened.current = chat;
     setCurrent(chat.id);
+    setFiled(chat.project_id ?? null);
     setOpening(chat);
     follow.current = true;
     try {
@@ -391,10 +423,76 @@ export function App({ widgetId, win = window, preview = false }: { widgetId: str
       await session.api.rate(session.conversation, messageId, rating && { rating, comment: comment || null });
     };
 
+  // Projects (signed-in visitors). Each change updates what is on screen from the gateway's reply.
+
+  async function loadProjects() {
+    const session = live.current;
+    if (!session) return;
+    setProjectsFailed(false);
+    try {
+      setProjects(await session.api.projects());
+    } catch {
+      setProjectsFailed(true);
+    }
+  }
+
+  function showProjects() {
+    setBrowsing(false);
+    setView({ kind: "projects" });
+    setFocusTo("view");
+    void loadProjects();
+  }
+
+  async function openProject(project: Project) {
+    const session = live.current;
+    if (!session) return;
+    setBrowsing(false);
+    setView({ kind: "project", project });
+    setFocusTo("view");
+    setProjectChats(null);
+    setProjectChatsFailed(false);
+    try {
+      const found = await session.api.projectChats(project.id);
+      setProjectChats(found.filter((chat) => chat.title)); // a chat with no question yet has nothing to reopen
+    } catch {
+      setProjectChatsFailed(true);
+    }
+  }
+
+  async function createProject(name: string) {
+    const project = await live.current!.api.createProject(name);
+    setProjects((all) => [project, ...(all ?? [])]);
+    return project;
+  }
+
+  async function renameProject(project: Project, name: string) {
+    const renamed = await live.current!.api.renameProject(project.id, name);
+    setProjects((all) => all?.map((each) => (each.id === renamed.id ? renamed : each)) ?? null);
+    setView({ kind: "project", project: renamed });
+    setFocusTo("view");
+  }
+
+  async function deleteProject(project: Project) {
+    await live.current!.api.deleteProject(project.id);
+    setProjects((all) => all?.filter((each) => each.id !== project.id) ?? null);
+    if (filed === project.id) setFiled(null);
+    showProjects();
+  }
+
+  /** Files the chat on screen under a project, or under none. */
+  async function fileChat(projectId: string | null) {
+    const session = live.current;
+    if (!session?.conversation) throw new Failure(0, null);
+    const moved = await session.api.file(session.conversation, projectId);
+    setFiled(moved.project_id ?? null);
+    setHeard(projectId ? t.filed(projects?.find((each) => each.id === projectId)?.name ?? "") : t.unfiled);
+  }
+
   function send() {
     const question = draft.trim();
     if (!question || busy) return;
     setDraft("");
+    if (view.kind === "project") newChat(view.project.id); // asked on a project's page: a new chat filed there
     void ask(question);
   }
 
@@ -429,14 +527,17 @@ export function App({ widgetId, win = window, preview = false }: { widgetId: str
       current={current}
       titleRef={listTitle}
       onOpen={(chat) => void openChat(chat)}
-      onNew={newChat}
+      onNew={() => newChat()}
+      onProjects={showProjects}
+      place={view.kind}
       onMore={() => void loadChats(chats.next ?? undefined)}
       onRetry={() => void loadChats()}
     />
   );
   // A wide frame (the chat filling a page, or the window) is laid out as a conversation app; an empty chat there
   // holds its welcome, composer and suggested questions in the middle of the screen.
-  const empty = turns.length === 0 && !opening && !openFailed && !browsing;
+  const chatting = view.kind === "chat";
+  const empty = chatting && turns.length === 0 && !opening && !openFailed && !browsing;
   const classes = ["chat", side && "split", wide && "page", empty && "empty", paused && "paused"]
     .filter(Boolean)
     .join(" ");
@@ -458,8 +559,8 @@ export function App({ widgetId, win = window, preview = false }: { widgetId: str
         {mark}
         <h1>{settings.title}</h1>
         <div className="actions">
-          {!side && !browsing && (turns.length > 0 || current) && (
-            <button type="button" className="icon new" aria-label={t.startChat} onClick={newChat}>
+          {!side && !browsing && (turns.length > 0 || current || !chatting) && (
+            <button type="button" className="icon new" aria-label={t.startChat} onClick={() => newChat()}>
               <Icon path={PLUS} />
             </button>
           )}
@@ -498,6 +599,31 @@ export function App({ widgetId, win = window, preview = false }: { widgetId: str
 
       {browsing ? (
         <main className="log">{list}</main>
+      ) : view.kind === "projects" ? (
+        <main className="log">
+          <ProjectsPage
+            projects={projects}
+            failed={projectsFailed}
+            titleRef={viewTitle}
+            onOpen={(project) => void openProject(project)}
+            onCreate={async (name) => void openProject(await createProject(name))}
+            onRetry={() => void loadProjects()}
+          />
+        </main>
+      ) : view.kind === "project" ? (
+        <main className="log">
+          <ProjectPage
+            key={view.project.id}
+            project={view.project}
+            chats={projectChats}
+            failed={projectChatsFailed}
+            titleRef={viewTitle}
+            onBack={showProjects}
+            onOpenChat={(chat) => void openChat(chat)}
+            onRename={(name) => renameProject(view.project, name)}
+            onDelete={() => deleteProject(view.project)}
+          />
+        </main>
       ) : (
       <main
         className="log"
@@ -507,6 +633,14 @@ export function App({ widgetId, win = window, preview = false }: { widgetId: str
           setAway(box.scrollHeight - box.scrollTop - box.clientHeight >= 48);
         }}
       >
+        {history && current && (
+          <ProjectPicker
+            projects={projects}
+            filed={filed}
+            onChoose={fileChat}
+            onCreate={async (name) => fileChat((await createProject(name)).id)}
+          />
+        )}
         {(settings.welcome || empty) && (
           <div className="intro">
             {mark}
@@ -538,12 +672,12 @@ export function App({ widgetId, win = window, preview = false }: { widgetId: str
             say={setHeard}
           />
         ))}
-        {ended && <ProblemNote problem={ended} action={ended.kind === "expired" ? t.newChat : undefined} onAction={newChat} />}
+        {ended && <ProblemNote problem={ended} action={ended.kind === "expired" ? t.newChat : undefined} onAction={() => newChat()} />}
       </main>
       )}
 
       <footer className="foot">
-        {away && !browsing && (
+        {away && !browsing && chatting && (
           <button
             type="button"
             className="latest"
@@ -554,7 +688,7 @@ export function App({ widgetId, win = window, preview = false }: { widgetId: str
           </button>
         )}
 
-        {!browsing && (
+        {!browsing && view.kind !== "projects" && (
         <form
           className="compose"
           onSubmit={(event) => {
@@ -572,7 +706,9 @@ export function App({ widgetId, win = window, preview = false }: { widgetId: str
             rows={1}
             value={draft}
             maxLength={LIMIT}
-            placeholder={preview ? t.previewPlaceholder : t.placeholder}
+            placeholder={
+              preview ? t.previewPlaceholder : view.kind === "project" ? t.askInProject(view.project.name) : t.placeholder
+            }
             aria-describedby={left <= LIMIT - WARN_AT ? "left" : undefined}
             disabled={Boolean(ended) || preview}
             onChange={(event) => setDraft(event.target.value)}
@@ -678,6 +814,8 @@ function ChatList({
   onNew,
   onMore,
   onRetry,
+  onProjects,
+  place,
 }: {
   chats: Chats;
   current: string | null;
@@ -686,10 +824,20 @@ function ChatList({
   onNew: () => void;
   onMore: () => void;
   onRetry: () => void;
+  onProjects: () => void;
+  place: View["kind"];
 }) {
   const items = chats.items.filter((chat) => chat.title); // a chat with no question yet has nothing to reopen
   return (
     <nav className="side" id="chats" aria-labelledby="chats-title">
+      <ul className="places">
+        <li>
+          <button type="button" aria-current={place === "chat" ? undefined : "page"} onClick={onProjects}>
+            <Icon path={FOLDER} />
+            {t.projects}
+          </button>
+        </li>
+      </ul>
       <div className="side-head">
         <h2 id="chats-title" ref={titleRef} tabIndex={-1}>
           {t.chats}
@@ -715,20 +863,7 @@ function ChatList({
         </>
       )}
       {chats.loaded && items.length === 0 && !chats.problem && <p className="meta empty">{t.noChats}</p>}
-      {items.length > 0 && (
-        <ul className="chats">
-          {items.map((chat) => (
-            <li key={chat.id}>
-              <button type="button" aria-current={chat.id === current ? "true" : undefined} onClick={() => onOpen(chat)}>
-                <span className="topic" dir="auto">
-                  {chat.title}
-                </span>
-                <time dateTime={chat.updated_at}>{when(chat.updated_at)}</time>
-              </button>
-            </li>
-          ))}
-        </ul>
-      )}
+      {items.length > 0 && <ChatRows chats={items} current={place === "chat" ? current : null} onOpen={onOpen} />}
       {chats.problem && <ProblemNote problem={chats.problem} action={t.retry} onAction={chats.next && chats.loaded ? onMore : onRetry} />}
       {chats.next && !chats.problem && (
         <button type="button" className="quiet more" onClick={onMore} disabled={chats.loading}>
