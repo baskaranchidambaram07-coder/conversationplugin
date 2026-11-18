@@ -65,6 +65,8 @@ The gateway reads its settings from the environment when it starts:
 | Schema checks in tests | Ajv with ajv-formats | 8.20 / 3.0 | Checks the shared example files against the schema, so the TypeScript side reaches the same verdict as the Python models |
 
 | Answer Markdown | react-markdown with remark-gfm | 10.1 / 4.0 | Raw HTML is skipped rather than sanitised, so nothing in an answer is ever parsed as HTML; loaded only when the first answer arrives |
+| Code highlighting | lowlight with highlight.js grammars | 3.3.0 / 11.11.2 | Tokens come back as a tree and become React spans with classes; 25 languages; loaded only when an answer holds code in one |
+| Maths | temml | 0.14.0 | TeX to MathML, which browsers lay out themselves; its output is rebuilt from an allow-list of MathML elements and attributes, so no inline style or link reaches the page; loaded only when an answer holds a formula |
 
 Added when first used: Recharts, Mermaid, Radix primitives.
 

@@ -40,6 +40,7 @@ export type Line = {
   color: string;
   from: string; // what it joins, for the spoken description
   to: string;
+  shift?: number; // px the label sits above (below 0) or under its point on the line: a sequence message's sits above
 };
 
 export type Scene = { kind: "draw.io" | "Excalidraw" | "Mermaid" | "text"; shapes: Shape[]; lines: Line[] };

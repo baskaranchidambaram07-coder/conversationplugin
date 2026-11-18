@@ -87,6 +87,7 @@ export const strings = {
     `${from || "A line"}${to ? ` to ${to}` : ""}${label ? `: ${label}` : ""}`,
   copyFor: (tool: string) => `Copy for ${tool}`,
   flowchart: "Flowchart",
+  formula: "Formula",
   drawing: "Text drawing",
   copyText: "Copy text",
   showText: "Show text",
