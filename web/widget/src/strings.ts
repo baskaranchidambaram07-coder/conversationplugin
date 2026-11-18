@@ -96,6 +96,11 @@ export const strings = {
   chartRange: (name: string, low: string, lowAt: string, high: string, highAt: string) =>
     `${name} from ${low} (${lowAt}) to ${high} (${highAt})`,
   chartKeys: "Use the arrow keys to read each value.",
+  chartType: "Chart type",
+  kinds: { bar: "Bar", line: "Line", area: "Area", pie: "Pie", scatter: "Scatter" } as Record<string, string>,
+  showChart: "Show as chart",
+  hideChart: "Hide chart",
+  downloadCsv: "Download CSV",
   showTable: "Show as table",
   hideTable: "Hide table",
   share: "Share",

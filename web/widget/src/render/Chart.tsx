@@ -1,12 +1,14 @@
 // A chart in an answer (M3-T6), drawn from the data ./chart.ts has checked. Thin marks on a quiet grid, the
 // categorical palette in its fixed order (validated for both schemes and colour-blind readers), a legend for two or
 // more series, every value readable by pointer or by the arrow keys, and the same numbers as a table.
-import { type KeyboardEvent, type PointerEvent, useId, useMemo, useRef, useState } from "react";
+import { type KeyboardEvent, type PointerEvent, useContext, useId, useMemo, useRef, useState } from "react";
 
 import { Icon } from "../Icon";
 import { strings as t } from "../strings";
-import { type Chart as Data, chartOf, format, type Plot, plotOf, rowsOf, share, summary } from "./plot";
+import { type Chart as Data, chartOf, format, type Kind, pieOf, type Plot, plotOf, rowsOf, share, summary } from "./plot";
 import { Code } from "./Code";
+import { specOfCode } from "./derive";
+import { Source } from "./source";
 import type { FenceProps } from "./registry";
 import { useRoom } from "./room";
 import { Table } from "./Table";
@@ -68,14 +70,14 @@ function Cartesian({ data, plot, at }: { data: Data; plot: Plot; at: number | nu
           {kind === "bar" &&
             points.map((value, i) =>
               value === null ? null : (
-                <path key={i} className="mark" d={bar(plot.x(i) - group / 2 + s * (thick + GAP), thick, base, plot.y(value))} />
+                <path key={i} className={value < 0 ? "bar below" : "bar"} d={bar(plot.x(i) - group / 2 + s * (thick + GAP), thick, base, plot.y(value))} />
               ),
             )}
           {(kind === "line" || kind === "area") &&
             runs(points, plot).map((run, r) => (
               <g key={r}>
                 {kind === "area" && <path className="wash" d={`${path(run)}V${base}H${run[0]?.[0]}Z`} />}
-                <path className="line" d={path(run)} />
+                <path className="line" pathLength={1} d={path(run)} />
               </g>
             ))}
           {(kind === "line" || kind === "area") &&
@@ -129,14 +131,32 @@ function stopsOf(data: Data): [number, number][] {
     .sort((a, b) => (data.xs[a[1]] as number) - (data.xs[b[1]] as number) || a[0] - b[0]);
 }
 
-export default function Chart({ code, language }: FenceProps) {
-  const data = useMemo(() => chartOf(code), [code]);
+/** The kinds a chart may be redrawn as: any of bar, line and area, and a pie for one series of eight or fewer
+ *  parts, none below 0. */
+function kindsOf(chart: Data): Kind[] {
+  if (chart.kind === "scatter") return [];
+  const one = chart.values.length === 1 && chart.xs.length <= 8 ? chart.values[0]! : []; // a pie of many slices misleads
+  const pie = one.every((value) => value === null || value >= 0) && one.some((value) => value !== null && value > 0);
+  return pie ? ["bar", "line", "area", "pie"] : ["bar", "line", "area"];
+}
+
+/** A chart block, or Python plotting code whose values are written into it (drawn over the code), or a table's
+ *  numbers (given as a chart block, without a second table under it). */
+export default function Chart({ code, language, table: tabled = true }: FenceProps & { table?: boolean }) {
+  const answer = useContext(Source);
+  const base = useMemo(
+    () => chartOf(language === "chart" ? code : JSON.stringify(specOfCode(code, answer))),
+    [code, language, answer],
+  );
+  const [kind, setKind] = useState<Kind | null>(null); // null until the visitor picks another
+  const data = base && kind && kind !== base.kind ? (kind === "pie" ? pieOf({ ...base, kind }) : { ...base, kind }) : base;
   const [at, setAt] = useState<number | null>(null);
   const [table, setTable] = useState(false);
   const frame = useRef<HTMLDivElement>(null);
   const room = useRoom(frame, data);
   const described = useId();
-  if (!data) return <Code code={code} language={language} />;
+  if (!data || !base) return <Code code={code} language={language} />;
+  const kinds = kindsOf(base);
 
   const width = room || 320;
   const plot = data.kind === "pie" ? null : plotOf(data, width);
@@ -254,13 +274,33 @@ export default function Chart({ code, language }: FenceProps) {
           {reading && `${reading[0]}: ${reading[1].map(([, value, name]) => `${value} ${name}`.trim()).join("; ")}`}
         </p>
         <div className="tools">
-          <button type="button" className="quiet" aria-expanded={table} onClick={() => setTable(!table)}>
-            <Icon path="M3 5h18v14H3zM3 10h18M9 10v9" />
-            {table ? t.hideTable : t.showTable}
-          </button>
+          {kinds.length > 0 && (
+            <div className="kinds" role="group" aria-label={t.chartType}>
+              {kinds.map((k) => (
+                <button
+                  key={k}
+                  type="button"
+                  aria-pressed={data.kind === k}
+                  onClick={() => {
+                    setKind(k);
+                    setAt(null);
+                  }}
+                >
+                  {t.kinds[k]}
+                </button>
+              ))}
+            </div>
+          )}
+          {tabled && (
+            <button type="button" className="quiet" aria-expanded={table} onClick={() => setTable(!table)}>
+              <Icon path="M3 5h18v14H3zM3 10h18M9 10v9" />
+              {table ? t.hideTable : t.showTable}
+            </button>
+          )}
         </div>
       </figure>
-      {table && (
+      {language !== "chart" && <Code code={code} language={language} />}
+      {tabled && table && (
         <Table rows={rows}>
           <thead>
             <tr>

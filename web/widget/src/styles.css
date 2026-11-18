@@ -568,6 +568,10 @@ h1 {
   line-height: 1.15; /* Consolas's box strokes part at 1.2 */
 }
 
+.tools {
+  flex-wrap: wrap; /* a narrow chat stacks a chart's or table's tools rather than squeeze them */
+}
+
 .code .quiet,
 .tools .quiet {
   flex-shrink: 0;
@@ -765,7 +769,7 @@ h1 {
   font-variant-numeric: tabular-nums;
 }
 
-.chart .mark {
+.chart .bar {
   fill: currentColor;
 }
 
@@ -791,6 +795,88 @@ h1 {
 
 .chart .hover {
   fill: color-mix(in srgb, var(--ink) 6%, transparent);
+}
+
+/* The one moment a chart moves: drawn in when it appears or the visitor picks another kind. Bars rise from the
+   baseline, lines draw from the left, washes and slices settle in. */
+.chart .bar {
+  transform-box: fill-box;
+  transform-origin: 50% 100%;
+  animation: chart-rise 520ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.chart .bar.below {
+  transform-origin: 50% 0;
+}
+
+.chart path.line {
+  stroke-dasharray: 1;
+  animation: chart-draw 760ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.chart .wash,
+.chart .slice {
+  animation: chart-settle 600ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.chart .slice {
+  transform-box: view-box;
+  transform-origin: center;
+}
+
+@keyframes chart-rise {
+  from {
+    transform: scaleY(0);
+  }
+}
+
+@keyframes chart-draw {
+  from {
+    stroke-dashoffset: 1;
+  }
+}
+
+@keyframes chart-settle {
+  from {
+    opacity: 0;
+    transform: scale(0.96);
+  }
+}
+
+/* Which kind the chart is drawn as: a small segment of quiet choices, the chosen one lifted onto the surface. */
+.chart .kinds {
+  display: inline-flex;
+  gap: 2px;
+  padding: 2px;
+  border-radius: 8px;
+  background: var(--ground);
+  box-shadow: inset 0 0 0 1px var(--line);
+}
+
+.chart .kinds button {
+  min-height: 28px;
+  padding: 0 10px;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--muted);
+}
+
+.chart .kinds button:hover {
+  color: var(--ink);
+}
+
+.chart .kinds button[aria-pressed="true"] {
+  background: var(--surface);
+  box-shadow: 0 1px 2px color-mix(in srgb, var(--shade) 12%, transparent), 0 0 0 1px var(--line);
+  font-weight: 600;
+  color: var(--ink);
+}
+
+.chart .kinds + .quiet {
+  margin-inline-start: 4px;
 }
 
 .chart .cross {
@@ -1874,7 +1960,11 @@ textarea::placeholder {
 @media (prefers-reduced-motion: reduce) {
   .ring,
   .dots span,
-  .sketch span {
+  .sketch span,
+  .chart .bar,
+  .chart path.line,
+  .chart .wash,
+  .chart .slice {
     animation: none;
   }
 

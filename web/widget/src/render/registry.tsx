@@ -32,6 +32,8 @@ const Chart = (props: FenceProps) => (
   </Suspense>
 );
 
+const PLOTTING = /\b(?:plt|ax\w*|px)\.(?:plot|bar|barh|scatter|step|pie|line|area)\s*\(/;
+
 /** Fenced-block languages with a renderer of their own. Anything else is code. */
 const FENCES: Record<string, ComponentType<FenceProps>> = { chart: Chart };
 
@@ -44,6 +46,8 @@ export const isBoxArt = (code: string) =>
  *  growing. */
 export function fenceRenderer(language: string, code = "", closed = true): ComponentType<FenceProps> {
   if (language === "mermaid" || (language !== "chart" && isBoxArt(code))) return closed ? Diagram : Code;
+  // Python that plots: its chart is drawn over it when the values are written into the code (derive.ts).
+  if (closed && /^(?:python3?|py)$/i.test(language) && PLOTTING.test(code)) return Chart;
   return isDiagram(code) ? Diagram : (FENCES[language] ?? Code);
 }
 

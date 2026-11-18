@@ -66,7 +66,7 @@ for (const colorScheme of ["light", "dark"] as const) {
     });
 
     // Rendered answers (M3), from the example gallery the unit tests draw.
-    for (const example of ["formatting", "code", "tables", "charts"]) {
+    for (const example of ["formatting", "code", "tables", "charts", "revenue", "plotted"]) {
       test(`an answer drawn from the ${example} example`, async ({ page }) => {
         await page.goto(CHAT);
         await ask(page, `[gallery:${example}]`);
