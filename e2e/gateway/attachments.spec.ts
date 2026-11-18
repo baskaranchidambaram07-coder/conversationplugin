@@ -44,7 +44,8 @@ test("a visitor attaches a document and a picture, asks about them, and saves on
   const saving = page.waitForEvent("download");
   await sent.getByRole("button", { name: "Save Tenancy agreement.pdf" }).click();
   const download = await saving;
-  expect(download.suggestedFilename()).toBe("Tenancy agreement.pdf");
+  // WebKit on Linux saves spaces as underscores; the name the gateway gave is what matters.
+  expect(download.suggestedFilename().replaceAll("_", " ")).toBe("Tenancy agreement.pdf");
 
   const { violations } = await new AxeBuilder({ page }).withTags(["wcag2a", "wcag2aa", "wcag22aa"]).analyze();
   expect(violations.filter((found) => found.impact === "serious" || found.impact === "critical")).toEqual([]);
