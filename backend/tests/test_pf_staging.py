@@ -11,18 +11,17 @@ can be shared. Not tried here: a wrong password, since repeated refusals can loc
 rate limit (5,000 calls a minute); the fake PF and test_pf_wire.py cover both.
 """
 
-import io
 import json
 import os
 import secrets
 import time
-import zipfile
 
 import httpx2
 import pytest
 
 from devstack import staging_profile
 from fakepf.app import FINAL, RECORDED, REF_REFUSED, TEMPLATES
+from fakescan import word_document
 from ucp.connector import Accepted, AgentFile, Final, Text
 from ucp.pf import API, PfConnector, PfProfile
 
@@ -214,27 +213,6 @@ async def test_our_connector_answers_and_after_a_restart_with_a_dead_token_pf_st
 
 MARKER = "MARIGOLD"  # a word only the document holds
 WORD = "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
-PACKAGE = "http://schemas.openxmlformats.org/package/2006"
-WORD_PARTS = {
-    "[Content_Types].xml": f'<Types xmlns="{PACKAGE}/content-types"><Default Extension="rels" '
-    'ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" '
-    'ContentType="application/xml"/><Override PartName="/word/document.xml" '
-    'ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.document.main+xml"/></Types>',
-    "_rels/.rels": f'<Relationships xmlns="{PACKAGE}/relationships"><Relationship Id="rId1" '
-    'Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" '
-    'Target="word/document.xml"/></Relationships>',
-}
-
-
-def word_document(text: str) -> bytes:
-    """A one-paragraph Word document, made by hand so the suite needs no library."""
-    body = '<w:document xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main">'
-    body += f"<w:body><w:p><w:r><w:t>{text}</w:t></w:r></w:p></w:body></w:document>"
-    buffer = io.BytesIO()
-    with zipfile.ZipFile(buffer, "w", zipfile.ZIP_DEFLATED) as archive:
-        for name, part in {**WORD_PARTS, "word/document.xml": body}.items():
-            archive.writestr(name, part)
-    return buffer.getvalue()
 
 
 def test_pf_reads_a_file_then_summarises_it_and_refuses_a_question_that_names_it_as_the_fake_does(client, pf):

@@ -16,6 +16,7 @@ from ucp.gateway.pipeline import Problem
 from ucp.gateway.public import widgets_of
 from ucp.identity import Identity, expiry, verify_provider_token, verify_shared_secret
 from ucp.pf import PfConnector, PfProfile
+from ucp.scan import ScanUnavailable, scan
 from ucp.sessions import ANONYMOUS_SECONDS, Keys, Limiter, Session, anonymous_user
 from ucp.store import Owner, Store, TurnInProgress, UnknownAttachment
 from ucp.turns import Turns
@@ -306,6 +307,14 @@ async def upload(
         clean, kind = files.checked(name, data)
     except ValueError as error:
         raise Problem("invalid_request") from error
+    try:
+        found = await scan(request.app.state.scanner, data)
+    except ScanUnavailable as error:  # fails closed: a file nothing has scanned is never kept
+        log.error("an upload to widget %s was refused unscanned: %s", session.widget_id, error)
+        raise Problem("assistant_unavailable", retryable=True, retry_after=30) from error
+    if found:
+        log.warning("an upload to widget %s was refused: the scan found %s", session.widget_id, found)
+        raise Problem("unsafe_file")
     block = await _store(request).add_file(owner(session), conversation_id, clean, kind, data)
     if not block:
         raise Problem("not_found")

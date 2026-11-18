@@ -37,6 +37,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse, RedirectResponse, Response
 from sqlalchemy.ext.asyncio import create_async_engine
 
+import fakescan
 from tests.fakeidp import FakeProvider
 from ucp import migrate
 from ucp.admin.app import create_app as admin_api
@@ -195,6 +196,7 @@ def main() -> None:
     migrate.upgrade(url)
     asyncio.run(_publish(url))
     pf = None if staging else _start_fake_pf()
+    scanner = fakescan.start(8310)  # the stand-in for ClamAV, which finds the EICAR test file
     settings = Settings(
         database_url=url,
         web_dir=ROOT / "web",
@@ -203,6 +205,7 @@ def main() -> None:
         host_secrets=json.dumps(_widgets_file()["test_host_secrets"]),
         signed_in_seconds=int(os.environ.get("UCP_SIGNED_IN_SECONDS", "900")),
         secrets_key=new_key(),  # the admin API seals tenants' secrets with it, the gateway opens them
+        clamd_address=f"127.0.0.1:{scanner}",
     )
     _start_control_plane(url, settings)
     try:

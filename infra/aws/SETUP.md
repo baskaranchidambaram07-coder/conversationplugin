@@ -10,7 +10,7 @@ Plan on about an hour for a first install, most of it waiting for AWS.
 |---|---|---|
 | Two web addresses, for the chat and for the admin console | Amazon CloudFront | HTTPS on addresses AWS provides, such as `https://d1234abcd.cloudfront.net` |
 | Load balancer | Application Load Balancer | Only CloudFront can reach it, and only requests that carry CloudFront's secret header get through |
-| The chat's server and the admin console's API | Amazon ECS on Fargate | One task (1 vCPU, 2 GB) running two containers. Only the load balancer can reach it. The image is pulled from GitHub's container registry, pinned to this version |
+| The chat's server and the admin console's API | Amazon ECS on Fargate | One task (1 vCPU, 6 GB) running three containers: the chat's server, the admin API and ClamAV, which scans every attached file. Only the load balancer can reach it. The image is pulled from GitHub's container registry, pinned to this version |
 | Database | Amazon RDS for PostgreSQL 17 | Private, encrypted, with a standby in a second zone and 7 days of point-in-time backups |
 | Secrets | AWS Secrets Manager | Under `NAME/`, where NAME is the name you choose in step 1 |
 | Administrators' sign-in | Amazon Cognito | By invitation only, with an authenticator app required |
@@ -43,7 +43,7 @@ Copy `infra/aws/environments/example.tfvars.json` to `infra/aws/environments/pro
 | `name` | The start of every resource's name: 4 to 20 lower-case letters, digits and hyphens, starting with a letter. It can't change once built | `ucp-prod` |
 | `environment` | The `environment` tag on every resource. The access policies check it | `prod` |
 | `region` | Where everything is built | `eu-west-2` |
-| `gateway_cpu`, `gateway_memory` | The server's size (1024 is one vCPU; memory in MB) | `1024`, `2048` |
+| `gateway_cpu`, `gateway_memory` | The server's size (1024 is one vCPU; memory in MB) | `1024`, `6144` (ClamAV needs most of it) |
 | `database_class` | The database's size | `db.t4g.small` |
 | `database_multi_az` | A standby database in a second zone, which takes over if the first fails. It roughly doubles the database's cost | `true` |
 | `protect_data` | The database and the administrators' sign-in pool refuse to be deleted | `true` |
@@ -186,14 +186,14 @@ These are rough figures from AWS list prices, for `us-east-1` with the example s
 
 | Part | Roughly, per month |
 |---|---|
-| Server (Fargate, 1 vCPU and 2 GB, always on) | US$36 |
+| Server (Fargate, 1 vCPU and 6 GB, always on) | US$49 |
 | Load balancer | US$20 |
 | Database (`db.t4g.small` with a standby, 20 GB) | US$50 |
 | Public IPv4 addresses (load balancer and server) | US$11 |
 | Secrets, logs, alarms | US$5 |
 | CloudFront and data transfer | Depends on traffic; small for text chat |
 | Cognito, for a few administrators | Expected to be free |
-| **Always on** | **about US$120 to 140** |
+| **Always on** | **about US$135 to 155** |
 | **Asleep** | **about US$5 to 10** (storage, secrets and backups) |
 
 ## Security in brief

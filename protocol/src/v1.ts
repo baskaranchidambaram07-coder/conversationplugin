@@ -174,6 +174,7 @@ export interface ApiError {
     | "not_found"
     | "turn_in_progress"
     | "conflict"
+    | "unsafe_file"
     | "rate_limited"
     | "assistant_unavailable"
     | "internal_error";

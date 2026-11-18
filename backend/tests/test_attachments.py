@@ -6,16 +6,20 @@ import secrets
 
 import httpx2
 import pytest
+from fastapi.testclient import TestClient
 from sqlalchemy.ext.asyncio import create_async_engine
 
+from fakescan import infected_word_document
 from tests import test_turns
 from tests.test_files import DOCX, JPEG, PDF, PNG
 from tests.test_public import PUBLIC, document
-from tests.test_turns import PF_ID, Visitor, events, wait_for
+from tests.test_turns import PF_ID, Visitor, events, settings_for, wait_for
+from ucp.gateway.app import create_app
 from ucp.store import Store
 from ucp.widgets import seed
 
 gateway = test_turns.gateway  # the same fixture
+BASE = "https://chat.example.net"
 
 
 @pytest.fixture
@@ -127,3 +131,26 @@ def test_only_the_upload_route_takes_a_large_body(gateway, attaching):
     big_question = {"text": "x", "client_message_id": "k_1", "padding": "x" * (100 * 1024)}
     url = f"/v1/conversations/{conversation}/messages"
     assert gateway.post(url, json=big_question, headers=visitor.headers).json()["code"] == "invalid_request"
+
+
+def test_a_file_carrying_a_virus_is_refused_and_never_kept(gateway, attaching, fake_pf):
+    visitor = Visitor(gateway, attaching["on"])
+    conversation = visitor.conversation()
+
+    refused = upload(visitor, conversation, "essay.docx", infected_word_document())
+
+    assert (refused.status_code, refused.json()["code"]) == (422, "unsafe_file")
+    assert ask(visitor, conversation, "Read it", ["f_any"]).json()["code"] == "invalid_request"  # nothing to send
+    assert "essay.docx" not in str(httpx2.get(f"{fake_pf}/_fake/uploads").json())  # PF never had it
+
+
+def test_with_no_scanner_answering_every_file_is_refused_unscanned(database_url, fake_pf, attaching):
+    with TestClient(create_app(settings_for(database_url, fake_pf, "127.0.0.1:9")), base_url=BASE) as client:
+        visitor = Visitor(client, attaching["on"])
+        refused = upload(visitor, visitor.conversation(), "lease.pdf", PDF)
+
+    assert (refused.status_code, refused.json()["code"], refused.json()["retryable"]) == (
+        503,
+        "assistant_unavailable",
+        True,
+    )

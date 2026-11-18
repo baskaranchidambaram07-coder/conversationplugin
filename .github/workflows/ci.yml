@@ -30,8 +30,22 @@ jobs:
           --health-interval 5s
           --health-timeout 5s
           --health-retries 10
+      # The real ClamAV, with its signatures in the image, as beside the gateway on AWS (infra/aws/stack/service.tf).
+      clamav:
+        image: clamav/clamav:1.5.4-debian@sha256:6982509b9e1415bf23cb49d0c55872fdd57fd2b92be33fa26d487da42d322076
+        env:
+          CLAMAV_NO_FRESHCLAMD: "true" # the signatures in the image are enough for a test run
+        ports:
+          - 3310:3310
+        options: >-
+          --health-cmd "clamdcheck.sh"
+          --health-interval 10s
+          --health-timeout 10s
+          --health-retries 30
+          --health-start-period 30s
     env:
       TEST_DATABASE_URL: postgresql+asyncpg://ucp:ci-only@127.0.0.1:5432/ucp_test
+      UCP_TEST_CLAMD: 127.0.0.1:3310
     defaults:
       run:
         working-directory: backend
@@ -45,6 +59,8 @@ jobs:
       - run: uv run ruff format --check .
       - run: uv run ruff check ../infra && uv run ruff format --check ../infra
       - run: uv run pytest
+      - name: The real ClamAV found the test virus (the test must have run, not skipped)
+        run: uv run pytest tests/test_scan.py -k real_clamav -v -rs | tee scan.log && grep -q PASSED scan.log
 
   web:
     name: Web checks, builds and browser tests
