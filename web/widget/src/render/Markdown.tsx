@@ -8,7 +8,7 @@ import remarkGfm from "remark-gfm";
 import { Icon } from "../Icon";
 import { strings as t } from "../strings";
 import { safeHref } from "./links";
-import { fenceRenderer } from "./registry";
+import { fenceRenderer, isBoxArt } from "./registry";
 import { Table } from "./Table";
 
 function Link({ href, children }: { href: string | null; children: ReactNode }) {
@@ -64,7 +64,42 @@ const components: Components = {
   },
 };
 
-export default function Markdown({ text }: { text: string }) {
+const FENCE = /^ {0,3}(`{3,}|~{3,})/;
+const DRAWN = /[┌┐└┘├┤┬┴┼│─▼▲►◄]/;
+
+/** A drawing in box-drawing characters that an agent wrote straight into its answer, outside a fenced block, fenced
+ *  so its spacing survives and it can be drawn. */
+export function fenceDrawings(text: string): string {
+  const out: string[] = [];
+  let run: string[] = [];
+  let held: string[] = []; // indented words inside a drawing, such as "Yes" on a line going down
+  let fence = "";
+  const flush = () => {
+    out.push(...(isBoxArt(run.join("\n")) ? ["```", ...run, "```"] : run), ...held);
+    [run, held] = [[], []];
+  };
+  for (const line of text.split("\n")) {
+    const mark = FENCE.exec(line)?.[1];
+    if (fence) {
+      if (mark?.startsWith(fence)) fence = "";
+    } else if (mark) fence = mark;
+    else if (DRAWN.test(line)) {
+      run.push(...held, line);
+      held = [];
+      continue;
+    } else if (run.length && /^\s+\S/.test(line) && line.trim().length <= 40) {
+      held.push(line);
+      continue;
+    }
+    flush();
+    out.push(line);
+  }
+  flush();
+  return out.join("\n");
+}
+
+export default function Markdown({ text: given }: { text: string }) {
+  const text = DRAWN.test(given) ? fenceDrawings(given) : given;
   return (
     <div className="md">
       {/* Every address is judged once, by safeHref in the components above; the library's own filter would drop tel: */}

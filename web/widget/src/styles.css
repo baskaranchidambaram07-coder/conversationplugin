@@ -562,6 +562,12 @@ h1 {
   scrollbar-width: thin;
 }
 
+/* A drawing in box-drawing characters: lines set close enough that its upright strokes join. */
+.code pre.art,
+.diagram pre.art {
+  line-height: 1.15; /* Consolas's box strokes part at 1.2 */
+}
+
 .code .quiet,
 .tools .quiet {
   flex-shrink: 0;

@@ -580,6 +580,7 @@ Links in Chat Ink, 1px underline 3px below, 2px on hover. Blockquote on Bubble G
 - **Code panel:** Chat Ground, hairline ring, 12px, clipped; a caption row (language in 650 13px Muted, quiet Copy) over a hairline; the body in Code, 12px 14px.
 - **Table:** Chat Surface frame; header row filled with the hairline colour, 700, sticky; cells 8px 12px, at least 8ch, top-aligned, hairlines between rows and columns, no striping; a tools row (Copy as CSV, Show all) under a hairline.
 - **Diagram:** a white sheet in both schemes; the source's own plain colours kept; tools to copy it or show its code.
+- **Flowchart drawn in text:** box-drawing art redrawn on the same sheet: 10px-cornered cards with an ink edge, a bold 14px heading over a 13px body in warm grey (#44403c), lists flush left with their further lines hanging, cards as wide as two side by side allow at the drawing's smallest size (180 to 320px). Its tools are "Copy text" and "Show text"; the text, like any drawing left as text, is set at 1.15 so its strokes join.
 - **Chart:** title 650 15px; legend Muted 13px, each name after its key (10px square, 14px stroke, or dot); series in the fixed palette; 1px hairline grid, the zero line at ink 30%, 12px Muted ticks in even figures; lines 2px round, areas a 10% wash, dots and slices ringed and gapped by the surface; a floating tip (surface, hairline, 10px) with values in ink 650 before their names. "Show as table" opens the numbers right-aligned.
 
 ### Your chats

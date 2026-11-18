@@ -7,9 +7,10 @@ import { useId, useMemo, useRef, useState } from "react";
 import { CopyButton, Icon } from "../Icon";
 import { strings as t } from "../strings";
 import { Code } from "./Code";
+import { fromBoxArt, widestFor } from "./boxart";
 import { fromMermaid } from "./mermaid";
 import { type Line, type Point, sceneOf, type Shape } from "./scene";
-import type { FenceProps } from "./registry";
+import { type FenceProps, isBoxArt } from "./registry";
 import { useRoom } from "./room";
 
 const PAD = 12;
@@ -152,11 +153,16 @@ function LineView({ line }: { line: Line }) {
 }
 
 export default function Diagram({ code, language }: FenceProps) {
-  const scene = useMemo(() => (language === "mermaid" ? fromMermaid(code) : sceneOf(code)), [code, language]);
+  const frame = useRef<HTMLDivElement>(null);
+  const room = useRoom(frame, code);
+  const art = language !== "mermaid" && isBoxArt(code);
+  const widest = art ? widestFor(room) : 0; // a drawing from text is laid out to fit the frame
+  const scene = useMemo(
+    () => (language === "mermaid" ? fromMermaid(code) : art ? fromBoxArt(code, widest) : sceneOf(code)),
+    [code, language, art, widest],
+  );
   const [showCode, setShowCode] = useState(false);
   const described = useId();
-  const frame = useRef<HTMLDivElement>(null);
-  const room = useRoom(frame, scene);
   if (!scene) return <Code code={code} language={language} />;
 
   // The drawing's extent: every shape (with a person's name under them), every line and every line's label.
@@ -184,6 +190,7 @@ export default function Diagram({ code, language }: FenceProps) {
   const shown = Math.max(width * smallest, Math.min(width, room || width));
 
   const shapes = scene.shapes.filter((s) => s.kind !== "text");
+  const fromText = scene.kind === "text"; // drawn from box-drawing characters, so its source is text, not code
   const flat = (words: string) => words.replace(/\s+/g, " ").trim();
   const description = [
     ...scene.shapes.map((s) => flat(s.label)).filter(Boolean),
@@ -194,7 +201,7 @@ export default function Diagram({ code, language }: FenceProps) {
 
   return (
     <figure className="diagram">
-      <div className="scroll" ref={frame} tabIndex={0} role="region" aria-label={t.diagram(scene.kind)}>
+      <div className="scroll" ref={frame} tabIndex={0} role="region" aria-label={fromText ? t.flowchart : t.diagram(scene.kind)}>
         <svg
           viewBox={`${left} ${top} ${width} ${height}`}
           role="img"
@@ -213,15 +220,15 @@ export default function Diagram({ code, language }: FenceProps) {
         </svg>
       </div>
       {showCode && (
-        <pre tabIndex={0} role="region" aria-label={t.diagramSource}>
+        <pre className={fromText ? "art" : undefined} tabIndex={0} role="region" aria-label={fromText ? t.drawing : t.diagramSource}>
           <code>{code}</code>
         </pre>
       )}
       <div className="tools">
-        <CopyButton text={code} label={t.copyFor(scene.kind)} />
+        <CopyButton text={code} label={fromText ? t.copyText : t.copyFor(scene.kind)} />
         <button type="button" className="quiet" aria-expanded={showCode} onClick={() => setShowCode(!showCode)}>
           <Icon path="M8 7l-5 5 5 5M16 7l5 5-5 5" />
-          {showCode ? t.hideCode : t.showCode}
+          {fromText ? (showCode ? t.hideText : t.showText) : showCode ? t.hideCode : t.showCode}
         </button>
       </div>
     </figure>
