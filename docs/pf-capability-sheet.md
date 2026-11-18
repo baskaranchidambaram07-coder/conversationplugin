@@ -122,6 +122,8 @@ Still open:
 5. Can per-user context be passed to the agent?
 6. How are files attached to a conversation message, and is there speech-to-text or text-to-speech for conversation agents?
 
+   Partly answered on 18 November 2026: PF takes doc, docx, pdf, jpg, jpeg and png. The call that uploads a file and gives its ID is still to come from the PF team. Until then the connector (`PfConnector._upload` in `backend/ucp/pf.py`) uses a provisional shape: the bytes as the body of `POST .../conversation/upload` with the conversation and name in the address, answering a `file_id`. The question then names the IDs in `ref_file_ids`, a field PF's message record already has (section 4). The fake PF mirrors this, so attachments are proven end to end against the fake only.
+
 ## 11. Recorded samples
 
 The raw streams and results are in `spikes/pf_capture_out/`, which is excluded from version control because the files contain staging identifiers. Cleaned copies, with every identifier replaced, are in `backend/fakepf/recordings/`, made by `spikes/clean_pf_recordings.py`. They are the test data for the fake PF and the connector tests. `backend/tests/test_pf_staging.py` compares their event order and fields with what staging sends, so a change in PF shows up as a failing test rather than as a fake that no longer matches.

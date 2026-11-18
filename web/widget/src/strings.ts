@@ -48,7 +48,7 @@ export const strings = {
   actionFailed: "That did not work. Please try again.",
   pinned: "Pinned",
   pin: "Pin answer",
-  unpin: "Unpin",
+  unpinOne: (question: string) => (question ? `Unpin the answer to: ${question}` : "Unpin this answer"),
   pinnedNow: "Answer pinned",
   unpinnedNow: "Answer unpinned",
   noPins: "Pin an answer to find it here later.",

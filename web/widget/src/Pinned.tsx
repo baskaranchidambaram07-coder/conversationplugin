@@ -14,6 +14,7 @@ export const PIN = "M9 3h6M10 3v6l-3 4h10l-3-4V3M12 13v8";
 export function excerpt(markdown: string): string {
   return markdown
     .replace(/^\s*```.*$/gm, " ") // fence lines
+    .replace(/^\s{0,3}#{1,6}\s+(.+?)\s*$/gm, "$1.") // a heading ends as a sentence, not run into what follows
     .replace(/^\s{0,3}(#{1,6}|>|[-*+]|\d+\.)\s+/gm, "") // heading, quote and list markers
     .replace(/!?\[([^\]]*)\]\([^)]*\)/g, "$1") // links and images keep their words
     .replace(/[*_`~]+/g, "") // emphasis and code marks
@@ -116,7 +117,12 @@ export function PinnedPage({
                   <time dateTime={pin.pinned_at}>{when(pin.pinned_at)}</time>
                 </span>
               </button>
-              <button type="button" className="quiet thumb" aria-label={t.unpin} onClick={() => void unpin(pin)}>
+              <button
+                type="button"
+                className="quiet thumb"
+                aria-label={t.unpinOne(pin.question ?? pin.conversation.title ?? "")}
+                onClick={() => void unpin(pin)}
+              >
                 <Icon path={PIN} filled />
               </button>
               {refused === pin.message.id && (

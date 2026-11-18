@@ -26,7 +26,8 @@ export function Feedback({ initial, rate, say }: { initial: Rating | null; rate:
   const field = useRef<HTMLTextAreaElement>(null);
 
   useEffect(() => {
-    if (asking) field.current?.focus();
+    // Not on a touch screen: focusing would raise the keyboard over the chat for a comment that is optional.
+    if (asking && !window.matchMedia?.("(pointer: coarse)").matches) field.current?.focus();
   }, [asking]);
 
   useEffect(() => {

@@ -1,6 +1,6 @@
 {
   "schemaVersion": 2,
-  "generatedAt": "2026-11-17T15:06:59.663Z",
+  "generatedAt": "2026-11-18T12:00:00.000Z",
   "title": "Design System: Conversation Plugin",
   "extensions": {
     "colorMeta": {
@@ -727,6 +727,10 @@
         "displayName": "Welcome",
         "purpose": "An empty chat's first line; 26px on wide frames."
       },
+      "chat-page-title": {
+        "displayName": "Page title",
+        "purpose": "The h2 of a page in the conversation's place: Projects, a project, Pinned."
+      },
       "answer-heading": {
         "displayName": "Answer heading",
         "purpose": "A rendered answer's h2 (Markdown h1). The chat's title is the only h1."
@@ -830,6 +834,16 @@
         "name": "spin",
         "value": "1turn, 0.9s linear infinite",
         "purpose": "The 28px loading ring."
+      },
+      {
+        "name": "found",
+        "value": "Bubble Grey wash (8px spread) to transparent, 2.4s ease-out, once",
+        "purpose": "An answer opened from the Pinned page. It does not move, so it plays under reduced motion."
+      },
+      {
+        "name": "upload",
+        "value": "inline-size 0.15s linear",
+        "purpose": "A file card's 2px ink progress line."
       }
     ],
     "breakpoints": [
@@ -953,6 +967,30 @@
       "description": "The six-station stepper: done, now, next.",
       "html": "<ol class=\"ds-track\"><li class=\"done\"><span class=\"dot\"><svg viewBox=\"0 0 24 24\" width=\"16\" height=\"16\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M5 12.5l4.5 4.5L19 7.5\"/></svg></span>Agent<small>Done</small></li><li class=\"now\"><span class=\"dot\">2</span>Sites<small>about 2 min</small></li><li><span class=\"dot\">3</span>Sign-in<small>about 3 min</small></li></ol>",
       "css": ".ds-track{display:grid;grid-template-columns:repeat(3,1fr);margin:0;padding:0;list-style:none;font:500 14px 'Inter Variable',Inter,system-ui,sans-serif;color:#111827;text-align:center}.ds-track li{display:grid;justify-items:center;gap:1px}.ds-track small{color:#6b7280;font-size:12.5px;font-weight:400}.ds-track .dot{display:grid;place-items:center;width:28px;height:28px;margin-bottom:8px;border-radius:50%;background:#fff;box-shadow:0 0 0 1.5px #e5e7eb;color:#6b7280;font-size:12.5px;font-weight:600}.ds-track .done .dot{background:#4f46e5;box-shadow:none;color:#fff}.ds-track .now .dot{color:#4338ca;box-shadow:0 0 0 2px #fff,0 0 0 4px #4f46e5,0 0 0 8px rgb(79 70 229/.2)}"
+    },
+    {
+      "name": "Answer Toggles",
+      "kind": "button",
+      "refersTo": "answer-toggle",
+      "description": "Pin and thumbs under a finished answer; chosen fills in ink, never the brand.",
+      "html": "<div class=\"ds-acts\"><button class=\"ds-toggle\" aria-label=\"Pin\" aria-pressed=\"true\"><svg viewBox=\"0 0 24 24\" width=\"16\" height=\"16\" fill=\"currentColor\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M9 3h6M10 3v6l-3 4h10l-3-4V3M12 13v8\"/></svg></button><button class=\"ds-toggle\" aria-label=\"Helpful\" aria-pressed=\"false\"><svg viewBox=\"0 0 24 24\" width=\"16\" height=\"16\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M7 10v11H4a1 1 0 0 1-1-1v-9a1 1 0 0 1 1-1zM7 10l4-7a2 2 0 0 1 3 2l-1 5h6a2 2 0 0 1 2 2.3l-1.4 7A2 2 0 0 1 17.6 21H7\"/></svg></button><span class=\"ds-rated\">Thanks</span></div>",
+      "css": ".ds-acts{display:flex;align-items:center;gap:2px}.ds-toggle{display:grid;place-items:center;width:32px;height:32px;padding:8px;border:0;border-radius:8px;background:transparent;color:#6b6a68;cursor:pointer;transition:background-color .15s ease-out,color .15s ease-out}.ds-toggle:hover{background:color-mix(in srgb,#1f1e1d 6%,transparent);color:#1f1e1d}.ds-toggle[aria-pressed=\"true\"]{color:#1f1e1d}.ds-toggle:focus-visible{outline:3px solid #1f1e1d;outline-offset:2px}.ds-rated{padding-inline:8px;font:400 13px 'Inter Variable',Inter,system-ui,sans-serif;color:#6b6a68}"
+    },
+    {
+      "name": "Place Row",
+      "kind": "nav",
+      "refersTo": "place-row",
+      "description": "Projects and Pinned above Your chats; the current place on Bubble Grey.",
+      "html": "<ul class=\"ds-places\"><li><button aria-current=\"page\">Projects</button></li><li><button>Pinned</button></li></ul>",
+      "css": ".ds-places{display:grid;gap:2px;margin:0;padding:0;list-style:none;max-width:288px}.ds-places button{display:flex;align-items:center;width:100%;min-height:40px;padding:8px 12px;border:0;border-radius:10px;background:transparent;color:#1f1e1d;font:500 15px 'Inter Variable',Inter,system-ui,sans-serif;text-align:start;cursor:pointer;transition:background-color .15s ease-out}.ds-places button:hover{background:color-mix(in srgb,#1f1e1d 5%,transparent)}.ds-places button[aria-current=\"page\"]{background:#f0efeb}.ds-places button:focus-visible{outline:3px solid #1f1e1d;outline-offset:2px}"
+    },
+    {
+      "name": "File Card",
+      "kind": "card",
+      "refersTo": "file-card",
+      "description": "An attached file: thumbnail, name, size, remove, and a thin ink line while it uploads.",
+      "html": "<div class=\"ds-file\"><span class=\"ds-file-thumb\"><svg viewBox=\"0 0 24 24\" width=\"18\" height=\"18\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z\"/><path d=\"M14 3v5h5\"/></svg></span><span class=\"ds-file-name\">Tenancy agreement.pdf</span><span class=\"ds-file-size\">240 KB</span><button class=\"ds-file-remove\" aria-label=\"Remove\"><svg viewBox=\"0 0 24 24\" width=\"16\" height=\"16\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\"><path d=\"M6 6l12 12M18 6L6 18\"/></svg></button><span class=\"ds-file-progress\"><span style=\"inline-size:60%\"></span></span></div>",
+      "css": ".ds-file{position:relative;display:grid;grid-template-columns:32px minmax(0,1fr) auto;grid-template-areas:\"thumb name remove\" \"thumb size remove\";align-items:center;column-gap:8px;max-width:220px;padding:6px 4px 6px 6px;border:1px solid #e6e4e0;border-radius:12px;background:#fff;color:#1f1e1d;font-family:'Inter Variable',Inter,system-ui,sans-serif}.ds-file-thumb{grid-area:thumb;display:grid;place-items:center;width:32px;height:32px;border-radius:8px;background:#f0efeb;color:#6b6a68}.ds-file-name{grid-area:name;overflow:hidden;font-size:13px;font-weight:500;line-height:1.3;white-space:nowrap;text-overflow:ellipsis}.ds-file-size{grid-area:size;font-size:12px;line-height:1.3;color:#6b6a68}.ds-file-remove{grid-area:remove;display:grid;place-items:center;width:28px;height:28px;padding:0;border:0;border-radius:8px;background:transparent;color:#6b6a68;cursor:pointer}.ds-file-remove:hover{background:color-mix(in srgb,#1f1e1d 6%,transparent);color:#1f1e1d}.ds-file-remove:focus-visible{outline:3px solid #1f1e1d;outline-offset:2px}.ds-file-progress{position:absolute;inset-inline:10px;inset-block-end:3px;height:2px;overflow:hidden;border-radius:1px;background:#e6e4e0}.ds-file-progress>span{display:block;height:100%;background:#1f1e1d}"
     }
   ],
   "narrative": {
@@ -1014,8 +1052,10 @@
       "Do go full screen under 600px wide or 520px tall, with no radius and no border.",
       "Do use the two-tone ring (3px white, 7px ink band) on anything drawn over the host page.",
       "Do keep the console's green, amber and red for state alone.",
-      "Do stop every animation while the panel is closed, and under reduced motion remove the rise, lift, press, spin and greeting animation, keeping only the fade; the dots and sketch bars hold still at 60%.",
-      "Do give every edge drawn as a box-shadow a 1px `CanvasText` border under forced colours, and mark the current chat's row with a 2px `Highlight` outline.",
+      "Do fill a chosen toggle (a thumb, the pin) in Chat Ink; pressed state never takes the brand.",
+      "Do open the chat's own small cards (feedback comment, filing, confirmation, files) flat, in Chat Surface with a 1px hairline and a 12px corner, and give any field in them the composer's focus.",
+      "Do stop every animation while the panel is closed, and under reduced motion remove the rise, lift, press, spin and greeting animation, keeping only the fade; the dots and sketch bars hold still at 60%, and the found-answer wash still fades because it does not move.",
+      "Do give every edge drawn as a box-shadow a 1px `CanvasText` border under forced colours, mark the current chat's row, place or filing option with a 2px `Highlight` outline, give a field that shows focus by box-shadow a transparent outline, and draw an upload's progress line in `CanvasText`.",
       "Do use logical properties, and mirror directional glyphs in right-to-left."
     ],
     "donts": [
