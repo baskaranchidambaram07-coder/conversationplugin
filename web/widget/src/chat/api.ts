@@ -7,6 +7,8 @@ import type {
   Feedback,
   Message,
   MessagePage,
+  Project,
+  ProjectPage,
   SendMessage,
   Session,
   SessionRequest,
@@ -78,8 +80,34 @@ export function gateway(widgetId: string, hostToken: () => Promise<string | null
 
   return {
     start,
-    async conversation(): Promise<Conversation> {
-      return (await authorised("/v1/conversations", { method: "POST" })).json();
+    /** A new chat, inside a project when one is named. */
+    async conversation(projectId?: string): Promise<Conversation> {
+      const filed = projectId ? { headers: JSON_TYPE, body: JSON.stringify({ project_id: projectId }) } : {};
+      return (await authorised("/v1/conversations", { method: "POST", ...filed })).json();
+    },
+    /** Files a chat under a project, or under none with null. */
+    async file(conversationId: string, projectId: string | null): Promise<Conversation> {
+      const body = JSON.stringify({ project_id: projectId });
+      return (await authorised(`/v1/conversations/${conversationId}`, { method: "PATCH", headers: JSON_TYPE, body })).json();
+    },
+    async projects(): Promise<Project[]> {
+      return ((await (await authorised("/v1/projects")).json()) as ProjectPage).projects;
+    },
+    async createProject(name: string): Promise<Project> {
+      const init = { method: "POST", headers: JSON_TYPE, body: JSON.stringify({ name }) };
+      return (await authorised("/v1/projects", init)).json();
+    },
+    async renameProject(projectId: string, name: string): Promise<Project> {
+      const init = { method: "PATCH", headers: JSON_TYPE, body: JSON.stringify({ name }) };
+      return (await authorised(`/v1/projects/${projectId}`, init)).json();
+    },
+    async deleteProject(projectId: string): Promise<void> {
+      await authorised(`/v1/projects/${projectId}`, { method: "DELETE" });
+    },
+    /** A project's chats, most recently active first. shortcut: the newest 50; page on when someone keeps more. */
+    async projectChats(projectId: string): Promise<Conversation[]> {
+      const page = (await (await authorised(`/v1/conversations?project=${projectId}&limit=50`)).json()) as ConversationPage;
+      return page.conversations;
     },
     /** The streamed reply; read its body with eventReader(). */
     send(conversationId: string, body: SendMessage, signal?: AbortSignal): Promise<Response> {

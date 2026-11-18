@@ -33,7 +33,7 @@ from sqlalchemy.dialects.postgresql import JSONB, distinct_on
 from sqlalchemy.dialects.postgresql import insert as pg_insert
 from sqlalchemy.ext.asyncio import AsyncEngine
 
-from ucp.protocol import ApiError, Block, Conversation, Message
+from ucp.protocol import ApiError, Block, Conversation, Message, Project
 
 metadata = MetaData()
 _BLOCK = TypeAdapter(Block)
@@ -130,6 +130,19 @@ images = Table(
     Column("created_by", Text, nullable=False),
 )
 
+# A signed-in visitor's folders of chats (0009). Deleting one leaves its chats, unfiled.
+projects = Table(
+    "projects",
+    metadata,
+    Column("id", Text, primary_key=True),
+    Column("tenant_id", Text, nullable=False),
+    Column("widget_id", Text, nullable=False),
+    Column("user_id", Text, nullable=False),
+    Column("name", Text, nullable=False),
+    *_times(),
+    Index("projects_by_owner", "tenant_id", "widget_id", "user_id"),
+)
+
 conversations = Table(
     "conversations",
     metadata,
@@ -140,7 +153,9 @@ conversations = Table(
     Column("agent_conversation_id", Text),
     Column("title", Text),
     *_times(),
+    Column("project_id", Text, ForeignKey("projects.id", ondelete="SET NULL")),
     Index("conversations_by_owner", "tenant_id", "widget_id", "user_id", "updated_at"),
+    Index("conversations_by_project", "project_id", "updated_at"),
 )
 
 messages = Table(
@@ -244,7 +259,13 @@ class TurnInProgress(Exception):
 
 
 def _conversation(row) -> Conversation:
-    return Conversation(id=row.id, title=row.title, created_at=row.created_at, updated_at=row.updated_at)
+    return Conversation(
+        id=row.id, title=row.title, created_at=row.created_at, updated_at=row.updated_at, project_id=row.project_id
+    )
+
+
+def _project(row) -> Project:
+    return Project(id=row.id, name=row.name, created_at=row.created_at, updated_at=row.updated_at)
 
 
 def _message(row) -> Message:
@@ -403,9 +424,12 @@ class Store:
             & (conversations.c.user_id == owner.user_id)
         )
 
-    async def create_conversation(self, owner: Owner) -> Conversation:
-        values = {"id": new_id("c"), **owner.__dict__}
+    async def create_conversation(self, owner: Owner, project_id: str | None = None) -> Conversation | None:
+        """A new chat, filed under one of the owner's projects if named. None if the project is not theirs."""
+        values = {"id": new_id("c"), **owner.__dict__, "project_id": project_id}
         async with self.engine.begin() as db:
+            if project_id and not await self._project_of(db, owner, project_id):
+                return None
             row = (await db.execute(insert(conversations).values(values).returning(conversations))).one()
         return _conversation(row)
 
@@ -415,15 +439,87 @@ class Store:
             row = (await db.execute(query)).first()
         return _conversation(row) if row else None
 
-    async def conversations(self, owner: Owner, before: tuple[datetime, str] | None, limit: int) -> list[Conversation]:
-        """Most recently active first. `before` is the (updated_at, id) of the last one already shown: the ID breaks
-        ties, so two conversations active at the same instant are neither skipped nor shown twice."""
+    async def conversations(
+        self, owner: Owner, before: tuple[datetime, str] | None, limit: int, project_id: str | None = None
+    ) -> list[Conversation]:
+        """Most recently active first, of one project if named. `before` is the (updated_at, id) of the last one
+        already shown: the ID breaks ties, so two conversations active at the same instant are neither skipped nor
+        shown twice."""
         query = select(conversations).where(self._owned(owner))
+        if project_id:
+            query = query.where(conversations.c.project_id == project_id)
         if before:
             query = query.where(tuple_(conversations.c.updated_at, conversations.c.id) < tuple_(*before))
         query = query.order_by(conversations.c.updated_at.desc(), conversations.c.id.desc()).limit(limit)
         async with self.engine.connect() as db:
             return [_conversation(row) for row in await db.execute(query)]
+
+    async def file_conversation(
+        self, owner: Owner, conversation_id: str, project_id: str | None
+    ) -> Conversation | None:
+        """Files one of the owner's chats under one of their projects, or under none. None if either is not theirs.
+        The chat keeps its place in the list: filing it is not activity."""
+        async with self.engine.begin() as db:
+            if project_id and not await self._project_of(db, owner, project_id):
+                return None
+            query = (
+                update(conversations)
+                .where(self._owned(owner) & (conversations.c.id == conversation_id))
+                .values(project_id=project_id)
+                .returning(conversations)
+            )
+            row = (await db.execute(query)).first()
+        return _conversation(row) if row else None
+
+    # Projects (signed-in visitors)
+
+    def _projects_owned(self, owner: Owner):
+        return (
+            (projects.c.tenant_id == owner.tenant_id)
+            & (projects.c.widget_id == owner.widget_id)
+            & (projects.c.user_id == owner.user_id)
+        )
+
+    async def _project_of(self, db, owner: Owner, project_id: str):
+        query = select(projects.c.id).where(self._projects_owned(owner) & (projects.c.id == project_id))
+        return (await db.execute(query)).first()
+
+    async def projects(self, owner: Owner, limit: int = 100) -> list[Project]:
+        """The owner's projects, most recently active first: a project is as recent as its newest chat.
+        shortcut: the newest 100 with no paging; add a cursor when someone keeps more."""
+        active = func.greatest(projects.c.updated_at, func.max(conversations.c.updated_at)).label("active")
+        query = (
+            select(projects.c.id, projects.c.name, projects.c.created_at, active.label("updated_at"))
+            .select_from(projects.outerjoin(conversations, conversations.c.project_id == projects.c.id))
+            .where(self._projects_owned(owner))
+            .group_by(projects.c.id)
+            .order_by(active.desc(), projects.c.id.desc())
+            .limit(limit)
+        )
+        async with self.engine.connect() as db:
+            return [_project(row) for row in await db.execute(query)]
+
+    async def create_project(self, owner: Owner, name: str) -> Project:
+        values = {"id": new_id("p"), **owner.__dict__, "name": name}
+        async with self.engine.begin() as db:
+            return _project((await db.execute(insert(projects).values(values).returning(projects))).one())
+
+    async def rename_project(self, owner: Owner, project_id: str, name: str) -> Project | None:
+        query = (
+            update(projects)
+            .where(self._projects_owned(owner) & (projects.c.id == project_id))
+            .values(name=name, updated_at=func.now())
+            .returning(projects)
+        )
+        async with self.engine.begin() as db:
+            row = (await db.execute(query)).first()
+        return _project(row) if row else None
+
+    async def delete_project(self, owner: Owner, project_id: str) -> bool:
+        """Removes one of the owner's projects; its chats stay, unfiled (the key's ON DELETE SET NULL)."""
+        query = delete(projects).where(self._projects_owned(owner) & (projects.c.id == project_id))
+        async with self.engine.begin() as db:
+            return (await db.execute(query)).rowcount > 0
 
     async def set_agent_conversation(self, conversation_id: str, agent_conversation_id: str) -> None:
         async with self.engine.begin() as db:

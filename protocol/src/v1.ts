@@ -12,7 +12,11 @@ export type Protocol =
   | SessionRequest
   | Session
   | SendMessage
-  | Feedback;
+  | Feedback
+  | Project
+  | ProjectName
+  | ProjectPage
+  | Filing;
 export type Block = TextBlock | MarkdownBlock | UnknownBlock;
 export type StreamEvent =
   MessageStarted | ContentBlockStarted | ContentBlockDelta | ContentBlockCompleted | MessageCompleted | MessageFailed;
@@ -171,6 +175,10 @@ export interface Conversation {
   title: string | null;
   created_at: string;
   updated_at: string;
+  /**
+   * The project the chat is filed under, if any.
+   */
+  project_id?: Id | null;
 }
 export interface Message {
   id: Id;
@@ -270,4 +278,35 @@ export interface Feedback {
    * What could be better.
    */
   comment?: string | null;
+}
+/**
+ * A signed-in visitor's folder of chats.
+ */
+export interface Project {
+  id: Id;
+  name: string;
+  created_at: string;
+  /**
+   * When the project or a chat in it was last active.
+   */
+  updated_at: string;
+}
+/**
+ * Body of POST /v1/projects and PATCH /v1/projects/{id}.
+ */
+export interface ProjectName {
+  name: string;
+}
+/**
+ * Reply to GET /v1/projects: the visitor's projects, most recently active first.
+ */
+export interface ProjectPage {
+  projects: Project[];
+}
+/**
+ * Body of PATCH /v1/conversations/{id}, and optionally of POST /v1/conversations: the project a chat is filed
+ * under, or null for none. Signed-in visitors only.
+ */
+export interface Filing {
+  project_id: Id | null;
 }

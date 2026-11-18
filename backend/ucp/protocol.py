@@ -157,6 +157,35 @@ class Conversation(_Model):
     title: str | None
     created_at: AwareDatetime
     updated_at: AwareDatetime
+    project_id: Id | None = Field(default=None, description="The project the chat is filed under, if any.")
+
+
+class Project(_Model):
+    """A signed-in visitor's folder of chats."""
+
+    id: Id
+    name: Annotated[str, Field(min_length=1, max_length=80)]
+    created_at: AwareDatetime
+    updated_at: AwareDatetime = Field(description="When the project or a chat in it was last active.")
+
+
+class ProjectName(_Model):
+    """Body of POST /v1/projects and PATCH /v1/projects/{id}."""
+
+    name: Annotated[str, Field(min_length=1, max_length=80, pattern=r"\S")]
+
+
+class ProjectPage(_Model):
+    """Reply to GET /v1/projects: the visitor's projects, most recently active first."""
+
+    projects: list[Project]
+
+
+class Filing(_Model):
+    """Body of PATCH /v1/conversations/{id}, and optionally of POST /v1/conversations: the project a chat is filed
+    under, or null for none. Signed-in visitors only."""
+
+    project_id: Id | None
 
 
 class Message(_Model):
@@ -263,6 +292,10 @@ PUBLIC_TYPES = {
     "Session": Session,
     "SendMessage": SendMessage,
     "Feedback": Feedback,
+    "Project": Project,
+    "ProjectName": ProjectName,
+    "ProjectPage": ProjectPage,
+    "Filing": Filing,
 }
 ADAPTERS = {name: TypeAdapter(kind) for name, kind in PUBLIC_TYPES.items()}
 
