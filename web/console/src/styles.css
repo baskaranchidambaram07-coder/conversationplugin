@@ -915,6 +915,10 @@ button {
   justify-self: start;
 }
 
+.filter button {
+  width: auto; /* the theme switch's buttons hold icons; these hold words */
+}
+
 .feedback {
   margin: 0;
   padding: 0;
