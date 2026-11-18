@@ -94,6 +94,29 @@ export function specOfTable(rows: string[][], hints: Hints): Spec | null {
   };
 }
 
+// --- Mermaid pie charts ------------------------------------------------------------------------------------------
+
+/** A Mermaid pie chart as chart data, so it is drawn and read like any other chart:
+ *      pie showData
+ *          title Pets adopted
+ *          "Dogs" : 386
+ *  Null when it holds no slice to draw. A slice below 0, which Mermaid refuses, is refused here too. */
+export function specOfMermaidPie(code: string): Spec | null {
+  const lines = code.split("\n").map((line) => line.trim()).filter((line) => line && !line.startsWith("%%"));
+  const header = /^pie(?:\s+showData)?(?:\s+title\s+(.+))?$/i.exec(lines[0] ?? "");
+  if (!header) return null;
+  let title = header[1]?.trim() ?? "";
+  const data: Spec["data"] = [];
+  for (const line of lines.slice(1)) {
+    const named = /^title\s+(.+)$/i.exec(line);
+    const slice = /^(["'])(.+)\1\s*:\s*([-+]?\d[\d_]*(?:\.\d+)?)$/.exec(line);
+    if (named) title = named[1]!.trim();
+    else if (slice && Number(slice[3]) >= 0) data.push({ Label: slice[2]!, Value: Number(slice[3]) });
+    else if (!/^(?:showData|accTitle|accDescr)\b/i.test(line)) return null; // not a pie Mermaid would draw
+  }
+  return data.length ? { type: "pie", title, x: "Label", y: ["Value"], data } : null;
+}
+
 // --- plotting code -----------------------------------------------------------------------------------------------
 
 type Value = string | number;

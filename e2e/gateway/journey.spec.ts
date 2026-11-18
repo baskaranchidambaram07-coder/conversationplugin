@@ -28,7 +28,8 @@ test("a long answer streams in and draws its headings, table and code", async ({
   await expect(chat.getByRole("button", { name: "Copy answer" })).toBeVisible({ timeout: 20_000 });
   await expect(chat.getByRole("heading", { name: "How HTTPS Works" })).toBeVisible();
   await expect(chat.locator(".md figure.table")).toHaveCount(1);
-  await expect(chat.locator(".md figure.code")).toHaveCount(2);
+  await expect(chat.locator(".md figure.code")).toHaveCount(1);
+  await expect(chat.locator(".md figure.diagram svg[role=img]")).toHaveCount(1); // its Mermaid sequence diagram
 });
 
 test("a second question in the same chat continues the conversation", async ({ page }) => {

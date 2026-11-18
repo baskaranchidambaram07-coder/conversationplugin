@@ -562,6 +562,116 @@ h1 {
   scrollbar-width: thin;
 }
 
+/* A formula: MathML the browser lays out in a maths face (temml's stylesheet), a step larger so it sits level with
+   Inter. One on its own line is centred and scrolls sideways in place when wider than the answer. temml spaces a
+   matrix's cells with inline styles, which the content policy refuses, so they are spaced here. */
+.maths math {
+  font-size: 1.12em;
+}
+
+.maths.block {
+  overflow-x: auto;
+  overflow-y: hidden;
+  padding-block: 2px;
+  scrollbar-width: thin;
+}
+
+.maths.block:focus-visible {
+  outline-offset: -3px;
+}
+
+.maths.block math {
+  display: block math; /* MathML's own block, which centres the formula; temml asks for it inline */
+}
+
+.maths mtd {
+  padding-inline: 0.4em; /* a matrix's cells */
+}
+
+.maths mtable.tml-jot mtd {
+  padding-inline: 0; /* aligned steps sit tight on their = signs */
+}
+
+/* Highlighted code: a few quiet hues on the code's cream ground, each above 5:1 in either scheme. Comments step back
+   in the muted ink and italic; anything without a class stays the ink. */
+.code {
+  --hl-keyword: light-dark(#a1306f, #e88cc4);
+  --hl-string: light-dark(#2a7a3b, #94cf96);
+  --hl-number: light-dark(#b04a00, #f2a86a);
+  --hl-title: light-dark(#2459b8, #93b7ff);
+  --hl-type: light-dark(#8a5200, #e2b866);
+  --hl-attr: light-dark(#9a3b28, #f09c86);
+  --hl-meta: light-dark(#6a4bb0, #bba4f2);
+  --hl-deletion: light-dark(#b3261e, #ff9b93);
+}
+
+.hljs-keyword,
+.hljs-selector-tag,
+.hljs-doctag,
+.hljs-name {
+  color: var(--hl-keyword);
+}
+
+.hljs-string,
+.hljs-regexp,
+.hljs-addition,
+.hljs-char {
+  color: var(--hl-string);
+}
+
+.hljs-number,
+.hljs-literal,
+.hljs-symbol,
+.hljs-bullet {
+  color: var(--hl-number);
+}
+
+.hljs-title,
+.hljs-section {
+  color: var(--hl-title);
+}
+
+.hljs-type,
+.hljs-built_in,
+.hljs-title.class_,
+.hljs-title.class_.inherited__ {
+  color: var(--hl-type);
+}
+
+.hljs-attr,
+.hljs-attribute,
+.hljs-property,
+.hljs-variable,
+.hljs-template-variable,
+.hljs-selector-attr,
+.hljs-selector-class,
+.hljs-selector-id {
+  color: var(--hl-attr);
+}
+
+.hljs-meta,
+.hljs-meta .hljs-keyword {
+  color: var(--hl-meta);
+}
+
+.hljs-deletion {
+  color: var(--hl-deletion);
+}
+
+.hljs-comment,
+.hljs-quote {
+  color: var(--muted);
+  font-style: italic;
+}
+
+.hljs-emphasis {
+  font-style: italic;
+}
+
+.hljs-strong {
+  font-weight: 650;
+}
+
 /* A drawing in box-drawing characters: lines set close enough that its upright strokes join. */
 .code pre.art,
 .diagram pre.art {
