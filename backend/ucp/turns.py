@@ -30,6 +30,7 @@ from ucp.store import Owner, Store, Turn
 log = logging.getLogger("ucp.turns")
 EVENTS = ADAPTERS["StreamEvent"]
 PING = ": ping\n\n"
+FILES_READING = 120  # seconds added to the first word's limit when the question brings files for the agent to read
 
 
 class Breaker:
@@ -255,7 +256,8 @@ class Turns:
         """One attempt: the outcome, and whether the agent got the question."""
         accepted, answering = False, False
         events = connector.send(agent_conversation, question, files)
-        deadline = asyncio.get_running_loop().time() + self.first_word
+        # Files are read by the agent before it answers (ucp.pf, up to 90 s): that is not the first word's wait.
+        deadline = asyncio.get_running_loop().time() + self.first_word + (FILES_READING if files else 0)
         try:
             while True:
                 limit = asyncio.timeout_at(None if answering else deadline)

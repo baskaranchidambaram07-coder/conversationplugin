@@ -9,9 +9,11 @@ The message text picks the behaviour, so a test at any level (connector, gateway
     [error]         three words, then PF's ERROR event inside the HTTP 201 stream
     [seeded]        the short reply with every event carrying what PF might add one day: internal addresses,
                     sources, citations, model and tool details (all marked SEEDED), to prove the allow-list (R13)
-A message naming uploaded files in `ref_file_ids` gets its answer with a last line naming them, so a test can see
-the files arrived; an unknown file ID gets an ERROR event. The upload call (POST .../upload) is provisional, as is
-the connector's, until PF's attach API is confirmed (ucp.pf).
+Files go in as PF takes them (pf-capability-sheet.md section 4a): POST .../fileupload, multipart; the conversation's
+details show each UPLOAD_SUCCESS, then FILE_PROCESS_SUCCESS at 2.5 s, then a summary at 5 s (recorded timings). An
+answer then ends with a line naming the files already summarised, as PF's agent finds only those, so a test can see
+they arrived; a file named with "unreadable" ends FILE_PROCESS_FAILED (assumed: PF's failure name is not recorded). A
+message naming files in `ref_file_ids` gets PF's HTTP 400, as staging gives.
 Wrong credentials get PF's failed login (HTTP 200, RESULT_FAILURE). POST /_fake/expire-tokens expires every token,
 so the next call gets PF's 401. An unknown conversation or an empty message gets PF's recorded ERROR events.
 The fetch call answers IN_PROGRESS until the recorded reply would have finished, even if the caller hung up.
@@ -27,6 +29,8 @@ import json
 import os
 import re
 import time
+from email.parser import BytesParser
+from email.policy import HTTP
 from pathlib import Path
 
 from fastapi import FastAPI, Request
@@ -37,6 +41,8 @@ API = "/magicplatform/v1/genai/conversation"
 TENANT, API_KEY, USERNAME, PASSWORD = "fake-tenant", "fake-api-key", "fake-user", "fake-password"
 SLOW_MS = 65_000
 SEEDED = "http://10.20.30.40/pf-internal/SEEDED"
+PROCESSED_MS, SUMMARISED_MS = 2_500, 5_000  # read, then summarised, after the upload (recorded 2.4-4.4, 4.7-8.5 s)
+REF_REFUSED = {"message": ["property ref_file_ids should not exist"], "error": "Bad Request", "statusCode": 400}
 
 NOTICES = ['{"content":"Stream connection established successfully"}', '{"content":"Agent Execution InProgress"}']
 UNAUTHORIZED = {"message": "Not Authorized.", "error": "Unauthorized", "statusCode": 401}
@@ -107,6 +113,21 @@ def _script(query):
     return name, RECORDED[name][1]
 
 
+def _parts(content_type: str, body: bytes):
+    """A multipart body's parts as (field, file name, type, bytes), read with the standard library."""
+    head = f"Content-Type: {content_type}\r\n\r\n".encode()
+    message = BytesParser(policy=HTTP).parsebytes(head + body)
+    return [
+        (
+            part.get_param("name", header="content-disposition"),
+            part.get_filename(),
+            part.get_content_type(),
+            part.get_payload(decode=True) or b"",
+        )
+        for part in message.iter_parts()
+    ]
+
+
 def _with_note(events, note):
     """A recording with one more piece of answer at its end, as if the agent had read the attached files."""
     noted = []
@@ -140,6 +161,19 @@ def create_app(time_scale: float = 1.0) -> FastAPI:
             content["response"] += message["note"]
         return body
 
+    def files_of(conversation_id):
+        return {file_id: file for file_id, file in uploads.items() if file["conversation_id"] == conversation_id}
+
+    def status(file):
+        """A file's status now: uploaded, then processed (or failed) at 2.5 s."""
+        if time.monotonic() < file["at"] + PROCESSED_MS * time_scale / 1000:
+            return "UPLOAD_SUCCESS"
+        return "FILE_PROCESS_FAILED" if "unreadable" in file["name"] else "FILE_PROCESS_SUCCESS"
+
+    def summarised(file):
+        ready = file["at"] + SUMMARISED_MS * time_scale / 1000
+        return status(file) == "FILE_PROCESS_SUCCESS" and time.monotonic() >= ready
+
     def accept(body):
         """Starts a message the way PF does. Returns the message, or instead the ERROR event PF sends."""
         conversation_id, query = body.get("conversation_id"), body.get("query") or ""
@@ -147,11 +181,9 @@ def create_app(time_scale: float = 1.0) -> FastAPI:
             return None, _stream_error("Conversation not found", 404)
         if not query:
             return None, _stream_error("Invalid Input. Query cannot be empty", 400)
-        attached = body.get("ref_file_ids") or []
-        if any(uploads.get(file_id, {}).get("conversation_id") != conversation_id for file_id in attached):
-            return None, _stream_error("File not found", 400)
         name, events = _script(query)
-        note = f"\n\nI read {', '.join(uploads[file_id]['name'] for file_id in attached)}." if attached else ""
+        read = [file["name"] for file in files_of(conversation_id).values() if summarised(file)]
+        note = f"\n\nI read {', '.join(read)}." if read else ""
         events = _with_note(events, note) if note else events
         message = {"id": object_id(), "content_id": object_id(), "conversation_id": conversation_id, "query": query}
         header = RECORDED[name][0]
@@ -227,30 +259,60 @@ def create_app(time_scale: float = 1.0) -> FastAPI:
         }
         return JSONResponse({"conversation_details": details}, status_code=201)
 
-    @app.post(f"{API}/upload")
-    async def upload(request: Request, conversation_id: str = "", name: str = ""):
+    def entry(file_id, file):
+        """A file as PF lists it, in the upload's reply and the conversation's details."""
+        listed = {"file_id": file_id, "file_name": file["name"], "file_ref_id": f"dms-{TENANT}-{file_id}"}
+        listed |= {"file_status": status(file), "mode": "DRAFT", "mime_type": file["content_type"]}
+        if summarised(file):
+            listed["summary"] = f"The document {file['name']} holds {file['size']} bytes of SEEDED text."
+        return listed
+
+    @app.post(f"{API}/fileupload")
+    async def file_upload(request: Request, conversation_id: str = ""):
         if conversation_id not in conversations:
             return JSONResponse({"message": "Conversation not found"}, status_code=404)
-        file_id = object_id()
-        data = await request.body()
-        kind = request.headers.get("content-type")
-        uploads[file_id] = {"conversation_id": conversation_id, "name": name, "size": len(data), "content_type": kind}
-        return JSONResponse({"file_id": file_id}, status_code=201)
+        listed = []
+        for field, name, kind, data in _parts(request.headers.get("content-type", ""), await request.body()):
+            if field == "files":
+                file_id = object_id()
+                uploads[file_id] = {
+                    "conversation_id": conversation_id,
+                    "name": name,
+                    "size": len(data),
+                    "content_type": kind,
+                    "at": time.monotonic(),
+                }
+                listed.append(entry(file_id, uploads[file_id]))
+        return JSONResponse(listed, status_code=201)
+
+    @app.get(f"{API}/details/{{conversation_id}}")
+    async def details(conversation_id: str):
+        if conversation_id not in conversations:
+            return JSONResponse(UNKNOWN_ID, status_code=500)
+        files = [entry(file_id, file) for file_id, file in files_of(conversation_id).items()]
+        record = {**TEMPLATES["conversation"], "conversation_id": conversation_id, "workspace_id": WORKSPACE_ID}
+        return {**record, "asset_version_id": conversations[conversation_id], "file_details": files}
 
     @app.get("/_fake/uploads")
     async def uploaded():
         """What was uploaded, for tests: file ID to conversation, name, size and type."""
-        return uploads
+        return {file_id: {k: v for k, v in file.items() if k != "at"} for file_id, file in uploads.items()}
 
     @app.post(f"{API}/addmessage/stream")
     async def add_message_stream(request: Request):
-        message, error = accept(await request.json())
+        body = await request.json()
+        if "ref_file_ids" in body:
+            return JSONResponse(REF_REFUSED, status_code=400)
+        message, error = accept(body)
         events = message["events"] if message else [(0, notice) for notice in NOTICES] + [(0, error)]
         return StreamingResponse(replay(events), status_code=201, headers=STREAM_HEADERS)
 
     @app.post(f"{API}/addmessage")
     async def add_message(request: Request):
-        message, error = accept(await request.json())
+        body = await request.json()
+        if "ref_file_ids" in body:
+            return JSONResponse(REF_REFUSED, status_code=400)
+        message, error = accept(body)
         return JSONResponse(json.loads(error) if error else record(message, "IN_PROGRESS"), status_code=201)
 
     @app.get(f"{API}/response/{{conversation_id}}/{{message_id}}")
