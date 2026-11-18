@@ -69,7 +69,7 @@ test("a file PF does not take, or a sixth file, is refused in plain words and ne
   await expect(chat.getByRole("alert")).toHaveText(
     "invoice.pdf could not be attached. Check it is a PDF, a Word document, or a JPG or PNG picture.",
   );
-  await expect(chat.getByText("Not attached")).toBeVisible();
+  await expect(chat.getByText("Not attached", { exact: true })).toBeVisible();
   await chat.getByRole("button", { name: "Remove invoice.pdf" }).click();
 
   const six = Array.from({ length: 6 }, (_, n) => ({ ...PDF, name: `page ${n + 1}.pdf` }));
@@ -89,7 +89,7 @@ test("a document carrying a virus is refused by the scan, in words, and never se
   await expect(chat.getByRole("alert")).toHaveText(
     "essay.docx was not attached: the virus check found something harmful in it.",
   );
-  await expect(chat.getByText("Not attached")).toBeVisible();
+  await expect(chat.getByText("Not attached", { exact: true })).toBeVisible();
 });
 
 test.describe("on a phone", () => {
