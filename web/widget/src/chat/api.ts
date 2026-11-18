@@ -4,6 +4,7 @@ import type {
   ApiError,
   Conversation,
   ConversationPage,
+  Feedback,
   Message,
   MessagePage,
   SendMessage,
@@ -95,6 +96,12 @@ export function gateway(widgetId: string, hostToken: () => Promise<string | null
     /** The visitor's chats, most recently active first; `cursor` is the `next` of the page before. */
     async conversations(cursor?: string | null): Promise<ConversationPage> {
       return (await authorised(`/v1/conversations${before(cursor)}`)).json();
+    },
+    /** Rates an answer, or takes the rating back with null. */
+    async rate(conversationId: string, messageId: string, feedback: Feedback | null): Promise<void> {
+      const path = `/v1/conversations/${conversationId}/messages/${messageId}/feedback`;
+      const put = feedback && { method: "PUT", headers: JSON_TYPE, body: JSON.stringify(feedback) };
+      await authorised(path, put ?? { method: "DELETE" });
     },
     /** A page of a chat, oldest first, ending with its newest message; `cursor` reaches further back. */
     async messages(conversationId: string, cursor?: string | null): Promise<MessagePage> {

@@ -279,8 +279,74 @@ h1 {
 /* Under a finished answer: its actions, quiet until wanted. */
 .acts {
   display: flex;
+  flex-wrap: wrap;
+  align-items: center;
   gap: 2px;
   margin-inline-start: -8px;
+}
+
+/* Helpful or not: 32px icon buttons; the chosen thumb fills in ink, never the brand (the Pressable Colour Rule). */
+.acts .thumb {
+  padding: 8px;
+}
+
+.thumb[aria-pressed="true"] {
+  color: var(--ink);
+}
+
+.rated {
+  font-size: 13px;
+  color: var(--muted);
+}
+
+.rated:not(:empty) {
+  padding-inline: 8px; /* level with the answer text when it wraps under the actions */
+}
+
+/* What was good or could be better: a small card under the actions, behaving like the composer. */
+.ask {
+  flex-basis: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  max-width: 400px;
+  margin-block-start: 6px;
+  margin-inline-start: 8px; /* level with the answer text, past the actions' pull */
+  padding: 10px 12px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: var(--surface);
+  transition: border-color 0.15s ease-out;
+}
+
+.ask:focus-within {
+  border-color: color-mix(in srgb, var(--ink) 40%, var(--line));
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--ink) 8%, transparent);
+}
+
+.ask label {
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.ask textarea {
+  padding: 2px 0;
+  font-size: 15px;
+}
+
+.ask-acts {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin-block-start: 4px;
+}
+
+.ask-acts .quiet {
+  margin: 0;
+}
+
+.ask .secondary:disabled {
+  opacity: 0.45;
 }
 
 .text {
