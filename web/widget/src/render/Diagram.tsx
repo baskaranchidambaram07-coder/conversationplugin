@@ -195,7 +195,8 @@ export default function Diagram({ code, language }: FenceProps) {
   const fromText = scene.kind === "text"; // drawn from box-drawing characters, so its source is text, not code
   const flat = (words: string) => words.replace(/\s+/g, " ").trim();
   const description = [
-    ...scene.shapes.map((s) => flat(s.label)).filter(Boolean),
+    // Each named thing once: a sequence diagram draws each participant at its top and again at its foot.
+    ...new Set(scene.shapes.map((s) => flat(s.label)).filter(Boolean)),
     // A line that joins nothing and says nothing, such as a lifeline, is drawing, not content.
     ...scene.lines.filter((l) => l.from || l.to || l.label).map((l) => t.diagramLine(flat(l.from), flat(l.to), flat(l.label))),
   ]
