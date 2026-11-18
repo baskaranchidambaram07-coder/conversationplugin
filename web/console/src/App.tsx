@@ -7,6 +7,7 @@ import { AgentEditor, Faults, SignInEditor, SitesEditor } from "./editors";
 import { GoLive } from "./golive";
 import { Install } from "./install";
 import { type Look, LookEditor, Preview } from "./look";
+import { FeedbackView } from "./feedback";
 import { Deletion, NewOrganisation } from "./organisations";
 import { begin, finish, type Provider, signOut, token } from "./signIn";
 import { strings as t } from "./strings";
@@ -630,12 +631,39 @@ function Widget(props: {
     }
   }
 
+  const feedback = (open as string) === "feedback";
+  const views = (
+    <nav className="views" aria-label={t.widgetViews}>
+      {[
+        { label: t.setUp, href: `/widgets/${row.widget_id}`, current: !feedback },
+        { label: t.feedback, href: `/widgets/${row.widget_id}/feedback`, current: feedback },
+      ].map(({ label, href, current }) => (
+        <a key={href} href={href} aria-current={current ? "page" : undefined} onClick={onRoute(href)}>
+          {label}
+        </a>
+      ))}
+    </nav>
+  );
+  if (feedback) {
+    return (
+      <>
+        <h1>{row.title}</h1>
+        <p className="sub">
+          {t.sites(document.allowed_domains.length)} · {who(document)}
+        </p>
+        {views}
+        <FeedbackView widgetId={row.widget_id} onProblem={onProblem} />
+      </>
+    );
+  }
+
   return (
     <>
       <h1>{row.title}</h1>
       <p className="sub">
         {t.sites(document.allowed_domains.length)} · {who(document)}
       </p>
+      {views}
       <Track
         track={track}
         shown={shown}

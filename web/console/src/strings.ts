@@ -2,6 +2,23 @@
 import type { StationId } from "./track";
 
 export const strings = {
+  setUp: "Set up",
+  feedback: "Feedback",
+  widgetViews: "This widget",
+  feedbackIntro: "What visitors said about the assistant's answers, the newest first.",
+  tally: (liked: number, disliked: number) =>
+    `${liked} helpful and ${disliked} not helpful, so ${Math.round((100 * liked) / Math.max(1, liked + disliked))}% helpful.`,
+  feedbackFilter: "Show",
+  feedbackShown: { all: "All", like: "Helpful", dislike: "Not helpful" },
+  rated: { like: "Helpful", dislike: "Not helpful" },
+  visitorKind: { anonymous: "Public visitor", signed_in: "Signed-in visitor" },
+  noComment: "No comment.",
+  askedQuestion: "Question",
+  questionGone: "Not stored.",
+  showAnswer: "Show the answer",
+  olderFeedback: "Show older feedback",
+  noFeedback: "No feedback yet. When visitors rate an answer, it appears here with their comment.",
+  noFeedbackOfKind: "None of this kind yet.",
   product: "UCP",
   console: "Console",
   signInTitle: "Sign in to set up your assistant",

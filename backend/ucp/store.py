@@ -800,6 +800,43 @@ class Store:
         async with self.engine.begin() as db:
             await db.execute(delete(feedback).where(self._mine(feedback, owner, conversation_id, message_id)))
 
+    async def widget_feedback(
+        self, widget_id: str, rating: str | None, before: tuple[datetime, str] | None, limit: int
+    ) -> tuple[dict[str, int], list]:
+        """For the admin console: a widget's ratings counted by kind, and a page of them, the newest first, each with
+        the question and the answer it is about (rows: message_id, rating, comment, user_kind, updated_at, question
+        and answer blocks)."""
+        asked, answered = messages.alias("asked"), messages.alias("answered")
+        page = (
+            select(
+                feedback.c.message_id,
+                feedback.c.rating,
+                feedback.c.comment,
+                feedback.c.user_kind,
+                feedback.c.updated_at,
+                asked.c.blocks.label("question"),
+                answered.c.blocks.label("answer"),
+            )
+            .select_from(
+                feedback.join(answered, answered.c.id == feedback.c.message_id).outerjoin(
+                    asked, asked.c.id == feedback.c.question_id
+                )
+            )
+            .where(feedback.c.widget_id == widget_id)
+            .order_by(feedback.c.updated_at.desc(), feedback.c.message_id.desc())
+            .limit(limit)
+        )
+        if rating:
+            page = page.where(feedback.c.rating == rating)
+        if before:
+            page = page.where(tuple_(feedback.c.updated_at, feedback.c.message_id) < tuple_(*before))
+        counted = (
+            select(feedback.c.rating, func.count()).where(feedback.c.widget_id == widget_id).group_by(feedback.c.rating)
+        )
+        async with self.engine.connect() as db:
+            counts = {"like": 0, "dislike": 0} | {kind: count for kind, count in await db.execute(counted)}
+            return counts, list(await db.execute(page))
+
     # Pins (signed-in visitors)
 
     async def pin(self, owner: Owner, conversation_id: str, message_id: str) -> bool:
