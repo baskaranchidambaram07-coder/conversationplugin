@@ -19,6 +19,7 @@ import { type Turn, turnsOf, when } from "./chat/history";
 import { type Problem, problemOf } from "./chat/problem";
 import { type Answer, pending } from "./chat/state";
 import { recover, runTurn } from "./chat/turn";
+import { Feedback, type Rate } from "./Feedback";
 import { CopyButton, Icon } from "./Icon";
 import { BlockView } from "./render/registry";
 import { strings as t } from "./strings";
@@ -381,6 +382,15 @@ export function App({ widgetId, win = window, preview = false }: { widgetId: str
     }
   }
 
+  /** Rating one of the answers in the chat on screen. */
+  const rater =
+    (messageId: string): Rate =>
+    async (rating, comment) => {
+      const session = live.current;
+      if (!session?.conversation) throw new Failure(0, null);
+      await session.api.rate(session.conversation, messageId, rating && { rating, comment: comment || null });
+    };
+
   function send() {
     const question = draft.trim();
     if (!question || busy) return;
@@ -524,6 +534,8 @@ export function App({ widgetId, win = window, preview = false }: { widgetId: str
             turn={turn}
             mark={mark}
             onRetry={ended || !turn.question ? undefined : () => void ask(turn.question, turn.key)}
+            rate={turn.answer.id ? rater(turn.answer.id) : undefined}
+            say={setHeard}
           />
         ))}
         {ended && <ProblemNote problem={ended} action={ended.kind === "expired" ? t.newChat : undefined} onAction={newChat} />}
@@ -608,10 +620,14 @@ function TurnView({
   turn,
   mark,
   onRetry,
+  rate,
+  say,
 }: {
   turn: Turn;
   mark: ReactNode;
   onRetry?: () => void;
+  rate?: Rate;
+  say: (text: string) => void;
 }) {
   const { answer, problem } = turn;
   const working = answer.status === "pending" || (answer.status === "streaming" && !plain(answer.blocks));
@@ -644,6 +660,7 @@ function TurnView({
           {answer.status === "complete" && (
             <div className="acts">
               <CopyButton text={plain(answer.blocks)} label={t.copy} />
+              {rate && <Feedback initial={answer.feedback} rate={rate} say={say} />}
             </div>
           )}
         </div>

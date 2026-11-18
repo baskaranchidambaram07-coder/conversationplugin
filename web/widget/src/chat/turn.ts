@@ -33,6 +33,7 @@ export function fromRecord(record: Message, previous: Answer): Answer {
     status: record.status === "in_progress" ? "streaming" : record.status,
     error: record.error,
     gap: false,
+    feedback: record.feedback ?? null,
   };
 }
 

@@ -166,6 +166,14 @@ class Message(_Model):
     blocks: list[Block]
     error: ApiError | None
     created_at: AwareDatetime
+    feedback: Literal["like", "dislike"] | None = Field(default=None, description="The visitor's rating of an answer.")
+
+
+class Feedback(_Model):
+    """Body of PUT /v1/conversations/{id}/messages/{id}/feedback: the visitor's rating of an answer."""
+
+    rating: Literal["like", "dislike"]
+    comment: Annotated[str, Field(max_length=1000)] | None = Field(default=None, description="What could be better.")
 
 
 type Cursor = Annotated[
@@ -254,6 +262,7 @@ PUBLIC_TYPES = {
     "SessionRequest": SessionRequest,
     "Session": Session,
     "SendMessage": SendMessage,
+    "Feedback": Feedback,
 }
 ADAPTERS = {name: TypeAdapter(kind) for name, kind in PUBLIC_TYPES.items()}
 

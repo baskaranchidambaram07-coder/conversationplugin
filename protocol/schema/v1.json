@@ -272,6 +272,37 @@
       "pattern": "^[A-Za-z0-9_.:+-]{1,64}$",
       "type": "string"
     },
+    "Feedback": {
+      "additionalProperties": false,
+      "description": "Body of PUT /v1/conversations/{id}/messages/{id}/feedback: the visitor's rating of an answer.",
+      "properties": {
+        "rating": {
+          "enum": [
+            "like",
+            "dislike"
+          ],
+          "type": "string"
+        },
+        "comment": {
+          "anyOf": [
+            {
+              "maxLength": 1000,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "What could be better."
+        }
+      },
+      "required": [
+        "rating"
+      ],
+      "title": "Feedback",
+      "type": "object"
+    },
     "Id": {
       "description": "Our opaque ID. Never a PF ID.",
       "pattern": "^[A-Za-z0-9_-]{1,64}$",
@@ -341,6 +372,22 @@
         "created_at": {
           "format": "date-time",
           "type": "string"
+        },
+        "feedback": {
+          "anyOf": [
+            {
+              "enum": [
+                "like",
+                "dislike"
+              ],
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "The visitor's rating of an answer."
         }
       },
       "required": [
@@ -814,6 +861,9 @@
     },
     {
       "$ref": "#/$defs/SendMessage"
+    },
+    {
+      "$ref": "#/$defs/Feedback"
     }
   ]
 }

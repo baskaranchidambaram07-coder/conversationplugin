@@ -12,6 +12,8 @@ export type Answer = {
   error: ApiError | null;
   /** The correlation ID, shown with any error so support can find the request. */
   reference: string | null;
+  /** The visitor's own rating of this answer, as stored. */
+  feedback: "like" | "dislike" | null;
 };
 
 export const pending = (): Answer => ({
@@ -22,6 +24,7 @@ export const pending = (): Answer => ({
   gap: false,
   error: null,
   reference: null,
+  feedback: null,
 });
 
 const settled = (answer: Answer) => ["complete", "failed", "stopped"].includes(answer.status);

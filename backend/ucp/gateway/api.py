@@ -22,6 +22,7 @@ from ucp.widgets import Widget
 
 log = logging.getLogger("ucp.gateway")
 REFUSALS_PER_MINUTE = 10  # host tokens refused from one address before it must wait
+FEEDBACK_PER_MINUTE = 30  # ratings from one visitor
 
 
 def same_origin(request: Request) -> None:
@@ -212,6 +213,31 @@ async def read_message(
     if not message:
         raise Problem("not_found")
     return message
+
+
+@router.put(
+    "/conversations/{conversation_id}/messages/{message_id}/feedback",
+    status_code=204,
+    summary="Rate a finished answer, like or dislike, with an optional comment; a second rating replaces the first",
+)
+async def rate(
+    conversation_id: protocol.Id, message_id: protocol.Id, body: protocol.Feedback, request: Request, session: Visitor
+) -> Response:
+    request.app.state.limiter.check(f"feedback:{session.user_id}", FEEDBACK_PER_MINUTE)
+    comment = (body.comment or "").strip() or None
+    if not await _store(request).rate(owner(session), session.mode, conversation_id, message_id, body.rating, comment):
+        raise Problem("not_found")
+    return Response(status_code=204)
+
+
+@router.delete(
+    "/conversations/{conversation_id}/messages/{message_id}/feedback",
+    status_code=204,
+    summary="Take back a rating",
+)
+async def unrate(conversation_id: protocol.Id, message_id: protocol.Id, request: Request, session: Visitor) -> Response:
+    await _store(request).unrate(owner(session), conversation_id, message_id)
+    return Response(status_code=204)
 
 
 @router.post(

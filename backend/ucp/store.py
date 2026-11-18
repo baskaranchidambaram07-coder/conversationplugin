@@ -166,6 +166,25 @@ messages = Table(
 )
 
 
+# A visitor's rating of an answer (M4-T10), tied to the answer and the question it answers. A public visitor's row
+# is marked anonymous; its user ID is the throwaway one that already owns the conversation.
+feedback = Table(
+    "feedback",
+    metadata,
+    Column("message_id", Text, ForeignKey("messages.id"), primary_key=True),
+    Column("question_id", Text, ForeignKey("messages.id")),
+    Column("conversation_id", Text, ForeignKey("conversations.id"), nullable=False),
+    Column("tenant_id", Text, nullable=False),
+    Column("widget_id", Text, nullable=False),
+    Column("user_id", Text, nullable=False),
+    Column("user_kind", Text, CheckConstraint("user_kind in ('anonymous', 'signed_in')"), nullable=False),
+    Column("rating", Text, CheckConstraint("rating in ('like', 'dislike')"), nullable=False),
+    Column("comment", Text),
+    *_times(),
+    Index("feedback_by_widget", "tenant_id", "widget_id", "created_at"),
+)
+
+
 # A turn takes at most 5 minutes (ucp.turns), so an answer still in progress after 6 was abandoned.
 STALE = timedelta(minutes=6)
 STALE_ERROR = {
@@ -232,7 +251,15 @@ def _message(row) -> Message:
     # Built field by field: PF IDs and the config version stay behind (D15).
     error = ApiError.model_validate(row.error) if row.error else None
     blocks = [_BLOCK.validate_python(block) for block in row.blocks]
-    return Message(id=row.id, role=row.role, status=row.status, blocks=blocks, error=error, created_at=row.created_at)
+    return Message(
+        id=row.id,
+        role=row.role,
+        status=row.status,
+        blocks=blocks,
+        error=error,
+        created_at=row.created_at,
+        feedback=row.rating,
+    )
 
 
 class Store:
@@ -515,11 +542,7 @@ class Store:
     ) -> tuple[list[Message], int | None]:
         """A page of messages, oldest first, ending just before message number `before` (the newest page when None),
         and the `before` that gives the page above it (None when this page reaches the first message)."""
-        query = (
-            select(messages)
-            .join(conversations, messages.c.conversation_id == conversations.c.id)
-            .where(self._owned(owner) & (conversations.c.id == conversation_id))
-        )
+        query = self._shown(owner, conversation_id)
         if before is not None:
             query = query.where(messages.c.seq < before)
         async with self.engine.connect() as db:
@@ -528,11 +551,59 @@ class Store:
         return [_message(row) for row in reversed(rows[:limit])], older
 
     async def message(self, owner: Owner, conversation_id: str, message_id: str) -> Message | None:
-        query = (
-            select(messages)
-            .join(conversations, messages.c.conversation_id == conversations.c.id)
-            .where(self._owned(owner) & (conversations.c.id == conversation_id) & (messages.c.id == message_id))
-        )
+        query = self._shown(owner, conversation_id).where(messages.c.id == message_id)
         async with self.engine.connect() as db:
             row = (await db.execute(query)).first()
         return _message(row) if row else None
+
+    def _shown(self, owner: Owner, conversation_id: str):
+        """A conversation's messages as the visitor sees them, with their own rating of each."""
+        return (
+            select(messages, feedback.c.rating)
+            .join(conversations, messages.c.conversation_id == conversations.c.id)
+            .outerjoin(feedback, feedback.c.message_id == messages.c.id)
+            .where(self._owned(owner) & (conversations.c.id == conversation_id))
+        )
+
+    # Feedback (M4-T10)
+
+    async def rate(
+        self, owner: Owner, user_kind: str, conversation_id: str, message_id: str, rating: str, comment: str | None
+    ) -> bool:
+        """Stores the visitor's rating of one of their finished answers, replacing an earlier one. False if there is
+        no such answer."""
+        answer = (
+            select(messages.c.id, messages.c.reply_to)
+            .join(conversations, messages.c.conversation_id == conversations.c.id)
+            .where(self._owned(owner) & (conversations.c.id == conversation_id) & (messages.c.id == message_id))
+            .where((messages.c.role == "assistant") & (messages.c.status == "complete"))
+        )
+        async with self.engine.begin() as db:
+            found = (await db.execute(answer)).first()
+            if not found:
+                return False
+            row = {
+                "message_id": message_id,
+                "question_id": found.reply_to,
+                "conversation_id": conversation_id,
+                **owner.__dict__,
+                "user_kind": user_kind,
+                "rating": rating,
+                "comment": comment,
+            }
+            changed = {"rating": rating, "comment": comment, "updated_at": func.now()}
+            upsert = pg_insert(feedback).values(row).on_conflict_do_update(index_elements=["message_id"], set_=changed)
+            await db.execute(upsert)
+        return True
+
+    async def unrate(self, owner: Owner, conversation_id: str, message_id: str) -> None:
+        """Takes back the visitor's rating of an answer, if they gave one."""
+        mine = (
+            (feedback.c.message_id == message_id)
+            & (feedback.c.conversation_id == conversation_id)
+            & (feedback.c.tenant_id == owner.tenant_id)
+            & (feedback.c.widget_id == owner.widget_id)
+            & (feedback.c.user_id == owner.user_id)
+        )
+        async with self.engine.begin() as db:
+            await db.execute(delete(feedback).where(mine))

@@ -11,7 +11,8 @@ export type Protocol =
   | WidgetConfig
   | SessionRequest
   | Session
-  | SendMessage;
+  | SendMessage
+  | Feedback;
 export type Block = TextBlock | MarkdownBlock | UnknownBlock;
 export type StreamEvent =
   MessageStarted | ContentBlockStarted | ContentBlockDelta | ContentBlockCompleted | MessageCompleted | MessageFailed;
@@ -178,6 +179,10 @@ export interface Message {
   blocks: Block[];
   error: ApiError | null;
   created_at: string;
+  /**
+   * The visitor's rating of an answer.
+   */
+  feedback?: ("like" | "dislike") | null;
 }
 /**
  * Reply to GET /v1/conversations: the visitor's conversations, most recently active first.
@@ -255,4 +260,14 @@ export interface SendMessage {
    * Our opaque ID. Never a PF ID.
    */
   client_message_id: string;
+}
+/**
+ * Body of PUT /v1/conversations/{id}/messages/{id}/feedback: the visitor's rating of an answer.
+ */
+export interface Feedback {
+  rating: "like" | "dislike";
+  /**
+   * What could be better.
+   */
+  comment?: string | null;
 }
