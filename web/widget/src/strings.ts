@@ -86,6 +86,11 @@ export const strings = {
   diagramLine: (from: string, to: string, label: string) =>
     `${from || "A line"}${to ? ` to ${to}` : ""}${label ? `: ${label}` : ""}`,
   copyFor: (tool: string) => `Copy for ${tool}`,
+  flowchart: "Flowchart",
+  drawing: "Text drawing",
+  copyText: "Copy text",
+  showText: "Show text",
+  hideText: "Hide text",
   chart: (kind: string, title: string) =>
     `${{ bar: "Bar", line: "Line", area: "Area", pie: "Pie", scatter: "Scatter" }[kind] ?? "A"} chart${title ? `: ${title}` : ""}`,
   chartRange: (name: string, low: string, lowAt: string, high: string, highAt: string) =>

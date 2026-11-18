@@ -35,10 +35,15 @@ const Chart = (props: FenceProps) => (
 /** Fenced-block languages with a renderer of their own. Anything else is code. */
 const FENCES: Record<string, ComponentType<FenceProps>> = { chart: Chart };
 
+/** Whether text holds two or more boxes drawn with box-drawing characters, as agents draw flowcharts in plain text. */
+export const isBoxArt = (code: string) =>
+  (code.match(/[┌╭┏╔][─━═]/g)?.length ?? 0) >= 2 && /[└╰┗╚][─━═]/.test(code) && /[│┃║]/.test(code);
+
 /** The renderer for a fenced block: by its content for diagrams (agents label draw.io XML as "xml"), else its language.
- *  A Mermaid chart is drawn only once its fence has closed: until then every prefix of it is a chart, still growing. */
+ *  A Mermaid chart, or a flowchart drawn in text, is drawn only once its fence has closed: until then it is still
+ *  growing. */
 export function fenceRenderer(language: string, code = "", closed = true): ComponentType<FenceProps> {
-  if (language === "mermaid") return closed ? Diagram : Code;
+  if (language === "mermaid" || (language !== "chart" && isBoxArt(code))) return closed ? Diagram : Code;
   return isDiagram(code) ? Diagram : (FENCES[language] ?? Code);
 }
 

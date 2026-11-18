@@ -31,6 +31,7 @@ const EXAMPLES = [
   { name: "code", question: "[gallery:code]", parts: "figure.code", count: 6 },
   { name: "tables", question: "[gallery:tables]", parts: "figure.table", count: 2 },
   { name: "diagrams", question: "[gallery:diagrams]", parts: "figure.diagram svg[role=img]", count: 3 },
+  { name: "drawings", question: "[gallery:drawings]", parts: "figure.diagram svg[role=img]", count: 2 },
   { name: "charts", question: "[gallery:charts]", parts: "figure.chart .plot svg", count: 5 },
   { name: "Purple Fabric's recorded long", question: "[long]", parts: "figure", count: 3 },
 ];
