@@ -59,6 +59,7 @@ export const strings = {
   fileEmpty: (name: string) => `${name} is empty.`,
   fileTooBig: (name: string) => `${name} is larger than 10 MB.`,
   fileRefused: (name: string) => `${name} could not be attached. Check it is a PDF, a Word document, or a JPG or PNG picture.`,
+  fileUnsafe: (name: string) => `${name} was not attached: the virus check found something harmful in it.`,
   fileFailed: "Not attached",
   uploading: (name: string) => `Uploading ${name}`,
   removeFile: (name: string) => `Remove ${name}`,

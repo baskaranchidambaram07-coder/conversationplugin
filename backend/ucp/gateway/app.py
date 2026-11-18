@@ -74,6 +74,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     app.state.signed_in_seconds = settings.signed_in_seconds
     app.state.public_origin = settings.public_origin
     app.state.visitor_address_header = settings.visitor_address_header
+    app.state.scanner = settings.clamd_address
     app.include_router(public.router)
     app.include_router(api.router)
     if settings.web_dir:

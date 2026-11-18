@@ -112,6 +112,7 @@ resource "aws_ecs_task_definition" "gateway" {
     environment = concat([
       { name = "UCP_PUBLIC_ORIGIN", value = "https://${aws_cloudfront_distribution.edge.domain_name}" },
       { name = "UCP_VISITOR_ADDRESS_HEADER", value = "cloudfront-viewer-address" },
+      { name = "UCP_CLAMD_ADDRESS", value = "127.0.0.1:3310" }, # the scanner below: containers in a task share localhost
       ], [
       # The hosted samples' site, which the widget file names as an allowed site (backend/deploy/widgets.dev.json).
       for samples in aws_cloudfront_distribution.samples : { name = "UCP_SAMPLES_ORIGIN", value = "https://${samples.domain_name}" }
@@ -142,6 +143,24 @@ resource "aws_ecs_task_definition" "gateway" {
         awslogs-group         = aws_cloudwatch_log_group.gateway.name
         awslogs-region        = var.region
         awslogs-stream-prefix = "admin"
+      }
+    }
+    }, {
+    # ClamAV (M10-T3): every file a visitor attaches is scanned here before it is kept or handed to PF (ucp.scan).
+    # Not essential: if it stops, chat carries on and uploads are refused until it is back (the gateway fails closed).
+    # Its signatures ship in the image and freshclam refreshes them over HTTPS. It writes its signatures and its
+    # socket, so its root file system cannot be read-only.
+    name         = "scanner"
+    image        = var.scanner_image
+    essential    = false
+    portMappings = [{ containerPort = 3310, protocol = "tcp" }]
+    healthCheck  = { command = ["CMD", "clamdcheck.sh"], interval = 30, timeout = 10, retries = 5, startPeriod = 300 }
+    logConfiguration = {
+      logDriver = "awslogs"
+      options = {
+        awslogs-group         = aws_cloudwatch_log_group.gateway.name
+        awslogs-region        = var.region
+        awslogs-stream-prefix = "scanner"
       }
     }
   }])

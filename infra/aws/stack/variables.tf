@@ -56,8 +56,18 @@ variable "gateway_cpu" {
 }
 
 variable "gateway_memory" {
-  type    = number
-  default = 2048
+  description = <<-EOT
+    The task's memory in MB, shared by the gateway, the admin API and the scanner. ClamAV holds its signatures in
+    memory (about 1.5 GB) and briefly twice that while it loads new ones, so the task needs 6 GB.
+  EOT
+  type        = number
+  default     = 6144
+}
+
+variable "scanner_image" {
+  description = "The ClamAV image that scans attachments, pinned by digest; the same one CI tests against."
+  type        = string
+  default     = "clamav/clamav:1.5.4-debian@sha256:6982509b9e1415bf23cb49d0c55872fdd57fd2b92be33fa26d487da42d322076"
 }
 
 variable "database_class" {

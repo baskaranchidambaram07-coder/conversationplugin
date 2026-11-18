@@ -103,7 +103,7 @@ Region `us-east-1`, built with Terraform 1.17.2. Every resource name starts with
 | VPC across two zones, with public and private subnets and security groups | The gateway in a public subnet with no NAT (your choice for dev), reachable only from the load balancer; the database private, with no route out |
 | CloudFront | HTTPS on an address AWS provides; caches the chat's files; stays while asleep and answers that the environment is asleep. The admin console has an address of its own |
 | Application load balancer | Only CloudFront's addresses with its secret header get in; holds long streamed replies open; removed while asleep |
-| ECS on Fargate | The gateway, one task of 1 vCPU and 2 GB; it serves the loader and the chat as well as the API. The admin API and console run beside it in the same task. Removed while asleep |
+| ECS on Fargate | The gateway, one task of 1 vCPU and 6 GB (ClamAV, which scans attachments, runs beside it); it serves the loader and the chat as well as the API. The admin API and console run beside it in the same task. Removed while asleep |
 | Cognito | The console's administrators: a user pool with no self sign-up and an authenticator app required, on Cognito's own sign-in pages |
 | RDS for PostgreSQL 17 | Conversation history and configuration; encrypted, seven days of point-in-time backups; stopped while asleep |
 | ECR | The gateway's images, scanned on push, commit tags fixed |

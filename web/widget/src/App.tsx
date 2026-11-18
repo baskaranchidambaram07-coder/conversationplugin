@@ -600,8 +600,13 @@ export function App({ widgetId, win = window, preview = false }: { widgetId: str
           const block = await session.api.upload(conversation, file, (progress) => changeFile(key, { progress }));
           changeFile(key, { block, progress: 1 });
         } catch (error) {
-          const refusedThere = error instanceof Failure && error.error?.code === "invalid_request";
-          const note = refusedThere ? t.fileRefused(file.name) : t.problems[problemOf(error).kind];
+          const code = error instanceof Failure ? error.error?.code : undefined;
+          const note =
+            code === "unsafe_file"
+              ? t.fileUnsafe(file.name)
+              : code === "invalid_request"
+                ? t.fileRefused(file.name)
+                : t.problems[problemOf(error).kind];
           changeFile(key, { problem: note });
           setAttachNote(note);
         }

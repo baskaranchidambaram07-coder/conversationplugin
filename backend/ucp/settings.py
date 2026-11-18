@@ -31,6 +31,7 @@ class Settings:
     admin_user_claim: str = "sub"
     admin_origins: str | None = None  # comma-separated
     gateway_origin: str | None = None  # the chat's public address, for the console's install snippets and checker
+    clamd_address: str | None = None  # host:port of the ClamAV every attachment passes (ucp.scan); none: all refused
 
     @classmethod
     def from_env(cls) -> "Settings":
@@ -51,4 +52,5 @@ class Settings:
             admin_user_claim=os.environ.get("UCP_ADMIN_USER_CLAIM", "sub"),
             admin_origins=os.environ.get("UCP_ADMIN_ORIGINS"),
             gateway_origin=os.environ.get("UCP_GATEWAY_ORIGIN"),
+            clamd_address=os.environ.get("UCP_CLAMD_ADDRESS"),
         )

@@ -34,6 +34,7 @@ type Code = Literal[
     "not_found",
     "turn_in_progress",
     "conflict",
+    "unsafe_file",
     "rate_limited",
     "assistant_unavailable",
     "internal_error",
@@ -49,6 +50,7 @@ CODES: dict[str, tuple[int, str]] = {
     "not_found": (404, "Not found."),
     "turn_in_progress": (409, "An answer is still on its way in this conversation."),
     "conflict": (409, "Someone else changed this first. Reload it, then try again."),  # the admin API (M8)
+    "unsafe_file": (422, "This file was refused: the virus scan found something harmful in it."),
     "rate_limited": (429, "Too many requests. Wait a moment, then try again."),
     "assistant_unavailable": (503, "The assistant is not available just now. Try again shortly."),
     "internal_error": (500, "Something went wrong on our side."),

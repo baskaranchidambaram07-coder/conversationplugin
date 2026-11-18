@@ -1,9 +1,12 @@
 import AxeBuilder from "@axe-core/playwright";
+import { readFileSync } from "node:fs";
+
 import { expect, type FrameLocator, type Page, test } from "@playwright/test";
 
 // Attachments (M10) through the real gateway: chosen in the composer, uploaded, sent with a question to the fake PF,
 // which names them in its answer, then saved back from the question. A file PF does not take is refused in words.
 const PUBLIC = "http://127.0.0.1:4174/hosts/gateway.html";
+const DOCX = "application/vnd.openxmlformats-officedocument.wordprocessingml.document";
 const PDF = { name: "Tenancy agreement.pdf", mimeType: "application/pdf", buffer: Buffer.from("%PDF-1.7\n%%EOF\n") };
 const PNG = {
   name: "meter.png",
@@ -66,13 +69,27 @@ test("a file PF does not take, or a sixth file, is refused in plain words and ne
   await expect(chat.getByRole("alert")).toHaveText(
     "invoice.pdf could not be attached. Check it is a PDF, a Word document, or a JPG or PNG picture.",
   );
-  await expect(chat.getByText("Not attached")).toBeVisible();
+  await expect(chat.getByText("Not attached", { exact: true })).toBeVisible();
   await chat.getByRole("button", { name: "Remove invoice.pdf" }).click();
 
   const six = Array.from({ length: 6 }, (_, n) => ({ ...PDF, name: `page ${n + 1}.pdf` }));
   await picker.setInputFiles(six);
   await expect(chat.getByRole("alert")).toHaveText("You can attach up to 5 files to one question.");
   await expect(chat.getByRole("list", { name: "5 files attached" })).toBeVisible();
+});
+
+test("a document carrying a virus is refused by the scan, in words, and never sent", async ({ page }) => {
+  // On Windows the browser's copy of the file would be quarantined by the machine's own anti-virus first.
+  test.skip(process.platform === "win32", "anti-virus software on the machine quarantines the test virus");
+  const infected = Buffer.from(readFileSync(new URL("infected-docx.b64", import.meta.url), "utf8"), "base64");
+  const chat = await open(page);
+
+  await chat.locator('input[type="file"]').setInputFiles({ name: "essay.docx", mimeType: DOCX, buffer: infected });
+
+  await expect(chat.getByRole("alert")).toHaveText(
+    "essay.docx was not attached: the virus check found something harmful in it.",
+  );
+  await expect(chat.getByText("Not attached", { exact: true })).toBeVisible();
 });
 
 test.describe("on a phone", () => {
