@@ -321,6 +321,7 @@ h1 {
 }
 
 .ask:focus-within {
+  outline: 2px solid transparent; /* shown by forced colours, which drop the ring below */
   border-color: color-mix(in srgb, var(--ink) 40%, var(--line));
   box-shadow: 0 0 0 3px color-mix(in srgb, var(--ink) 8%, transparent);
 }
@@ -1281,7 +1282,7 @@ textarea::placeholder {
 }
 
 .name-row input:focus-visible {
-  outline: none;
+  outline: 2px solid transparent; /* invisible here, drawn by forced colours, which drop the ring below */
   border-color: color-mix(in srgb, var(--ink) 40%, var(--line));
   box-shadow: 0 0 0 3px color-mix(in srgb, var(--ink) 8%, transparent);
 }
@@ -1537,7 +1538,7 @@ textarea::placeholder {
 
 .files.sent {
   justify-content: flex-end;
-  margin-block-start: 6px;
+  margin-block-start: -16px; /* 8px under the question they went with, not a turn's distance */
 }
 
 .file {
@@ -1603,8 +1604,13 @@ textarea::placeholder {
   color: var(--muted);
 }
 
+/* Not faded: its small reason line must keep full contrast. */
 .file.refused {
-  opacity: 0.7;
+  border-style: dashed;
+}
+
+.file.refused .file-size {
+  color: var(--ink);
 }
 
 .file-remove {
@@ -1836,8 +1842,7 @@ textarea::placeholder {
 @media (prefers-reduced-motion: reduce) {
   .ring,
   .dots span,
-  .sketch span,
-  .answer.found .said {
+  .sketch span {
     animation: none;
   }
 
@@ -1865,6 +1870,11 @@ textarea::placeholder {
   .chats,
   .pins {
     border: 1px solid CanvasText;
+  }
+
+  .file-progress > span {
+    forced-color-adjust: none;
+    background: CanvasText; /* the only sign a file is still on its way */
   }
 
   .chats button[aria-current="true"],

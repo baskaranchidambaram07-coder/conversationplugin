@@ -511,6 +511,7 @@ export function App({ widgetId, win = window, preview = false }: { widgetId: str
     await live.current!.api.pin(pin.conversation.id, pin.message.id, false);
     setPins((all) => all?.filter((each) => each.message.id !== pin.message.id) ?? null);
     setHeard(t.unpinnedNow);
+    setFocusTo("view"); // its row, with the focused button, is gone: the page's heading keeps the visitor's place
   }
 
   /** A file sent with a question in the chat on screen. */
@@ -1021,8 +1022,9 @@ function TurnView({
           {answer.status === "complete" && (
             <div className="acts">
               <CopyButton text={plain(answer.blocks)} label={t.copy} />
-              {rate && <Feedback initial={answer.feedback} rate={rate} say={say} />}
+              {/* The pin before the thumbs: their comment card and thanks line come after, and must not split the row. */}
               {pin && <PinButton pinned={answer.pinned} toggle={pin} say={say} />}
+              {rate && <Feedback initial={answer.feedback} rate={rate} say={say} />}
             </div>
           )}
         </div>

@@ -190,6 +190,7 @@ export function ProjectPage({
 }) {
   const [mode, setMode] = useState<"shown" | "renaming" | "deleting">("shown");
   const [refused, setRefused] = useState(false);
+  const question = useId();
 
   async function remove() {
     setRefused(false);
@@ -232,8 +233,15 @@ export function ProjectPage({
         </div>
       )}
       {mode === "deleting" && (
-        <div className="confirm" onKeyDown={escaping(() => setMode("shown"))}>
-          <p dir="auto">{t.confirmDelete(project.name)}</p>
+        <div
+          className="confirm"
+          role="group"
+          aria-labelledby={question} // read out with the button focus lands on
+          onKeyDown={escaping(() => setMode("shown"))}
+        >
+          <p id={question} dir="auto">
+            {t.confirmDelete(project.name)}
+          </p>
           {refused && (
             <p className="meta" role="alert">
               {t.actionFailed}

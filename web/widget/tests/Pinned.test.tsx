@@ -80,7 +80,7 @@ afterEach(() => {
 
 test("an excerpt is the answer's words without its Markdown", () => {
   expect(excerpt("## Rent\n\nRent is due on the **first**.\n\n- by card\n- by `transfer`")).toBe(
-    "Rent Rent is due on the first. by card by transfer",
+    "Rent. Rent is due on the first. by card by transfer",
   );
   expect(excerpt("See [the portal](https://example.org) and\n```python\nprint(1)\n```")).toBe(
     "See the portal and print(1)",
@@ -114,7 +114,7 @@ test("the Pinned page lists each answer under its question and opens it in its c
   expect(await screen.findByRole("heading", { name: t.pinned })).toBe(document.activeElement);
   const row = await screen.findByRole("button", { name: /Rent is due on the first/ });
   expect(row.querySelector(".asked")?.textContent).toBe("When is rent due?");
-  expect(row.querySelector(".excerpt")?.textContent).toBe("Rent Rent is due on the first of each month.");
+  expect(row.querySelector(".excerpt")?.textContent).toBe("Rent. Rent is due on the first of each month.");
 
   fireEvent.click(row);
 
@@ -134,7 +134,8 @@ test("an answer unpinned on the Pinned page leaves it", async () => {
   fireEvent.click(await screen.findByRole("button", { name: t.chats }));
   fireEvent.click(screen.getByRole("button", { name: t.pinned }));
 
-  fireEvent.click(await screen.findByRole("button", { name: t.unpin }));
+  fireEvent.click(await screen.findByRole("button", { name: t.unpinOne("When is rent due?") }));
+  expect(await screen.findByRole("heading", { name: t.pinned })).toBe(document.activeElement); // the place is kept
 
   expect(await screen.findByText(t.noPins)).toBeTruthy();
 });
