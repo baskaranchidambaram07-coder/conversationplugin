@@ -26,6 +26,7 @@ from sqlalchemy import (
     func,
     insert,
     select,
+    true,
     tuple_,
     update,
 )
@@ -33,7 +34,7 @@ from sqlalchemy.dialects.postgresql import JSONB, distinct_on
 from sqlalchemy.dialects.postgresql import insert as pg_insert
 from sqlalchemy.ext.asyncio import AsyncEngine
 
-from ucp.protocol import ApiError, Block, Conversation, Message, Project
+from ucp.protocol import ApiError, Block, Conversation, Message, Pin, Project
 
 metadata = MetaData()
 _BLOCK = TypeAdapter(Block)
@@ -200,6 +201,20 @@ feedback = Table(
 )
 
 
+# Answers a signed-in visitor pinned to find again (0010).
+pins = Table(
+    "pins",
+    metadata,
+    Column("message_id", Text, ForeignKey("messages.id"), primary_key=True),
+    Column("conversation_id", Text, ForeignKey("conversations.id"), nullable=False),
+    Column("tenant_id", Text, nullable=False),
+    Column("widget_id", Text, nullable=False),
+    Column("user_id", Text, nullable=False),
+    Column("created_at", DateTime(timezone=True), nullable=False, server_default=func.now()),
+    Index("pins_by_owner", "tenant_id", "widget_id", "user_id", "created_at"),
+)
+
+
 # A turn takes at most 5 minutes (ucp.turns), so an answer still in progress after 6 was abandoned.
 STALE = timedelta(minutes=6)
 STALE_ERROR = {
@@ -280,6 +295,7 @@ def _message(row) -> Message:
         error=error,
         created_at=row.created_at,
         feedback=row.rating,
+        pinned=bool(row.pinned),
     )
 
 
@@ -653,12 +669,33 @@ class Store:
         return _message(row) if row else None
 
     def _shown(self, owner: Owner, conversation_id: str):
-        """A conversation's messages as the visitor sees them, with their own rating of each."""
+        """A conversation's messages as the visitor sees them, with their own rating and pin of each."""
         return (
-            select(messages, feedback.c.rating)
+            select(messages, feedback.c.rating, pins.c.message_id.is_not(None).label("pinned"))
             .join(conversations, messages.c.conversation_id == conversations.c.id)
             .outerjoin(feedback, feedback.c.message_id == messages.c.id)
+            .outerjoin(pins, pins.c.message_id == messages.c.id)
             .where(self._owned(owner) & (conversations.c.id == conversation_id))
+        )
+
+    def _finished_answer(self, owner: Owner, conversation_id: str, message_id: str):
+        """One of the owner's finished answers: what may be rated or pinned."""
+        return (
+            select(messages.c.id, messages.c.reply_to)
+            .join(conversations, messages.c.conversation_id == conversations.c.id)
+            .where(self._owned(owner) & (conversations.c.id == conversation_id) & (messages.c.id == message_id))
+            .where((messages.c.role == "assistant") & (messages.c.status == "complete"))
+        )
+
+    @staticmethod
+    def _mine(table: Table, owner: Owner, conversation_id: str, message_id: str):
+        """The owner's row about one message, in the feedback or pins table."""
+        return (
+            (table.c.message_id == message_id)
+            & (table.c.conversation_id == conversation_id)
+            & (table.c.tenant_id == owner.tenant_id)
+            & (table.c.widget_id == owner.widget_id)
+            & (table.c.user_id == owner.user_id)
         )
 
     # Feedback (M4-T10)
@@ -668,14 +705,8 @@ class Store:
     ) -> bool:
         """Stores the visitor's rating of one of their finished answers, replacing an earlier one. False if there is
         no such answer."""
-        answer = (
-            select(messages.c.id, messages.c.reply_to)
-            .join(conversations, messages.c.conversation_id == conversations.c.id)
-            .where(self._owned(owner) & (conversations.c.id == conversation_id) & (messages.c.id == message_id))
-            .where((messages.c.role == "assistant") & (messages.c.status == "complete"))
-        )
         async with self.engine.begin() as db:
-            found = (await db.execute(answer)).first()
+            found = (await db.execute(self._finished_answer(owner, conversation_id, message_id))).first()
             if not found:
                 return False
             row = {
@@ -694,12 +725,66 @@ class Store:
 
     async def unrate(self, owner: Owner, conversation_id: str, message_id: str) -> None:
         """Takes back the visitor's rating of an answer, if they gave one."""
-        mine = (
-            (feedback.c.message_id == message_id)
-            & (feedback.c.conversation_id == conversation_id)
-            & (feedback.c.tenant_id == owner.tenant_id)
-            & (feedback.c.widget_id == owner.widget_id)
-            & (feedback.c.user_id == owner.user_id)
-        )
         async with self.engine.begin() as db:
-            await db.execute(delete(feedback).where(mine))
+            await db.execute(delete(feedback).where(self._mine(feedback, owner, conversation_id, message_id)))
+
+    # Pins (signed-in visitors)
+
+    async def pin(self, owner: Owner, conversation_id: str, message_id: str) -> bool:
+        """Pins one of the owner's finished answers; pinning it again changes nothing. False if there is no such
+        answer."""
+        async with self.engine.begin() as db:
+            if not (await db.execute(self._finished_answer(owner, conversation_id, message_id))).first():
+                return False
+            row = {"message_id": message_id, "conversation_id": conversation_id, **owner.__dict__}
+            await db.execute(pg_insert(pins).values(row).on_conflict_do_nothing())
+        return True
+
+    async def unpin(self, owner: Owner, conversation_id: str, message_id: str) -> None:
+        async with self.engine.begin() as db:
+            await db.execute(delete(pins).where(self._mine(pins, owner, conversation_id, message_id)))
+
+    async def pinned(self, owner: Owner, limit: int = 100) -> list[Pin]:
+        """The owner's pinned answers, the newest pin first, each with its question and chat.
+        shortcut: the newest 100 with no paging; add a cursor when someone keeps more."""
+        asked = messages.alias("asked")
+        chat = conversations.c
+        query = (
+            select(
+                messages,
+                feedback.c.rating,
+                true().label("pinned"),
+                pins.c.created_at.label("pinned_at"),
+                chat.title.label("chat_title"),
+                chat.created_at.label("chat_created_at"),
+                chat.updated_at.label("chat_updated_at"),
+                chat.project_id.label("chat_project_id"),
+                asked.c.blocks.label("question_blocks"),
+            )
+            .select_from(
+                pins.join(messages, messages.c.id == pins.c.message_id)
+                .join(conversations, conversations.c.id == messages.c.conversation_id)
+                .outerjoin(asked, asked.c.id == messages.c.reply_to)
+                .outerjoin(feedback, feedback.c.message_id == messages.c.id)
+            )
+            .where(self._owned(owner))
+            .order_by(pins.c.created_at.desc(), pins.c.message_id.desc())
+            .limit(limit)
+        )
+        async with self.engine.connect() as db:
+            rows = list(await db.execute(query))
+        return [
+            Pin(
+                conversation=Conversation(
+                    id=row.conversation_id,
+                    title=row.chat_title,
+                    created_at=row.chat_created_at,
+                    updated_at=row.chat_updated_at,
+                    project_id=row.chat_project_id,
+                ),
+                question=next((block["text"] for block in row.question_blocks or [] if block["type"] == "text"), None),
+                message=_message(row),
+                pinned_at=row.pinned_at,
+            )
+            for row in rows
+        ]

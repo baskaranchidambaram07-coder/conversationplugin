@@ -23,7 +23,7 @@ from ucp.widgets import Widget
 log = logging.getLogger("ucp.gateway")
 REFUSALS_PER_MINUTE = 10  # host tokens refused from one address before it must wait
 FEEDBACK_PER_MINUTE = 30  # ratings from one visitor
-PROJECT_CHANGES_PER_MINUTE = 30  # projects started or renamed by one visitor
+CHANGES_PER_MINUTE = 30  # projects started or renamed, and answers pinned, by one visitor
 
 
 def same_origin(request: Request) -> None:
@@ -256,7 +256,7 @@ async def list_projects(request: Request, session: Visitor) -> protocol.ProjectP
 
 @router.post("/projects", status_code=201, summary="Start a project")
 async def create_project(body: protocol.ProjectName, request: Request, session: Visitor) -> protocol.Project:
-    request.app.state.limiter.check(f"projects:{signed_in(session).user_id}", PROJECT_CHANGES_PER_MINUTE)
+    request.app.state.limiter.check(f"projects:{signed_in(session).user_id}", CHANGES_PER_MINUTE)
     return await _store(request).create_project(owner(session), body.name.strip())
 
 
@@ -264,7 +264,7 @@ async def create_project(body: protocol.ProjectName, request: Request, session: 
 async def rename_project(
     project_id: protocol.Id, body: protocol.ProjectName, request: Request, session: Visitor
 ) -> protocol.Project:
-    request.app.state.limiter.check(f"projects:{signed_in(session).user_id}", PROJECT_CHANGES_PER_MINUTE)
+    request.app.state.limiter.check(f"projects:{signed_in(session).user_id}", CHANGES_PER_MINUTE)
     project = await _store(request).rename_project(owner(session), project_id, body.name.strip())
     if not project:
         raise Problem("not_found")
@@ -275,6 +275,30 @@ async def rename_project(
 async def delete_project(project_id: protocol.Id, request: Request, session: Visitor) -> Response:
     if not await _store(request).delete_project(owner(signed_in(session)), project_id):
         raise Problem("not_found")
+    return Response(status_code=204)
+
+
+# Pinned answers (signed-in visitors)
+
+
+@router.get("/pins", summary="The visitor's pinned answers, the newest pin first")
+async def list_pins(request: Request, session: Visitor) -> protocol.PinPage:
+    return protocol.PinPage(pins=await _store(request).pinned(owner(signed_in(session))))
+
+
+@router.put(
+    "/conversations/{conversation_id}/messages/{message_id}/pin", status_code=204, summary="Pin a finished answer"
+)
+async def pin(conversation_id: protocol.Id, message_id: protocol.Id, request: Request, session: Visitor) -> Response:
+    request.app.state.limiter.check(f"pins:{signed_in(session).user_id}", CHANGES_PER_MINUTE)
+    if not await _store(request).pin(owner(session), conversation_id, message_id):
+        raise Problem("not_found")
+    return Response(status_code=204)
+
+
+@router.delete("/conversations/{conversation_id}/messages/{message_id}/pin", status_code=204, summary="Unpin an answer")
+async def unpin(conversation_id: protocol.Id, message_id: protocol.Id, request: Request, session: Visitor) -> Response:
+    await _store(request).unpin(owner(signed_in(session)), conversation_id, message_id)
     return Response(status_code=204)
 
 

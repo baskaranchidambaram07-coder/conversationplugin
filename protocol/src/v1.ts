@@ -16,7 +16,9 @@ export type Protocol =
   | Project
   | ProjectName
   | ProjectPage
-  | Filing;
+  | Filing
+  | Pin
+  | PinPage;
 export type Block = TextBlock | MarkdownBlock | UnknownBlock;
 export type StreamEvent =
   MessageStarted | ContentBlockStarted | ContentBlockDelta | ContentBlockCompleted | MessageCompleted | MessageFailed;
@@ -191,6 +193,10 @@ export interface Message {
    * The visitor's rating of an answer.
    */
   feedback?: ("like" | "dislike") | null;
+  /**
+   * The visitor pinned this answer to find it again.
+   */
+  pinned?: boolean;
 }
 /**
  * Reply to GET /v1/conversations: the visitor's conversations, most recently active first.
@@ -309,4 +315,22 @@ export interface ProjectPage {
  */
 export interface Filing {
   project_id: Id | null;
+}
+/**
+ * A pinned answer, with what was asked and the chat it is in.
+ */
+export interface Pin {
+  conversation: Conversation;
+  /**
+   * What the visitor asked, as typed; null if it is not stored.
+   */
+  question: string | null;
+  message: Message;
+  pinned_at: string;
+}
+/**
+ * Reply to GET /v1/pins: the visitor's pinned answers, the newest pin first.
+ */
+export interface PinPage {
+  pins: Pin[];
 }

@@ -640,6 +640,126 @@
         }
       }
     },
+    "/v1/pins": {
+      "get": {
+        "summary": "The visitor's pinned answers, the newest pin first",
+        "operationId": "list_pins_v1_pins_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PinPage"
+                }
+              }
+            }
+          },
+          "4XX": {
+            "description": "Client Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/conversations/{conversation_id}/messages/{message_id}/pin": {
+      "put": {
+        "summary": "Pin a finished answer",
+        "operationId": "pin_v1_conversations__conversation_id__messages__message_id__pin_put",
+        "parameters": [
+          {
+            "name": "conversation_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^[A-Za-z0-9_-]{1,64}$",
+              "description": "Our opaque ID. Never a PF ID.",
+              "title": "Conversation Id"
+            },
+            "description": "Our opaque ID. Never a PF ID."
+          },
+          {
+            "name": "message_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^[A-Za-z0-9_-]{1,64}$",
+              "description": "Our opaque ID. Never a PF ID.",
+              "title": "Message Id"
+            },
+            "description": "Our opaque ID. Never a PF ID."
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "4XX": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            },
+            "description": "Client Error"
+          }
+        }
+      },
+      "delete": {
+        "summary": "Unpin an answer",
+        "operationId": "unpin_v1_conversations__conversation_id__messages__message_id__pin_delete",
+        "parameters": [
+          {
+            "name": "conversation_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^[A-Za-z0-9_-]{1,64}$",
+              "description": "Our opaque ID. Never a PF ID.",
+              "title": "Conversation Id"
+            },
+            "description": "Our opaque ID. Never a PF ID."
+          },
+          {
+            "name": "message_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^[A-Za-z0-9_-]{1,64}$",
+              "description": "Our opaque ID. Never a PF ID.",
+              "title": "Message Id"
+            },
+            "description": "Our opaque ID. Never a PF ID."
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "4XX": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            },
+            "description": "Client Error"
+          }
+        }
+      }
+    },
     "/v1/conversations/{conversation_id}/messages/{message_id}/feedback": {
       "put": {
         "summary": "Rate a finished answer, like or dislike, with an optional comment; a second rating replaces the first",
@@ -1097,6 +1217,12 @@
             ],
             "title": "Feedback",
             "description": "The visitor's rating of an answer."
+          },
+          "pinned": {
+            "type": "boolean",
+            "title": "Pinned",
+            "description": "The visitor pinned this answer to find it again.",
+            "default": false
           }
         },
         "additionalProperties": false,
@@ -1140,6 +1266,61 @@
         ],
         "title": "MessagePage",
         "description": "Reply to GET /v1/conversations/{id}/messages: a page of messages, oldest first, and the page before it."
+      },
+      "Pin": {
+        "properties": {
+          "conversation": {
+            "$ref": "#/components/schemas/Conversation"
+          },
+          "question": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Question",
+            "description": "What the visitor asked, as typed; null if it is not stored."
+          },
+          "message": {
+            "$ref": "#/components/schemas/Message"
+          },
+          "pinned_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Pinned At"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "conversation",
+          "question",
+          "message",
+          "pinned_at"
+        ],
+        "title": "Pin",
+        "description": "A pinned answer, with what was asked and the chat it is in."
+      },
+      "PinPage": {
+        "properties": {
+          "pins": {
+            "items": {
+              "$ref": "#/components/schemas/Pin"
+            },
+            "type": "array",
+            "title": "Pins"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "pins"
+        ],
+        "title": "PinPage",
+        "description": "Reply to GET /v1/pins: the visitor's pinned answers, the newest pin first."
       },
       "Project": {
         "properties": {

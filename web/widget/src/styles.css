@@ -1379,6 +1379,124 @@ textarea::placeholder {
   padding: 6px 4px 4px;
 }
 
+/* Pinned answers: one hairline card of rows, each the question in Muted, the start of the answer, and its chat. */
+.pins {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  overflow: hidden;
+  border-radius: 12px;
+  background: var(--surface);
+  box-shadow: 0 0 0 1px var(--line);
+}
+
+.pins li {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: start;
+}
+
+.pins li + li {
+  border-block-start: 1px solid var(--line);
+}
+
+.pin-open {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+  padding-block: 11px;
+  padding-inline: 14px 6px;
+  border: 0;
+  background: transparent;
+  text-align: start;
+  transition: background-color 0.15s ease-out;
+}
+
+.pin-open:hover {
+  background: color-mix(in srgb, var(--ink) 5%, transparent);
+}
+
+.pin-open:focus-visible {
+  outline-offset: -3px; /* the card clips its rows, so the ring is drawn inside */
+}
+
+.asked,
+.excerpt {
+  display: -webkit-box;
+  overflow: hidden;
+  -webkit-box-orient: vertical;
+  overflow-wrap: anywhere;
+}
+
+.asked {
+  -webkit-line-clamp: 1;
+  line-clamp: 1;
+  font-size: 13px;
+  color: var(--muted);
+}
+
+.excerpt {
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  font-size: 15px;
+  line-height: 1.45;
+}
+
+.where {
+  display: flex;
+  gap: 8px;
+  min-width: 0;
+  font-size: 13px;
+  color: var(--muted);
+}
+
+.where span {
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.where time {
+  flex: none;
+}
+
+.pins .thumb {
+  margin: 8px;
+  color: var(--ink);
+}
+
+.pins li > .meta {
+  grid-column: 1 / -1;
+  padding-inline: 14px;
+  padding-block-end: 10px;
+}
+
+.thumb[aria-pressed="true"] .glyph {
+  color: var(--ink);
+}
+
+/* An answer opened from the Pinned page: a soft wash that fades, so the eye finds it. */
+.answer.found {
+  scroll-margin-block-start: 24px; /* clear of the conversation's top fade */
+}
+
+.answer.found .said {
+  border-radius: 12px;
+  animation: found 2.4s ease-out;
+}
+
+@keyframes found {
+  from {
+    background: var(--bubble);
+    box-shadow: 0 0 0 8px var(--bubble);
+  }
+  to {
+    background: transparent;
+    box-shadow: 0 0 0 8px transparent;
+  }
+}
+
 /* Wide frames (the chat filling a page, or the window): a conversation app. The list of chats runs the full height
    at the start; the conversation, the composer, the AI notice and the credit share one centred column. */
 .chat.split {
@@ -1537,7 +1655,8 @@ textarea::placeholder {
 @media (prefers-reduced-motion: reduce) {
   .ring,
   .dots span,
-  .sketch span {
+  .sketch span,
+  .answer.found .said {
     animation: none;
   }
 
@@ -1562,7 +1681,8 @@ textarea::placeholder {
   .table,
   .diagram,
   .chart,
-  .chats {
+  .chats,
+  .pins {
     border: 1px solid CanvasText;
   }
 

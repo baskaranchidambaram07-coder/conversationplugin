@@ -14,6 +14,8 @@ export type Answer = {
   reference: string | null;
   /** The visitor's own rating of this answer, as stored. */
   feedback: "like" | "dislike" | null;
+  /** The visitor pinned this answer (signed-in visitors). */
+  pinned: boolean;
 };
 
 export const pending = (): Answer => ({
@@ -25,6 +27,7 @@ export const pending = (): Answer => ({
   error: null,
   reference: null,
   feedback: null,
+  pinned: false,
 });
 
 const settled = (answer: Answer) => ["complete", "failed", "stopped"].includes(answer.status);

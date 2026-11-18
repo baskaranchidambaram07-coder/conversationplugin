@@ -34,6 +34,7 @@ export function fromRecord(record: Message, previous: Answer): Answer {
     error: record.error,
     gap: false,
     feedback: record.feedback ?? null,
+    pinned: record.pinned ?? false,
   };
 }
 
