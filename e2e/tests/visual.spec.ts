@@ -1,3 +1,5 @@
+import path from "node:path";
+
 import { expect, test } from "@playwright/test";
 
 // Screenshot comparison per block (M3): every block of every example, at a phone's width in the light scheme and a
@@ -5,6 +7,7 @@ import { expect, test } from "@playwright/test";
 // elsewhere, so these run only there, in Chromium). A block that changes by more than 1% of its pixels fails; when a
 // change is meant, the pipeline's "screenshots" artifact holds the new pictures to commit.
 const CHAT = "http://localhost:4174/embed/w_chat";
+const STYLE = path.join(import.meta.dirname, "visual.css"); // hides what floats over the block
 const EXAMPLES = ["formatting", "code", "tables", "diagrams", "drawings", "charts", "mermaid", "maths"];
 const LOOKS = [
   { width: 360, scheme: "light" },
@@ -35,6 +38,7 @@ for (const example of EXAMPLES) {
           animations: "disabled",
           caret: "hide",
           maxDiffPixelRatio: 0.01,
+          stylePath: STYLE,
         });
       }
     });

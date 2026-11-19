@@ -1,0 +1,9 @@
+/* Applied only while a block is photographed (visual.spec.ts): what floats over the conversation, and the fade at
+   its edges, depend on where it is scrolled to, and are not part of the block. */
+.latest {
+  visibility: hidden !important;
+}
+
+.log {
+  mask-image: none !important;
+}
