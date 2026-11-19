@@ -9,6 +9,7 @@ const TYPES = new Set([
   "content_block.completed",
   "message.completed",
   "message.failed",
+  "speech.audio",
 ]);
 
 /** The event if it is a version 1 event of a type this chat knows; otherwise null, and the caller skips it. */
