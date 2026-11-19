@@ -52,6 +52,9 @@ test("a voice conversation: asked when the visitor stops, read aloud with pause 
   await expect(chat.getByRole("heading", { name: "How HTTPS Works" })).toBeVisible({ timeout: 20_000 }); // the text, as ever
 
   await expect(bar.getByRole("status")).toHaveText("Reading the answer aloud", { timeout: 20_000 });
+  // Scanned once the answer is whole, as every journey is: mid-stream, a long first answer scrolls before it holds
+  // anything to focus, an older gap in the conversation's frame that voice does not change.
+  await expect(chat.getByRole("button", { name: "Copy answer" })).toBeVisible({ timeout: 30_000 });
   expect(await serious(page)).toEqual([]);
   await bar.getByRole("button", { name: "Pause reading" }).click();
   await expect(bar.getByRole("status")).toHaveText("Paused");
