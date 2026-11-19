@@ -15,7 +15,10 @@
         "color_scheme": "auto",
         "launcher_position": "bottom-right",
         "history_enabled": true,
-        "attachments_enabled": true
+        "attachments_enabled": true,
+        "voice_enabled": true,
+        "voice_languages": ["en-GB", "en-US", "en-IN", "hi-IN", "es-ES", "fr-FR"],
+        "browser_speech": "allowed"
       },
       "allowed_domains": [
         "http://127.0.0.1:4174"
@@ -68,7 +71,10 @@
         "color_scheme": "auto",
         "launcher_position": "bottom-right",
         "history_enabled": true,
-        "attachments_enabled": true
+        "attachments_enabled": true,
+        "voice_enabled": true,
+        "voice_languages": ["en-GB", "en-US", "en-IN", "hi-IN", "es-ES", "fr-FR"],
+        "browser_speech": "allowed"
       },
       "allowed_domains": [
         "http://127.0.0.1:4174"

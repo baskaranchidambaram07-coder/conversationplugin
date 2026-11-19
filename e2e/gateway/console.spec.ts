@@ -237,11 +237,28 @@ test("the look is edited beside the chat itself, which shows each change at once
   await page.getByLabel(/Visitors can attach files/).check(); // the paperclip appears in the preview, sending nothing
   await expect(chat.getByRole("button", { name: "Attach files" })).toBeDisabled();
 
+  // Voice (M11): languages open onto their regions, each ticked on its own; the default is chosen from those ticked.
+  await page.getByLabel(/Visitors can speak their questions/).check();
+  const languages = page.locator("details.languages");
+  await languages.locator("> summary").click(); // the languages field, opening
+  const language = (name: string) => languages.locator("details > summary", { hasText: new RegExp(`^${name}`) });
+  await language("English").click(); // a language, opening onto its regions
+  await expect(page.getByRole("checkbox", { name: "English (United Kingdom)" })).toBeDisabled(); // the only one stays
+  await page.getByRole("checkbox", { name: "English (United States)" }).check();
+  await language("Hindi").click();
+  await page.getByRole("checkbox", { name: "Hindi (India)" }).check();
+  await expect(page.getByText("English (United Kingdom) and 2 more")).toBeVisible();
+  await page.getByLabel("Default language").selectOption("hi-IN");
+  await page.getByRole("radio", { name: /Also on the browser maker.s servers/ }).check();
+  if (info.project.name === "chromium") await page.screenshot({ path: test.info().outputPath("voice-settings.png"), fullPage: true });
+
   await page.getByRole("radio", { name: "Dark" }).check();
   await expect.poll(() => chat.locator("html").getAttribute("data-scheme")).toBe("dark");
   await page.getByRole("button", { name: "Save" }).click();
   await expect(page.getByText("Saved. Visitors see it once you publish.")).toBeVisible();
   await expect(page.getByRole("link", { name: /Ask the Riverside desk/ })).toBeVisible();
+  const saved = (await api("GET", `/widgets/${widget}/draft`)) as { document: { public: Record<string, unknown> } };
+  expect(saved.document.public).toMatchObject({ voice_enabled: true, voice_languages: ["hi-IN", "en-GB", "en-US"], browser_speech: "allowed" });
   expect(await serious(page)).toEqual([]);
   await page.getByRole("button", { name: "Continue to Install" }).click();
   await expect(page).toHaveURL(`${CONSOLE}/widgets/${widget}/install`);
