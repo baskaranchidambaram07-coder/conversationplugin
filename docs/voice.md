@@ -1,6 +1,6 @@
 # Voice (M11): design and exploration
 
-Status: built on `module/m11-voice` on 19 November 2026 (pull requests 141 to 144). It answers M11-T1 (the provider path) and records how M11-T2 to T5 were built. Research on browsers and speech services was done on 19 November 2026; facts that could not be confirmed are marked.
+Status: built on `module/m11-voice` on 19 November 2026 (pull requests 141 to 144) and merged into `develop` the same day. It answers M11-T1 (the provider path) and records how M11-T2 to T5 were built. Research on browsers and speech services was done on 19 November 2026; facts that could not be confirmed are marked.
 
 **Your decisions (19 November):**
 - Build tasks 1 to 3, with AWS (Transcribe and Polly) as dev's speech service in `us-east-1`. Production's provider is decided later.
