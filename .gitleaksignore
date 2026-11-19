@@ -1,0 +1,3 @@
+# Findings checked by hand and known to be harmless, one gitleaks fingerprint a line.
+# A made-up session token in a message-format example, replaced by an opaque one in the next commit (#141).
+564af4507dc2ada3db4c8dabf96f56c20c3d45f5:protocol/examples/v1/VoiceRequest/valid/start.json:generic-api-key:3
