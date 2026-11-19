@@ -70,6 +70,7 @@ The gateway reads its settings from the environment when it starts:
 | Code highlighting | lowlight with highlight.js grammars | 3.3.0 / 11.11.2 | Tokens come back as a tree and become React spans with classes; 25 languages; loaded only when an answer holds code in one |
 | Maths | temml | 0.14.0 | TeX to MathML, which browsers lay out themselves; its output is rebuilt from an allow-list of MathML elements and attributes, so no inline style or link reaches the page; loaded only when an answer holds a formula |
 | Voice in the chat (M11) | The browser's own speech recognition and voices (Web Speech API), an AudioWorklet of our own for the microphone, Web Audio for playback | the browsers' own | Nothing to install; all of it loads on the first press of a voice button (about 5 KB) |
+| Files in the chat (M3) | The browser's own `DecompressionStream` (zip) and `DOMParser` (Office XML); its own PDF viewer | the browsers' own | Nothing to install; Word, Excel, PowerPoint and CSV readers load when a file is opened (about 5 KB) |
 
 Added when first used: Recharts, Mermaid, Radix primitives.
 
