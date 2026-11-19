@@ -3,11 +3,14 @@
 // more series, every value readable by pointer or by the arrow keys, and the same numbers as a table.
 import { type KeyboardEvent, type PointerEvent, useContext, useId, useMemo, useRef, useState } from "react";
 
-import { CopyButton, Icon } from "../Icon";
+import { CopyButton, Icon, SaveButton } from "../Icon";
 import { strings as t } from "../strings";
+import { InViewer } from "../frame";
+import { FullScreen, Viewer } from "../Viewer";
 import { type Chart as Data, chartOf, format, type Kind, pieOf, type Plot, plotOf, rowsOf, share, summary } from "./plot";
 import { Code } from "./Code";
 import { specOfCode, specOfMermaidPie } from "./derive";
+import { pictureName, pngOf } from "./image";
 import { Source } from "./source";
 import type { FenceProps } from "./registry";
 import { useRoom } from "./room";
@@ -98,13 +101,13 @@ function Cartesian({ data, plot, at }: { data: Data; plot: Plot; at: number | nu
   );
 }
 
-function Pie({ data, width, at }: { data: Data; width: number; at: number | null }) {
+function Pie({ data, width, size, at }: { data: Data; width: number; size: number; at: number | null }) {
   const slices = data.values[0] ?? [];
   const total = slices.reduce<number>((sum, value) => sum + (value ?? 0), 0);
-  const [cx, cy, outer] = [width / 2, PIE / 2, PIE / 2 - 8];
+  const [cx, cy, outer] = [width / 2, size / 2, size / 2 - 8];
   let angle = 0;
   return (
-    <svg width={width} height={PIE} aria-hidden="true">
+    <svg width={width} height={size} aria-hidden="true">
       {slices.map((value, i) => {
         const turn = ((value ?? 0) / total) * 2 * Math.PI;
         const [a0, a1] = [angle, (angle += turn)];
@@ -121,6 +124,19 @@ function Pie({ data, width, at }: { data: Data; width: number; at: number | null
       })}
     </svg>
   );
+}
+
+/** The chart as drawn, with its title and legend, as PNG on its own card's colour. */
+function picture(plot: HTMLElement, title: string) {
+  const figure = plot.closest("figure")!;
+  const svg = plot.querySelector("svg")!;
+  const legend = [...figure.querySelectorAll(".legend li")].map((item) => {
+    const key = getComputedStyle(item.querySelector(".key")!);
+    const filled = key.backgroundColor !== "rgba(0, 0, 0, 0)" && key.backgroundColor !== "transparent";
+    return { name: item.textContent ?? "", colour: filled ? key.backgroundColor : key.borderTopColor };
+  });
+  const ground = getComputedStyle(figure).backgroundColor;
+  return pngOf({ svg, width: svg.width.baseVal.value, height: svg.height.baseVal.value, ground, title, legend });
 }
 
 /** The points the arrow keys step through: categories, slices, or a scatter's dots from left to right. */
@@ -142,7 +158,7 @@ function kindsOf(chart: Data): Kind[] {
 
 /** A chart block; a Mermaid pie; Python plotting code whose values are written into it (drawn over the code); or a
  *  table's numbers (given as a chart block, without a second table under it). */
-export default function Chart({ code, language, table: tabled = true }: FenceProps & { table?: boolean }) {
+export default function Chart({ code, language, table: tabled = true, start = null }: FenceProps & { table?: boolean; start?: Kind | null }) {
   const answer = useContext(Source);
   const base = useMemo(
     () =>
@@ -153,10 +169,12 @@ export default function Chart({ code, language, table: tabled = true }: FencePro
       ),
     [code, language, answer],
   );
-  const [kind, setKind] = useState<Kind | null>(null); // null until the visitor picks another
+  const [kind, setKind] = useState<Kind | null>(start); // null until the visitor picks another
   const data = base && kind && kind !== base.kind ? (kind === "pie" ? pieOf({ ...base, kind }) : { ...base, kind }) : base;
   const [at, setAt] = useState<number | null>(null);
   const [table, setTable] = useState(false);
+  const [viewing, setViewing] = useState(false);
+  const whole = useContext(InViewer);
   const frame = useRef<HTMLDivElement>(null);
   const room = useRoom(frame, data);
   const described = useId();
@@ -164,7 +182,10 @@ export default function Chart({ code, language, table: tabled = true }: FencePro
   const kinds = kindsOf(base);
 
   const width = room || 320;
-  const plot = data.kind === "pie" ? null : plotOf(data, width);
+  // In the full-screen viewer a chart is drawn taller, as the window allows.
+  const tall = whole ? Math.max(260, Math.min(560, window.innerHeight - 240)) : 0;
+  const pie = tall ? Math.min(tall, 360) : PIE;
+  const plot = data.kind === "pie" ? null : plotOf(data, width, tall);
   const stops = stopsOf(data);
   const total = data.kind === "pie" ? (data.values[0] ?? []).reduce<number>((sum, value) => sum + (value ?? 0), 0) : 0;
   const many = data.values.length > 1 || data.kind === "pie";
@@ -175,8 +196,8 @@ export default function Chart({ code, language, table: tabled = true }: FencePro
     const box = event.currentTarget.getBoundingClientRect();
     const [px, py] = [event.clientX - box.left, event.clientY - box.top];
     if (data.kind === "pie") {
-      const [dx, dy] = [px - width / 2, py - PIE / 2];
-      if (Math.hypot(dx, dy) > PIE / 2) return setAt(null);
+      const [dx, dy] = [px - width / 2, py - pie / 2];
+      if (Math.hypot(dx, dy) > pie / 2) return setAt(null);
       const turn = (Math.atan2(dx, -dy) + 2 * Math.PI) % (2 * Math.PI);
       let angle = 0;
       const slice = (data.values[0] ?? []).findIndex((value) => (angle += ((value ?? 0) / total) * 2 * Math.PI) >= turn);
@@ -261,7 +282,7 @@ export default function Chart({ code, language, table: tabled = true }: FencePro
           <p id={described} className="hidden">
             {summary(data)} {t.chartKeys}
           </p>
-          {plot ? <Cartesian data={data} plot={plot} at={at} /> : <Pie data={data} width={width} at={at} />}
+          {plot ? <Cartesian data={data} plot={plot} at={at} /> : <Pie data={data} width={width} size={pie} at={at} />}
           {/* Over the chart, in the top corner away from the reading, so it never moves anything. */}
           {reading && (
             <div className={`tip ${side}`} aria-hidden="true">
@@ -303,8 +324,15 @@ export default function Chart({ code, language, table: tabled = true }: FencePro
               {table ? t.hideTable : t.showTable}
             </button>
           )}
+          <SaveButton label={t.downloadImage} name={pictureName(data.title, "chart")} make={() => picture(frame.current!, data.title)} />
+          <FullScreen onOpen={() => setViewing(true)} />
         </div>
       </figure>
+      {viewing && (
+        <Viewer title={t.chart(data.kind, data.title)} zoomable={false} onClose={() => setViewing(false)}>
+          <Chart code={code} language={language} table={tabled} start={kind} />
+        </Viewer>
+      )}
       {language !== "chart" && language !== "mermaid" && <Code code={code} language={language} />}
       {tabled && table && (
         <Table rows={rows}>

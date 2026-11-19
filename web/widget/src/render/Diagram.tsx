@@ -2,13 +2,16 @@
 // frame, which scrolls sideways when the diagram is too wide to read at the card's width. Its code stays one press
 // away, to copy into draw.io, Excalidraw or Mermaid. Loaded only when an answer holds a diagram; anything it cannot
 // read is shown as code.
-import { useId, useMemo, useRef, useState } from "react";
+import { useContext, useId, useMemo, useRef, useState } from "react";
 
-import { CopyButton, Icon } from "../Icon";
+import { CopyButton, Icon, SaveButton } from "../Icon";
 import { strings as t } from "../strings";
+import { InViewer } from "../frame";
+import { FullScreen, Viewer } from "../Viewer";
 import { Code } from "./Code";
 import { fromBoxArt, widestFor } from "./boxart";
 import { ems, fromMermaid } from "./mermaid";
+import { pngOf } from "./image";
 import { fromSequence } from "./sequence";
 import { type Line, type Point, sceneOf, type Shape } from "./scene";
 import { type FenceProps, isBoxArt } from "./registry";
@@ -164,6 +167,9 @@ export default function Diagram({ code, language }: FenceProps) {
     [code, language, art, widest],
   );
   const [showCode, setShowCode] = useState(false);
+  const [viewing, setViewing] = useState(false);
+  const whole = useContext(InViewer);
+  const drawing = useRef<SVGSVGElement>(null);
   const described = useId();
   if (!scene) return <Code code={code} language={language} />;
 
@@ -188,8 +194,10 @@ export default function Diagram({ code, language }: FenceProps) {
   const height = Math.max(...ys) + PAD - top;
   // As wide as the frame, never larger than drawn, and never so small its words cannot be read: then it scrolls.
   const sizes = [...scene.shapes, ...scene.lines].filter((part) => part.label).map((part) => part.size).sort((a, b) => a - b);
-  const smallest = Math.min(1, READABLE / (sizes[Math.floor(sizes.length / 2)] ?? 12));
-  const shown = Math.max(width * smallest, Math.min(width, room || width));
+  // In the full-screen viewer the whole drawing fits the window at first; its zoom makes the words readable.
+  const smallest = whole ? 0 : Math.min(1, READABLE / (sizes[Math.floor(sizes.length / 2)] ?? 12));
+  const tallest = whole ? ((window.innerHeight - 200) * width) / height : Infinity; // and its height, in the viewer
+  const shown = Math.max(width * smallest, Math.min(width, room || width, Math.max(160, tallest)));
 
   const shapes = scene.shapes.filter((s) => s.kind !== "text");
   const fromText = scene.kind === "text"; // drawn from box-drawing characters, so its source is text, not code
@@ -207,6 +215,7 @@ export default function Diagram({ code, language }: FenceProps) {
     <figure className="diagram">
       <div className="scroll" ref={frame} tabIndex={0} role="region" aria-label={fromText ? t.flowchart : t.diagram(scene.kind)}>
         <svg
+          ref={drawing}
           viewBox={`${left} ${top} ${width} ${height}`}
           role="img"
           aria-label={t.diagramParts(shapes.length, scene.lines.length)}
@@ -234,7 +243,18 @@ export default function Diagram({ code, language }: FenceProps) {
           <Icon path="M8 7l-5 5 5 5M16 7l5 5-5 5" />
           {fromText ? (showCode ? t.hideText : t.showText) : showCode ? t.hideCode : t.showCode}
         </button>
+        <SaveButton
+          label={t.downloadImage}
+          name="diagram.png"
+          make={() => pngOf({ svg: drawing.current!, width: Math.round(width), height: Math.round(height), ground: "#ffffff" })}
+        />
+        <FullScreen onOpen={() => setViewing(true)} />
       </div>
+      {viewing && (
+        <Viewer title={fromText ? t.flowchart : t.diagram(scene.kind)} onClose={() => setViewing(false)}>
+          <Diagram code={code} language={language} />
+        </Viewer>
+      )}
     </figure>
   );
 }

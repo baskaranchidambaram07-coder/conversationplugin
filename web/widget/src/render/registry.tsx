@@ -5,6 +5,7 @@ import type { Block } from "@ucp/protocol/v1";
 import { Component, type ComponentType, lazy, type ReactNode, Suspense } from "react";
 
 import { textOf } from "../chat/state";
+import { SaveButton } from "../Icon";
 import { strings as t } from "../strings";
 import { Code } from "./Code";
 
@@ -102,5 +103,11 @@ export function BlockView({ block }: { block: Block }) {
       </Isolated>
     );
   }
-  return <p className="text unknown">{text || t.unknownBlock}</p>;
+  // A kind of part this chat does not know yet: what text it has, and the part itself to save (M3-T1).
+  return (
+    <>
+      <p className="text unknown">{text || t.unknownBlock}</p>
+      <SaveButton label={t.unknownPart} name="part.json" make={() => new Blob([JSON.stringify(block, null, 2)], { type: "application/json" })} />
+    </>
+  );
 }
