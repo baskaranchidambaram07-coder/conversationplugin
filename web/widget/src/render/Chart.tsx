@@ -7,9 +7,9 @@ import { CopyButton, Icon, SaveButton } from "../Icon";
 import { strings as t } from "../strings";
 import { InViewer } from "../frame";
 import { FullScreen, Viewer } from "../Viewer";
-import { type Chart as Data, chartOf, format, type Kind, pieOf, type Plot, plotOf, rowsOf, share, summary } from "./plot";
+import { type Chart as Data, chartOf, format, type Kind, pieOf, type Plot, plotOf, rowsOf, share, stacks, summary, tops } from "./plot";
 import { Code } from "./Code";
-import { specOfCode, specOfMermaidPie } from "./derive";
+import { specOfCode, specOfMermaidPie, specOfMermaidXy } from "./derive";
 import { pictureName, pngOf } from "./image";
 import { Source } from "./source";
 import type { FenceProps } from "./registry";
@@ -43,12 +43,21 @@ function runs(values: (number | null)[], plot: Plot) {
 
 const path = (points: [number, number][]) => points.map(([x, y], i) => `${i ? "L" : "M"}${x},${y}`).join("");
 
+/** One part of a stacked bar, from `low` up to `high`; the top part rounded like a bar's end, the rest square. */
+function part(x: number, w: number, low: number, high: number, top: boolean) {
+  return top ? bar(x, w, low, high) : `M${x},${low}V${high}H${x + w}V${low}Z`;
+}
+
 function Cartesian({ data, plot, at }: { data: Data; plot: Plot; at: number | null }) {
   const { kind, values } = data;
   const { width, height, left, right, base, band } = plot;
   const series = values.length;
-  const thick = Math.max(1, Math.min(BAR, (band * 0.7 - (series - 1) * GAP) / series));
+  // Stacked, each category is one bar of its series' parts, split by the surface; else its series side by side.
+  const stacked = stacks(data) ? tops(data) : null;
+  const thick = stacked ? Math.max(1, Math.min(BAR * 1.5, band * 0.6)) : Math.max(1, Math.min(BAR, (band * 0.7 - (series - 1) * GAP) / series));
   const group = series * thick + (series - 1) * GAP;
+  const highest = (i: number) => values.reduce((last, points, s) => ((points[i] ?? 0) > 0 ? s : last), -1);
+  const lowOf = (s: number, i: number) => (s ? stacked![s - 1]![i]! : 0);
   const point = kind === "scatter" && at !== null ? stopsOf(data)[at] : null;
   return (
     <svg width={width} height={height} aria-hidden="true">
@@ -71,12 +80,32 @@ function Cartesian({ data, plot, at }: { data: Data; plot: Plot; at: number | nu
       {values.map((points, s) => (
         <g key={s} className={hue(s)}>
           {kind === "bar" &&
+            stacked &&
+            points.map((value, i) => {
+              if (!value) return null;
+              const top = highest(i) === s;
+              const [low, high] = [plot.y(lowOf(s, i)) - (s ? GAP / 2 : 0), plot.y(stacked[s]![i]!) + (top ? 0 : GAP / 2)];
+              return low - high < 0.5 ? null : <path key={i} className="bar" d={part(plot.x(i) - thick / 2, thick, low, high, top)} />;
+            })}
+          {kind === "bar" &&
+            !stacked &&
             points.map((value, i) =>
               value === null ? null : (
                 <path key={i} className={value < 0 ? "bar below" : "bar"} d={bar(plot.x(i) - group / 2 + s * (thick + GAP), thick, base, plot.y(value))} />
               ),
             )}
-          {(kind === "line" || kind === "area") &&
+          {kind === "area" && stacked && (
+            <g>
+              <path
+                className="wash"
+                d={`${path(points.map((_, i) => [plot.x(i), plot.y(stacked[s]![i]!)]))}${points
+                  .map((_, i) => `L${plot.x(points.length - 1 - i)},${plot.y(lowOf(s, points.length - 1 - i))}`)
+                  .join("")}Z`}
+              />
+              <path className="line" pathLength={1} d={path(points.map((_, i) => [plot.x(i), plot.y(stacked[s]![i]!)]))} />
+            </g>
+          )}
+          {(kind === "line" || (kind === "area" && !stacked)) &&
             runs(points, plot).map((run, r) => (
               <g key={r}>
                 {kind === "area" && <path className="wash" d={`${path(run)}V${base}H${run[0]?.[0]}Z`} />}
@@ -86,7 +115,8 @@ function Cartesian({ data, plot, at }: { data: Data; plot: Plot; at: number | nu
           {(kind === "line" || kind === "area") &&
             [at ?? points.reduce<number>((last, value, i) => (value === null ? last : i), -1)].map((i) => {
               const value = points[i];
-              return value === null || value === undefined ? null : <circle key={i} className="dot" cx={plot.x(i)} cy={plot.y(value)} r={4} />;
+              if (value === null || value === undefined) return null;
+              return <circle key={i} className="dot" cx={plot.x(i)} cy={plot.y(stacked ? stacked[s]![i]! : value)} r={4} />;
             })}
           {kind === "scatter" &&
             points.map((value, i) =>
@@ -165,7 +195,7 @@ export default function Chart({ code, language, table: tabled = true, start = nu
       chartOf(
         language === "chart"
           ? code
-          : JSON.stringify(language === "mermaid" ? specOfMermaidPie(code) : specOfCode(code, answer)),
+          : JSON.stringify(language === "mermaid" ? (specOfMermaidPie(code) ?? specOfMermaidXy(code)) : specOfCode(code, answer)),
       ),
     [code, language, answer],
   );
@@ -271,7 +301,7 @@ export default function Chart({ code, language, table: tabled = true, start = nu
           ref={frame}
           tabIndex={0}
           role="group"
-          aria-label={t.chart(data.kind, data.title)}
+          aria-label={t.chart(data.kind, data.title, stacks(data))}
           aria-describedby={described}
           onPointerMove={pick}
           onPointerDown={pick}
@@ -329,7 +359,7 @@ export default function Chart({ code, language, table: tabled = true, start = nu
         </div>
       </figure>
       {viewing && (
-        <Viewer title={t.chart(data.kind, data.title)} zoomable={false} onClose={() => setViewing(false)}>
+        <Viewer title={t.chart(data.kind, data.title, stacks(data))} zoomable={false} onClose={() => setViewing(false)}>
           <Chart code={code} language={language} table={tabled} start={kind} />
         </Viewer>
       )}

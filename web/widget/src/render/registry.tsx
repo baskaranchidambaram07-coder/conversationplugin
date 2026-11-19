@@ -71,8 +71,8 @@ export const isBoxArt = (code: string) =>
 export function fenceRenderer(language: string, code = "", closed = true): ComponentType<FenceProps> {
   if (isFormula(language, code)) return closed ? Maths : Code;
   if (/^(?:csv|tsv)$/i.test(language)) return closed ? Csv : Code;
-  // A Mermaid pie is a chart, read like any other; the rest of Mermaid is drawn as a diagram.
-  if (language === "mermaid" && closed && /^(?:\s*%%.*\n)*\s*pie\b/.test(code)) return Chart;
+  // A Mermaid pie or XY chart is a chart, read like any other; the rest of Mermaid is drawn as a diagram.
+  if (language === "mermaid" && closed && /^(?:\s*%%.*\n)*\s*(?:pie|xychart(?:-beta)?)\b/.test(code)) return Chart;
   if (language === "mermaid" || (language !== "chart" && isBoxArt(code))) return closed ? Diagram : Code;
   // Python that plots: its chart is drawn over it when the values are written into the code (derive.ts).
   if (closed && /^(?:python3?|py)$/i.test(language) && PLOTTING.test(code)) return Chart;

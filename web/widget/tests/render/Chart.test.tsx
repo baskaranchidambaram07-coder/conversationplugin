@@ -112,7 +112,7 @@ test.each([
 test("only data is read: anything that looks like code or configuration is ignored, and words are kept short", () => {
   const chart = chartOf(spec({ title: `${"x".repeat(200)}`, formatter: "function () { alert(1) }", labels: { a: " A\n  b " } }))!;
 
-  expect(Object.keys(chart).sort()).toEqual(["kind", "names", "title", "values", "xName", "xs"]);
+  expect(Object.keys(chart).sort()).toEqual(["kind", "names", "stacked", "title", "values", "xName", "xs"]);
   expect(chart.title).toHaveLength(120);
   expect(chart.names).toEqual(["A b"]);
 });
@@ -131,4 +131,63 @@ test("in a narrow panel the axis names only every few categories, and large valu
   expect(plot.xTicks.length).toBeLessThan(10);
   expect(plot.xTicks[0]?.label).toBe("Day 1");
   expect(plot.yTicks.map((tick) => tick.label)).toContain("20K");
+});
+
+test("a stacked bar chart draws one bar a category, its parts summing to the top of the scale; as lines it is unstacked", async () => {
+  const stacked = JSON.stringify({
+    type: "bar",
+    title: "Nights booked",
+    x: "month",
+    stacked: true,
+    data: [
+      { month: "Sep", single: 120, double: 80 },
+      { month: "Oct", single: 150, double: 0 },
+    ],
+  });
+  const data = chartOf(stacked)!;
+  expect(data.stacked).toBe(true);
+  const plot = plotOf(data, 400);
+  expect(plot.yTicks[plot.yTicks.length - 1]!.value).toBeGreaterThanOrEqual(200); // the tallest bar is 120 + 80, not 150
+
+  render(<Chart code={stacked} language="chart" />);
+  const chart = screen.getByRole("group", { name: "Stacked bar chart: Nights booked" });
+  const bars = [...chart.querySelectorAll("path.bar")];
+  expect(bars).toHaveLength(3); // Oct's empty double draws nothing
+  const lefts = new Set(bars.map((path) => path.getAttribute("d")!.match(/^M([\d.]+)/)![1]));
+  expect(lefts.size).toBe(2); // one bar a month, its parts on one another
+
+  fireEvent.click(screen.getByRole("button", { name: "Line" }));
+  expect(screen.getByRole("group", { name: "Line chart: Nights booked" })).toBeTruthy();
+});
+
+test("a chart is stacked only when asked, with two or more series and none below 0", () => {
+  const rows = [{ m: "Jan", a: 1, b: 2 }];
+  expect(chartOf(JSON.stringify({ type: "area", x: "m", stacked: true, data: rows }))!.stacked).toBe(true);
+  expect(chartOf(JSON.stringify({ type: "area", x: "m", data: rows }))!.stacked).toBe(false);
+  expect(chartOf(JSON.stringify({ type: "bar", x: "m", y: ["a"], stacked: true, data: rows }))!.stacked).toBe(false);
+  expect(chartOf(JSON.stringify({ type: "bar", x: "m", stacked: true, data: [{ m: "Jan", a: -1, b: 2 }] }))!.stacked).toBe(false);
+});
+
+test("a stacked area chart fills each series between the running totals", () => {
+  const code = JSON.stringify({ type: "area", x: "m", stacked: true, data: [{ m: "A", x: 1, y: 2 }, { m: "B", x: 3, y: 1 }] });
+  render(<Chart code={code} language="chart" />);
+  const washes = [...document.querySelectorAll("figure.chart path.wash")];
+  expect(washes).toHaveLength(2);
+  expect(washes[1]!.getAttribute("d")!.match(/L/g)!.length).toBeGreaterThanOrEqual(3); // along the top, back along the one under it
+});
+
+test("a Mermaid XY chart is drawn as a chart, its bars and lines over its x-axis", async () => {
+  const xy = [
+    "```mermaid",
+    "xychart-beta",
+    '    title "Laundry use by day"',
+    "    x-axis [Mon, Tue, Wed]",
+    '    y-axis "Loads" 0 --> 60',
+    "    bar [32, 41, 28]",
+    "```",
+  ].join("\n");
+  render(<Markdown text={xy} />);
+  const chart = await screen.findByRole("group", { name: "Bar chart: Laundry use by day" });
+  expect(chart.querySelectorAll("path.bar")).toHaveLength(3);
+  expect(screen.getByRole("button", { name: "Copy for Mermaid" })).toBeTruthy();
 });

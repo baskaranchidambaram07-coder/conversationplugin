@@ -10,7 +10,7 @@ import { fromSequence, readSequence } from "../../src/render/sequence";
 
 afterEach(cleanup);
 
-const [booking = "", pie = "", gantt = ""] = [...gallery.matchAll(/```mermaid\n([\s\S]*?)```/g)].map((m) => m[1]!);
+const [booking = "", pie = "", , gantt = ""] = [...gallery.matchAll(/```mermaid\n([\s\S]*?)```/g)].map((m) => m[1]!);
 
 test("a sequence diagram's participants, messages, notes and blocks are read as Mermaid writes them", () => {
   const seq = readSequence(booking)!;

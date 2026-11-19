@@ -5,7 +5,8 @@
 //    "labels": {"on_time": "On time", "late": "Late"}, "data": [{"month": "Jan", "on_time": 120, "late": 8}]}
 //
 // type is bar, line, area, pie or scatter. y names the series (all numeric fields but x when left out); labels are
-// optional display names. Scatter takes numbers for x and at most three series; pie takes one series.
+// optional display names. Scatter takes numbers for x and at most three series; pie takes one series. "stacked": true
+// stacks a bar or area chart's series, when it has two or more and none below 0.
 import { strings as t } from "../strings";
 
 export type Kind = "bar" | "line" | "area" | "pie" | "scatter";
@@ -20,6 +21,8 @@ export type Chart = {
   xs: (string | number)[];
   /** values[series][point]; null where a point has no value. */
   values: (number | null)[][];
+  /** Series stacked on one another: drawn so as a bar or area chart (never below 0), as a line chart side by side. */
+  stacked: boolean;
 };
 
 const KINDS: Kind[] = ["bar", "line", "area", "pie", "scatter"];
@@ -66,6 +69,7 @@ export function chartOf(code: string): Chart | null {
     names: keys.map((key) => text(labels[key]) || text(key)),
     xs: xs as (string | number)[],
     values,
+    stacked: raw.stacked === true && values.length > 1 && values.every((series) => series.every((value) => (value ?? 0) >= 0)),
   };
   return kind === "pie" ? pieOf(chart) : chart;
 }
@@ -155,12 +159,21 @@ export type Plot = {
   xTicks: { at: number; label: string }[];
 };
 
-/** Where everything goes on a bar, line, area or scatter chart this wide. */
-/** The plot at a width, and a height when one is given (the full-screen viewer's); else its usual height. */
+/** Whether the chart is drawn stacked as it is now: a stacked bar or area chart. */
+export const stacks = (chart: Chart) => chart.stacked && (chart.kind === "bar" || chart.kind === "area");
+
+/** Each category's running totals, series by series: what a stacked chart draws each series up to. */
+export function tops(chart: Chart): number[][] {
+  const sums = chart.xs.map(() => 0);
+  return chart.values.map((series) => series.map((value, i) => (sums[i]! += value ?? 0)));
+}
+
+/** Where everything goes on a bar, line, area or scatter chart this wide, and this tall when a height is given
+ *  (the full-screen viewer's). */
 export function plotOf(chart: Chart, width: number, tall = 0): Plot {
   const { kind, xs, values } = chart;
   const height = tall || (width < 480 ? 200 : 260);
-  const all = values.flat().filter((value): value is number => value !== null);
+  const all = (stacks(chart) ? tops(chart) : values).flat().filter((value): value is number => value !== null);
   let [low, high] = [Math.min(...all), Math.max(...all)];
   if (kind === "bar" || kind === "area") [low, high] = [Math.min(low, 0), Math.max(high, 0)];
   const ys = ticks(low, high, height < 240 ? 4 : 5);

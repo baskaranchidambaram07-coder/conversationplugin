@@ -141,8 +141,8 @@ export const strings = {
   copyText: "Copy text",
   showText: "Show text",
   hideText: "Hide text",
-  chart: (kind: string, title: string) =>
-    `${{ bar: "Bar", line: "Line", area: "Area", pie: "Pie", scatter: "Scatter" }[kind] ?? "A"} chart${title ? `: ${title}` : ""}`,
+  chart: (kind: string, title: string, stacked = false) =>
+    `${stacked ? "Stacked " : ""}${({ bar: "Bar", line: "Line", area: "Area", pie: "Pie", scatter: "Scatter" }[kind] ?? "A").replace(/^./, (c) => (stacked ? c.toLowerCase() : c))} chart${title ? `: ${title}` : ""}`,
   chartRange: (name: string, low: string, lowAt: string, high: string, highAt: string) =>
     `${name} from ${low} (${lowAt}) to ${high} (${highAt})`,
   chartKeys: "Use the arrow keys to read each value.",

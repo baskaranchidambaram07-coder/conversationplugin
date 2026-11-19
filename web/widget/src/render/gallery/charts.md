@@ -103,6 +103,24 @@ Visits rose through the autumn term:
 }
 ```
 
+## Guest room nights, by room
+
+```chart
+{
+  "type": "bar",
+  "title": "Guest room nights by room type",
+  "x": "month",
+  "stacked": true,
+  "labels": { "month": "Month", "single": "Single", "double": "Double", "family": "Family" },
+  "data": [
+    { "month": "Sep", "single": 120, "double": 84, "family": 30 },
+    { "month": "Oct", "single": 148, "double": 96, "family": 41 },
+    { "month": "Nov", "single": 131, "double": 102, "family": 36 },
+    { "month": "Dec", "single": 64, "double": 70, "family": 52 }
+  ]
+}
+```
+
 A chart that does not hold together is shown as its code:
 
 ```chart

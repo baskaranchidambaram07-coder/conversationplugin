@@ -42,6 +42,17 @@ pie showData
     "Other" : 41
 ```
 
+## Laundry use through the week
+
+```mermaid
+xychart-beta
+    title "Laundry loads by day"
+    x-axis [Mon, Tue, Wed, Thu, Fri, Sat, Sun]
+    y-axis "Loads" 0 --> 80
+    bar [42, 38, 45, 40, 51, 72, 66]
+    line [42, 38, 45, 40, 51, 72, 66]
+```
+
 ## Kinds Mermaid can draw that the chat shows as code
 
 ```mermaid

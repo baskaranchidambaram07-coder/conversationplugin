@@ -2,7 +2,7 @@
 import { cleanup, fireEvent, render, screen, within } from "@testing-library/react";
 import { afterEach, expect, test, vi } from "vitest";
 
-import { hintsOf, numberOf, specOfCode, specOfTable } from "../../src/render/derive";
+import { hintsOf, numberOf, specOfCode, specOfMermaidXy, specOfTable } from "../../src/render/derive";
 import plotted from "../../src/render/gallery/plotted.md?raw";
 import revenue from "../../src/render/gallery/revenue.md?raw";
 import Markdown from "../../src/render/Markdown";
@@ -125,3 +125,53 @@ test("plotting code with its values written in is drawn over the code, which sta
   expect(screen.getAllByRole("region", { name: "python" })).toHaveLength(3); // each code block, the computed one alone
   expect(screen.getAllByRole("group", { name: /chart:/ })).toHaveLength(2);
 });
+
+test("a Mermaid XY chart's series sit over its categories, or over its x-axis range spread evenly", () => {
+  const visits = `xychart-beta
+  title "Visits"
+  x-axis "Week" [W1, "Week 2"]
+  y-axis "People"
+  line [5, 7]`;
+  expect(specOfMermaidXy(visits)).toEqual({
+    type: "line",
+    title: "Visits",
+    x: "Week",
+    y: ["People"],
+    data: [
+      { Week: "W1", People: 5 },
+      { Week: "Week 2", People: 7 },
+    ],
+  });
+  const ranged = specOfMermaidXy(`xychart-beta
+  x-axis 0 --> 10
+  bar [1, 2, 3]
+  line [3, 2, 1]`)!;
+  expect(ranged.type).toBe("bar"); // bars and lines together: all bars
+  expect(ranged.data.map((row) => row.x)).toEqual(["0", "5", "10"]);
+  expect(ranged.y).toEqual(["Series 1", "Series 2"]);
+  const traced = specOfMermaidXy(`xychart-beta
+  y-axis "Loads"
+  bar [4, 5]
+  line [4, 5]`)!;
+  expect(traced.y).toEqual(["Loads"]); // a line tracing the bars is not drawn twice
+  expect(specOfMermaidXy(`xychart-beta
+  bar [1, 2]
+  line [1]`)).toBeNull(); // series of different lengths
+  expect(specOfMermaidXy(`xychart-beta
+  sankey [1]`)).toBeNull();
+  expect(specOfMermaidXy(`pie
+  "a": 1`)).toBeNull();
+});
+
+test("Python that stacks its bars (stacked=True, or bars drawn on others with bottom=) is drawn stacked", () => {
+  const code = `import matplotlib.pyplot as plt
+m = ['Jan', 'Feb']
+a = [1, 2]
+b = [3, 4]
+plt.bar(m, a, label='A')
+plt.bar(m, b, bottom=a, label='B')
+`;
+  expect(specOfCode(code)!.stacked).toBe(true);
+  expect(specOfCode(code.replace(", bottom=a", ""))!.stacked).toBe(false);
+});
+
