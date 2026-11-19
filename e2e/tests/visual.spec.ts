@@ -22,7 +22,7 @@ test.skip(({ browserName, isMobile }) => browserName !== "chromium" || isMobile,
 for (const example of EXAMPLES) {
   for (const { width, scheme } of LOOKS) {
     test(`${example} at ${width}px in the ${scheme} scheme looks as it did`, async ({ page }) => {
-      await page.setViewportSize({ width, height: 900 });
+      await page.setViewportSize({ width, height: 3000 }); // tall enough that no answer scrolls inside the chat
       await page.emulateMedia({ colorScheme: scheme, reducedMotion: "reduce" }); // charts drawn whole, not drawing in
       await page.goto(CHAT);
       const field = page.getByRole("textbox", { name: "Your question" });
