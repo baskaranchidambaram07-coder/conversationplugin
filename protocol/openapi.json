@@ -982,6 +982,37 @@
         }
       }
     },
+    "/v1/voice/consent": {
+      "post": {
+        "summary": "Record that the visitor accepted the voice notice",
+        "operationId": "consent_v1_voice_consent_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/VoiceConsent"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "4XX": {
+            "description": "Client Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/healthz": {
       "get": {
         "summary": "Healthz",
@@ -1751,6 +1782,34 @@
           "type"
         ],
         "title": "ValidationError"
+      },
+      "VoiceConsent": {
+        "properties": {
+          "version": {
+            "type": "integer",
+            "minimum": 1.0,
+            "title": "Version",
+            "description": "The version of the notice they read."
+          },
+          "engine": {
+            "type": "string",
+            "enum": [
+              "service",
+              "browser",
+              "device"
+            ],
+            "title": "Engine",
+            "description": "Who hears their voice: our speech service, the browser maker's servers, or only their device."
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "version",
+          "engine"
+        ],
+        "title": "VoiceConsent",
+        "description": "Body of POST /v1/voice/consent: the visitor accepted the voice notice before their first recording."
       },
       "VoiceLanguage": {
         "type": "string",
