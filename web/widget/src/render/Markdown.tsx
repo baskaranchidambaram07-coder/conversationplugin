@@ -1,7 +1,7 @@
 // Markdown in an answer (M3-T2). Loaded only when the first answer arrives, so the chat's first load stays small.
 // Raw HTML is never rendered, links open safely in a new tab, and images are never fetched: an image address can
 // carry data out of the conversation, so it becomes a link the visitor chooses to follow.
-import { lazy, type ReactNode, Suspense, useContext } from "react";
+import { type ComponentType, createElement, lazy, type ReactNode, Suspense, useContext } from "react";
 import ReactMarkdown, { type Components } from "react-markdown";
 import remarkGfm from "remark-gfm";
 
@@ -9,7 +9,7 @@ import { Icon } from "../Icon";
 import { strings as t } from "../strings";
 import { safeHref } from "./links";
 import { INLINE, markMaths } from "./mathsyntax";
-import { fenceRenderer, isBoxArt } from "./registry";
+import { fenceRenderer, isBoxArt, mathsAhead } from "./registry";
 import { Source } from "./source";
 import { Table } from "./Table";
 
@@ -32,7 +32,11 @@ function Fence({ language, text, start, end }: { language: string; text: string;
   return <Drawn code={text.replace(/\n$/, "")} language={language} />;
 }
 
-const InlineMaths = lazy(() => import("./maths").then((m) => ({ default: m.InlineMaths })));
+// An inline formula's renderer: drawn at once once fetched (see registry.tsx's onDemand), as TeX until then.
+let inline: ComponentType<{ tex: string }> | null = null;
+let fetching: Promise<unknown> | null = null;
+const inlineAhead = () => void (fetching ??= import("./maths").then((m) => (inline = m.InlineMaths)));
+const InlineMaths = lazy(() => (inlineAhead(), fetching!.then(() => ({ default: inline! }))));
 
 // The chat's title is the page's top heading, so an answer's headings start one level below it.
 const shifted = (level: 2 | 3 | 4 | 5 | 6) => {
@@ -55,6 +59,7 @@ const components: Components = {
     const text = typeof children === "string" ? children : "";
     if (className || !text.startsWith(INLINE)) return <code className={className}>{children}</code>;
     const tex = text.slice(INLINE.length).trim();
+    if (inline) return createElement(inline, { tex });
     return (
       <Suspense fallback={<code>{tex}</code>}>
         <InlineMaths tex={tex} />
@@ -114,6 +119,10 @@ export function fenceDrawings(text: string): string {
 export default function Markdown({ text: given }: { text: string }) {
   const drawn = DRAWN.test(given) ? fenceDrawings(given) : given;
   const text = /\$|\\[([]/.test(drawn) ? markMaths(drawn) : drawn;
+  if (text !== drawn) {
+    mathsAhead(); // a formula is coming: its renderer is fetched now, so it never stands in as TeX above later words
+    inlineAhead();
+  }
   return (
     <div className="md">
       {/* Every address is judged once, by safeHref in the components above; the library's own filter would drop tel: */}

@@ -190,7 +190,7 @@ function kindsOf(chart: Data): Kind[] {
  *  table's numbers (given as a chart block, without a second table under it). */
 export default function Chart({ code, language, table: tabled = true, start = null }: FenceProps & { table?: boolean; start?: Kind | null }) {
   const answer = useContext(Source);
-  const base = useMemo(
+  const fresh = useMemo(
     () =>
       chartOf(
         language === "chart"
@@ -199,6 +199,10 @@ export default function Chart({ code, language, table: tabled = true, start = nu
       ),
     [code, language, answer],
   );
+  // A table's chart is redrawn as its rows arrive; while a row is half there, it keeps its last whole drawing.
+  const kept = useRef(fresh);
+  if (fresh) kept.current = fresh;
+  const base = fresh ?? (tabled ? null : kept.current);
   const [kind, setKind] = useState<Kind | null>(start); // null until the visitor picks another
   const data = base && kind && kind !== base.kind ? (kind === "pie" ? pieOf({ ...base, kind }) : { ...base, kind }) : base;
   const [at, setAt] = useState<number | null>(null);
@@ -208,7 +212,7 @@ export default function Chart({ code, language, table: tabled = true, start = nu
   const frame = useRef<HTMLDivElement>(null);
   const room = useRoom(frame, data);
   const described = useId();
-  if (!data || !base) return <Code code={code} language={language} />;
+  if (!data || !base) return tabled ? <Code code={code} language={language} /> : null; // a table's chart has no code to show
   const kinds = kindsOf(base);
 
   const width = room || 320;

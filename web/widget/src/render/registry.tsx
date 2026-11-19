@@ -2,7 +2,7 @@
 // renderer that draws it, loaded only when first needed. Every block is drawn behind its own boundary, so one
 // that fails shows its plain text and never blanks the rest of the answer.
 import type { Block } from "@ucp/protocol/v1";
-import { Component, type ComponentType, lazy, type ReactNode, Suspense } from "react";
+import { Component, type ComponentType, createElement, lazy, type ReactNode, Suspense } from "react";
 
 import { textOf } from "../chat/state";
 import { SaveButton } from "../Icon";
@@ -12,44 +12,40 @@ import { Code } from "./Code";
 export type FenceProps = { code: string; language: string };
 
 const Markdown = lazy(() => import("./Markdown"));
-const LazyDiagram = lazy(() => import("./Diagram"));
-const LazyChart = lazy(() => import("./Chart"));
 
-// Until the diagram renderer has loaded, and while a diagram is still arriving, the block shows as code.
-const Diagram = (props: FenceProps) => (
-  <Suspense fallback={<Code {...props} />}>
-    <LazyDiagram {...props} />
-  </Suspense>
-);
+/** A renderer loaded on demand: until it has arrived, its block shows as code. `early` starts loading it as the
+ *  block's fence opens, so it is there when the fence closes; once there it draws at once, never through a stand-in,
+ *  so a block above the newest one never changes height later, when its renderer arrives (a layout jump). */
+function onDemand(load: () => Promise<{ default: ComponentType<FenceProps> }>): [ComponentType<FenceProps>, () => void] {
+  let ready: ComponentType<FenceProps> | null = null;
+  let loading: Promise<{ default: ComponentType<FenceProps> }> | null = null;
+  const early = () => {
+    loading ??= load().then((module) => ((ready = module.default), module));
+  };
+  const Lazy = lazy(() => (early(), loading!));
+  const Drawn = (props: FenceProps) =>
+    ready ? (
+      createElement(ready, props)
+    ) : (
+      <Suspense fallback={<Code {...props} />}>
+        <Lazy {...props} />
+      </Suspense>
+    );
+  return [Drawn, early];
+}
+
+// A diagram, a chart, a CSV block or a formula on a line of its own: its source, as code, until drawn.
+const [Diagram, diagramEarly] = onDemand(() => import("./Diagram"));
+const [Chart, chartEarly] = onDemand(() => import("./Chart"));
+const [Csv, csvEarly] = onDemand(() => import("./Csv"));
+const [Maths, mathsEarly] = onDemand(() => import("./maths"));
+
+/** Fetches the maths renderer as soon as an answer holds a formula, before the formula is drawn. */
+export const mathsAhead = mathsEarly;
 
 /** Whether a fenced block holds draw.io XML or Excalidraw JSON, judged cheaply on every streamed render. */
 export const isDiagram = (code: string) =>
   /^\s*<(?:mxfile|mxGraphModel)\b/.test(code) || /^\s*[[{][\s\S]{0,200}"type"\s*:\s*"excalidraw"/.test(code);
-
-// A chart likewise: as code until its renderer has loaded and its data has arrived whole.
-const Chart = (props: FenceProps) => (
-  <Suspense fallback={<Code {...props} />}>
-    <LazyChart {...props} />
-  </Suspense>
-);
-
-const LazyCsv = lazy(() => import("./Csv"));
-
-// A CSV block likewise: as code until its renderer has loaded.
-const Csv = (props: FenceProps) => (
-  <Suspense fallback={<Code {...props} />}>
-    <LazyCsv {...props} />
-  </Suspense>
-);
-
-const LazyMaths = lazy(() => import("./maths"));
-
-// A formula on a line of its own: its TeX, as code, until the maths renderer has loaded.
-const Maths = (props: FenceProps) => (
-  <Suspense fallback={<Code {...props} />}>
-    <LazyMaths {...props} />
-  </Suspense>
-);
 
 /** A fenced block of TeX that is a formula, not a whole LaTeX document. */
 const isFormula = (language: string, code: string) =>
@@ -67,15 +63,16 @@ export const isBoxArt = (code: string) =>
 
 /** The renderer for a fenced block: by its content for diagrams (agents label draw.io XML as "xml"), else its language.
  *  A Mermaid chart, or a flowchart drawn in text, is drawn only once its fence has closed: until then it is still
- *  growing. */
+ *  growing, and its renderer is fetched meanwhile. */
 export function fenceRenderer(language: string, code = "", closed = true): ComponentType<FenceProps> {
-  if (isFormula(language, code)) return closed ? Maths : Code;
-  if (/^(?:csv|tsv)$/i.test(language)) return closed ? Csv : Code;
+  const drawn = (renderer: ComponentType<FenceProps>, early: () => void) => (closed ? renderer : (early(), Code));
+  if (isFormula(language, code)) return drawn(Maths, mathsEarly);
+  if (/^(?:csv|tsv)$/i.test(language)) return drawn(Csv, csvEarly);
   // A Mermaid pie or XY chart is a chart, read like any other; the rest of Mermaid is drawn as a diagram.
-  if (language === "mermaid" && closed && /^(?:\s*%%.*\n)*\s*(?:pie|xychart(?:-beta)?)\b/.test(code)) return Chart;
-  if (language === "mermaid" || (language !== "chart" && isBoxArt(code))) return closed ? Diagram : Code;
+  if (language === "mermaid" && /^(?:\s*%%.*\n)*\s*(?:pie|xychart(?:-beta)?)\b/.test(code)) return drawn(Chart, chartEarly);
+  if (language === "mermaid" || (language !== "chart" && isBoxArt(code))) return drawn(Diagram, diagramEarly);
   // Python that plots: its chart is drawn over it when the values are written into the code (derive.ts).
-  if (closed && /^(?:python3?|py)$/i.test(language) && PLOTTING.test(code)) return Chart;
+  if (/^(?:python3?|py)$/i.test(language) && PLOTTING.test(code)) return drawn(Chart, chartEarly);
   return isDiagram(code) ? Diagram : (FENCES[language] ?? Code);
 }
 

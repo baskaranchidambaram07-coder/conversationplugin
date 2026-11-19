@@ -82,6 +82,18 @@ jobs:
       - run: npm run size --workspace @ucp/widget
       - run: npx playwright install --with-deps
       - run: npm run e2e
+      # A block that looks different, or one with no picture yet, fails the run; these are the pictures to compare,
+      # and the new baselines to commit into e2e/tests/visual.spec.ts-snapshots when the change is meant.
+      - name: Keep the screenshots
+        if: failure()
+        uses: actions/upload-artifact@v7
+        with:
+          name: screenshots
+          path: |
+            e2e/tests/visual.spec.ts-snapshots/
+            e2e/test-results/
+          if-no-files-found: ignore
+          retention-days: 7
 
   gateway:
     name: Gateway journeys and load
