@@ -263,6 +263,9 @@ test("the look is edited beside the chat itself, which shows each change at once
   await page.getByRole("button", { name: "Continue to Install" }).click();
   await expect(page).toHaveURL(`${CONSOLE}/widgets/${widget}/install`);
   await expect(page.getByRole("heading", { level: 2, name: "Install" })).toBeFocused();
+  // With voice on, a site that limits the microphone is told what to allow (M11-T5).
+  await expect(page.getByRole("heading", { name: "If your site limits the microphone" })).toBeVisible();
+  await expect(page.getByText(/^Permissions-Policy: microphone=\(self "http/)).toBeVisible();
 });
 
 // Install (M9-T5): the code to add, filled in for the widget, and a check of a page of the customer's site.

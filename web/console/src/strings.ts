@@ -276,6 +276,10 @@ export const strings = {
   policyTitle: "If your site has a content security policy",
   policyHint: "Add the chat's address to these four directives, and to nothing else. img-src is for the assistant's picture.",
   policyLabel: "Content security policy",
+  microphoneTitle: "If your site limits the microphone",
+  microphoneHint:
+    "Visitors speak to the assistant through its frame. Most sites need nothing here. If yours sends a Permissions-Policy header that names the microphone, add the chat's address to it, as shown.",
+  microphoneLabel: "Permissions policy",
   checkTitle: "Check a page",
   checkHint: "Once the code is on a page of one of your allowed sites, check it here. We read the page; we never run it.",
   pageAddress: "Page address",

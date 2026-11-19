@@ -43,6 +43,8 @@ check allowed ec2:CreateSecurityGroup "*" "$region"
 check allowed cloudfront:CreateDistribution "*"
 check allowed iam:CreateRole "arn:aws:iam::$account:role/ucp-dev-task" "$boundary"
 check allowed iam:PassRole "arn:aws:iam::$account:role/ucp-dev-task" "$to_ecs"
+check allowed polly:SynthesizeSpeech "*" "$region"  # voice (M11), tried from this machine with UCP_SPEECH=aws
+check allowed transcribe:StartStreamTranscriptionWebSocket "*" "$region"
 
 echo "== must stay out of reach"
 check denied iam:CreateRole "arn:aws:iam::$account:role/ucp-dev-task"

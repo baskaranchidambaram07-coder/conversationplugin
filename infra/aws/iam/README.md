@@ -73,6 +73,7 @@ Then, as `service-commandline-user`, run `bash verify-access.sh` again.
 | `GitHubSignIn` | Register GitHub as a sign-in source, so the build pipeline can deploy without stored access keys. |
 | `InspectOwnAccess` | Let this user read its own permissions and run the verification script. |
 | `ReadProjectPolicies` | Read these two policies. |
+| `SpeechInTheDeploymentsRegion` | Voice (M11): have Polly read text aloud and Transcribe hear speech, in `us-east-1` only, so a developer can try voice from the build machine (`UCP_SPEECH=aws`). The boundary carries the same statement, which the gateway's own role needs (added on 19 November 2026; both policies must be published again, as above). |
 
 ## What it does not allow
 

@@ -83,11 +83,28 @@ resource "aws_iam_role_policy" "execution" {
   })
 }
 
-# The gateway itself needs no AWS permission: everything reaches it as settings.
+# The gateway's own role. Its one AWS permission is speech for voice (M11): everything else reaches it as settings.
 resource "aws_iam_role" "task" {
   name                 = "${var.name}-task"
   assume_role_policy   = local.ecs_trust
   permissions_boundary = local.boundary
+}
+
+# Transcribe hears the visitor and Polly reads the answer, in this environment's own region (docs/voice.md). The
+# permissions boundary must allow the same two actions (infra/aws/iam/ucp-dev-boundary.json); until an administrator
+# publishes it, the gateway is refused and the chat listens and speaks with the browser's own engines instead.
+#trivy:ignore:AWS-0057 Transcribe streaming has no resource to name, and Polly's only resources are lexicons, which we have none of; the boundary pins both to the region
+resource "aws_iam_role_policy" "speech" {
+  name = "speech"
+  role = aws_iam_role.task.id
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [{
+      Effect   = "Allow"
+      Action   = ["polly:SynthesizeSpeech", "transcribe:StartStreamTranscriptionWebSocket"]
+      Resource = "*" # neither names a resource of ours: Polly's are lexicons, which we have none of
+    }]
+  })
 }
 
 resource "aws_ecs_task_definition" "gateway" {
@@ -113,6 +130,8 @@ resource "aws_ecs_task_definition" "gateway" {
       { name = "UCP_PUBLIC_ORIGIN", value = "https://${aws_cloudfront_distribution.edge.domain_name}" },
       { name = "UCP_VISITOR_ADDRESS_HEADER", value = "cloudfront-viewer-address" },
       { name = "UCP_CLAMD_ADDRESS", value = "127.0.0.1:3310" }, # the scanner below: containers in a task share localhost
+      { name = "UCP_SPEECH", value = "aws" },
+      { name = "UCP_SPEECH_REGION", value = var.region }, # speech stays in the deployment's region (T19)
       ], [
       # The hosted samples' site, which the widget file names as an allowed site (backend/deploy/widgets.dev.json).
       for samples in aws_cloudfront_distribution.samples : { name = "UCP_SAMPLES_ORIGIN", value = "https://${samples.domain_name}" }

@@ -1,6 +1,10 @@
 # Voice (M11): design and exploration
 
-Status: proposal, 19 November 2026. It answers M11-T1 (the provider path) and sets out how M11-T2 to T5 are built. Research on browsers and speech services was done on 19 November 2026; facts that could not be confirmed are marked.
+Status: built on `module/m11-voice` on 19 November 2026 (pull requests 141 to 144). It answers M11-T1 (the provider path) and records how M11-T2 to T5 were built. Research on browsers and speech services was done on 19 November 2026; facts that could not be confirmed are marked.
+
+**Your decisions (19 November):**
+- Build tasks 1 to 3, with AWS (Transcribe and Polly) as dev's speech service in `us-east-1`. Production's provider is decided later.
+- Languages: English by default. Administrators choose more, each language opening onto its regions, each region with a checkbox.
 
 ## 1. What the visitor gets
 
@@ -106,6 +110,11 @@ This works in every supported browser:
 
 The cost is a second supplier beside AWS. AWS is the alternative if one supplier matters more: the adapter is the same size, but it waits for the two administrator changes. Whichever is chosen, the provider's region is set to match each deployment's region (dev: the provider's nearest region to us-east-1; production: London).
 
+**Chosen for dev: AWS** (your decision, 19 November).
+- Dev holds test data only, in the US, so AWS keeping audio by default does not touch UK visitors.
+- Before production in London, either the AWS Organization's AI opt-out policy is set, or Azure is used.
+- The adapter is `backend/ucp/aws_speech.py` (section 10).
+
 ## 5. How it runs
 
 ```mermaid
@@ -184,8 +193,11 @@ Answers are Markdown with tables, code, charts and diagrams. They are read aloud
 - at most 60 seconds per utterance;
 - frames of at most 6,400 bytes;
 - at most 50 KB/s;
-- concurrent listeners per tenant, like `Turns.admit` today;
-- a daily allowance of minutes per widget, counted in PostgreSQL like the text quotas.
+- 20 listeners at once per tenant on each instance, like `Turns.admit` (`Limits.concurrent_listeners`);
+- 10 utterances a minute per visitor (`Limits.utterances_per_minute_per_session`);
+- the token, one of the widget's own languages, and the visitor's consent, all checked before any audio is taken.
+
+A daily allowance of minutes per widget is left for later, with the text quotas it would sit beside (D11).
 
 When the speech service is full or down, the chat says so and the visitor can type. The circuit breaker used for PF is reused per speech service.
 
@@ -239,11 +251,11 @@ Feature branches into `module/m11-voice`. Everything up to task 4 is built and t
 
 | # | Branch | What | Tests |
 |---|---|---|---|
-| 1 | `feature/m11-voice-contract` | The settings, `speak`, the `speech.audio` event and the socket messages in the message format; the console switches; the loader's `allow` | Protocol examples; console unit test; loader unit test that `allow` follows the switch |
-| 2 | `feature/m11-voice-gateway` | `ucp/speech.py` with the two interfaces and a fake; the voice socket with its limits, quota and consent table; speaking answers in `Turns`; speakable text | Unit: speakable text, piece-cutting. Backend: size, length, rate and format limits, origin and token, quota, consent. Integration: a turn with `speak` streams text and audio in order; a speech failure leaves the text whole; no audio written anywhere |
-| 3 | `feature/m11-voice-chat` | The two buttons, consent notice, listening and speaking states, play, pause and stop; the AudioWorklet and Web Audio queue; the browser's own engines with the on-device check | Unit: recording and playback states. UI: permission granted, denied and withdrawn; no microphone; page hidden; keyboard only; phone width. End to end on Chromium with a recorded question as the fake microphone (`--use-file-for-fake-audio-capture`): speak, confirm, send, hear the reply. Accessibility scan |
-| 4 | `feature/m11-voice-provider` | The chosen service's adapter; Terraform for its secret and region (applied only when you next wake dev) | Integration against the real service: an en-GB recording transcribes, and synthesised audio decodes. Gated like the PF staging test |
-| 5 | `feature/m11-voice-docs` | This document kept current; the host permission guide (T5); threat model T23; the browser matrix; `DESIGN.md`; the breakdown | |
+| 1 (#141) | `feature/m11-voice-contract` | The settings, `speak`, the `speech.audio` event and the socket messages in the message format; the console switches; the loader's `allow` | Protocol examples; console unit test; loader unit test that `allow` follows the switch |
+| 2 (#142) | `feature/m11-voice-gateway` | `ucp/speech.py` with the two interfaces and a fake; the voice socket with its limits, quota and consent table; speaking answers in `Turns`; speakable text | Unit: speakable text, piece-cutting. Backend: size, length, rate and format limits, origin and token, quota, consent. Integration: a turn with `speak` streams text and audio in order; a speech failure leaves the text whole; no audio written anywhere |
+| 3 (#143) | `feature/m11-voice-chat` | The two buttons, consent notice, listening and speaking states, play, pause and stop; the AudioWorklet and Web Audio queue; the browser's own engines with the on-device check | Unit: recording and playback states. UI: permission granted, denied and withdrawn; no microphone; page hidden; keyboard only; phone width. End to end on Chromium with a recorded question as the fake microphone (`--use-file-for-fake-audio-capture`): speak, confirm, send, hear the reply. Accessibility scan |
+| 4 (#144) | `feature/m11-voice-aws` | The chosen service's adapter; Terraform for its secret and region (applied only when you next wake dev) | Integration against the real service: an en-GB recording transcribes, and synthesised audio decodes. Gated like the PF staging test |
+| 5 (#144) | with task 4 | This document kept current; the host permission guide (T5); threat model T23; the browser matrix; `DESIGN.md`; the breakdown | |
 
 **Left for later:**
 - interrupting the reading by voice (a tap stops it now);
@@ -254,7 +266,59 @@ Feature branches into `module/m11-voice`. Everything up to task 4 is built and t
 - reading text into the speech service as it streams, rather than piece by piece (Azure's text-streaming mode, Polly's bidirectional mode);
 - real-device passes on iPhone and Android, with the rest of real-device testing before production.
 
-## 10. Sources
+## 10. As built
+
+| Part | Where | What it does |
+|---|---|---|
+| Settings | `WidgetConfig.voice_enabled`, `voice_languages`, `browser_speech` (`backend/ucp/protocol.py`) | Off by default. The list of languages is `VOICE_LANGUAGES`; the first chosen is the default. |
+| Console | Look station (`web/console/src/look.tsx`) | The voice switch. The languages, as a field that opens onto each language, and each language onto its regions with a checkbox (at least one always stays). The default language, and the browser's own recogniser. Install shows the host's microphone line when voice is on. |
+| Loader | `web/loader/src/index.ts` | `allow="microphone; on-device-speech-recognition"` on the frame, only when voice is on. |
+| Gateway | `backend/ucp/speech.py`, `backend/ucp/gateway/voice.py`, `backend/ucp/turns.py` | The two interfaces; the voice socket and its limits; consent (`voice_consents`, migration 0012); answers read aloud as `speech.audio` events. `UCP_SPEECH` picks `none` (the browser's engines), `fake` (tests) or `aws`. |
+| AWS | `backend/ucp/aws_speech.py`, `infra/aws/stack/service.tf` | Transcribe streaming over a presigned WebSocket, in AWS's event-stream frames. Polly's neural voices, one signed request per piece. Signature Version 4 and the task role's credentials, with no AWS library. |
+| Chat | `web/widget/src/voice/` | The voice bar, loaded on the first press (4 KB) with its AudioWorklet (1.4 KB). Dictation, the conversation and the player. |
+
+### Languages
+
+There are 21 languages, those that both Transcribe streaming and Polly's neural voices serve:
+- English (United Kingdom, United States, Australia, India, Ireland, New Zealand, South Africa);
+- Arabic (United Arab Emirates);
+- Chinese (China);
+- Dutch;
+- French (France, Canada);
+- German;
+- Hindi;
+- Italian;
+- Japanese;
+- Korean;
+- Portuguese (Brazil, Portugal);
+- Spanish (Spain, United States).
+
+How they are chosen:
+- **An administrator** opens Languages on the Look station, opens a language, ticks its regions, then picks the default.
+- **A visitor** starts in the language they chose last time, else the first of their browser's languages the widget offers, else the default. They can change it in the voice bar.
+- **The chat's own words** stay in English. Translating them is separate work (M2-T11).
+- **The voices** are Polly's neural ones, one per language (`aws_speech.LANGUAGES`). Each was chosen from Polly's published list and is still to be confirmed by the live check below.
+
+### Running it
+
+| Where | Listening | Speaking |
+|---|---|---|
+| This machine, as set up (`devstack.py`, `UCP_SPEECH` unset) | Chrome's own recogniser, on the device where the language is installed, or on Google's servers where the widget allows it (the dev and local widgets do) | The browser's own voices |
+| This machine with `UCP_SPEECH=aws` | Transcribe in `us-east-1`, with this machine's AWS credentials | Polly |
+| Dev on AWS (`UCP_SPEECH=aws`, set by Terraform) | Transcribe, with the task role | Polly |
+| The browser journeys (`e2e/gateway.config.ts`) | The fake speech service, from Chromium's fake microphone | Silence, played through Web Audio |
+
+**One step needs an AWS administrator.**
+- The permissions boundary and the deployer's policy each gain one statement, `SpeechInTheDeploymentsRegion`. It allows `polly:SynthesizeSpeech` and `transcribe:StartStreamTranscriptionWebSocket`, in `us-east-1` only.
+- An administrator publishes both files again (`infra/aws/iam/README.md`, "Updating a policy").
+- Until then, AWS refuses the calls. The chat says voice is unavailable and, where the widget allows, listens and speaks with the browser's own engines instead.
+
+**Checked against AWS without that permission (19 November):**
+- Polly and Transcribe both accepted our signature and refused only for lack of permission. AWS checks permission only after the signature.
+- Transcribe's refusal came back as an event-stream frame, which our code read.
+- Once the policies are published, the chat with `UCP_SPEECH=aws` proves the voices and an en-GB recording end to end.
+
+## 11. Sources
 
 - Chrome 139 release notes (on-device speech recognition): https://developer.chrome.com/release-notes/139
 - On-device recognition platforms, blink-dev, May 2026: https://groups.google.com/a/chromium.org/g/blink-dev/c/cD_-fohuHrs

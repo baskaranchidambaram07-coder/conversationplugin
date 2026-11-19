@@ -47,6 +47,10 @@ If your pages set a content security policy, add the assistant's address to four
 `script-src`, `frame-src`, `connect-src` and `img-src` (for the launcher's picture). The samples carry such a policy, so you can see it in place. The
 assistant needs no inline scripts or styles, and works with Trusted Types enforced.
 
+If the widget takes questions by voice, its frame asks for the microphone. Most sites need nothing more. If yours sends
+a `Permissions-Policy` header that names the microphone, add the assistant's address to it:
+`Permissions-Policy: microphone=(self "{{GATEWAY}}")`. The console shows this line at Install when voice is on.
+
 ## 2. A portal page
 
 A signed-in resident needs a short token from your portal, so that the assistant knows who they are.
