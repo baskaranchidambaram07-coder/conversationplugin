@@ -162,8 +162,25 @@ class MessageFailed(_Event):
     error: ApiError
 
 
+class SpeechAudio(_Event):
+    """A piece of the answer read aloud (M11), for a question sent with `speak`. Pieces arrive in order, after the
+    text they read. `audio` is base64 of an MP3 or WAV clip; null when it could not be voiced, so the chat reads
+    `text` with the browser's own voice."""
+
+    type: Literal["speech.audio"]
+    part: Index
+    text: Annotated[str, Field(min_length=1, max_length=3000)]
+    audio: Annotated[str, Field(min_length=1, max_length=2_000_000, pattern=r"^[A-Za-z0-9+/]+={0,2}$")] | None
+
+
 type StreamEvent = Annotated[
-    MessageStarted | ContentBlockStarted | ContentBlockDelta | ContentBlockCompleted | MessageCompleted | MessageFailed,
+    MessageStarted
+    | ContentBlockStarted
+    | ContentBlockDelta
+    | ContentBlockCompleted
+    | MessageCompleted
+    | MessageFailed
+    | SpeechAudio,
     Field(discriminator="type"),
 ]
 
@@ -259,6 +276,62 @@ class MessagePage(_Model):
     next: Cursor | None = Field(description="Null when this page starts the conversation.")
 
 
+# Voice (M11). Languages a visitor may speak and hear: those both speech-to-text and text-to-speech serve.
+
+VOICE_LANGUAGES = (
+    "en-GB", "en-US", "en-AU", "en-IN", "en-IE", "en-NZ", "en-ZA",
+    "ar-AE", "de-DE", "es-ES", "es-US", "fr-CA", "fr-FR", "hi-IN", "it-IT",
+    "ja-JP", "ko-KR", "nl-NL", "pt-BR", "pt-PT", "zh-CN",
+)  # fmt: skip
+type VoiceLanguage = Literal[VOICE_LANGUAGES]  # type: ignore[valid-type]
+
+
+class VoiceConsent(_Model):
+    """Body of POST /v1/voice/consent: the visitor accepted the voice notice before their first recording."""
+
+    version: Annotated[int, Field(ge=1)] = Field(description="The version of the notice they read.")
+    engine: Literal["service", "browser", "device"] = Field(
+        description="Who hears their voice: our speech service, the browser maker's servers, or only their device."
+    )
+
+
+class VoiceStart(_Model):
+    """The first message on the voice socket, GET /v1/voice. Binary frames of audio follow: 16 kHz, 16-bit, mono
+    little-endian PCM, at most 6,400 bytes each."""
+
+    type: Literal["start"]
+    token: Annotated[str, Field(min_length=1, max_length=4096)] = Field(
+        description="The session token, sent here rather than in the address so it stays out of logs."
+    )
+    language: VoiceLanguage
+
+
+class VoiceStop(_Model):
+    """The visitor stopped speaking: the gateway sends the final text and closes the socket."""
+
+    type: Literal["stop"]
+
+
+type VoiceRequest = Annotated[VoiceStart | VoiceStop, Field(discriminator="type")]
+
+
+class VoiceHeard(_Model):
+    """Everything heard so far, which replaces the last `partial`. `final` is the last message before closing."""
+
+    type: Literal["partial", "final"]
+    text: Annotated[str, Field(max_length=4000)]
+
+
+class VoiceFailed(_Model):
+    """The socket could not carry on; it closes after this."""
+
+    type: Literal["error"]
+    error: ApiError
+
+
+type VoiceReply = Annotated[VoiceHeard | VoiceFailed, Field(discriminator="type")]
+
+
 # Public widget configuration: display settings only. Domains, identity, limits and PF details stay private (R13).
 
 
@@ -286,6 +359,16 @@ class WidgetConfig(_Model):
     history_enabled: bool
     attachments_enabled: bool = Field(
         default=False, description="Visitors may attach doc, docx, pdf, jpg, jpeg and png files to a question."
+    )
+    voice_enabled: bool = Field(default=False, description="Visitors may speak questions and hear answers (M11).")
+    voice_languages: Annotated[list[VoiceLanguage], Field(min_length=1, max_length=len(VOICE_LANGUAGES))] = Field(
+        default_factory=lambda: ["en-GB"],
+        description="The languages visitors may speak and hear, the first being the default.",
+    )
+    browser_speech: Literal["never", "on_device", "allowed"] = Field(
+        default="on_device",
+        description="Whether the chat may use the browser's own speech recognition: never; only where it runs on "
+        "the device, so no audio leaves it; or also where the browser maker's servers recognise it.",
     )
 
 
@@ -318,6 +401,9 @@ class SendMessage(_Model):
     attachments: Annotated[list[Id], Field(max_length=5)] = Field(
         default_factory=list, description="Files uploaded to this conversation, sent with the question: at most 5."
     )
+    speak: VoiceLanguage | None = Field(
+        default=None, description="Read the answer aloud in this language, as `speech.audio` events (M11)."
+    )
 
 
 PUBLIC_TYPES = {
@@ -339,6 +425,9 @@ PUBLIC_TYPES = {
     "Filing": Filing,
     "Pin": Pin,
     "PinPage": PinPage,
+    "VoiceConsent": VoiceConsent,
+    "VoiceRequest": VoiceRequest,
+    "VoiceReply": VoiceReply,
 }
 ADAPTERS = {name: TypeAdapter(kind) for name, kind in PUBLIC_TYPES.items()}
 

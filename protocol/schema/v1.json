@@ -767,6 +767,18 @@
           },
           "maxItems": 5,
           "type": "array"
+        },
+        "speak": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/VoiceLanguage"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Read the answer aloud in this language, as `speech.audio` events (M11)."
         }
       },
       "required": [
@@ -825,6 +837,67 @@
       "title": "SessionRequest",
       "type": "object"
     },
+    "SpeechAudio": {
+      "additionalProperties": false,
+      "description": "A piece of the answer read aloud (M11), for a question sent with `speak`. Pieces arrive in order, after the\ntext they read. `audio` is base64 of an MP3 or WAV clip; null when it could not be voiced, so the chat reads\n`text` with the browser's own voice.",
+      "properties": {
+        "v": {
+          "const": 1,
+          "type": "integer"
+        },
+        "seq": {
+          "$ref": "#/$defs/Index",
+          "description": "Starts at 0 for each message and rises by one per event."
+        },
+        "type": {
+          "const": "speech.audio",
+          "type": "string"
+        },
+        "conversation_id": {
+          "$ref": "#/$defs/Id"
+        },
+        "message_id": {
+          "$ref": "#/$defs/Id"
+        },
+        "correlation_id": {
+          "$ref": "#/$defs/Id"
+        },
+        "part": {
+          "$ref": "#/$defs/Index"
+        },
+        "text": {
+          "maxLength": 3000,
+          "minLength": 1,
+          "type": "string"
+        },
+        "audio": {
+          "anyOf": [
+            {
+              "maxLength": 2000000,
+              "minLength": 1,
+              "pattern": "^[A-Za-z0-9+/]+={0,2}$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [
+        "v",
+        "seq",
+        "type",
+        "conversation_id",
+        "message_id",
+        "correlation_id",
+        "part",
+        "text",
+        "audio"
+      ],
+      "title": "SpeechAudio",
+      "type": "object"
+    },
     "StreamEvent": {
       "discriminator": {
         "mapping": {
@@ -833,7 +906,8 @@
           "content_block.started": "#/$defs/ContentBlockStarted",
           "message.completed": "#/$defs/MessageCompleted",
           "message.failed": "#/$defs/MessageFailed",
-          "message.started": "#/$defs/MessageStarted"
+          "message.started": "#/$defs/MessageStarted",
+          "speech.audio": "#/$defs/SpeechAudio"
         },
         "propertyName": "type"
       },
@@ -855,6 +929,9 @@
         },
         {
           "$ref": "#/$defs/MessageFailed"
+        },
+        {
+          "$ref": "#/$defs/SpeechAudio"
         }
       ]
     },
@@ -907,6 +984,176 @@
         "type"
       ],
       "title": "UnknownBlock",
+      "type": "object"
+    },
+    "VoiceConsent": {
+      "additionalProperties": false,
+      "description": "Body of POST /v1/voice/consent: the visitor accepted the voice notice before their first recording.",
+      "properties": {
+        "version": {
+          "description": "The version of the notice they read.",
+          "minimum": 1,
+          "type": "integer"
+        },
+        "engine": {
+          "description": "Who hears their voice: our speech service, the browser maker's servers, or only their device.",
+          "enum": [
+            "service",
+            "browser",
+            "device"
+          ],
+          "type": "string"
+        }
+      },
+      "required": [
+        "version",
+        "engine"
+      ],
+      "title": "VoiceConsent",
+      "type": "object"
+    },
+    "VoiceFailed": {
+      "additionalProperties": false,
+      "description": "The socket could not carry on; it closes after this.",
+      "properties": {
+        "type": {
+          "const": "error",
+          "type": "string"
+        },
+        "error": {
+          "$ref": "#/$defs/ApiError"
+        }
+      },
+      "required": [
+        "type",
+        "error"
+      ],
+      "title": "VoiceFailed",
+      "type": "object"
+    },
+    "VoiceHeard": {
+      "additionalProperties": false,
+      "description": "Everything heard so far, which replaces the last `partial`. `final` is the last message before closing.",
+      "properties": {
+        "type": {
+          "enum": [
+            "partial",
+            "final"
+          ],
+          "type": "string"
+        },
+        "text": {
+          "maxLength": 4000,
+          "type": "string"
+        }
+      },
+      "required": [
+        "type",
+        "text"
+      ],
+      "title": "VoiceHeard",
+      "type": "object"
+    },
+    "VoiceLanguage": {
+      "enum": [
+        "en-GB",
+        "en-US",
+        "en-AU",
+        "en-IN",
+        "en-IE",
+        "en-NZ",
+        "en-ZA",
+        "ar-AE",
+        "de-DE",
+        "es-ES",
+        "es-US",
+        "fr-CA",
+        "fr-FR",
+        "hi-IN",
+        "it-IT",
+        "ja-JP",
+        "ko-KR",
+        "nl-NL",
+        "pt-BR",
+        "pt-PT",
+        "zh-CN"
+      ],
+      "type": "string"
+    },
+    "VoiceReply": {
+      "discriminator": {
+        "mapping": {
+          "error": "#/$defs/VoiceFailed",
+          "final": "#/$defs/VoiceHeard",
+          "partial": "#/$defs/VoiceHeard"
+        },
+        "propertyName": "type"
+      },
+      "oneOf": [
+        {
+          "$ref": "#/$defs/VoiceHeard"
+        },
+        {
+          "$ref": "#/$defs/VoiceFailed"
+        }
+      ]
+    },
+    "VoiceRequest": {
+      "discriminator": {
+        "mapping": {
+          "start": "#/$defs/VoiceStart",
+          "stop": "#/$defs/VoiceStop"
+        },
+        "propertyName": "type"
+      },
+      "oneOf": [
+        {
+          "$ref": "#/$defs/VoiceStart"
+        },
+        {
+          "$ref": "#/$defs/VoiceStop"
+        }
+      ]
+    },
+    "VoiceStart": {
+      "additionalProperties": false,
+      "description": "The first message on the voice socket, GET /v1/voice. Binary frames of audio follow: 16 kHz, 16-bit, mono\nlittle-endian PCM, at most 6,400 bytes each.",
+      "properties": {
+        "type": {
+          "const": "start",
+          "type": "string"
+        },
+        "token": {
+          "description": "The session token, sent here rather than in the address so it stays out of logs.",
+          "maxLength": 4096,
+          "minLength": 1,
+          "type": "string"
+        },
+        "language": {
+          "$ref": "#/$defs/VoiceLanguage"
+        }
+      },
+      "required": [
+        "type",
+        "token",
+        "language"
+      ],
+      "title": "VoiceStart",
+      "type": "object"
+    },
+    "VoiceStop": {
+      "additionalProperties": false,
+      "description": "The visitor stopped speaking: the gateway sends the final text and closes the socket.",
+      "properties": {
+        "type": {
+          "const": "stop",
+          "type": "string"
+        }
+      },
+      "required": [
+        "type"
+      ],
+      "title": "VoiceStop",
       "type": "object"
     },
     "WidgetConfig": {
@@ -1023,6 +1270,30 @@
           "default": false,
           "description": "Visitors may attach doc, docx, pdf, jpg, jpeg and png files to a question.",
           "type": "boolean"
+        },
+        "voice_enabled": {
+          "default": false,
+          "description": "Visitors may speak questions and hear answers (M11).",
+          "type": "boolean"
+        },
+        "voice_languages": {
+          "description": "The languages visitors may speak and hear, the first being the default.",
+          "items": {
+            "$ref": "#/$defs/VoiceLanguage"
+          },
+          "maxItems": 21,
+          "minItems": 1,
+          "type": "array"
+        },
+        "browser_speech": {
+          "default": "on_device",
+          "description": "Whether the chat may use the browser's own speech recognition: never; only where it runs on the device, so no audio leaves it; or also where the browser maker's servers recognise it.",
+          "enum": [
+            "never",
+            "on_device",
+            "allowed"
+          ],
+          "type": "string"
         }
       },
       "required": [
@@ -1097,6 +1368,15 @@
     },
     {
       "$ref": "#/$defs/PinPage"
+    },
+    {
+      "$ref": "#/$defs/VoiceConsent"
+    },
+    {
+      "$ref": "#/$defs/VoiceRequest"
+    },
+    {
+      "$ref": "#/$defs/VoiceReply"
     }
   ]
 }
