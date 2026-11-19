@@ -85,7 +85,7 @@ async def test_the_chat_page_may_be_framed_only_by_the_widgets_sites_and_loads_o
     assert f'<html data-scheme="{PUBLIC["color_scheme"]}" lang="en">' in response.text  # painted in it from the start
     assert response.headers["content-security-policy"] == (
         "default-src 'none'; script-src 'self'; style-src 'self'; font-src 'self'; connect-src 'self'; "
-        "img-src 'self' blob: https://example.org; base-uri 'none'; form-action 'none'; "
+        "img-src 'self' blob: https://example.org; frame-src blob:; base-uri 'none'; form-action 'none'; "
         "frame-ancestors https://www.example.org https://*.example.ac.uk"
     )
 

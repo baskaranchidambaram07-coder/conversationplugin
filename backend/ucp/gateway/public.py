@@ -23,7 +23,8 @@ def chat_policy(widget: Widget) -> str:
     images = " ".join(filter(None, ["'self'", "blob:", widget.logo_origin]))  # blob: a picture the visitor attached
     return (
         "default-src 'none'; script-src 'self'; style-src 'self'; font-src 'self'; connect-src 'self'; "
-        f"img-src {images}; base-uri 'none'; form-action 'none'; "
+        # frame-src blob: a PDF the visitor opens, shown by the browser's own viewer from its local copy (M3-T8)
+        f"img-src {images}; frame-src blob:; base-uri 'none'; form-action 'none'; "
         f"frame-ancestors {' '.join(widget.document.allowed_domains)}"
     )
 

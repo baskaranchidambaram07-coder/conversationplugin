@@ -28,9 +28,10 @@ export function FullScreen({ onOpen }: { onOpen: () => void }) {
   );
 }
 
-/** `zoomable` is false for what already redraws to fill the viewer, as a chart does. */
-export function Viewer(props: { title: string; onClose: () => void; zoomable?: boolean; children: ReactNode }) {
-  const { title, onClose, zoomable = true, children } = props;
+/** `zoomable` is false for what already redraws to fill the viewer, as a chart does; `actions` sit in the bar before
+ *  the zoom (a file's Save). */
+export function Viewer(props: { title: string; onClose: () => void; zoomable?: boolean; actions?: ReactNode; children: ReactNode }) {
+  const { title, onClose, zoomable = true, actions, children } = props;
   const dialog = useRef<HTMLDialogElement>(null);
   const frame = useContext(Frame);
   const [zoom, setZoom] = useState(ACTUAL);
@@ -71,6 +72,7 @@ export function Viewer(props: { title: string; onClose: () => void; zoomable?: b
     >
       <header>
         <h2 dir="auto">{title}</h2>
+        {actions}
         {zoomable && (
           <div className="zoom" role="group" aria-label={t.zoom}>
             <button type="button" className="icon" aria-label={t.zoomOut} disabled={zoom === 0} onClick={() => by(-1)}>

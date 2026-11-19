@@ -40,15 +40,45 @@ test("a visitor attaches a document and a picture, asks about them, and saves on
     timeout: 20_000,
   });
   const sent = chat.locator(".turn").getByRole("list", { name: "2 files attached" });
-  await expect(sent.getByRole("button", { name: "Save Tenancy agreement.pdf" })).toBeVisible();
+  await expect(sent.getByRole("button", { name: "Open Tenancy agreement.pdf" })).toBeVisible();
   await expect(sent.locator("img")).toHaveAttribute("src", /^blob:/); // fetched with the session, never by address
   await expect(chat.getByRole("list", { name: "2 files attached" })).toHaveCount(1); // the composer is empty again
 
+  // A press opens the file in the full-screen viewer (M3-T8); it saves from the viewer's bar.
+  await sent.getByRole("button", { name: "Open Tenancy agreement.pdf" }).click();
+  const viewer = chat.getByRole("dialog", { name: "Tenancy agreement.pdf" });
+  await expect(viewer).toBeVisible();
+  // The browser's own PDF viewer where it has one; a headless test browser has none, and says to save it.
+  await expect(viewer.locator("iframe.pdf").or(viewer.getByText(/cannot show PDF files here/))).toBeVisible();
   const saving = page.waitForEvent("download");
-  await sent.getByRole("button", { name: "Save Tenancy agreement.pdf" }).click();
+  await viewer.getByRole("button", { name: "Save Tenancy agreement.pdf" }).click();
   const download = await saving;
   // WebKit on Linux saves spaces as underscores; the name the gateway gave is what matters.
   expect(download.suggestedFilename().replaceAll("_", " ")).toBe("Tenancy agreement.pdf");
+  await page.keyboard.press("Escape");
+  await expect(viewer).toBeHidden();
+  await expect(sent.getByRole("button", { name: "Open Tenancy agreement.pdf" })).toBeFocused();
+
+  const { violations } = await new AxeBuilder({ page }).withTags(["wcag2a", "wcag2aa", "wcag22aa"]).analyze();
+  expect(violations.filter((found) => found.impact === "serious" || found.impact === "critical")).toEqual([]);
+});
+
+test("a Word document sent with a question opens in the chat: its heading, list and table, read here", async ({ page }) => {
+  const chat = await open(page);
+  // Welcome.docx: a heading, a sentence with bold words, a numbered list of two and a two-row table.
+  const welcome = Buffer.from(readFileSync(new URL("welcome-docx.b64", import.meta.url), "utf8"), "base64");
+  await chat.locator('input[type="file"]').setInputFiles([{ name: "Welcome.docx", mimeType: DOCX, buffer: welcome }]);
+  await expect(chat.getByRole("list", { name: "1 file attached" }).getByRole("progressbar")).toHaveCount(0, { timeout: 10_000 });
+  await chat.getByRole("textbox", { name: "Your question" }).fill("What should I bring?");
+  await chat.getByRole("textbox", { name: "Your question" }).press("Enter");
+  await expect(chat.getByRole("article").getByText("I read Welcome.docx.")).toBeVisible({ timeout: 20_000 });
+
+  await chat.locator(".turn").getByRole("button", { name: "Open Welcome.docx" }).click();
+  const viewer = chat.getByRole("dialog", { name: "Welcome.docx" });
+  await expect(viewer.getByRole("heading", { level: 3, name: "Arriving at the College" })).toBeVisible();
+  await expect(viewer.getByText("passport", { exact: true })).toHaveCSS("font-weight", "700");
+  await expect(viewer.locator("ol > li")).toHaveText(["Collect your keys at reception", "Meet your house warden"]);
+  await expect(viewer.getByRole("cell", { name: "£295.00" })).toBeVisible();
 
   const { violations } = await new AxeBuilder({ page }).withTags(["wcag2a", "wcag2aa", "wcag22aa"]).analyze();
   expect(violations.filter((found) => found.impact === "serious" || found.impact === "critical")).toEqual([]);

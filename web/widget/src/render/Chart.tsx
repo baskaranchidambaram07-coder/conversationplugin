@@ -14,7 +14,7 @@ import { pictureName, pngOf } from "./image";
 import { Source } from "./source";
 import type { FenceProps } from "./registry";
 import { useRoom } from "./room";
-import { Table } from "./Table";
+import { RowsTable } from "./Table";
 
 const BAR = 24; // the thickest a bar gets; the rest of its band stays air
 const GAP = 2; // the surface gap between touching bars and between slices
@@ -334,28 +334,7 @@ export default function Chart({ code, language, table: tabled = true, start = nu
         </Viewer>
       )}
       {language !== "chart" && language !== "mermaid" && <Code code={code} language={language} />}
-      {tabled && table && (
-        <Table rows={rows}>
-          <thead>
-            <tr>
-              {rows[0]?.map((cell, n) => (
-                <th key={n} scope="col">
-                  {cell}
-                </th>
-              ))}
-            </tr>
-          </thead>
-          <tbody>
-            {rows.slice(1).map((row, r) => (
-              <tr key={r}>
-                {row.map((cell, n) => (
-                  <td key={n}>{cell}</td>
-                ))}
-              </tr>
-            ))}
-          </tbody>
-        </Table>
-      )}
+      {tabled && table && <RowsTable rows={rows} />}
     </>
   );
 }

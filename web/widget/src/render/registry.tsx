@@ -33,6 +33,15 @@ const Chart = (props: FenceProps) => (
   </Suspense>
 );
 
+const LazyCsv = lazy(() => import("./Csv"));
+
+// A CSV block likewise: as code until its renderer has loaded.
+const Csv = (props: FenceProps) => (
+  <Suspense fallback={<Code {...props} />}>
+    <LazyCsv {...props} />
+  </Suspense>
+);
+
 const LazyMaths = lazy(() => import("./maths"));
 
 // A formula on a line of its own: its TeX, as code, until the maths renderer has loaded.
@@ -61,6 +70,7 @@ export const isBoxArt = (code: string) =>
  *  growing. */
 export function fenceRenderer(language: string, code = "", closed = true): ComponentType<FenceProps> {
   if (isFormula(language, code)) return closed ? Maths : Code;
+  if (/^(?:csv|tsv)$/i.test(language)) return closed ? Csv : Code;
   // A Mermaid pie is a chart, read like any other; the rest of Mermaid is drawn as a diagram.
   if (language === "mermaid" && closed && /^(?:\s*%%.*\n)*\s*pie\b/.test(code)) return Chart;
   if (language === "mermaid" || (language !== "chart" && isBoxArt(code))) return closed ? Diagram : Code;

@@ -1121,7 +1121,14 @@ function TurnView({
             </span>
           )}
           {answer.blocks.map((block, index) =>
-            block ? <BlockView key={index} block={block} /> : null,
+            !block ? null : block.type === "file" ? (
+              // A file the answer carries: its card, opened like a sent file's (M3-T8).
+              <ul key={index} className="files">
+                <SentChip block={block as FileBlock} fetchFile={fetchFile} />
+              </ul>
+            ) : (
+              <BlockView key={index} block={block} />
+            ),
           )}
           {answer.status === "stopped" && <p className="meta">{t.stopped}</p>}
           {answer.status === "failed" && problem && (
