@@ -32,6 +32,20 @@ const Chart = (props: FenceProps) => (
   </Suspense>
 );
 
+const LazyMaths = lazy(() => import("./maths"));
+
+// A formula on a line of its own: its TeX, as code, until the maths renderer has loaded.
+const Maths = (props: FenceProps) => (
+  <Suspense fallback={<Code {...props} />}>
+    <LazyMaths {...props} />
+  </Suspense>
+);
+
+/** A fenced block of TeX that is a formula, not a whole LaTeX document. */
+const isFormula = (language: string, code: string) =>
+  language === "math" ||
+  (/^(?:latex|tex)$/i.test(language) && code.length < 2_000 && !/\\(?:documentclass|usepackage|begin\{document\})/.test(code));
+
 const PLOTTING = /\b(?:plt|ax\w*|px)\.(?:plot|bar|barh|scatter|step|pie|line|area)\s*\(/;
 
 /** Fenced-block languages with a renderer of their own. Anything else is code. */
@@ -45,6 +59,9 @@ export const isBoxArt = (code: string) =>
  *  A Mermaid chart, or a flowchart drawn in text, is drawn only once its fence has closed: until then it is still
  *  growing. */
 export function fenceRenderer(language: string, code = "", closed = true): ComponentType<FenceProps> {
+  if (isFormula(language, code)) return closed ? Maths : Code;
+  // A Mermaid pie is a chart, read like any other; the rest of Mermaid is drawn as a diagram.
+  if (language === "mermaid" && closed && /^(?:\s*%%.*\n)*\s*pie\b/.test(code)) return Chart;
   if (language === "mermaid" || (language !== "chart" && isBoxArt(code))) return closed ? Diagram : Code;
   // Python that plots: its chart is drawn over it when the values are written into the code (derive.ts).
   if (closed && /^(?:python3?|py)$/i.test(language) && PLOTTING.test(code)) return Chart;

@@ -107,10 +107,10 @@ flowchart LR
     welcome --> agent
 ```
 
-A sequence diagram is not drawn; it stays as code to copy:
+A class diagram is not drawn; it stays as code to copy:
 
 ```mermaid
-sequenceDiagram
-    Visitor->>Gateway: Hello
-    Gateway-->>Visitor: Hi there
+classDiagram
+    Visitor <|-- Resident
+    Visitor : +ask(question)
 ```
