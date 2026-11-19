@@ -12,8 +12,10 @@ import { Code } from "./Code";
 import { fromBoxArt, widestFor } from "./boxart";
 import { ems, fromMermaid } from "./mermaid";
 import { pngOf } from "./image";
+import { fromGraph } from "./graphs";
 import { fromSequence } from "./sequence";
-import { type Line, type Point, sceneOf, type Shape } from "./scene";
+import { fromTimelines } from "./timelines";
+import { type Head as HeadKind, type Line, type Point, sceneOf, type Shape } from "./scene";
 import { type FenceProps, isBoxArt } from "./registry";
 import { useRoom } from "./room";
 
@@ -114,12 +116,19 @@ function along(points: Point[], at: number): Point {
   return points[points.length - 1]!;
 }
 
-function Head({ tip, from, line }: { tip: Point; from: Point; line: Line }) {
+function Head({ tip, from, line, kind = "arrow" }: { tip: Point; from: Point; line: Line; kind?: HeadKind }) {
   const angle = Math.atan2(tip[1] - from[1], tip[0] - from[0]);
-  const length = 7 + line.width * 2;
-  const side = (turn: number): Point => [tip[0] - length * Math.cos(angle + turn), tip[1] - length * Math.sin(angle + turn)];
-  const [a, b] = [side(0.42), side(-0.42)];
-  return <polygon points={`${tip} ${a} ${b}`} fill={line.stroke} stroke={line.stroke} strokeWidth={1} strokeLinejoin="round" />;
+  const length = kind === "arrow" ? 7 + line.width * 2 : kind === "triangle" ? 13 : 16;
+  const side = (turn: number, far = length): Point => [tip[0] - far * Math.cos(angle + turn), tip[1] - far * Math.sin(angle + turn)];
+  const hollow = kind === "triangle" || kind === "odiamond";
+  const paint = { fill: hollow ? "#ffffff" : line.stroke, stroke: line.stroke, strokeWidth: hollow ? 1.5 : 1, strokeLinejoin: "round" as const };
+  if (kind === "diamond" || kind === "odiamond") {
+    // A diamond: its far point on the line, its sides half its length out from the line's middle.
+    const [a, b, back] = [side(0.5, length * 0.57), side(-0.5, length * 0.57), side(0)];
+    return <polygon points={`${tip} ${a} ${back} ${b}`} {...paint} />;
+  }
+  const [a, b] = kind === "triangle" ? [side(0.5), side(-0.5)] : [side(0.42), side(-0.42)];
+  return <polygon points={`${tip} ${a} ${b}`} {...paint} />;
 }
 
 function labelBox(line: Line) {
@@ -145,8 +154,8 @@ function LineView({ line }: { line: Line }) {
         strokeLinejoin="round"
         strokeLinecap="round"
       />
-      {line.end && <Head tip={p[p.length - 1]!} from={p[p.length - 2]!} line={line} />}
-      {line.start && <Head tip={p[0]!} from={p[1]!} line={line} />}
+      {line.end && <Head tip={p[p.length - 1]!} from={p[p.length - 2]!} line={line} kind={line.heads?.[1]} />}
+      {line.start && <Head tip={p[0]!} from={p[1]!} line={line} kind={line.heads?.[0]} />}
       {box && (
         <g>
           <rect x={box.x - box.w / 2} y={box.y - box.h / 2} width={box.w} height={box.h} rx={4} fill="#ffffff" />
@@ -163,7 +172,12 @@ export default function Diagram({ code, language }: FenceProps) {
   const art = language !== "mermaid" && isBoxArt(code);
   const widest = art ? widestFor(room) : 0; // a drawing from text is laid out to fit the frame
   const scene = useMemo(
-    () => (language === "mermaid" ? (fromSequence(code) ?? fromMermaid(code)) : art ? fromBoxArt(code, widest) : sceneOf(code)),
+    () =>
+      language === "mermaid"
+        ? (fromSequence(code) ?? fromMermaid(code) ?? fromGraph(code) ?? fromTimelines(code))
+        : art
+          ? fromBoxArt(code, widest)
+          : sceneOf(code),
     [code, language, art, widest],
   );
   const [showCode, setShowCode] = useState(false);
@@ -202,14 +216,16 @@ export default function Diagram({ code, language }: FenceProps) {
   const shapes = scene.shapes.filter((s) => s.kind !== "text");
   const fromText = scene.kind === "text"; // drawn from box-drawing characters, so its source is text, not code
   const flat = (words: string) => words.replace(/\s+/g, " ").trim();
-  const description = [
-    // Each named thing once: a sequence diagram draws each participant at its top and again at its foot.
-    ...new Set(scene.shapes.map((s) => flat(s.label)).filter(Boolean)),
-    // A line that joins nothing and says nothing, such as a lifeline, is drawing, not content.
-    ...scene.lines.filter((l) => l.from || l.to || l.label).map((l) => t.diagramLine(flat(l.from), flat(l.to), flat(l.label))),
-  ]
-    .map((sentence) => (/[.!?]$/.test(sentence) ? sentence : `${sentence}.`))
-    .join(" ");
+  const description =
+    scene.description ??
+    [
+      // Each named thing once: a sequence diagram draws each participant at its top and again at its foot.
+      ...new Set(scene.shapes.map((s) => flat(s.label)).filter(Boolean)),
+      // A line that joins nothing and says nothing, such as a lifeline, is drawing, not content.
+      ...scene.lines.filter((l) => l.from || l.to || l.label).map((l) => t.diagramLine(flat(l.from), flat(l.to), flat(l.label))),
+    ]
+      .map((sentence) => (/[.!?]$/.test(sentence) ? sentence : `${sentence}.`))
+      .join(" ");
 
   return (
     <figure className="diagram">

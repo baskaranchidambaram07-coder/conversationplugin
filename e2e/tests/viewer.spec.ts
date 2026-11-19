@@ -67,6 +67,7 @@ test("a wide diagram opens fitted to the screen, then zooms in to read; the view
   const drawing = viewer.getByRole("img", { name: /^Diagram: / });
   const fitted = (await drawing.boundingBox())!;
   const room = (await viewer.boundingBox())!;
+  expect([room.width, room.height]).toEqual([page.viewportSize()!.width, page.viewportSize()!.height]); // the whole screen, on a phone too
   expect(fitted.width).toBeLessThanOrEqual(room.width); // the whole drawing at once
   expect(await serious(page)).toEqual([]);
 

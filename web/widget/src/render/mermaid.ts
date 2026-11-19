@@ -1,13 +1,15 @@
 // Mermaid flowcharts in answers, read into the same scene as draw.io and Excalidraw (scene.ts) and laid out here in
 // layers, top to bottom or left to right as the chart says, the way Mermaid's own layout does. The chat cannot run
-// the Mermaid library: it writes inline styles, which the chat's content policy refuses. Only `flowchart` and `graph`
-// are read; any other Mermaid diagram, or one this cannot read, is shown as code.
+// the Mermaid library: it writes inline styles, which the chat's content policy refuses. `flowchart` and `graph` are
+// read here; state, class, entity-relationship and mind-map diagrams are read into the same graph (graphs.ts);
+// sequence diagrams (sequence.ts), Gantt charts and timelines (timelines.ts) are drawn their own way; pies and XY
+// charts are charts. Any other Mermaid diagram, or one this cannot read, is shown as code.
 // The source is untrusted: only its words, its shapes' kinds and its arrows' kinds are used. click, style, classDef,
 // class and linkStyle are skipped, so a chart can neither link, fetch nor colour anything.
 
-import { type Box, INK, type Line, type Point, rim, type Scene, type Shape, shape, text } from "./scene";
+import { type Box, type Head, INK, type Line, type Point, rim, type Scene, type Shape, shape, text } from "./scene";
 
-type Direction = "TB" | "BT" | "LR" | "RL";
+export type Direction = "TB" | "BT" | "LR" | "RL";
 /** A node's words. A box drawn in text (boxart.ts) may add a body under them: its paragraphs, one per line. */
 export type Node = {
   label: string;
@@ -16,9 +18,21 @@ export type Node = {
   group: number | null;
   body?: string;
   list?: boolean; // the body is a list, so it is set flush left
+  divider?: boolean; // a rule between the words and the body, as a class's name sits over its members
+  dot?: "start" | "end" | "bar"; // a state diagram's start (filled), end (ringed), or a fork or join (a bar)
 };
-export type Edge = { from: string; to: string; label: string; dashed: boolean; thick: boolean; start: boolean; end: boolean; hidden: boolean };
-type Group = { title: string; parent: number | null };
+export type Edge = {
+  from: string;
+  to: string;
+  label: string;
+  dashed: boolean;
+  thick: boolean;
+  start: boolean;
+  end: boolean;
+  hidden: boolean;
+  heads?: [Head, Head];
+};
+export type Group = { title: string; parent: number | null };
 
 const MAX_NODES = 200;
 const MAX_EDGES = 400;
@@ -252,6 +266,7 @@ const widthOf = (lines: string[], size: number, bold = false) => Math.max(0, ...
 
 /** A node's box for its wrapped words, its body and its shape. */
 function size(node: Node, lines: string[], body: string[]): { w: number; h: number } {
+  if (node.dot) return node.dot === "bar" ? { w: 64, h: 8 } : { w: 22, h: 22 };
   const w = Math.max(widthOf(lines, SIZE, Boolean(node.body)), widthOf(body, BODY)) + 24;
   const h = lines.length * SIZE * LEAD + (body.length ? 6 + body.length * BODY * LEAD : 0) + 18;
   if (node.kind === "rhombus") return { w: Math.max(w + h, 70), h: Math.max(w + h, 70) * 0.75 };
@@ -445,11 +460,22 @@ export function layout(chart: Chart, widest = WIDEST): Pick<Scene, "shapes" | "l
     .map(([g, b]) =>
       shape({ ...b, radius: 10, fill: FRAME, stroke: FRAME_EDGE, label: groups[g]!.title, size: 13, bold: true, valign: "top", wrap: false }),
     );
+  const rules: Line[] = []; // a class's rule between its name and its members
   for (const id of ids) {
     const node = nodes.get(id)!;
     const b = boxOf(id);
     const radius = node.round === "pill" ? b.h / 2 : node.round === "soft" ? 10 : 2;
     const body = bodies.get(id)!;
+    if (node.dot === "bar") {
+      shapes.push(shape({ ...b, radius: 2, fill: INK, stroke: INK }));
+      continue;
+    }
+    if (node.dot) {
+      // A start is a filled dot; an end, a dot in a ring. Their names are for the spoken description only.
+      shapes.push(shape({ ...b, kind: "ellipse", fill: node.dot === "start" ? INK : FILL, stroke: INK, width: 1.5 }));
+      if (node.dot === "end") shapes.push(shape({ x: b.x + 5, y: b.y + 5, w: b.w - 10, h: b.h - 10, kind: "ellipse", fill: INK, stroke: INK }));
+      continue;
+    }
     if (!body.length) {
       shapes.push(shape({ ...b, radius, fill: FILL, stroke: INK, width: 1.5, label: lines.get(id)!.join("\n"), size: SIZE, wrap: false }));
       continue;
@@ -463,9 +489,13 @@ export function layout(chart: Chart, widest = WIDEST): Pick<Scene, "shapes" | "l
       shape({ ...words, x: b.x, y: b.y + 9, w: b.w, h: head, label: lines.get(id)!.join("\n"), size: SIZE, bold: true }),
       shape({ ...words, ...left, y: b.y + 15 + head, h: b.h - 24 - head, label: body.join("\n"), size: BODY, color: BODY_INK }),
     );
+    if (node.divider) {
+      const y = b.y + 12 + head;
+      rules.push({ points: [[b.x, y], [b.x + b.w, y]], stroke: INK, width: 1, dashed: false, start: false, end: false, label: "", at: 0, size: 13, color: INK, from: "", to: "" });
+    }
   }
 
-  const drawn: Line[] = [];
+  const drawn: Line[] = [...rules];
   const line = (e: Edge, points: Point[]): Line => ({
     points,
     stroke: INK,
@@ -479,6 +509,7 @@ export function layout(chart: Chart, widest = WIDEST): Pick<Scene, "shapes" | "l
     color: INK,
     from: nodes.get(e.from)!.label,
     to: nodes.get(e.to)!.label,
+    ...(e.heads ? { heads: e.heads } : {}),
   });
   for (const { e, path, reversed } of chains) {
     if (e.hidden) continue;

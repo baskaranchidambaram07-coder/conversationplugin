@@ -10,7 +10,9 @@ import { fromSequence, readSequence } from "../../src/render/sequence";
 
 afterEach(cleanup);
 
-const [booking = "", pie = "", gantt = ""] = [...gallery.matchAll(/```mermaid\n([\s\S]*?)```/g)].map((m) => m[1]!);
+const blocks = [...gallery.matchAll(/```mermaid\n([\s\S]*?)```/g)].map((m) => m[1]!);
+const [booking = "", pie = ""] = blocks;
+const unknown = blocks[blocks.length - 1]!; // a git graph: a kind the chat shows as code
 
 test("a sequence diagram's participants, messages, notes and blocks are read as Mermaid writes them", () => {
   const seq = readSequence(booking)!;
@@ -63,14 +65,15 @@ test("it is laid out as Mermaid lays it out: participants across, lifelines down
 test("a sequence diagram is drawn with its words spoken, a pie as a chart, and other Mermaid kinds as code", async () => {
   render(<Markdown text={gallery} />);
 
-  const drawing = await screen.findByRole("img", { name: /^Diagram: \d+ shapes and \d+ lines$/ });
+  const drawings = await screen.findAllByRole("img", { name: /^Diagram: \d+ shapes and \d+ lines$/ });
+  const drawing = drawings.find((d) => d.querySelector("desc")?.textContent?.includes("Chat assistant"))!;
   expect(drawing.querySelector("desc")?.textContent).toContain("Resident to Chat assistant: 1. Is a guest room free on Friday?");
   expect(drawing.querySelector("desc")?.textContent).not.toContain("A line."); // lifelines are drawing, not content
   const chart = await screen.findByRole("group", { name: "Pie chart: Questions this term" });
   expect(within(chart.closest("figure")!).getByRole("button", { name: "Copy for Mermaid" })).toBeTruthy();
-  expect(screen.getByRole("region", { name: "Diagram source" }).textContent).toContain("gantt");
+  expect(screen.getByRole("region", { name: "Diagram source" }).textContent).toContain("gitGraph");
   expect(fenceRenderer("mermaid", pie, false)).toBe(fenceRenderer("python", "x = 1")); // still arriving: code
-  expect(fenceRenderer("mermaid", gantt, true)).toBe(fenceRenderer("mermaid", booking, true)); // a diagram, shown as code by it
+  expect(fenceRenderer("mermaid", unknown, true)).toBe(fenceRenderer("mermaid", booking, true)); // a diagram, shown as code by it
 });
 
 test("a pie's slices and title are read; one Mermaid would refuse is not drawn", () => {

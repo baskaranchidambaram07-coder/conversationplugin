@@ -3,9 +3,9 @@
 // become the plain data a `chart` block holds, checked by plot.ts like any other; the code only suggests the kind of
 // chart and its title. Code is read for its literal values, never run.
 
-import type { Kind } from "./plot";
+import { format, type Kind } from "./plot";
 
-export type Spec = { type: Kind; title: string; x: string; y: string[]; data: Record<string, string | number | null>[] };
+export type Spec = { type: Kind; title: string; x: string; y: string[]; data: Record<string, string | number | null>[]; stacked?: boolean };
 export type Hints = { kind: Kind | null; title: string; wanted: boolean };
 
 // --- the answer's hints ------------------------------------------------------------------------------------------
@@ -122,6 +122,50 @@ export function specOfMermaidPie(code: string): Spec | null {
 type Value = string | number;
 
 /** The items of a list literal holding only quoted strings and numbers, such as ["Jan", "Feb"] or [45_200, 42800]. */
+/** A Mermaid XY chart (`xychart-beta`): its bars or lines over its x-axis categories, or over the x-axis range spread
+ *  evenly. Mermaid draws bars and lines together; here the series are all bars when any is, else all lines. */
+export function specOfMermaidXy(code: string): Spec | null {
+  const lines = code.split("\n").map((line) => line.trim()).filter((line) => line && !line.startsWith("%%"));
+  if (!/^xychart(?:-beta)?(?:\s+(?:horizontal|vertical))?$/i.test(lines[0] ?? "")) return null;
+  const label = (text = "") => text.trim().replace(/^"(.*)"$/, "$1").trim();
+  const items = (text: string) => [...text.matchAll(/\s*(?:"([^"]*)"|([^,]+))/g)].map((m) => (m[1] ?? m[2]!).trim()).filter(Boolean);
+  let title = "";
+  let axis = { name: "x", categories: [] as string[], range: null as [number, number] | null };
+  let measure = "";
+  const series: { kind: Kind; values: number[] }[] = [];
+  for (const line of lines.slice(1)) {
+    const named = /^title\s+(.+)$/i.exec(line);
+    const x = /^x-axis\s*(?:("[^"]*"|[^\s[]+)\s*)?(?:\[(.*)\]|(-?[\d.]+)\s*-->\s*(-?[\d.]+))?$/i.exec(line);
+    const y = /^y-axis\s*(?:("[^"]*"|[^\s"]+(?=\s|$)))?/i.exec(line);
+    const data = /^(bar|line)\s*(?:"[^"]*"\s*)?\[(.*)\]$/i.exec(line);
+    if (named) title = label(named[1]);
+    else if (x) axis = { name: label(x[1]) || "x", categories: x[2] ? items(x[2]) : [], range: x[3] ? [Number(x[3]), Number(x[4])] : null };
+    else if (y) measure = /^-?[\d.]+$/.test(y[1] ?? "") ? "" : label(y[1]);
+    else if (data) {
+      const values = items(data[2]!).map(Number);
+      if (!values.length || values.some((v) => !Number.isFinite(v))) return null;
+      series.push({ kind: data[1]!.toLowerCase() as Kind, values });
+    } else if (!/^(?:accTitle|accDescr)\b/i.test(line)) return null; // not an XY chart Mermaid would draw
+  }
+  // Mermaid often traces a bar series with a line of the same numbers; drawn as bars here, that line would repeat it.
+  const same = (a: number[], b: number[]) => a.length === b.length && a.every((v, i) => v === b[i]);
+  const drawn = series.filter((s) => s.kind === "bar" || !series.some((o) => o.kind === "bar" && same(o.values, s.values)));
+  series.splice(0, series.length, ...drawn);
+  const count = series[0]?.values.length ?? 0;
+  if (!count || series.some((s) => s.values.length !== count) || series.length > 8) return null;
+  const [low, high] = axis.range ?? [1, count];
+  const xs = axis.categories.length === count ? axis.categories : series[0]!.values.map((_, i) => format(count > 1 ? low + ((high - low) * i) / (count - 1) : low));
+  const taken = new Set([axis.name]);
+  const keys = series.map((_, n) => unique(series.length === 1 && measure ? measure : `Series ${n + 1}`, taken));
+  return {
+    type: series.some((s) => s.kind === "bar") ? "bar" : "line",
+    title,
+    x: axis.name,
+    y: keys,
+    data: xs.map((value, i) => ({ [axis.name]: value, ...Object.fromEntries(series.map((s, n) => [keys[n]!, s.values[i]!])) })),
+  };
+}
+
 function listOf(text: string): Value[] | null {
   const inner = text.trim().replace(/^\[([\s\S]*)\]$/, "$1").replace(/#[^\n]*/g, "");
   const items = inner.match(/"[^"\n]*"|'[^'\n]*'|[^,]+/g)?.map((item) => item.trim()).filter(Boolean) ?? [];
@@ -238,6 +282,8 @@ export function specOfCode(code: string, answer = ""): Spec | null {
   return {
     type: kind === "scatter" && !numeric ? "line" : kind === "pie" && series.length > 1 ? "bar" : kind,
     title: hints.title,
+    // pandas' stacked=True, or matplotlib's bars drawn on others with bottom=
+    stacked: /\bstacked\s*=\s*True\b/.test(code) || /\.bar\s*\([^)]*\bbottom\s*=/.test(code),
     x,
     y: keys,
     data: lead.xs.map((value, i) => ({ [x]: value, ...Object.fromEntries(series.map((s, n) => [keys[n]!, s.ys[i] ?? null])) })),
