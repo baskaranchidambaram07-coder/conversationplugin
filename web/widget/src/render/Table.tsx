@@ -4,16 +4,16 @@
 import type { Element, ElementContent } from "hast";
 import { lazy, type ReactNode, Suspense, useContext, useState } from "react";
 
-import { save } from "../Attachments";
-import { CopyButton, Icon } from "../Icon";
+import { CopyButton, Icon, SaveButton } from "../Icon";
 import { strings as t } from "../strings";
+import { InViewer } from "../frame";
+import { FullScreen, Viewer } from "../Viewer";
 import { hintsOf, specOfTable } from "./derive";
 import { Source } from "./source";
 
 const Chart = lazy(() => import("./Chart"));
 
 const FOLD_AFTER = 10;
-const DOWNLOAD = "M12 4v11M7 10l5 5 5-5M5 20h14";
 const BARS = "M5 20V10M12 20V4M19 20v-7";
 const BOM = String.fromCharCode(0xfeff);
 
@@ -49,9 +49,11 @@ export function toCsv(rows: string[][]) {
 export function Table({ node, rows: given, children }: { node?: Element; rows?: string[][]; children?: ReactNode }) {
   const [all, setAll] = useState(false);
   const [charted, setCharted] = useState<boolean | null>(null); // null until the visitor chooses
+  const [viewing, setViewing] = useState(false);
+  const whole = useContext(InViewer); // in the full-screen viewer every row shows
   const answer = useContext(Source);
   const rows = given ?? (node ? rowsOf(node) : []);
-  const hidden = Math.max(0, rows.length - 1 - FOLD_AFTER);
+  const hidden = whole ? 0 : Math.max(0, rows.length - 1 - FOLD_AFTER);
   const csv = toCsv(rows);
   const hints = node ? hintsOf(answer) : null; // a chart's own table is not charted again
   const spec = hints && specOfTable(rows, hints);
@@ -74,15 +76,12 @@ export function Table({ node, rows: given, children }: { node?: Element; rows?: 
         </div>
         <div className="tools">
           <CopyButton text={csv} label={t.copyCsv} />
-          <button
-            type="button"
-            className="quiet"
+          <SaveButton
+            label={t.downloadCsv}
+            name={fileName(rows[0])}
             // The byte-order mark makes spreadsheets read the file as UTF-8, so £ and é survive.
-            onClick={() => save(new Blob([BOM, csv], { type: "text/csv;charset=utf-8" }), fileName(rows[0]))}
-          >
-            <Icon path={DOWNLOAD} />
-            {t.downloadCsv}
-          </button>
+            make={() => new Blob([BOM, csv], { type: "text/csv;charset=utf-8" })}
+          />
           {spec && (
             <button type="button" className="quiet" aria-expanded={drawn} onClick={() => setCharted(!drawn)}>
               <Icon path={BARS} />
@@ -94,8 +93,16 @@ export function Table({ node, rows: given, children }: { node?: Element; rows?: 
               {t.showRows(rows.length - 1)}
             </button>
           )}
+          <FullScreen onOpen={() => setViewing(true)} />
         </div>
       </figure>
+      {viewing && (
+        <Viewer title={t.table(rows[0] ?? [])} onClose={() => setViewing(false)}>
+          <Table node={node} rows={given}>
+            {children}
+          </Table>
+        </Viewer>
+      )}
     </>
   );
 }

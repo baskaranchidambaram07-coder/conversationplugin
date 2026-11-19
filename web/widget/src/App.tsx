@@ -26,6 +26,7 @@ import { type Answer, pending, textOf } from "./chat/state";
 import { recover, runTurn } from "./chat/turn";
 import { Feedback, type Rate } from "./Feedback";
 import { CopyButton, Icon } from "./Icon";
+import { Frame } from "./frame";
 import { PIN, PinButton, PinnedPage } from "./Pinned";
 import { ChatRows, FOLDER, ProjectPage, ProjectPicker, ProjectsPage } from "./Projects";
 import { BlockView } from "./render/registry";
@@ -151,6 +152,7 @@ export function App({ widgetId, win = window, preview = false }: { widgetId: str
   const [earlier, setEarlier] = useState<string | null>(null); // where the chat on screen continues further back
   const [earlierFailed, setEarlierFailed] = useState<Problem | null>(null);
   const [focusTo, setFocusTo] = useState<"input" | "chats" | "list" | "view" | null>(null);
+  const keepFocus = useRef(false); // the next "shown" is the full-screen viewer resizing the panel
   const keep = useRef<number | null>(null); // distance from the end to hold while earlier messages go in above
   const chatsButton = useRef<HTMLButtonElement>(null);
   const listTitle = useRef<HTMLHeadingElement>(null);
@@ -223,7 +225,8 @@ export function App({ widgetId, win = window, preview = false }: { widgetId: str
 
   // The loader says the chat is shown, often before the configuration has arrived: focus the box once it exists.
   useEffect(() => {
-    if (shown) input.current?.focus();
+    if (shown && !keepFocus.current) input.current?.focus();
+    keepFocus.current = false;
   }, [shown, settings]);
 
   // Escape leaves the list of chats first, then closes a floating panel.
@@ -763,7 +766,17 @@ export function App({ widgetId, win = window, preview = false }: { widgetId: str
   );
   const attaching = settings.attachments && chatting && !browsing && !ended;
   const carriesFiles = (event: DragEvent) => attaching && !preview && event.dataTransfer.types.includes("Files");
-  return (
+  // The full-screen viewer (M3-T9) asks a floating panel to fill the window while it shows.
+  // The loader says "shown" again when the panel changes size; that one leaves focus where the viewer put it.
+  const frame = {
+    expandable: mode === "floating" && expandable,
+    expanded,
+    expand: (on: boolean) => {
+      keepFocus.current = true;
+      live.current?.bridge.expand(on);
+    },
+  };
+  const chat = (
     <div
       className={classes}
       style={theme}
@@ -1040,6 +1053,7 @@ export function App({ widgetId, win = window, preview = false }: { widgetId: str
       </footer>
     </div>
   );
+  return <Frame.Provider value={frame}>{chat}</Frame.Provider>;
 }
 
 /** Who answers: the assistant's picture, else the customer's logo, else the title's initials. An

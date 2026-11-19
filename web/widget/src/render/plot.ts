@@ -156,9 +156,10 @@ export type Plot = {
 };
 
 /** Where everything goes on a bar, line, area or scatter chart this wide. */
-export function plotOf(chart: Chart, width: number): Plot {
+/** The plot at a width, and a height when one is given (the full-screen viewer's); else its usual height. */
+export function plotOf(chart: Chart, width: number, tall = 0): Plot {
   const { kind, xs, values } = chart;
-  const height = width < 480 ? 200 : 260;
+  const height = tall || (width < 480 ? 200 : 260);
   const all = values.flat().filter((value): value is number => value !== null);
   let [low, high] = [Math.min(...all), Math.max(...all)];
   if (kind === "bar" || kind === "area") [low, high] = [Math.min(low, 0), Math.max(high, 0)];
