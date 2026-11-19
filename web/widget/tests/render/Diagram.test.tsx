@@ -109,7 +109,7 @@ test("a Mermaid flowchart is drawn once its fence has closed, and copied to open
 
 test.each([
   ["a flowchart still arriving, its fence not closed", "Here it is:\n\n```mermaid\nflowchart TB\n  A --> B\n"],
-  ["a class diagram", "```mermaid\nclassDiagram\n  Animal <|-- Duck\n```"],
+  ["a git graph", "```mermaid\ngitGraph\n  commit\n```"],
   ["a flowchart that does not read", "```mermaid\nflowchart TB\n```"],
 ])("%s is shown as code", async (_, text) => {
   const { container } = render(<Markdown text={text} />);

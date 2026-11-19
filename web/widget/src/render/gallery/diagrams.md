@@ -107,10 +107,11 @@ flowchart LR
     welcome --> agent
 ```
 
-A class diagram is not drawn; it stays as code to copy:
+A git graph is not drawn; it stays as code to copy:
 
 ```mermaid
-classDiagram
-    Visitor <|-- Resident
-    Visitor : +ask(question)
+gitGraph
+    commit
+    branch rooms
+    commit
 ```

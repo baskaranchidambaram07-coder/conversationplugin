@@ -36,7 +36,7 @@ const EXAMPLES = [
   { name: "charts", question: "[gallery:charts]", parts: "figure.chart .plot svg", count: 6 },
   { name: "revenue", question: "[gallery:revenue]", parts: "figure.chart .plot svg", count: 1 },
   { name: "plotted", question: "[gallery:plotted]", parts: "figure.chart .plot svg", count: 2 },
-  { name: "mermaid", question: "[gallery:mermaid]", parts: ":is(figure.diagram svg[role=img], figure.chart .plot svg)", count: 3 },
+  { name: "mermaid", question: "[gallery:mermaid]", parts: ":is(figure.diagram svg[role=img], figure.chart .plot svg)", count: 9 },
   { name: "maths", question: "[gallery:maths]", parts: ".maths math", count: 14 },
   { name: "Purple Fabric's recorded long", question: "[long]", parts: "figure", count: 3 },
 ];

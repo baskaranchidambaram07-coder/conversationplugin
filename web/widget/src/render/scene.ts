@@ -41,9 +41,16 @@ export type Line = {
   from: string; // what it joins, for the spoken description
   to: string;
   shift?: number; // px the label sits above (below 0) or under its point on the line: a sequence message's sits above
+  /** The kind of end where `start` or `end` is set: an arrowhead unless a class diagram says otherwise. */
+  heads?: [Head, Head];
 };
 
-export type Scene = { kind: "draw.io" | "Excalidraw" | "Mermaid" | "text"; shapes: Shape[]; lines: Line[] };
+/** A line's end: an arrow, UML's hollow triangle (inherits, realises), or a filled or hollow diamond (owns, holds). */
+export type Head = "arrow" | "triangle" | "diamond" | "odiamond";
+
+/** `description`, when given, is what screen readers hear in place of a list of the drawing's parts: a Gantt chart's
+ *  tasks with their dates, say. */
+export type Scene = { kind: "draw.io" | "Excalidraw" | "Mermaid" | "text"; shapes: Shape[]; lines: Line[]; description?: string };
 
 export const INK = "#1f1e1d";
 const PAPER = "#ffffff";
