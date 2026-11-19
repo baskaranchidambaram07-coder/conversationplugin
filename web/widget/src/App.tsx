@@ -1,13 +1,16 @@
 // The chat inside the panel (M2), in the world of DESIGN.md and the composition the user picked
 // (web/widget/.impeccable/surfaces/src-app-tsx.md).
 import { contrast, inkOn, isColor } from "@ucp/protocol/brand";
-import type { Block, Conversation, Pin, Project, WidgetConfig } from "@ucp/protocol/v1";
+import type { Block, Conversation, Pin, Project, SpeechAudio, VoiceLanguage, WidgetConfig } from "@ucp/protocol/v1";
+import { VOICE_LANGUAGES } from "@ucp/protocol/voice";
 import {
   type CSSProperties,
   type DragEvent,
   type KeyboardEvent,
   type ReactNode,
   type Ref,
+  lazy,
+  Suspense,
   useEffect,
   useLayoutEffect,
   useRef,
@@ -27,6 +30,9 @@ import { PIN, PinButton, PinnedPage } from "./Pinned";
 import { ChatRows, FOLDER, ProjectPage, ProjectPicker, ProjectsPage } from "./Projects";
 import { BlockView } from "./render/registry";
 import { strings as t } from "./strings";
+import { unlockAudio } from "./voice/start";
+
+const VoiceBar = lazy(() => import("./voice/Voice")); // all voice code loads on the first press of a voice button
 
 const LIMIT = 4000;
 const WARN_AT = 3600; // the character count appears only near the limit
@@ -46,6 +52,7 @@ type Settings = {
   notice: string;
   history: boolean;
   attachments: boolean;
+  voice: { languages: VoiceLanguage[]; browser: "never" | "on_device" | "allowed" } | null;
 };
 /** `project`: where the next new chat is filed, when it is started from a project's page. */
 type Live = {
@@ -86,8 +93,20 @@ export function readConfig(config: Partial<WidgetConfig>): Settings {
     notice: text(config.ai_notice, 500) || t.notice,
     history: config.history_enabled === true,
     attachments: config.attachments_enabled === true,
+    voice: voiceOf(config),
   };
 }
+
+function voiceOf(config: Partial<WidgetConfig>): Settings["voice"] {
+  const offered = Array.isArray(config.voice_languages) ? config.voice_languages : [];
+  const languages = offered.filter((code): code is VoiceLanguage => (VOICE_LANGUAGES as readonly string[]).includes(code));
+  if (config.voice_enabled !== true || !languages.length) return null;
+  const browser = config.browser_speech === "never" || config.browser_speech === "allowed" ? config.browser_speech : "on_device";
+  return { languages: [...new Set(languages)], browser };
+}
+
+const MIC = "M12 3a3 3 0 0 0-3 3v6a3 3 0 0 0 6 0V6a3 3 0 0 0-3-3zM19 11a7 7 0 0 1-14 0M12 18v3";
+const WAVES = "M4 10v4M8 6v12M12 3v18M16 7v10M20 10v4";
 
 export const plain = (blocks: Block[]) =>
   blocks.map(textOf).filter(Boolean).join("\n\n");
@@ -149,6 +168,10 @@ export function App({ widgetId, win = window, preview = false }: { widgetId: str
   const [attachNote, setAttachNote] = useState<string | null>(null); // why the last file could not be attached
   const [dropping, setDropping] = useState(false); // files are being dragged over the chat
   const picker = useRef<HTMLInputElement>(null);
+  const [voicing, setVoicing] = useState<"dictation" | "conversation" | null>(null);
+  const spoken = useRef<((piece: SpeechAudio) => void) | null>(null); // the voice bar's player, while it reads
+  const typed = useRef(""); // the question box as it was when dictation began
+  const audio = useRef<AudioContext | undefined>(undefined);
   const lastOpened = useRef<Conversation | null>(null);
 
   async function loadConfig() {
@@ -324,7 +347,7 @@ export function App({ widgetId, win = window, preview = false }: { widgetId: str
     return session.starting;
   }
 
-  async function ask(question: string, replacing?: string, files: FileBlock[] = []) {
+  async function ask(question: string, replacing?: string, files: FileBlock[] = [], speak?: VoiceLanguage) {
     const session = live.current;
     if (!session || ended) return;
     const key = newKey();
@@ -337,7 +360,8 @@ export function App({ widgetId, win = window, preview = false }: { widgetId: str
       const conversation = await chatOf(session);
       if (signal.aborted) throw new DOMException("The visitor moved on", "AbortError");
       const ids = files.map((file) => file.id);
-      return runTurn(session.api, conversation, question, key, signal, (next) => change(key, (turn) => ({ ...turn, answer: next })), ids);
+      const voice = speak && { language: speak, onSpeech: (piece: SpeechAudio) => spoken.current?.(piece) };
+      return runTurn(session.api, conversation, question, key, signal, (next) => change(key, (turn) => ({ ...turn, answer: next })), ids, voice);
     });
   }
 
@@ -622,7 +646,7 @@ export function App({ widgetId, win = window, preview = false }: { widgetId: str
 
   function send() {
     const question = draft.trim();
-    if (!question || busy || uploading) return;
+    if (!question || busy || uploading || voicing) return;
     setDraft("");
     const files = attached.flatMap((file) => (file.block ? [file.block] : []));
     setAttached([]);
@@ -630,6 +654,20 @@ export function App({ widgetId, win = window, preview = false }: { widgetId: str
     if (view.kind === "project") newChat(view.project.id); // asked on a project's page: a new chat filed there
     void ask(question, undefined, files);
   }
+
+  // Voice (M11): audio is unlocked inside the press itself, as iPhones require, before the voice code loads.
+  function dictate() {
+    audio.current = unlockAudio();
+    typed.current = draft;
+    setVoicing("dictation");
+  }
+
+  function converse() {
+    audio.current = unlockAudio();
+    setVoicing("conversation");
+  }
+
+  const joined = (before: string, words: string) => (before.trim() && words ? `${before.trimEnd()} ${words}` : before + words);
 
   function enter(event: KeyboardEvent<HTMLTextAreaElement>) {
     // Enter sends, Shift+Enter adds a line, and nothing happens while an input method is composing a character.
@@ -650,6 +688,40 @@ export function App({ widgetId, win = window, preview = false }: { widgetId: str
     );
   }
 
+  const last = turns[turns.length - 1];
+  const voiceBar = (mode: "dictation" | "conversation") => {
+    const session = live.current;
+    if (!settings.voice || !session) return null;
+    const bar = (
+      <Suspense fallback={<p className="voice-state">{t.voiceStarting}</p>}>
+        <VoiceBar
+          mode={mode}
+          api={session.api}
+          languages={settings.voice.languages}
+          browserSpeech={settings.voice.browser}
+          context={audio.current}
+          answering={busy}
+          failed={Boolean(last && (last.answer.status === "failed" || last.problem))}
+          sink={spoken}
+          onHeard={(words) => setDraft(joined(typed.current, words))}
+          onDone={(words) => {
+            setVoicing(null);
+            setDraft(words === null ? typed.current : joined(typed.current, words));
+            setFocusTo("input");
+          }}
+          onAsk={(question, language) => {
+            if (view.kind === "project") newChat(view.project.id); // asked on a project's page: a new chat filed there
+            void ask(question, undefined, [], language);
+          }}
+          onClose={() => {
+            setVoicing(null);
+            setFocusTo("input");
+          }}
+        />
+      </Suspense>
+    );
+    return mode === "conversation" ? <div className="compose voicing">{bar}</div> : bar;
+  };
   const dark = forDark(settings.color);
   const theme = {
     "--brand": `light-dark(${settings.color}, ${dark})`,
@@ -862,7 +934,8 @@ export function App({ widgetId, win = window, preview = false }: { widgetId: str
             {attachNote}
           </p>
         )}
-        {!browsing && (chatting || view.kind === "project") && (
+        {!browsing && (chatting || view.kind === "project") && voicing === "conversation" && voiceBar("conversation")}
+        {!browsing && (chatting || view.kind === "project") && voicing !== "conversation" && (
         <form
           className={dropping ? "compose dropping" : "compose"}
           onSubmit={(event) => {
@@ -871,6 +944,7 @@ export function App({ widgetId, win = window, preview = false }: { widgetId: str
             else send();
           }}
         >
+          {voicing === "dictation" && voiceBar("dictation")}
           {attached.length > 0 && (
             <ul className="files" aria-label={t.attached(attached.length)}>
               {attached.map((file) => (
@@ -918,6 +992,7 @@ export function App({ widgetId, win = window, preview = false }: { widgetId: str
             }
             aria-describedby={left <= LIMIT - WARN_AT ? "left" : undefined}
             disabled={Boolean(ended) || preview}
+            readOnly={voicing === "dictation"}
             onChange={(event) => setDraft(event.target.value)}
             onKeyDown={enter}
             onPaste={(event) => {
@@ -927,14 +1002,26 @@ export function App({ widgetId, win = window, preview = false }: { widgetId: str
               void attach(pasted);
             }}
           />
-          <button
-            type="submit"
-            className="send"
-            aria-label={busy ? t.stop : t.send}
-            disabled={!busy && (!draft.trim() || Boolean(ended) || uploading)}
-          >
-            {busy ? <Icon path="M7 7h10v10H7z" filled /> : <Icon path="M12 19V5M5 12l7-7 7 7" />}
-          </button>
+          {settings.voice && !voicing && (
+            <button type="button" className="mic" aria-label={t.dictate} disabled={preview || Boolean(ended)} onClick={dictate}>
+              <Icon path={MIC} />
+            </button>
+          )}
+          {settings.voice && !busy && !draft.trim() && !voicing ? (
+            // With nothing typed, the send button starts a voice conversation instead, as familiar chat apps do.
+            <button type="button" className="send" aria-label={t.voiceStart} disabled={preview || Boolean(ended) || uploading} onClick={converse}>
+              <Icon path={WAVES} />
+            </button>
+          ) : (
+            <button
+              type="submit"
+              className="send"
+              aria-label={busy ? t.stop : t.send}
+              disabled={!busy && (!draft.trim() || Boolean(ended) || uploading || Boolean(voicing))}
+            >
+              {busy ? <Icon path="M7 7h10v10H7z" filled /> : <Icon path="M12 19V5M5 12l7-7 7 7" />}
+            </button>
+          )}
         </form>
         )}
         {left <= LIMIT - WARN_AT && !browsing && (

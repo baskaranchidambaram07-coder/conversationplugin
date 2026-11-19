@@ -49,7 +49,8 @@ class NoSpeech:
         return None
 
 
-PHRASES = {  # what the fake hears in any voiced audio, by language
+PHRASES = {  # what the fake hears in any voiced audio, by language or, first, by language and region
+    "en-US": "Tell me how HTTPS works. [long]",  # the recorded long answer, read aloud for long enough to pause
     "en": "When does the library open?",
     "hi": "पुस्तकालय कब खुलता है?",
     "fr": "Quand la bibliothèque ouvre-t-elle ?",
@@ -79,7 +80,7 @@ class FakeSpeech:
     and speaks silence as long as the text would take to say."""
 
     async def listen(self, audio: AsyncIterator[bytes], language: str) -> AsyncIterator[str]:
-        words = PHRASES.get(language.split("-")[0], PHRASES["en"]).split()
+        words = PHRASES.get(language, PHRASES.get(language.split("-")[0], PHRASES["en"])).split()
         voiced, said = 0.0, 0
         async for frame in audio:
             if loud(frame):
