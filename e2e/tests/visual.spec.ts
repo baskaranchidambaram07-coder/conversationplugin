@@ -15,6 +15,8 @@ const LOOKS = [
 ] as const;
 
 test.skip(process.platform !== "linux", "baselines are drawn on the pipeline's Linux machines");
+// The chat page refuses inline styles; Playwright adds visual.css as one, so here (and only here) its policy is set aside.
+test.use({ bypassCSP: true });
 test.skip(({ browserName, isMobile }) => browserName !== "chromium" || isMobile, "one engine's pictures are enough");
 
 for (const example of EXAMPLES) {
