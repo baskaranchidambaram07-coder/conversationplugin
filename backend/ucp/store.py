@@ -232,6 +232,22 @@ pins = Table(
 )
 
 
+# Voice consents (M11, 0012): a visitor accepted the voice notice, of this version, before their first recording.
+# No audio is ever kept: recognised words become the question, stored as any typed question is.
+voice_consents = Table(
+    "voice_consents",
+    metadata,
+    Column("id", BigInteger, primary_key=True, autoincrement=True),
+    Column("tenant_id", Text, nullable=False),
+    Column("widget_id", Text, nullable=False),
+    Column("user_id", Text, nullable=False),
+    Column("user_kind", Text, CheckConstraint("user_kind in ('anonymous', 'signed_in')"), nullable=False),
+    Column("version", Integer, nullable=False),
+    Column("engine", Text, CheckConstraint("engine in ('service', 'browser', 'device')"), nullable=False),
+    Column("created_at", DateTime(timezone=True), nullable=False, server_default=func.now()),
+    Index("voice_consents_by_owner", "tenant_id", "widget_id", "user_id"),
+)
+
 # A turn takes at most 5 minutes (ucp.turns), so an answer still in progress after 6 was abandoned.
 STALE = timedelta(minutes=6)
 STALE_ERROR = {
@@ -848,6 +864,24 @@ class Store:
             row = {"message_id": message_id, "conversation_id": conversation_id, **owner.__dict__}
             await db.execute(pg_insert(pins).values(row).on_conflict_do_nothing())
         return True
+
+    async def consent_to_voice(self, owner: Owner, user_kind: str, version: int, engine: str) -> None:
+        """Records that the visitor accepted the voice notice (M11-T2)."""
+        async with self.engine.begin() as db:
+            await db.execute(
+                insert(voice_consents).values(**owner.__dict__, user_kind=user_kind, version=version, engine=engine)
+            )
+
+    async def consented_to_voice(self, owner: Owner, engine: str) -> bool:
+        """Whether the visitor accepted the voice notice for that engine."""
+        mine = (
+            (voice_consents.c.tenant_id == owner.tenant_id)
+            & (voice_consents.c.widget_id == owner.widget_id)
+            & (voice_consents.c.user_id == owner.user_id)
+            & (voice_consents.c.engine == engine)
+        )
+        async with self.engine.connect() as db:
+            return (await db.execute(select(voice_consents.c.id).where(mine).limit(1))).first() is not None
 
     async def unpin(self, owner: Owner, conversation_id: str, message_id: str) -> None:
         async with self.engine.begin() as db:

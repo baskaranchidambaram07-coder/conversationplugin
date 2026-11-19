@@ -143,6 +143,14 @@ export function Install(props: { widgetId: string; gateway: string | null; docum
         <p className="hint">{t.policyHint}</p>
         <Snippet label={t.policyLabel} code={`script-src ${gateway}\nframe-src ${gateway}\nconnect-src ${gateway}\nimg-src ${gateway}`} />
       </section>
+      {document.public.voice_enabled && (
+        // Voice (M11-T5): the loader asks for the microphone on the chat's frame, which a host's own policy can forbid.
+        <section>
+          <h3>{t.microphoneTitle}</h3>
+          <p className="hint">{t.microphoneHint}</p>
+          <Snippet label={t.microphoneLabel} code={`Permissions-Policy: microphone=(self "${gateway}")`} />
+        </section>
+      )}
       <section>
         <h3>{t.checkTitle}</h3>
         <p className="hint">{t.checkHint}</p>

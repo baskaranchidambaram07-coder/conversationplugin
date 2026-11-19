@@ -15,6 +15,9 @@ import type {
   SendMessage,
   Session,
   SessionRequest,
+  VoiceConsent,
+  VoiceLanguage,
+  VoiceStart,
 } from "@ucp/protocol/v1";
 
 /** Any failed call: `status` 0 means the network failed; `error` is the gateway's body when it sent one. */
@@ -171,6 +174,24 @@ export function gateway(widgetId: string, hostToken: () => Promise<string | null
     async pin(conversationId: string, messageId: string, pinned: boolean): Promise<void> {
       const path = `/v1/conversations/${conversationId}/messages/${messageId}/pin`;
       await authorised(path, { method: pinned ? "PUT" : "DELETE" });
+    },
+    /** Records that the visitor accepted the voice notice for one way of listening (M11). */
+    async consent(body: VoiceConsent): Promise<void> {
+      await authorised("/v1/voice/consent", { method: "POST", headers: JSON_TYPE, body: JSON.stringify(body) });
+    },
+    /** The voice socket, open and started for the language: audio frames go in, what is heard comes back. The
+     *  token goes in its first message, never in its address. */
+    async voice(language: VoiceLanguage, place: Location = location): Promise<WebSocket> {
+      const token = await (session ?? start());
+      const socket = new WebSocket(`${place.protocol === "https:" ? "wss" : "ws"}://${place.host}/v1/voice`);
+      socket.binaryType = "arraybuffer";
+      await new Promise<void>((opened, failed) => {
+        socket.onopen = () => opened();
+        socket.onerror = () => failed(new Failure(0, null));
+      });
+      const begin: VoiceStart = { type: "start", token, language };
+      socket.send(JSON.stringify(begin));
+      return socket;
     },
     async pins(): Promise<Pin[]> {
       return ((await (await authorised("/v1/pins")).json()) as PinPage).pins;

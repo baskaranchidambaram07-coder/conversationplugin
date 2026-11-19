@@ -181,6 +181,13 @@
       }
     },
     {
+      "Sid": "SpeechInTheDeploymentsRegion",
+      "Effect": "Allow",
+      "Action": ["polly:SynthesizeSpeech", "transcribe:StartStreamTranscriptionWebSocket"],
+      "Resource": "*",
+      "Condition": { "StringEquals": { "aws:RequestedRegion": "us-east-1" } }
+    },
+    {
       "Sid": "PassProjectRolesToEcsTasks",
       "Effect": "Allow",
       "Action": "iam:PassRole",
