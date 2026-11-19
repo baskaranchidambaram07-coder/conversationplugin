@@ -67,5 +67,7 @@ export function apply(answer: Answer, event: StreamEvent): Answer {
       return { ...next, status: "complete" };
     case "message.failed":
       return { ...next, status: "failed", error: event.error };
+    case "speech.audio":
+      return next; // played by the voice module, not drawn
   }
 }

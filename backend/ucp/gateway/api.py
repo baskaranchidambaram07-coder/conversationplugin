@@ -427,8 +427,11 @@ async def send_message(
     else:
         received = getattr(request.state, "received", None)
         attached = await store.file_contents(conversation_id, body.attachments) if body.attachments else ()
+        # Read aloud only in a language the widget offers; otherwise the answer is text alone, as it always is.
+        voiced = widget.config.voice_enabled and body.speak in widget.config.voice_languages
+        speak = (request.app.state.speaker, body.speak) if voiced else None
         queue, task, timing = turns.start(
-            turn, widget.document.tenant_id, profile, connector, body.text, received, attached
+            turn, widget.document.tenant_id, profile, connector, body.text, received, attached, speak
         )
         if whole:
             await asyncio.shield(task)  # a caller who leaves does not cancel the answer

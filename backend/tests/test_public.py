@@ -56,6 +56,9 @@ async def test_the_config_is_exactly_the_public_settings_readable_from_any_site(
     assert response.status_code == 200
     assert WidgetConfig.model_validate_json(response.content).model_dump(mode="json") == {
         "attachments_enabled": False,  # off unless the widget switches it on (R11)
+        "voice_enabled": False,  # likewise
+        "voice_languages": ["en-GB"],
+        "browser_speech": "on_device",  # the browser's recogniser only where no audio leaves the device
         **EXAMPLE,
         "widget_id": widget_id,
     }

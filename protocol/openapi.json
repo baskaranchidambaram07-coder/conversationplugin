@@ -982,6 +982,37 @@
         }
       }
     },
+    "/v1/voice/consent": {
+      "post": {
+        "summary": "Record that the visitor accepted the voice notice",
+        "operationId": "consent_v1_voice_consent_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/VoiceConsent"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "4XX": {
+            "description": "Client Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/healthz": {
       "get": {
         "summary": "Healthz",
@@ -1584,6 +1615,17 @@
             "maxItems": 5,
             "title": "Attachments",
             "description": "Files uploaded to this conversation, sent with the question: at most 5."
+          },
+          "speak": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/VoiceLanguage"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Read the answer aloud in this language, as `speech.audio` events (M11)."
           }
         },
         "additionalProperties": false,
@@ -1741,6 +1783,60 @@
         ],
         "title": "ValidationError"
       },
+      "VoiceConsent": {
+        "properties": {
+          "version": {
+            "type": "integer",
+            "minimum": 1.0,
+            "title": "Version",
+            "description": "The version of the notice they read."
+          },
+          "engine": {
+            "type": "string",
+            "enum": [
+              "service",
+              "browser",
+              "device"
+            ],
+            "title": "Engine",
+            "description": "Who hears their voice: our speech service, the browser maker's servers, or only their device."
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "version",
+          "engine"
+        ],
+        "title": "VoiceConsent",
+        "description": "Body of POST /v1/voice/consent: the visitor accepted the voice notice before their first recording."
+      },
+      "VoiceLanguage": {
+        "type": "string",
+        "enum": [
+          "en-GB",
+          "en-US",
+          "en-AU",
+          "en-IN",
+          "en-IE",
+          "en-NZ",
+          "en-ZA",
+          "ar-AE",
+          "de-DE",
+          "es-ES",
+          "es-US",
+          "fr-CA",
+          "fr-FR",
+          "hi-IN",
+          "it-IT",
+          "ja-JP",
+          "ko-KR",
+          "nl-NL",
+          "pt-BR",
+          "pt-PT",
+          "zh-CN"
+        ]
+      },
       "WidgetConfig": {
         "properties": {
           "v": {
@@ -1865,6 +1961,33 @@
             "title": "Attachments Enabled",
             "description": "Visitors may attach doc, docx, pdf, jpg, jpeg and png files to a question.",
             "default": false
+          },
+          "voice_enabled": {
+            "type": "boolean",
+            "title": "Voice Enabled",
+            "description": "Visitors may speak questions and hear answers (M11).",
+            "default": false
+          },
+          "voice_languages": {
+            "items": {
+              "$ref": "#/components/schemas/VoiceLanguage"
+            },
+            "type": "array",
+            "maxItems": 21,
+            "minItems": 1,
+            "title": "Voice Languages",
+            "description": "The languages visitors may speak and hear, the first being the default."
+          },
+          "browser_speech": {
+            "type": "string",
+            "enum": [
+              "never",
+              "on_device",
+              "allowed"
+            ],
+            "title": "Browser Speech",
+            "description": "Whether the chat may use the browser's own speech recognition: never; only where it runs on the device, so no audio leaves it; or also where the browser maker's servers recognise it.",
+            "default": "on_device"
           }
         },
         "additionalProperties": false,

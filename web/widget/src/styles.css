@@ -1602,7 +1602,9 @@ textarea::placeholder {
   padding-inline-start: 8px;
 }
 
-.clip {
+.clip,
+.mic,
+.voice-icon {
   display: grid;
   place-items: center;
   flex: none;
@@ -1616,17 +1618,22 @@ textarea::placeholder {
   transition: background-color 0.15s ease-out, color 0.15s ease-out;
 }
 
-.clip:hover:not(:disabled) {
+.clip:hover:not(:disabled),
+.mic:hover:not(:disabled),
+.voice-icon:hover {
   background: color-mix(in srgb, var(--ink) 6%, transparent);
   color: var(--ink);
 }
 
-.clip:disabled {
+.clip:disabled,
+.mic:disabled {
   opacity: 0.45;
   cursor: default;
 }
 
-.clip .glyph {
+.clip .glyph,
+.mic .glyph,
+.voice-icon .glyph {
   width: 20px;
   height: 20px;
 }
@@ -1951,6 +1958,144 @@ textarea::placeholder {
   }
 }
 
+/* Voice (M11): while dictating, a bar across the top of the composer, over a hairline, with the words going into
+   the box; during a voice conversation, the composer itself, holding the state, the language and the controls. Four
+   ink bars follow the microphone's loudness, or breathe while the answer is read. */
+.voice-bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 6px;
+  flex-basis: 100%;
+  min-width: 0;
+  min-height: 36px;
+}
+
+.voice-bar.dictation {
+  margin-block-end: 2px;
+  padding-block-end: 6px;
+  border-block-end: 1px solid var(--line);
+}
+
+.compose.voicing {
+  padding-inline-start: 14px;
+}
+
+.levels {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  flex: none;
+  block-size: 20px;
+}
+
+.levels i {
+  display: block;
+  inline-size: 3px;
+  block-size: 30%;
+  border-radius: 2px;
+  background: var(--ink);
+  transition: block-size 0.1s ease-out;
+}
+
+.levels.moving i {
+  animation: voice-level 1.1s ease-in-out infinite;
+}
+
+.levels.moving i:nth-child(2) {
+  animation-delay: 0.18s;
+}
+
+.levels.moving i:nth-child(3) {
+  animation-delay: 0.36s;
+}
+
+.levels.moving i:nth-child(4) {
+  animation-delay: 0.54s;
+}
+
+@keyframes voice-level {
+  0%,
+  100% {
+    block-size: 30%;
+  }
+  50% {
+    block-size: 100%;
+  }
+}
+
+.voice-state {
+  flex: 1 1 96px;
+  min-width: 0;
+  margin: 0;
+  color: var(--muted);
+  font-size: 14px;
+}
+
+.voice-state span {
+  display: -webkit-box;
+  overflow: hidden;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  overflow-wrap: anywhere;
+}
+
+.voice-state.heard {
+  color: var(--ink);
+  font-size: 15px;
+}
+
+/* The controls keep together; short of room, they move under the words as one, at the end. */
+.voice-controls {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin-inline-start: auto;
+}
+
+.voice-bar .language {
+  max-inline-size: 10em;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.voice-bar .secondary .glyph {
+  width: 16px;
+  height: 16px;
+}
+
+.voice-languages {
+  flex-basis: 100%;
+  padding-block-start: 4px;
+  border-block-start: 1px solid var(--line);
+}
+
+.voice-bar.consent {
+  display: grid;
+  gap: 6px;
+  padding: 2px 0 4px;
+}
+
+.voice-ask {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.voice-note {
+  margin: 0;
+  color: var(--muted);
+  font-size: 14px;
+  text-wrap: pretty;
+}
+
+.voice-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
 /* The loader has closed the panel: nothing may keep animating out of sight. */
 .paused,
 .paused * {
@@ -1964,8 +2109,13 @@ textarea::placeholder {
   .chart .bar,
   .chart path.line,
   .chart .wash,
-  .chart .slice {
+  .chart .slice,
+  .levels.moving i {
     animation: none;
+  }
+
+  .levels.moving i {
+    block-size: 60%;
   }
 
   .dots span,
@@ -1992,6 +2142,11 @@ textarea::placeholder {
   .chats,
   .pins {
     border: 1px solid CanvasText;
+  }
+
+  .levels i {
+    forced-color-adjust: none;
+    background: CanvasText;
   }
 
   .file-progress > span {

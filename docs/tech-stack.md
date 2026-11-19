@@ -36,6 +36,7 @@ Status: 12 November 2026. Everything marked "verified" was run on that date, on 
 | Tokens | PyJWT with its cryptography extra | 2.15 | Signs and checks session tokens; checks host tokens, HMAC from a customer's backend or RSA and EC from an identity provider |
 | Identity-provider test | Keycloak (pipeline only, in a container) | 26.0.5 | A real OpenID Connect provider for the sign-in tests |
 | HTTP client for PF | httpx2 | 2.16 | Streams PF's replies; also FastAPI's test client |
+| Speech on AWS (M11) | Amazon Transcribe streaming and Polly neural voices, called with our own Signature Version 4 code over websockets and httpx2 | websockets 17.4 (already a Uvicorn dependency) | No AWS library, as decided on 14 November; the task role's credentials, in the deployment's region (`docs/voice.md`) |
 
 Added when first used: OpenTelemetry for traces and metrics.
 
@@ -46,6 +47,7 @@ The gateway reads its settings from the environment when it starts:
 - `UCP_HOST_SECRETS`: the widgets' shared secrets for host tokens, as JSON `{"name": "id:secret,…"}`.
 - `UCP_SIGNED_IN_SECONDS`: how long a signed-in session lasts before the chat renews it; 900 unless set.
 - `UCP_WEB_DIR`: where the built loader and chat are. The image sets this one.
+- `UCP_SPEECH`: the speech service for voice (M11): `none` (the default: the browser's own engines), `fake` (tests) or `aws`. `UCP_SPEECH_REGION`: AWS's region for it, `us-east-1` unless set.
 
 ## 3. Web
 
@@ -65,6 +67,7 @@ The gateway reads its settings from the environment when it starts:
 | Schema checks in tests | Ajv with ajv-formats | 8.20 / 3.0 | Checks the shared example files against the schema, so the TypeScript side reaches the same verdict as the Python models |
 
 | Answer Markdown | react-markdown with remark-gfm | 10.1 / 4.0 | Raw HTML is skipped rather than sanitised, so nothing in an answer is ever parsed as HTML; loaded only when the first answer arrives |
+| Voice in the chat (M11) | The browser's own speech recognition and voices (Web Speech API), an AudioWorklet of our own for the microphone, Web Audio for playback | the browsers' own | Nothing to install; all of it loads on the first press of a voice button (about 5 KB) |
 
 Added when first used: Recharts, Mermaid, Radix primitives.
 

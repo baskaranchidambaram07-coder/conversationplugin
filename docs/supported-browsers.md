@@ -58,6 +58,19 @@ The chat lays itself out by the width of its own frame, from 280 px up (M2-T3).
 | A right-to-left host page | Direction-neutral layout from day one | M1, M2 |
 | A slow connection and a low-end Android phone | Size budgets: loader at most 6 KB compressed, chat first load at most 100 KB compressed | M2 performance tests |
 | A corporate proxy that buffers streamed replies | The plain JSON reply takes over (D2) | M2-T6 |
+| Voice (M11) with no microphone, a blocked one, or a host policy that forbids it | The chat says why in plain words; typing is unaffected | `e2e/gateway/voice.spec.ts` |
+
+### Voice, by browser
+
+Every supported browser can use voice through our speech service: the microphone through an AudioWorklet, answers through Web Audio. Where a browser's own recogniser is allowed and present, it is used first.
+
+| Browser | Own recogniser | On the device | Checked |
+|---|---|---|---|
+| Chrome (desktop) | Yes | From Chrome 139, where the language is installed | Chromium in the pipeline, with a fake microphone and a stand-in recogniser |
+| Chrome (Android), Edge, Samsung Internet | Yes, on the maker's servers | No | Not yet on real devices |
+| Safari (macOS, iOS) | Yes, on Apple's servers; push to talk only on iPhone | No | Not yet; iPhone needs audio unlocked on the press, which the chat does |
+| Firefox | No (an on-device one is planned for Firefox 161) | — | Not yet |
+| App web views | No | — | Not yet |
 
 ## 4. Assistive technology
 

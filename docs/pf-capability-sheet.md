@@ -137,7 +137,7 @@ Still open:
 5. Can per-user context be passed to the agent?
 6. How are files attached to a conversation message, and is there speech-to-text or text-to-speech for conversation agents?
 
-   Files answered on 18 November 2026: PF takes doc, docx, pdf, jpg, jpeg and png, and the flow is in section 4a, confirmed against staging. Speech remains open.
+   Files answered on 18 November 2026: PF takes doc, docx, pdf, jpg, jpeg and png, and the flow is in section 4a, confirmed against staging. Speech answered on 19 November 2026: PF has none (you confirmed); voice is built outside PF, with speech before the question and after the answer (`voice.md`).
 
 ## 11. Recorded samples
 

@@ -26,9 +26,9 @@ Sources: `universal_conversation_platform_internal_discussion.docx` (v0.1), `Uni
 13. Repository and branching
 14. Base version for 22 November 2026
 
-## 0. Status of each module, 18 November 2026
+## 0. Status of each module, 19 November 2026
 
-Every module of the base version is built, merged into `develop` and deployed to the dev environment on AWS. On 18 November M10 (attachments) was built on its branch, with three features you asked for alongside it: feedback on answers, projects and pinned answers (pull requests 124 to 127, see M10). M11 has not been started. On 17 November 2026, before the environment was put to sleep, the deployed suite passed 5 of 5 against it (`npm run e2e:deployed`): the hosted console behind Cognito, the hosted public page answered from PF staging, the hosted portal's sign-in and its chat kept across signing out and in, a refused name, and the R13 leak search in a real conversation. The pipeline's eight checks pass on `develop` (81de18d).
+Every module of the base version is built, merged into `develop` and deployed to the dev environment on AWS. On 18 November M10 (attachments) was built, with three features you asked for alongside it: feedback on answers, projects and pinned answers (pull requests 124 to 127, see M10), and merged into `develop` (#132). On 19 November M11 (voice) was built (pull requests 141 to 144, see M11 and `voice.md`) and merged into `develop`. Both reach the dev environment on its next wake: it has slept since 17 November, and each merge only stores the new image. On 17 November 2026, before the environment was put to sleep, the deployed suite passed 5 of 5 against it (`npm run e2e:deployed`): the hosted console behind Cognito, the hosted public page answered from PF staging, the hosted portal's sign-in and its chat kept across signing out and in, a refused name, and the R13 leak search in a real conversation. The pipeline's eight checks pass on `develop` (81de18d).
 
 | Module | Status | Built | Still open |
 |---|---|---|---|
@@ -42,8 +42,8 @@ Every module of the base version is built, merged into `develop` and deployed to
 | M7 History and persistence | Done | The data model and its PostgreSQL repository; migrations `0001` to `0007`; tenant enforcement; the conformance and cross-tenant suites; one turn at a time under racing questions; the restore rehearsal (with M14). On 18 November, on M10's branch: feedback, projects, pins and files (migrations `0008` to `0011`). | Retention, deletion and purging, until the purge policy is set. Paging past 100 projects or pins. |
 | M8 Control plane API | Done | The admin API: company sign-in with three roles scoped to tenants; drafts, publish, rollback and compare; sealed connection profiles and shared secrets; an append-only audit log; operator commands; the onboarding journey. On 16 November: a connection edited field by field and read back without its secrets. On 17 November: picture uploads and `GET /admin/v1/overview`. | Feature switches and retention (second release and the purge policy); re-sealing secrets under a new key; self-service sign-up, usage and billing. |
 | M9 Admin console | Done | Hosted on AWS behind Cognito; organisations; each widget's six-station track (Agent, Sites, Sign-in, Look, Install, Go live) with a live preview; versions and rollback; deleting widgets and organisations; onboarding from the console alone. On 16 November: continue buttons and connection editing. On 17 November: a light and a Graphite dark theme, the picture upload and greeting, a home page with figures and every organisation by state, and a profile menu (#117, #120). | Feature and layout settings (T4, with the second release); the iframe-only snippet; validation generated from the server's schema; screenshot comparison; a screen to manage people (your decision). |
-| M10 Attachments | Built on its branch | Doc, docx, pdf, jpg, jpeg and png checked from their bytes; upload and download; files sent with a question to the agent, proven against PF staging (#129); every file scanned by ClamAV first (T3, #130); the composer's picker, drop and paste; a switch per widget in the console (#127). Built alongside: feedback, projects and pinned answers (#124 to #126). | S3 for the files (T1); deletion with the purge policy (T6). |
-| M11 Voice | Not started | — | The whole module, in the second release. |
+| M10 Attachments | Merged into `develop` | Doc, docx, pdf, jpg, jpeg and png checked from their bytes; upload and download; files sent with a question to the agent, proven against PF staging (#129); every file scanned by ClamAV first (T3, #130); the composer's picker, drop and paste; a switch per widget in the console (#127). Built alongside: feedback, projects and pinned answers (#124 to #126). | S3 for the files (T1); deletion with the purge policy (T6). |
+| M11 Voice | Merged into `develop` | 19 November (#141 to #144):<br>• The design, with research on browsers and speech services (`docs/voice.md`).<br>• Per-widget switches and 21 languages, chosen in the console with each language opening onto its regions.<br>• The voice socket and consent at the gateway.<br>• Answers read aloud in the answer's own stream.<br>• In the chat: dictation into the box, a hands-free voice conversation with pause and stop, and Chrome's own recogniser on the device where it can.<br>• Transcribe and Polly on AWS for dev, with no AWS library.<br>• The host's microphone line at Install. | An AWS administrator publishes the boundary and deployer policies with the speech statement; then a live check of Polly's voices and an en-GB recording. Production's provider (Azure in London recommended, or AWS with the Organization's AI opt-out). Interrupting by voice; a daily allowance of minutes; real-device passes. |
 | M12 Security and compliance | Partly, as it runs through every module | The threat model, kept current (T21 added on 17 November); strict content policies for every page; rate limits; secrets in AWS Secrets Manager or sealed in the database; dependency, code, secret and container scanning in the pipeline; the R13 browser leak test, passing on dev. | The web application firewall (T3); the privacy inventory, retention and export (T7); security-event alerts (T8); the evidence pack (T9); an independent penetration test (T10); image signing. |
 | M13 Observability and analytics | Partly | Structured logs with a correlation ID and nothing sensitive; the gateway's own share of each first word logged; two CloudWatch alarms (errors, unhealthy targets); a smoke test after every release. | OpenTelemetry traces and metrics (T2); browser telemetry (T3); dashboards (T4); usage counts per tenant (T5); a scheduled scripted conversation (T6); operating guides (T7). |
 | M14 Cloud platform and deployment | Done for dev | The dev environment from Terraform, woken and put to sleep on demand; the delivery pipeline with a smoke test; rebuilt from the code alone (the done condition, 13 November); the restore rehearsal; a bundle for a customer's own AWS account, with its image on GitHub's container registry (v1.0.0, 15 November). | Production in London: private subnets and NAT, a database across two zones, our own domains and certificates, a web application firewall; budget alerts and autoscaling (need an AWS administrator); image signing; pinned loader releases. |
@@ -1006,6 +1006,34 @@ State on 18 November 2026 (pull requests 124 to 128 into `module/m10-attachments
 - End-to-end: speak, confirm, send, hear the reply, using simulated audio input.
 - Deployment: provider region matches the data-residency region; provider quotas.
 - Other: all voice controls work by keyboard and a text transcript is always present; no audio retained by default; consent recorded.
+
+State on 19 November 2026 (pull requests 141 to 144 into `module/m11-voice`, merged into `develop` the same day). The design and the research behind it are in `docs/voice.md`. You decided: AWS for dev, production later; English by default, with administrators choosing more languages.
+
+- **T1:** PF has no speech (you confirmed this).
+  - Speech-to-text and text-to-speech sit behind two separate interfaces (`ucp/speech.py`): none, a fake for tests, and AWS.
+  - On AWS, Transcribe streaming and Polly's neural voices are signed with our own Signature Version 4 code (`ucp/aws_speech.py`), with no AWS library.
+  - The task role may use them only in the deployment's region.
+- **T2:** a microphone dictates into the box for the visitor to confirm. Consent comes first, worded for whoever will hear the voice, and is recorded (`voice_consents`, migration 0012).
+  - Where the language is installed, Chrome's own recogniser runs on the device and no audio leaves it.
+  - Otherwise our gateway listens over the voice socket: 16 kHz audio from an AudioWorklet of our own, at most 60 s, with limits per tenant and per visitor.
+  - The browser maker's recogniser is used only where the widget allows it.
+- **T3:** a hands-free voice conversation sends each question when the visitor stops, and reads the answer aloud as it streams.
+  - Pieces come as `speech.audio` events in the answer's own stream: the first sentence alone, then each paragraph. Tables, code and diagrams are named, not read.
+  - Pause, resume and stop are on screen, then it listens again.
+  - Pieces without audio are read by the browser's own voice.
+- **T4:**
+  - 21 languages, ticked per widget in the console, each language opening onto its regions. A visitor starts in their own language where the widget offers it.
+  - No audio is kept anywhere, and nothing heard is logged.
+  - Keeping audio "where configured" is not built.
+- **T5:**
+  - The loader grants the frame the microphone only when voice is on.
+  - Install shows the `Permissions-Policy` line a host that limits the microphone must add.
+- **Tests:** unit tests for reading aloud, the endpointer, the player, languages and the AWS framing and signing. Gateway tests for the socket's limits and consent. Four Chromium journeys with a fake microphone through the real gateway, scanned by axe.
+- **Waiting:**
+  - An AWS administrator publishes `ucp-dev-boundary` and `ucp-dev-deployer` with the speech statement. AWS already accepted our signing on 19 November and refused only for lack of permission.
+  - Production's provider.
+  - Interrupting by voice, and a daily allowance of minutes.
+  - iPhone and Android on real devices.
 
 ---
 

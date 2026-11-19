@@ -13,6 +13,8 @@ What happens when a step fails:
 """
 
 import asyncio
+import base64
+import contextlib
 import itertools
 import json
 import logging
@@ -25,10 +27,12 @@ from math import ceil
 from ucp.connector import Accepted, AgentConnector, AgentError, AgentFile, Failed, Final, Text
 from ucp.gateway.pipeline import Problem, api_error, correlation
 from ucp.protocol import ADAPTERS, Message
+from ucp.speech import Reading, Speaker
 from ucp.store import Owner, Store, Turn
 
 log = logging.getLogger("ucp.turns")
 EVENTS = ADAPTERS["StreamEvent"]
+SPEAKING = 120  # seconds the voice may run on after the answer's last word
 PING = ": ping\n\n"
 FILES_READING = 120  # seconds added to the first word's limit when the question brings files for the agent to read
 
@@ -103,11 +107,14 @@ class Turns:
         question: str,
         received: float | None = None,
         files: Sequence[AgentFile] = (),
+        speak: tuple[Speaker, str] | None = None,
     ) -> tuple[asyncio.Queue, asyncio.Task, FirstWord]:
+        """Starts answering. With `speak` (a speaker and a language), the answer is also read aloud (M11)."""
         queue: asyncio.Queue[str | None] = asyncio.Queue()
         timing = FirstWord(received if received is not None else time.perf_counter())
         self.active[tenant_id] += 1
-        task = asyncio.create_task(self._run(turn, tenant_id, profile, connector, question, queue, timing, files))
+        run = self._run(turn, tenant_id, profile, connector, question, queue, timing, files, speak)
+        task = asyncio.create_task(run)
         self.tasks.add(task)
         task.add_done_callback(self.tasks.discard)
         return queue, task, timing
@@ -183,6 +190,7 @@ class Turns:
         queue: asyncio.Queue,
         timing: FirstWord,
         files: Sequence[AgentFile] = (),
+        speak: tuple[Speaker, str] | None = None,
     ) -> None:
         emit = _emitter(turn)
         answer: list[str] = []
@@ -190,6 +198,10 @@ class Turns:
 
         def send(kind: str, **fields) -> None:
             queue.put_nowait(emit(kind, **fields))
+
+        reading = Reading() if speak else None
+        pieces: asyncio.Queue[str | None] = asyncio.Queue()
+        speaking = asyncio.create_task(self._speak(pieces, *speak, send)) if speak else None
 
         def piece(text: str) -> None:
             nonlocal opened
@@ -199,6 +211,8 @@ class Turns:
                 opened = True
             answer.append(text)
             send("content_block.delta", index=0, text=text)
+            for part in reading.feed(text) if reading else ():
+                pieces.put_nowait(part)
 
         outcome: Final | Failed
         ids: list[str] = []  # PF's ID for the answer, stored with it at the end
@@ -236,6 +250,8 @@ class Turns:
                 await self.store.finish(turn.answer_id, "complete", [block], None, agent_message_id)
                 send("content_block.completed", index=0, block=block)
                 send("message.completed")
+                for part in reading.end(outcome.text) if reading else ():
+                    pieces.put_nowait(part)
                 log.info("turn %s answered, usage %s", turn.answer_id, json.dumps(outcome.usage))
             else:
                 error = api_error(outcome.code, retryable=outcome.retryable) if outcome else api_error("internal_error")
@@ -250,7 +266,42 @@ class Turns:
             log.exception("turn %s could not be stored, reference %s", turn.answer_id, correlation.get())
             send("message.failed", error=api_error("internal_error").model_dump(mode="json"))
         finally:
+            if speaking:
+                pieces.put_nowait(None)
+                with contextlib.suppress(Exception):  # the stream ends whatever happens to the voice
+                    await asyncio.wait_for(speaking, SPEAKING)
             queue.put_nowait(None)
+
+    async def _speak(self, pieces: asyncio.Queue, speaker: Speaker, language: str, send) -> None:
+        """Reads the answer aloud as it streams (M11): each piece voiced, at most two ahead of the one being sent,
+        and sent in order. A piece that cannot be voiced goes with no audio, for the browser's own voice to read."""
+        ahead: asyncio.Queue = asyncio.Queue(maxsize=2)
+
+        async def voiced(text: str) -> bytes | None:
+            try:
+                return await speaker.speak(text, language)
+            except Exception as error:
+                log.warning("turn: a piece of the answer could not be voiced (%s)", type(error).__name__)
+                return None
+
+        async def making() -> None:
+            while (text := await pieces.get()) is not None:
+                await ahead.put((text, asyncio.create_task(voiced(text))))
+            await ahead.put(None)
+
+        maker = asyncio.create_task(making())
+        try:
+            part = 0
+            while (item := await ahead.get()) is not None:
+                text, task = item
+                audio = await task
+                send("speech.audio", part=part, text=text, audio=base64.b64encode(audio).decode() if audio else None)
+                part += 1
+        finally:
+            maker.cancel()
+            while not ahead.empty():
+                if item := ahead.get_nowait():
+                    item[1].cancel()
 
     async def _ask(self, connector, agent_conversation: str, question: str, piece, ids: list[str], files=()) -> tuple:
         """One attempt: the outcome, and whether the agent got the question."""
