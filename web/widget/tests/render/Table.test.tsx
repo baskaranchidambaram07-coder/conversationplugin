@@ -75,3 +75,13 @@ test("a copy the browser refuses says so, instead of claiming it worked", async 
   expect(await screen.findByRole("button", { name: "Could not copy" })).toBeTruthy();
   expect(screen.queryByRole("button", { name: "Copied" })).toBeNull();
 });
+
+test("a CSV block in an answer is drawn as a table with the table's tools once its fence closes; until then it is code", async () => {
+  const csv = '```csv\nRoom,Rate\nSingle,"£295, weekly"\nStudio,465\n';
+  const { rerender } = render(<Markdown text={csv} />);
+  expect(screen.getByRole("region", { name: "csv" })).toBeTruthy(); // still arriving: code
+  rerender(<Markdown text={`${csv}\`\`\``} />);
+  expect(await screen.findByRole("cell", { name: "£295, weekly" })).toBeTruthy();
+  expect(screen.getByRole("columnheader", { name: "Rate" })).toBeTruthy();
+  expect(screen.getByRole("button", { name: "Download CSV" })).toBeTruthy();
+});

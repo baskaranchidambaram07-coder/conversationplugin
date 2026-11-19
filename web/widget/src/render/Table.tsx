@@ -106,3 +106,29 @@ export function Table({ node, rows: given, children }: { node?: Element; rows?: 
     </>
   );
 }
+
+/** A table of plain rows, the first its header: a chart's numbers, a CSV block or file, a sheet of a workbook. */
+export function RowsTable({ rows }: { rows: string[][] }) {
+  return (
+    <Table rows={rows}>
+      <thead>
+        <tr>
+          {rows[0]?.map((cell, n) => (
+            <th key={n} scope="col">
+              {cell}
+            </th>
+          ))}
+        </tr>
+      </thead>
+      <tbody>
+        {rows.slice(1).map((row, r) => (
+          <tr key={r}>
+            {row.map((cell, n) => (
+              <td key={n}>{cell}</td>
+            ))}
+          </tr>
+        ))}
+      </tbody>
+    </Table>
+  );
+}

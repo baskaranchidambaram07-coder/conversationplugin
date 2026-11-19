@@ -1,7 +1,7 @@
 // Attachments (M10-T5): files chosen, dropped or pasted into the composer, uploaded at once, and sent with the
 // question. The gateway checks every file again from its bytes; the checks here only explain a refusal sooner.
 import type { Block } from "@ucp/protocol/v1";
-import { useEffect, useState } from "react";
+import { lazy, Suspense, useEffect, useState } from "react";
 
 import { Icon } from "./Icon";
 import { strings as t } from "./strings";
@@ -17,6 +17,8 @@ export type Pending = {
   block: FileBlock | null;
   problem: string | null;
 };
+
+const FileViewer = lazy(() => import("./files/FileViewer"));
 
 export const LIMIT_BYTES = 10 * 1024 * 1024;
 export const PER_QUESTION = 5;
@@ -84,10 +86,11 @@ export function PendingChip({ file, onRemove }: { file: Pending; onRemove: () =>
   );
 }
 
-/** A file sent with a question: saved on a press. A picture shows itself, fetched with the visitor's session. */
+/** A file sent with a question, or carried by an answer: opened on a press in the full-screen viewer (M3-T8), which
+ *  shows it or offers to save it. A picture shows itself on the card, fetched with the visitor's session. */
 export function SentChip({ block, fetchFile }: { block: FileBlock; fetchFile: (id: string) => Promise<Blob> }) {
   const [picture, setPicture] = useState<string | null>(null);
-  const [failed, setFailed] = useState(false);
+  const [viewing, setViewing] = useState(false);
 
   useEffect(() => {
     if (!isPicture(block.name)) return;
@@ -106,24 +109,27 @@ export function SentChip({ block, fetchFile }: { block: FileBlock; fetchFile: (i
     };
   }, [block.id]);
 
-  async function open() {
-    setFailed(false);
-    try {
-      save(await fetchFile(block.id), block.name);
-    } catch {
-      setFailed(true);
-    }
-  }
-
   return (
     <li>
-      <button type="button" className="file file-open" onClick={() => void open()} aria-label={t.saveFile(block.name)}>
+      <button
+        type="button"
+        className="file file-open"
+        aria-haspopup="dialog"
+        aria-label={t.openFile(block.name)}
+        // Safari does not focus a button on a click; focused, it is where the viewer gives focus back.
+        onClick={(event) => (event.currentTarget.focus(), setViewing(true))}
+      >
         {picture ? <img src={picture} alt="" /> : <Icon path={PAGE} />}
         <span className="file-name" dir="auto">
           {block.name}
         </span>
-        <span className="file-size">{failed ? t.fileFailed : sizeOf(block.size)}</span>
+        <span className="file-size">{sizeOf(block.size)}</span>
       </button>
+      {viewing && (
+        <Suspense fallback={null}>
+          <FileViewer name={block.name} id={block.id} fetchFile={fetchFile} onClose={() => setViewing(false)} />
+        </Suspense>
+      )}
     </li>
   );
 }
