@@ -567,6 +567,18 @@ Chat Surface, 20px, a hairline and the Composer shadow; the field grows to 160px
 - **Dropping:** while files are dragged over it, the composer's edge turns dashed, ink 40% into the line, with the focus halo.
 - **Refusal:** a one-line note (13px, pretty wrap) above the composer, aligned with it. A card the gateway refused stays at full strength, never faded: its edge turns dashed and "Not attached" replaces its size, in ink.
 
+### Voice
+- **Microphone:** a quiet 36px button (10px, 20px mic glyph, Muted), the clip's twin, just before send. It dictates into the box: "Speak your question".
+- **Voice conversation:** with nothing typed, the send button itself starts one: the same brand-filled 36px square, its glyph five rising bars ("Start a voice conversation"). Once anything is typed, it is send again.
+- **Voice bar:** dictating, a row across the top of the composer over a 1px hairline, with the words going into the box. In a conversation, it is the composer itself: the same card, 20px.
+  - The row: four 3px ink bars, a 15px state line, then the controls kept together at the end, moving under the words as one when room runs short.
+  - The bars follow the microphone's loudness, or breathe while the answer is read (1.1s, staggered 0.18s). Under reduced motion they hold at 60%.
+  - The state line is Muted 14px ("Listening", "Finding an answer", "Reading the answer aloud", "Paused"). The words heard are Ink 15px, clamped to two lines.
+  - The controls: the language as a quiet action naming it ("British English", truncating at 10em); then Done (secondary), or Pause/Resume and Stop as 36px quiet icons; then a 36px cross to cancel or end.
+  - The language opens as `.options` rows inside the bar, over a hairline, the chosen one checked.
+- **Consent:** in place of the bar, before the first recording: "Use your voice?" in 500 14px, one Muted 14px sentence naming who hears the voice, then Continue (secondary) and Cancel (quiet). It is never a modal.
+- **States are announced** through a hidden polite status: the state, never every word heard. Escape ends voice.
+
 ### Places and pages
 - **Places:** Projects and Pinned as rows above "Your chats": at least 40px, 8px 12px, 10px, 500 15px with an 18px Muted glyph. Hover 5% ink wash; the current place Bubble Grey.
 - **Page:** the page title over its content, quiet actions to its end (on a project, Rename and Delete). A project page opens with a quiet back link. A project's chats are rows as in "Your chats".

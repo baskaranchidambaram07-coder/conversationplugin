@@ -21,7 +21,7 @@ type Tenant = { tenant_id: string; name: string };
 type Row = { widget_id: string; title: string; version: number | null; unpublished: boolean };
 export type WidgetDocument = {
   tenant_id: string;
-  public: { title?: string; welcome_message?: string | null; suggested_prompts?: string[]; brand_color?: string };
+  public: { title?: string; welcome_message?: string | null; suggested_prompts?: string[]; brand_color?: string; voice_enabled?: boolean };
   allowed_domains: string[];
   sign_in: "anonymous" | "signed_in" | "both";
   agent_profile: string;
