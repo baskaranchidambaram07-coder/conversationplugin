@@ -29,7 +29,7 @@ export type Look = {
 };
 
 const LIGHT = "#ffffff"; // the chat's composer, where the send button sits, in the light scheme
-const NIGHT = "#30302e"; // and in the dark
+const NIGHT = "#1a2537"; // and in the dark
 const QUESTIONS = 4;
 const SIDE = 256; // px: the picture as stored, twice the largest place it is shown
 
@@ -77,7 +77,7 @@ export function colourNotes(colour: string): { text: string; warnings: string[] 
   const text = t.textOn(ink === "#ffffff" ? t.white : t.black, contrast(colour, ink).toFixed(1));
   const warnings = [];
   if (contrast(colour, LIGHT) < 3) warnings.push(t.faintOnLight); // WCAG's line for a control
-  if (contrast(colour, NIGHT) < 3) warnings.push(t.creamOnDark);
+  if (contrast(colour, NIGHT) < 3) warnings.push(t.greyOnDark);
   return { text, warnings };
 }
 
@@ -141,7 +141,7 @@ export function LookEditor(props: {
             <input
               type="color"
               aria-label={t.colourPicker}
-              value={isColor(colour) ? colour.toLowerCase() : "#1f1e1d"}
+              value={isColor(colour) ? colour.toLowerCase() : "#0047ab"}
               onChange={(event) => change({ brand_color: event.target.value.toUpperCase() })}
             />
             <input

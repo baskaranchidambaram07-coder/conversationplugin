@@ -955,6 +955,12 @@ State on 17 November 2026 (pull requests 106 to 109, 117 and 120; into `develop`
   - On Windows, npm had dropped two packages that only Linux installs from the lock file, so the pipeline's clean install refused it.
 - Tests: 45 console journeys on three engines, including a picture upload and the home page, and the role matrix with the overview.
 
+State on 20 November 2026 (pull request 155 into `module/m09-admin-console`; not in `develop` yet). At your request the console was re-skinned in the PF design language (PFDL 2.3.0, its Cobalt theme), as the chat was (M2). This is an interim step: the `@purple-fabric/ui` package is not on the public registry, so the console's parts are still its own, and the design language's token values are written out at the top of `web/console/src/styles.css`.
+
+- Changed: Roboto in place of Inter; white cards on a slate canvas with one cobalt primary, in light and dark (the Graphite theme is gone); the design language's status colours, focus colour, field edges and type scale; flat cards and controls, with a shadow only under the account menu and the chat preview. A new widget's colour starts as the cobalt primary.
+- Unchanged: layout, behaviour and the words. Status words stay capitalised ("Live"), where the design language writes them in lowercase, because the same strings serve as headings and labels.
+- When the package can be installed: rebuild the console on its app frame, fields and buttons.
+
 ---
 
 ### M10 — Attachments (second release)

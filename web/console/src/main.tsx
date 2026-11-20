@@ -1,4 +1,4 @@
-import "@fontsource-variable/inter";
+import "@fontsource-variable/roboto";
 import "./styles.css";
 
 import { StrictMode } from "react";
