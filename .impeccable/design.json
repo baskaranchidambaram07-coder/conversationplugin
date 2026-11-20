@@ -1,700 +1,1071 @@
 {
   "schemaVersion": 2,
-  "generatedAt": "2026-11-14T12:00:00Z",
+  "generatedAt": "2026-11-18T12:00:00.000Z",
   "title": "Design System: Conversation Plugin",
   "extensions": {
     "colorMeta": {
-      "warm-ground": {
+      "chat-ground": {
         "role": "neutral",
-        "displayName": "Warm Cream Ground",
-        "canonical": "#fbf3ea",
-        "tonalRamp": [
-          "#0d0b09",
-          "#282420",
-          "#46413c",
-          "#666059",
-          "#88817a",
-          "#aaa49d",
-          "#cdc8c3",
-          "#f1eeea"
-        ]
-      },
-      "soft-border": {
-        "role": "neutral",
-        "displayName": "Soft Sand Border",
-        "canonical": "#e7dacb",
-        "tonalRamp": [
-          "#0e0b07",
-          "#2a241d",
-          "#494037",
-          "#6a5f53",
-          "#8b8074",
-          "#ada398",
-          "#cfc8bf",
-          "#f3eee8"
-        ]
-      },
-      "ink": {
-        "role": "neutral",
-        "displayName": "Warm Ink",
-        "canonical": "#2b241f",
-        "tonalRamp": [
-          "#0d0b09",
-          "#282421",
-          "#47413c",
-          "#67605a",
-          "#89817b",
-          "#aba39f",
-          "#cec8c4",
-          "#f1eeeb"
-        ]
-      },
-      "secondary-ink": {
-        "role": "neutral",
-        "displayName": "Muted Umber",
-        "canonical": "#6f625a",
-        "tonalRamp": [
-          "#0e0a08",
-          "#2a241f",
-          "#49403a",
-          "#6a5e57",
-          "#8c7f78",
-          "#aea39c",
-          "#d0c7c2",
-          "#f3edea"
-        ]
-      },
-      "paper-white": {
-        "role": "neutral",
-        "displayName": "Paper White",
-        "canonical": "#ffffff",
+        "displayName": "Chat Ground",
+        "canonical": "#fcfcfb",
         "tonalRamp": [
           "#0b0b0b",
-          "#252525",
-          "#424242",
-          "#616161",
-          "#828282",
-          "#a5a5a5",
-          "#c9c9c9",
+          "#242423",
+          "#40403f",
+          "#5e5e5d",
+          "#80807f",
+          "#a4a4a4",
+          "#cacaca",
           "#eeeeee"
         ]
       },
-      "night-ground": {
+      "chat-surface": {
         "role": "neutral",
-        "displayName": "Night Ground",
-        "canonical": "#1c1815",
+        "displayName": "Chat Surface",
+        "canonical": "#ffffff",
+        "tonalRamp": [
+          "#0b0b0b",
+          "#242424",
+          "#404040",
+          "#5d5d5d",
+          "#808080",
+          "#a4a4a4",
+          "#cacaca",
+          "#eeeeee"
+        ]
+      },
+      "chat-bubble": {
+        "role": "neutral",
+        "displayName": "Bubble Grey",
+        "canonical": "#f0efeb",
+        "tonalRamp": [
+          "#0b0b0a",
+          "#242422",
+          "#40403d",
+          "#5e5e5a",
+          "#81807d",
+          "#a5a4a2",
+          "#cbcac8",
+          "#efeeec"
+        ]
+      },
+      "chat-line": {
+        "role": "neutral",
+        "displayName": "Hairline",
+        "canonical": "#e6e4e0",
         "tonalRamp": [
           "#0c0b0a",
-          "#272423",
-          "#45413e",
-          "#65605d",
-          "#86817e",
-          "#a8a4a1",
-          "#ccc8c6",
-          "#f0eeec"
+          "#252422",
+          "#41403d",
+          "#5f5d5a",
+          "#82807d",
+          "#a6a4a1",
+          "#cccac8",
+          "#efeeec"
         ]
       },
-      "night-border": {
+      "chat-ink": {
         "role": "neutral",
-        "displayName": "Night Border",
-        "canonical": "#3b332d",
+        "displayName": "Chat Ink",
+        "canonical": "#1f1e1d",
         "tonalRamp": [
-          "#0d0b09",
-          "#292421",
-          "#47413c",
-          "#685f59",
-          "#89807a",
-          "#aba39e",
-          "#cec8c3",
-          "#f2eeeb"
+          "#0b0b0b",
+          "#242423",
+          "#403f3f",
+          "#5e5d5c",
+          "#81807f",
+          "#a5a4a3",
+          "#cbcac9",
+          "#efeeed"
         ]
       },
-      "cream-ink": {
+      "chat-muted": {
         "role": "neutral",
-        "displayName": "Cream Ink",
-        "canonical": "#f2e9df",
+        "displayName": "Chat Muted",
+        "canonical": "#6b6a68",
         "tonalRamp": [
-          "#0d0b08",
-          "#282420",
-          "#47413b",
-          "#676058",
-          "#888179",
-          "#aaa49d",
-          "#cdc8c2",
-          "#f1eeea"
+          "#0b0b0a",
+          "#242423",
+          "#40403e",
+          "#5e5d5c",
+          "#81807e",
+          "#a5a4a3",
+          "#cbcac9",
+          "#efeeed"
         ]
       },
-      "light-umber": {
+      "chat-ground-dark": {
         "role": "neutral",
-        "displayName": "Light Umber",
-        "canonical": "#b5a69a",
+        "displayName": "Chat Ground Dark",
+        "canonical": "#262624",
         "tonalRamp": [
-          "#0e0a07",
-          "#2a241e",
-          "#4a4038",
-          "#6b5f54",
-          "#8d8075",
-          "#aea399",
-          "#d1c7c0",
-          "#f3ede8"
+          "#0b0b0a",
+          "#242423",
+          "#40403e",
+          "#5e5e5c",
+          "#80807e",
+          "#a5a5a3",
+          "#cacac9",
+          "#eeeeed"
         ]
       },
-      "night-paper": {
+      "chat-surface-dark": {
         "role": "neutral",
-        "displayName": "Night Paper",
-        "canonical": "#27211d",
+        "displayName": "Chat Surface Dark",
+        "canonical": "#30302e",
         "tonalRamp": [
-          "#0d0b09",
-          "#282422",
-          "#46413d",
-          "#66605b",
-          "#88817c",
-          "#aaa4a0",
-          "#cdc8c5",
-          "#f1eeec"
+          "#0b0b0a",
+          "#242423",
+          "#40403e",
+          "#5e5e5c",
+          "#80807e",
+          "#a5a5a3",
+          "#cacac9",
+          "#eeeeed"
         ]
       },
-      "column-tint": {
+      "chat-bubble-dark": {
         "role": "neutral",
-        "displayName": "Column Tint",
-        "canonical": "color-mix(in srgb, #e7dacb 35%, #fbf3ea)",
+        "displayName": "Chat Bubble Dark",
+        "canonical": "#393936",
         "tonalRamp": [
-          "#0d0b08",
-          "#29241f",
-          "#47413a",
-          "#686057",
-          "#898178",
-          "#aba49c",
-          "#cec8c2",
-          "#f2eeea"
+          "#0b0b0a",
+          "#242422",
+          "#40403d",
+          "#5e5e5b",
+          "#80807d",
+          "#a5a5a2",
+          "#cbcbc8",
+          "#eeeeec"
         ]
       },
-      "problem-red": {
-        "role": "error",
-        "displayName": "Problem Red",
-        "canonical": "#9b2c1f",
+      "chat-line-dark": {
+        "role": "neutral",
+        "displayName": "Chat Line Dark",
+        "canonical": "#3e3e3a",
         "tonalRamp": [
-          "#1e0100",
-          "#470c06",
-          "#732218",
-          "#a13b2d",
-          "#c85e4e",
-          "#e48879",
-          "#feb4a6",
-          "#ffe1d8"
+          "#0b0b0a",
+          "#242422",
+          "#40403d",
+          "#5e5e5a",
+          "#80807c",
+          "#a5a5a1",
+          "#cbcbc7",
+          "#efefec"
         ]
       },
-      "good-green": {
-        "role": "success",
-        "displayName": "Good Green",
-        "canonical": "#2f6b3a",
+      "chat-ink-dark": {
+        "role": "neutral",
+        "displayName": "Chat Ink Dark",
+        "canonical": "#f5f4ef",
         "tonalRamp": [
-          "#010f03",
-          "#0d2d13",
-          "#214d29",
-          "#396f42",
-          "#5a9262",
-          "#84b389",
-          "#b0d4b3",
-          "#def6e0"
+          "#0b0b0a",
+          "#242422",
+          "#40403d",
+          "#5e5e5a",
+          "#81807c",
+          "#a5a5a1",
+          "#cbcac7",
+          "#efeeec"
         ]
       },
-      "warn-amber": {
-        "role": "warning",
-        "displayName": "Warn Amber",
-        "canonical": "#8a4b12",
+      "chat-muted-dark": {
+        "role": "neutral",
+        "displayName": "Chat Muted Dark",
+        "canonical": "#b0aea5",
         "tonalRamp": [
-          "#170600",
-          "#3c1b00",
-          "#63340c",
-          "#8b5020",
-          "#b07243",
-          "#ce9871",
-          "#ebbfa1",
-          "#ffe8d5"
+          "#0c0b08",
+          "#252420",
+          "#41403a",
+          "#5f5e56",
+          "#828078",
+          "#a6a59e",
+          "#cccbc5",
+          "#f0eeea"
+        ]
+      },
+      "chart-blue": {
+        "role": "tertiary",
+        "displayName": "Chart Blue",
+        "canonical": "#2a78d6",
+        "tonalRamp": [
+          "#000a20",
+          "#01234c",
+          "#013e7f",
+          "#125caf",
+          "#3980d9",
+          "#6ba7f4",
+          "#a8cdff",
+          "#e5f0fe"
+        ]
+      },
+      "chart-orange": {
+        "role": "tertiary",
+        "displayName": "Chart Orange",
+        "canonical": "#eb6834",
+        "tonalRamp": [
+          "#1a0400",
+          "#421200",
+          "#6e2401",
+          "#9f3601",
+          "#ce5624",
+          "#ed845d",
+          "#feb79e",
+          "#fee9e2"
+        ]
+      },
+      "chart-aqua": {
+        "role": "tertiary",
+        "displayName": "Chart Aqua",
+        "canonical": "#1baf7a",
+        "tonalRamp": [
+          "#000f07",
+          "#012c1c",
+          "#014c32",
+          "#006f4b",
+          "#059868",
+          "#5bba8f",
+          "#92deb8",
+          "#c3ffe0"
+        ]
+      },
+      "chart-yellow": {
+        "role": "tertiary",
+        "displayName": "Chart Yellow",
+        "canonical": "#eda100",
+        "tonalRamp": [
+          "#130900",
+          "#331f00",
+          "#573902",
+          "#7e5404",
+          "#ab7304",
+          "#d3983a",
+          "#f3c17a",
+          "#ffebd2"
+        ]
+      },
+      "chart-magenta": {
+        "role": "tertiary",
+        "displayName": "Chart Magenta",
+        "canonical": "#e87ba4",
+        "tonalRamp": [
+          "#1d000b",
+          "#440824",
+          "#6a2040",
+          "#94385e",
+          "#bd5b81",
+          "#dd86a5",
+          "#fcb2cb",
+          "#ffe7ee"
+        ]
+      },
+      "chart-green": {
+        "role": "tertiary",
+        "displayName": "Chart Green",
+        "canonical": "#008300",
+        "tonalRamp": [
+          "#001000",
+          "#012e01",
+          "#014f01",
+          "#017201",
+          "#349830",
+          "#6bbb65",
+          "#9dde97",
+          "#ccffc6"
+        ]
+      },
+      "chart-violet": {
+        "role": "tertiary",
+        "displayName": "Chart Violet",
+        "canonical": "#6250d6",
+        "tonalRamp": [
+          "#0a002e",
+          "#210f5e",
+          "#3a2a8c",
+          "#5645bd",
+          "#766ae9",
+          "#9996fe",
+          "#c3c4fe",
+          "#ecedff"
+        ]
+      },
+      "chart-red": {
+        "role": "tertiary",
+        "displayName": "Chart Red",
+        "canonical": "#e34948",
+        "tonalRamp": [
+          "#1f0001",
+          "#4b0106",
+          "#7c0010",
+          "#aa1e25",
+          "#d64846",
+          "#f57a73",
+          "#feb5ae",
+          "#fee9e7"
+        ]
+      },
+      "console-ground": {
+        "role": "neutral",
+        "displayName": "Console Ground",
+        "canonical": "#f9fafb",
+        "tonalRamp": [
+          "#0b0b0b",
+          "#242424",
+          "#3f4040",
+          "#5d5e5e",
+          "#7f8081",
+          "#a4a5a5",
+          "#cacacb",
+          "#eeeeef"
+        ]
+      },
+      "console-surface": {
+        "role": "neutral",
+        "displayName": "Console Surface",
+        "canonical": "#ffffff",
+        "tonalRamp": [
+          "#0b0b0b",
+          "#242424",
+          "#404040",
+          "#5d5d5d",
+          "#808080",
+          "#a4a4a4",
+          "#cacaca",
+          "#eeeeee"
+        ]
+      },
+      "console-line": {
+        "role": "neutral",
+        "displayName": "Console Line",
+        "canonical": "#e5e7eb",
+        "tonalRamp": [
+          "#0a0b0c",
+          "#232426",
+          "#3e4042",
+          "#5c5e61",
+          "#7e8084",
+          "#a3a4a7",
+          "#c9cacd",
+          "#edeef0"
+        ]
+      },
+      "console-ink": {
+        "role": "neutral",
+        "displayName": "Console Ink",
+        "canonical": "#111827",
+        "tonalRamp": [
+          "#080b12",
+          "#1f242e",
+          "#39404d",
+          "#555e6f",
+          "#778093",
+          "#9da5b5",
+          "#c4cbd9",
+          "#e9effa"
+        ]
+      },
+      "console-muted": {
+        "role": "neutral",
+        "displayName": "Console Muted",
+        "canonical": "#6b7280",
+        "tonalRamp": [
+          "#090b10",
+          "#20242c",
+          "#3b404a",
+          "#585e6a",
+          "#7a808e",
+          "#9fa5b1",
+          "#c5cbd5",
+          "#eaeff7"
+        ]
+      },
+      "console-accent": {
+        "role": "primary",
+        "displayName": "Console Indigo",
+        "canonical": "#4f46e5",
+        "tonalRamp": [
+          "#070031",
+          "#1b086a",
+          "#30259b",
+          "#4842d0",
+          "#6668fd",
+          "#8e9afe",
+          "#bdc7fe",
+          "#eaedff"
+        ]
+      },
+      "console-accent-hover": {
+        "role": "primary",
+        "displayName": "Console Accent Hover",
+        "canonical": "#4338ca",
+        "tonalRamp": [
+          "#070031",
+          "#1a0e65",
+          "#302a95",
+          "#4946c8",
+          "#676bf5",
+          "#8e9afe",
+          "#bdc6ff",
+          "#eaedff"
+        ]
+      },
+      "console-accent-soft": {
+        "role": "primary",
+        "displayName": "Console Accent Soft",
+        "canonical": "#eef2ff",
+        "tonalRamp": [
+          "#0a0b0f",
+          "#22242a",
+          "#3d3f47",
+          "#5a5d67",
+          "#7c808b",
+          "#a1a4ae",
+          "#c8cad2",
+          "#eceef5"
+        ]
+      },
+      "console-problem": {
+        "role": "tertiary",
+        "displayName": "Console Problem",
+        "canonical": "#b42318",
+        "tonalRamp": [
+          "#1f0000",
+          "#4b0000",
+          "#7a0c06",
+          "#a7271c",
+          "#d34d3e",
+          "#f27e6e",
+          "#feb6aa",
+          "#ffe9e5"
+        ]
+      },
+      "console-good": {
+        "role": "tertiary",
+        "displayName": "Console Good",
+        "canonical": "#067647",
+        "tonalRamp": [
+          "#001005",
+          "#002d17",
+          "#014d2c",
+          "#136f44",
+          "#3e9465",
+          "#71b68d",
+          "#a2dab7",
+          "#cefcdf"
+        ]
+      },
+      "console-good-soft": {
+        "role": "tertiary",
+        "displayName": "Console Good Soft",
+        "canonical": "#ecfdf3",
+        "tonalRamp": [
+          "#070d09",
+          "#1e2622",
+          "#38433d",
+          "#54615a",
+          "#76847c",
+          "#9ca8a1",
+          "#c3cec7",
+          "#e8f1ec"
+        ]
+      },
+      "console-warn": {
+        "role": "tertiary",
+        "displayName": "Console Warn",
+        "canonical": "#b54708",
+        "tonalRamp": [
+          "#1a0400",
+          "#401401",
+          "#6c2701",
+          "#9b3b02",
+          "#c65d2e",
+          "#e58963",
+          "#feb79b",
+          "#feeae1"
+        ]
+      },
+      "graphite-ground": {
+        "role": "neutral",
+        "displayName": "Graphite Ground",
+        "canonical": "#111315",
+        "tonalRamp": [
+          "#0a0b0c",
+          "#232426",
+          "#3e4042",
+          "#5c5e60",
+          "#7e8083",
+          "#a3a5a7",
+          "#c9cbcd",
+          "#edeff0"
+        ]
+      },
+      "graphite-surface": {
+        "role": "neutral",
+        "displayName": "Graphite Surface",
+        "canonical": "#1b1e21",
+        "tonalRamp": [
+          "#0a0b0d",
+          "#222426",
+          "#3d4043",
+          "#5b5e61",
+          "#7d8184",
+          "#a2a5a8",
+          "#c8cbcd",
+          "#eceff1"
+        ]
+      },
+      "graphite-field": {
+        "role": "neutral",
+        "displayName": "Graphite Field",
+        "canonical": "#15171a",
+        "tonalRamp": [
+          "#0a0b0d",
+          "#232426",
+          "#3e4043",
+          "#5b5e61",
+          "#7e8084",
+          "#a2a5a8",
+          "#c9cbcd",
+          "#edeef1"
+        ]
+      },
+      "graphite-line": {
+        "role": "neutral",
+        "displayName": "Graphite Line",
+        "canonical": "#2a2e33",
+        "tonalRamp": [
+          "#0a0b0d",
+          "#222427",
+          "#3d4044",
+          "#5a5e63",
+          "#7c8186",
+          "#a1a5aa",
+          "#c7cbcf",
+          "#eceff2"
+        ]
+      },
+      "graphite-ink": {
+        "role": "neutral",
+        "displayName": "Graphite Ink",
+        "canonical": "#e6e8ea",
+        "tonalRamp": [
+          "#0b0b0c",
+          "#232425",
+          "#3f4041",
+          "#5c5e5f",
+          "#7f8082",
+          "#a3a5a6",
+          "#c9cbcc",
+          "#edeef0"
+        ]
+      },
+      "graphite-muted": {
+        "role": "neutral",
+        "displayName": "Graphite Muted",
+        "canonical": "#9aa1a9",
+        "tonalRamp": [
+          "#090b0e",
+          "#212428",
+          "#3c4046",
+          "#585e65",
+          "#7b8188",
+          "#a0a5ac",
+          "#c6cbd0",
+          "#ebeff3"
+        ]
+      },
+      "graphite-accent": {
+        "role": "primary",
+        "displayName": "Graphite Blue",
+        "canonical": "#4f8cff",
+        "tonalRamp": [
+          "#000728",
+          "#001c5c",
+          "#0e388a",
+          "#2256ba",
+          "#437be5",
+          "#71a3ff",
+          "#aecbff",
+          "#e6effe"
+        ]
+      },
+      "graphite-accent-hover": {
+        "role": "primary",
+        "displayName": "Graphite Accent Hover",
+        "canonical": "#6b9dff",
+        "tonalRamp": [
+          "#00062b",
+          "#071f53",
+          "#1b3b7e",
+          "#3059ac",
+          "#507dd6",
+          "#7ba4f1",
+          "#b0cbff",
+          "#e7effe"
+        ]
+      },
+      "graphite-on-accent": {
+        "role": "primary",
+        "displayName": "Graphite On Accent",
+        "canonical": "#0b1220",
+        "tonalRamp": [
+          "#080b12",
+          "#1f242e",
+          "#39404d",
+          "#555e6e",
+          "#778192",
+          "#9da5b5",
+          "#c4cbd8",
+          "#e9effa"
+        ]
+      },
+      "graphite-accent-text": {
+        "role": "primary",
+        "displayName": "Graphite Accent Text",
+        "canonical": "#8fb4ff",
+        "tonalRamp": [
+          "#020824",
+          "#102248",
+          "#263d6f",
+          "#3e5b99",
+          "#5e7fc1",
+          "#87a4df",
+          "#b2cbfd",
+          "#e7effe"
+        ]
+      },
+      "graphite-problem": {
+        "role": "tertiary",
+        "displayName": "Graphite Problem",
+        "canonical": "#f97066",
+        "tonalRamp": [
+          "#1f0001",
+          "#4b0104",
+          "#771414",
+          "#a32d29",
+          "#ce524a",
+          "#ed8177",
+          "#feb5ad",
+          "#ffe9e6"
+        ]
+      },
+      "graphite-good": {
+        "role": "tertiary",
+        "displayName": "Graphite Good",
+        "canonical": "#47cd89",
+        "tonalRamp": [
+          "#000f06",
+          "#002d18",
+          "#004d2c",
+          "#007043",
+          "#04985d",
+          "#5abb86",
+          "#92dfb1",
+          "#c4ffda"
+        ]
+      },
+      "graphite-warn": {
+        "role": "tertiary",
+        "displayName": "Graphite Warn",
+        "canonical": "#fdb022",
+        "tonalRamp": [
+          "#130900",
+          "#332000",
+          "#573903",
+          "#7d5403",
+          "#ab7403",
+          "#d39838",
+          "#f3c179",
+          "#ffebd1"
         ]
       }
     },
+    "darkPairs": {
+      "chat-ground": "chat-ground-dark",
+      "chat-surface": "chat-surface-dark",
+      "chat-bubble": "chat-bubble-dark",
+      "chat-line": "chat-line-dark",
+      "chat-ink": "chat-ink-dark",
+      "chat-muted": "chat-muted-dark",
+      "chart-blue": "#3987e5",
+      "chart-orange": "#d95926",
+      "chart-aqua": "#199e70",
+      "chart-yellow": "#c98500",
+      "chart-magenta": "#d55181",
+      "chart-green": "#008300",
+      "chart-violet": "#9085e9",
+      "chart-red": "#e66767",
+      "console-ground": "graphite-ground",
+      "console-surface": "graphite-surface",
+      "console-line": "graphite-line",
+      "console-ink": "graphite-ink",
+      "console-muted": "graphite-muted",
+      "console-accent": "graphite-accent",
+      "console-accent-hover": "graphite-accent-hover",
+      "console-accent-soft": "rgb(79 140 255 / 0.14)",
+      "console-problem": "graphite-problem",
+      "console-good": "graphite-good",
+      "console-good-soft": "rgb(71 205 137 / 0.14)",
+      "console-warn": "graphite-warn"
+    },
+    "runtimeColors": [
+      {
+        "name": "brand",
+        "purpose": "The customer's colour (#rrggbb, per widget). Launcher and send only; on the dark composer (#30302e) it gives way to #f5f4ef when under 3:1 (forDark). Falls back to #1f1e1d."
+      },
+      {
+        "name": "on-brand",
+        "purpose": "White or black, whichever contrasts more with the brand (inkOn). Computed, never configured."
+      }
+    ],
     "typographyMeta": {
-      "title": {
-        "displayName": "Title",
-        "purpose": "The widget title in the chat header."
+      "chat-body": {
+        "displayName": "Chat body",
+        "purpose": "Answers, the visitor's words, the composer."
       },
-      "body": {
-        "displayName": "Body",
-        "purpose": "Answers, welcome text, visitor messages and the composer field."
+      "chat-welcome": {
+        "displayName": "Welcome",
+        "purpose": "An empty chat's first line; 26px on wide frames."
       },
-      "label": {
-        "displayName": "Label",
-        "purpose": "Suggested-question pills."
-      },
-      "label-small": {
-        "displayName": "Label small",
-        "purpose": "Secondary, quiet and jump-to-latest actions."
-      },
-      "meta": {
-        "displayName": "Meta",
-        "purpose": "AI notice, stopped line, reference line."
-      },
-      "caption": {
-        "displayName": "Caption",
-        "purpose": "Character count near the limit."
-      },
-      "credit": {
-        "displayName": "Credit",
-        "purpose": "The one 'Powered by Purple Fabric' line."
+      "chat-page-title": {
+        "displayName": "Page title",
+        "purpose": "The h2 of a page in the conversation's place: Projects, a project, Pinned."
       },
       "answer-heading": {
         "displayName": "Answer heading",
-        "purpose": "An answer's h2 (Markdown h1, shifted down one level)."
+        "purpose": "A rendered answer's h2 (Markdown h1). The chat's title is the only h1."
       },
-      "answer-subheading": {
-        "displayName": "Answer subheading",
-        "purpose": "h3: a step by weight alone, below the h2."
+      "chat-caption": {
+        "displayName": "Caption",
+        "purpose": "The AI notice, the credit, the character count."
       },
-      "answer-minor-heading": {
-        "displayName": "Answer minor heading",
-        "purpose": "h4 to h6, in Muted Umber."
-      },
-      "code-label": {
-        "displayName": "Code label",
-        "purpose": "The language label in a code panel's caption, Muted Umber, one line."
-      },
-      "table": {
-        "displayName": "Table",
-        "purpose": "Table cells, tabular figures."
-      },
-      "table-header": {
-        "displayName": "Table header",
-        "purpose": "Header cells on Soft Sand, kept on one line."
-      },
-      "list-heading": {
-        "displayName": "List heading",
-        "purpose": "'Your chats', the heading of the list of chats."
-      },
-      "list-title": {
-        "displayName": "List title",
-        "purpose": "A chat's title in its row, two lines at most, wrapping anywhere."
-      },
-      "code": {
-        "displayName": "Code",
-        "purpose": "Code panel body, platform monospace."
-      },
-      "code-inline": {
-        "displayName": "Inline code",
-        "purpose": "Code inside running answer text."
+      "greeting": {
+        "displayName": "Greeting",
+        "purpose": "The launcher's greeting on the host page, in the host's system face."
       },
       "console-body": {
         "displayName": "Console body",
-        "purpose": "The admin console's running text."
+        "purpose": "The console's text, with tabular figures."
       },
-      "console-page-title": {
-        "displayName": "Console page title",
-        "purpose": "The widget's name: the console page's one h1."
-      },
-      "console-station-title": {
-        "displayName": "Console station title",
-        "purpose": "The open station's h2 in its card."
-      },
-      "console-section-title": {
-        "displayName": "Console section title",
-        "purpose": "h3 inside a station."
-      },
-      "console-mark": {
-        "displayName": "Console mark",
-        "purpose": "'Conversation Plugin' in the top bar."
-      },
-      "console-action": {
-        "displayName": "Console action",
-        "purpose": "The console's primary action."
-      },
-      "console-field-label": {
-        "displayName": "Console field label",
-        "purpose": "Field labels and legends."
-      },
-      "console-hint": {
-        "displayName": "Console hint",
-        "purpose": "Hints under labels, second lines of choice tiles."
-      },
-      "console-small": {
-        "displayName": "Console small",
-        "purpose": "Station minutes, widget state lines, the preview caption."
-      },
-      "console-sign": {
-        "displayName": "Console sign",
-        "purpose": "The track's sign: the time left to go-live."
-      },
-      "console-snippet": {
-        "displayName": "Console snippet",
-        "purpose": "Code to copy on the Install station."
+      "console-group-label": {
+        "displayName": "Group label",
+        "purpose": "The widget column's 'Widgets' heading only; uppercase."
       }
     },
     "shadows": [
       {
-        "name": "launcher-rest",
-        "value": "0 10px 24px -10px rgba(43,36,31,.55), 0 2px 6px -2px rgba(43,36,31,.3)",
-        "purpose": "The closed launcher at rest."
+        "name": "composer",
+        "value": "0 8px 24px -16px rgb(0 0 0 / 0.4)",
+        "purpose": "The chat's composer card."
+      },
+      {
+        "name": "composer-focus",
+        "value": "0 8px 24px -16px rgb(0 0 0 / 0.4), 0 0 0 3px color-mix(in srgb, var(--ink) 8%, transparent)",
+        "purpose": "The composer while it holds focus."
+      },
+      {
+        "name": "jump",
+        "value": "0 6px 16px -8px rgb(0 0 0 / 0.35)",
+        "purpose": "The 'latest message' circle."
+      },
+      {
+        "name": "hairline",
+        "value": "0 0 0 1px var(--line)",
+        "purpose": "Every framed surface: code, tables, charts, the list of chats, console cards and fields."
+      },
+      {
+        "name": "launcher",
+        "value": "0 10px 24px -10px rgba(0,0,0,.45), 0 2px 6px -2px rgba(0,0,0,.25)",
+        "purpose": "The launcher at rest."
       },
       {
         "name": "launcher-hover",
-        "value": "0 14px 30px -10px rgba(43,36,31,.6), 0 3px 8px -2px rgba(43,36,31,.32)",
-        "purpose": "Launcher on pointer hover, paired with a 2px lift."
+        "value": "0 14px 30px -10px rgba(0,0,0,.5), 0 3px 8px -2px rgba(0,0,0,.28)",
+        "purpose": "Pointer hover, with a 2px lift."
+      },
+      {
+        "name": "greeting",
+        "value": "0 12px 32px -12px rgba(0,0,0,.35), 0 2px 6px -2px rgba(0,0,0,.12)",
+        "purpose": "The greeting bubble."
       },
       {
         "name": "panel",
-        "value": "0 24px 60px -24px rgba(43,36,31,.45), 0 8px 20px -12px rgba(43,36,31,.25)",
-        "purpose": "The floating panel. None when inline."
+        "value": "0 24px 60px -24px rgba(0,0,0,.4), 0 8px 20px -12px rgba(0,0,0,.2)",
+        "purpose": "The floating panel (the console preview at .35/.2)."
       },
       {
-        "name": "composer",
-        "value": "0 10px 24px -14px rgba(43,36,31,.4), 0 0 0 1px #e7dacb",
-        "purpose": "The composer at rest; the sand edge becomes 0 0 0 2px #2b241f while focused."
+        "name": "console-whisper",
+        "value": "0 1px 2px rgb(16 24 40 / 0.05)",
+        "purpose": "Light theme controls and cards; none in Graphite."
       },
       {
-        "name": "jump-pill",
-        "value": "0 10px 24px -12px rgba(43,36,31,.45), 0 0 0 1px #e7dacb",
-        "purpose": "The 'Go to the latest message' pill over the conversation."
-      },
-      {
-        "name": "sand-edge",
-        "value": "0 0 0 1px #e7dacb",
-        "purpose": "Cards, the list of chats and the logo tile: keeps white distinct from the ground."
-      },
-      {
-        "name": "focus-ring",
-        "value": "outline: 3px solid #fff; outline-offset: 2px; box-shadow: 0 0 0 7px #2b241f",
-        "purpose": "Two-tone focus ring that holds on any host page and any brand colour."
-      },
-      {
-        "name": "focus-chat",
-        "value": "outline: 3px solid #2b241f; outline-offset: 2px",
-        "purpose": "Focus on anything inside the chat, on the known warm ground."
-      },
-      {
-        "name": "scroll-edge-cue",
-        "value": "radial-gradient(farthest-side at 0 50%, rgba(43,36,31,.22), transparent) left / 12px 100% no-repeat scroll, mirrored right; covered by linear-gradient(to right, <frame fill> 40%, transparent) left / 28px 100% no-repeat local, mirrored right",
-        "purpose": "Code panels and table scroll areas: a soft ink shade at an inline edge only while more content lies that way."
-      },
-      {
-        "name": "focus-inset",
-        "value": "outline: 3px solid #2b241f; outline-offset: -3px",
-        "purpose": "Focus on a code body, a table scroll area or a row in the list of chats, drawn inside the clipped frame."
-      },
-      {
-        "name": "console-focus",
-        "value": "outline: 3px solid #2b241f; outline-offset: 2px",
-        "purpose": "Focus on everything in the admin console."
-      },
-      {
-        "name": "console-field-focus",
-        "value": "outline: 2px solid transparent; box-shadow: 0 0 0 2px #2b241f",
-        "purpose": "A console field holding focus; the transparent outline shows in forced colours."
+        "name": "console-focus-field",
+        "value": "0 0 0 1px var(--accent), 0 0 0 4px var(--accent-ring)",
+        "purpose": "A console field holding focus."
       }
     ],
     "motion": [
       {
-        "name": "ease-out-soft",
+        "name": "ease-out-expo",
         "value": "cubic-bezier(.16,1,.3,1)",
-        "purpose": "Panel rise-and-fade (200ms) and shadow changes."
+        "purpose": "Panel rise and fade (200ms, 12px), greeting rise (400ms, 8px), launcher return (200ms)."
       },
       {
-        "name": "spring-release",
-        "value": "transform .4s cubic-bezier(.34,1.56,.64,1)",
-        "purpose": "Launcher settling back after a press, with a slight overshoot. Release only, never entry."
+        "name": "hover",
+        "value": "0.15s ease-out",
+        "purpose": "Background, colour and border changes on hover."
       },
       {
-        "name": "press-in",
-        "value": "transform .08s ease-out; scale(.92)",
+        "name": "press-launcher",
+        "value": "scale(.92) over 80ms ease-out",
         "purpose": "Launcher press."
       },
       {
-        "name": "panel-rise",
-        "value": "translateY(12px) to none, opacity 0 to 1, 200ms",
-        "purpose": "Panel open and close. Reduced motion keeps only the opacity fade."
+        "name": "press-send",
+        "value": "scale(.94) over 120ms ease-out",
+        "purpose": "Send press."
       },
       {
-        "name": "loading-spin",
-        "value": "rotate(1turn) .9s linear infinite",
-        "purpose": "Loading mark, only while the panel is open and the chat has not loaded."
+        "name": "breathe",
+        "value": "opacity .25 to 1, 1.2s ease-in-out infinite, staggered .15s",
+        "purpose": "Working dots and sketch bars."
       },
       {
-        "name": "press-in-pill",
-        "value": "transform .08s ease-out; scale(.96)",
-        "purpose": "Suggested-question pill press, released on spring-release. Send uses press-in (scale .92)."
+        "name": "spin",
+        "value": "1turn, 0.9s linear infinite",
+        "purpose": "The 28px loading ring."
       },
       {
-        "name": "dots-breathe",
-        "value": "opacity .25 to 1 at 40%, 1.2s ease-in-out infinite, staggered .15s",
-        "purpose": "Three working dots on an empty answer card. Reduced motion holds them at .6 opacity."
+        "name": "found",
+        "value": "Bubble Grey wash (8px spread) to transparent, 2.4s ease-out, once",
+        "purpose": "An answer opened from the Pinned page. It does not move, so it plays under reduced motion."
       },
       {
-        "name": "conversation-fade",
-        "value": "mask-image: linear-gradient(transparent, var(--ink) 14px, var(--ink) calc(100% - 14px), transparent)",
-        "purpose": "The conversation fades out over its top and bottom 14px, under the header and into the composer."
-      },
-      {
-        "name": "sketch-breathe",
-        "value": "opacity .25 to 1 at 40%, 1.2s ease-in-out infinite, second bar delayed .15s",
-        "purpose": "Sand bars of the list of chats while it loads, on the working dots' keyframes. Reduced motion holds them at .6 opacity. Opening and closing the list is an immediate swap, never animated."
+        "name": "upload",
+        "value": "inline-size 0.15s linear",
+        "purpose": "A file card's 2px ink progress line."
       }
     ],
     "breakpoints": [
       {
-        "name": "full-screen-width",
-        "value": "max-width: 599.98px"
-      },
-      {
-        "name": "full-screen-height",
-        "value": "max-height: 519.98px"
-      },
-      {
         "name": "chat-narrow",
-        "value": "max-width: 340px"
+        "value": "340px",
+        "purpose": "Below: 10px gutter, wider bubbles, header New chat hidden."
+      },
+      {
+        "name": "loader-full-screen",
+        "value": "600px wide / 520px tall",
+        "purpose": "Below either: the panel fills the viewport."
       },
       {
         "name": "chat-wide",
-        "value": "min-width: 720px"
+        "value": "720px",
+        "purpose": "From: centred 760px column, chats column beside; inline panel drops border and radius."
       },
       {
-        "name": "console-preview-stacks",
-        "value": "max-width: 1199.98px"
+        "name": "console-phone",
+        "value": "640px",
+        "purpose": "Below: three-row bar, dot-only track."
       },
       {
-        "name": "console-column-above",
-        "value": "max-width: 899.98px"
+        "name": "console-narrow",
+        "value": "900px",
+        "purpose": "Below: widget column above the work."
       },
       {
-        "name": "console-track-vertical",
-        "value": "max-width: 639.98px"
+        "name": "console-preview",
+        "value": "1200px",
+        "purpose": "Below: preview under the form, Look only."
       }
     ]
   },
   "components": [
     {
+      "name": "Send Button",
+      "kind": "button",
+      "refersTo": "send-button",
+      "description": "The composer's send, in the customer's colour.",
+      "html": "<button class=\"ds-send\" aria-label=\"Send\"><svg viewBox=\"0 0 24 24\" width=\"18\" height=\"18\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M12 19V5M5 12l7-7 7 7\"/></svg></button>",
+      "css": ".ds-send{--brand:#5b2a86;display:grid;place-items:center;width:36px;height:36px;border:0;border-radius:10px;background:var(--brand);color:#fff;cursor:pointer;transition:transform .12s ease-out}.ds-send:active{transform:scale(.94)}.ds-send:focus-visible{outline:3px solid #1f1e1d;outline-offset:2px}.ds-send:disabled{opacity:.3}"
+    },
+    {
+      "name": "Composer",
+      "kind": "input",
+      "refersTo": "composer",
+      "description": "The chat's white composer card with the send inside.",
+      "html": "<div class=\"ds-compose\"><textarea rows=\"1\" placeholder=\"Ask anything\"></textarea><button class=\"ds-compose-send\" aria-label=\"Send\"><svg viewBox=\"0 0 24 24\" width=\"18\" height=\"18\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M12 19V5M5 12l7-7 7 7\"/></svg></button></div>",
+      "css": ".ds-compose{display:flex;align-items:flex-end;gap:8px;padding:8px 8px 8px 16px;border:1px solid #e6e4e0;border-radius:20px;background:#fff;box-shadow:0 8px 24px -16px rgb(0 0 0/.4);font:400 16px/1.5 'Inter Variable',Inter,system-ui,sans-serif;transition:border-color .15s ease-out}.ds-compose:focus-within{border-color:color-mix(in srgb,#1f1e1d 40%,#e6e4e0);box-shadow:0 8px 24px -16px rgb(0 0 0/.4),0 0 0 3px color-mix(in srgb,#1f1e1d 8%,transparent)}.ds-compose textarea{flex:1;border:0;background:transparent;resize:none;padding:6px 0;font:inherit;color:#1f1e1d;outline:none}.ds-compose textarea::placeholder{color:#6b6a68}.ds-compose-send{display:grid;place-items:center;width:36px;height:36px;border:0;border-radius:10px;background:#5b2a86;color:#fff}"
+    },
+    {
+      "name": "Suggestion Chip",
+      "kind": "chip",
+      "refersTo": "suggestion-chip",
+      "description": "An outlined suggested question; the brand only at its edge under the pointer.",
+      "html": "<button class=\"ds-chip\">When does the library open?</button>",
+      "css": ".ds-chip{--brand:#5b2a86;min-height:40px;padding:8px 14px;border:1px solid #e6e4e0;border-radius:12px;background:#fff;color:#1f1e1d;font:400 14px/1.35 'Inter Variable',Inter,system-ui,sans-serif;cursor:pointer;transition:border-color .15s ease-out,background-color .15s ease-out}.ds-chip:hover{border-color:color-mix(in srgb,var(--brand) 55%,#e6e4e0);background:color-mix(in srgb,var(--brand) 5%,#fff)}.ds-chip:focus-visible{outline:3px solid #1f1e1d;outline-offset:2px}"
+    },
+    {
+      "name": "Answer with Mark",
+      "kind": "custom",
+      "refersTo": "chat-mark",
+      "description": "An answer as plain text beside the assistant's 28px mark; the visitor's bubble above.",
+      "html": "<div class=\"ds-turn\"><p class=\"ds-mine\">How do I book a guest room?</p><div class=\"ds-answer\"><span class=\"ds-mark\">AC</span><p>Book through the porters' lodge, up to two weeks ahead.</p></div></div>",
+      "css": ".ds-turn{display:flex;flex-direction:column;gap:24px;font:400 16px/1.6 'Inter Variable',Inter,system-ui,sans-serif;color:#1f1e1d;background:#fcfcfb;padding:16px}.ds-mine{align-self:flex-end;max-width:85%;margin:0;padding:10px 16px;border-radius:20px;background:#f0efeb}.ds-answer{display:grid;grid-template-columns:auto minmax(0,1fr);column-gap:12px}.ds-answer p{margin:0}.ds-mark{display:grid;place-items:center;width:28px;height:28px;border-radius:50%;background:#f0efeb;font-size:10.6px;font-weight:650}"
+    },
+    {
+      "name": "Quiet Action",
+      "kind": "button",
+      "refersTo": "button-quiet",
+      "description": "Copy, show code, show all rows: quiet until wanted.",
+      "html": "<button class=\"ds-quiet\"><svg viewBox=\"0 0 24 24\" width=\"16\" height=\"16\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><rect x=\"9\" y=\"9\" width=\"11\" height=\"11\" rx=\"2\"/><path d=\"M5 15V6a2 2 0 0 1 2-2h9\"/></svg>Copy answer</button>",
+      "css": ".ds-quiet{display:inline-flex;align-items:center;gap:6px;min-height:32px;padding:6px 8px;border:0;border-radius:8px;background:transparent;color:#6b6a68;font:500 13px 'Inter Variable',Inter,system-ui,sans-serif;cursor:pointer}.ds-quiet:hover{background:color-mix(in srgb,#1f1e1d 6%,transparent);color:#1f1e1d}.ds-quiet:focus-visible{outline:3px solid #1f1e1d;outline-offset:2px}"
+    },
+    {
+      "name": "Code Panel",
+      "kind": "card",
+      "refersTo": "code-panel",
+      "description": "Code in its own hairline frame, captioned and scrolling sideways.",
+      "html": "<figure class=\"ds-code\"><figcaption><span>python</span><button>Copy code</button></figcaption><pre tabindex=\"0\">print(\"hello\")</pre></figure>",
+      "css": ".ds-code{margin:0;overflow:hidden;border-radius:12px;background:#fcfcfb;box-shadow:0 0 0 1px #e6e4e0}.ds-code figcaption{display:flex;justify-content:space-between;align-items:center;padding:4px 6px 4px 14px;border-bottom:1px solid #e6e4e0;font:650 13px 'Inter Variable',Inter,system-ui,sans-serif;color:#6b6a68}.ds-code button{border:0;background:none;color:#6b6a68;font:500 13px 'Inter Variable',Inter,system-ui,sans-serif;padding:6px 8px;border-radius:8px}.ds-code button:hover{background:color-mix(in srgb,#1f1e1d 6%,transparent);color:#1f1e1d}.ds-code pre{margin:0;padding:12px 14px;overflow-x:auto;font:13.5px/1.6 ui-monospace,'Cascadia Mono',Menlo,Consolas,monospace;color:#1f1e1d}.ds-code pre:focus-visible{outline:3px solid #1f1e1d;outline-offset:-3px}"
+    },
+    {
       "name": "Launcher",
       "kind": "button",
       "refersTo": "launcher",
-      "description": "The 56px round launcher in the customer's colour, glyph ink chosen by contrast. Sample brand shown.",
-      "html": "<button class=\"ds-launcher\" type=\"button\" aria-label=\"Chat\" style=\"--brand:#5B2A86;--ink:#ffffff\"><svg viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M20 11.5a7.5 7.5 0 0 1-11.1 6.6L4 19.5l1.4-4.6A7.5 7.5 0 1 1 20 11.5z\"/></svg></button>",
-      "css": ".ds-launcher{all:unset;box-sizing:border-box;width:56px;height:56px;border-radius:50%;display:grid;place-items:center;cursor:pointer;background:var(--brand,#2b241f);color:var(--ink,#fff);box-shadow:0 10px 24px -10px rgba(43,36,31,.55),0 2px 6px -2px rgba(43,36,31,.3);transition:transform .4s cubic-bezier(.34,1.56,.64,1),box-shadow .2s cubic-bezier(.16,1,.3,1)}.ds-launcher svg{width:26px;height:26px}@media (hover:hover){.ds-launcher:hover{transform:translateY(-2px);box-shadow:0 14px 30px -10px rgba(43,36,31,.6),0 3px 8px -2px rgba(43,36,31,.32)}}.ds-launcher:active{transform:scale(.92);transition:transform .08s ease-out}.ds-launcher:focus-visible{outline:3px solid #fff;outline-offset:2px;box-shadow:0 0 0 7px #2b241f}@media (prefers-reduced-motion:reduce){.ds-launcher,.ds-launcher:hover,.ds-launcher:active{transform:none;transition:none}}"
+      "description": "The round launcher on the customer's page, with the two-tone focus ring.",
+      "html": "<button class=\"ds-launcher\" aria-label=\"Chat\"><svg viewBox=\"0 0 24 24\" width=\"26\" height=\"26\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M20 11.5a7.5 7.5 0 0 1-11.1 6.6L4 19.5l1.4-4.6A7.5 7.5 0 1 1 20 11.5z\"/></svg></button>",
+      "css": ".ds-launcher{display:grid;place-items:center;width:56px;height:56px;border:0;border-radius:50%;background:#5b2a86;color:#fff;cursor:pointer;box-shadow:0 10px 24px -10px rgba(0,0,0,.45),0 2px 6px -2px rgba(0,0,0,.25);transition:transform .2s cubic-bezier(.16,1,.3,1),box-shadow .2s cubic-bezier(.16,1,.3,1)}.ds-launcher:hover{transform:translateY(-2px);box-shadow:0 14px 30px -10px rgba(0,0,0,.5),0 3px 8px -2px rgba(0,0,0,.28)}.ds-launcher:active{transform:scale(.92);transition:transform .08s ease-out}.ds-launcher:focus-visible{outline:3px solid #fff;outline-offset:2px;box-shadow:0 0 0 7px #1f1e1d}"
     },
     {
-      "name": "Launcher (unbranded fallback)",
+      "name": "Console Primary",
       "kind": "button",
-      "refersTo": "launcher-unbranded",
-      "description": "The launcher when a configuration has no valid brand colour: Warm Ink with a white glyph.",
-      "html": "<button class=\"ds-launcher-ink\" type=\"button\" aria-label=\"Chat\"><svg viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M6 6l12 12M18 6 6 18\"/></svg></button>",
-      "css": ".ds-launcher-ink{all:unset;box-sizing:border-box;width:56px;height:56px;border-radius:50%;display:grid;place-items:center;cursor:pointer;background:#2b241f;color:#fff;box-shadow:0 10px 24px -10px rgba(43,36,31,.55),0 2px 6px -2px rgba(43,36,31,.3);transition:transform .4s cubic-bezier(.34,1.56,.64,1)}.ds-launcher-ink svg{width:26px;height:26px}.ds-launcher-ink:active{transform:scale(.92);transition:transform .08s ease-out}.ds-launcher-ink:focus-visible{outline:3px solid #fff;outline-offset:2px;box-shadow:0 0 0 7px #2b241f}"
+      "refersTo": "console-primary",
+      "description": "The console's one accent action, ending a form.",
+      "html": "<button class=\"ds-primary\">Continue to Sites</button>",
+      "css": ".ds-primary{display:inline-flex;align-items:center;min-height:38px;padding:8px 16px;border:0;border-radius:8px;background:#4f46e5;color:#fff;font:500 14px 'Inter Variable',Inter,system-ui,sans-serif;box-shadow:0 1px 2px rgb(16 24 40/.05);cursor:pointer;transition:background-color .15s ease-out}.ds-primary:hover{background:#4338ca}.ds-primary:focus-visible{outline:2px solid #4f46e5;outline-offset:2px}.ds-primary:disabled{opacity:.45}"
     },
     {
-      "name": "Panel with loading mark",
-      "kind": "card",
-      "refersTo": "panel",
-      "description": "The warm 24px panel frame that holds the chat, shown before the chat page loads.",
-      "html": "<div class=\"ds-panel\" role=\"presentation\"></div>",
-      "css": ".ds-panel{position:relative;box-sizing:border-box;width:min(400px,100%);height:360px;border-radius:24px;overflow:hidden;background:#fbf3ea;border:1px solid #e7dacb;box-shadow:0 24px 60px -24px rgba(43,36,31,.45),0 8px 20px -12px rgba(43,36,31,.25);animation:ds-rise .2s cubic-bezier(.16,1,.3,1)}.ds-panel::before{content:\"\";position:absolute;inset:0;margin:auto;width:28px;height:28px;box-sizing:border-box;border-radius:50%;border:3px solid #e7dacb;border-top-color:#6f625a;animation:ds-spin .9s linear infinite}@keyframes ds-spin{to{transform:rotate(1turn)}}@keyframes ds-rise{from{opacity:0;transform:translateY(12px)}}@media (prefers-reduced-motion:reduce){.ds-panel{animation-name:ds-fade}.ds-panel::before{animation:none}@keyframes ds-fade{from{opacity:0}}}"
-    },
-    {
-      "name": "Chat header",
-      "kind": "nav",
-      "refersTo": "logo-tile",
-      "description": "Logo tile (initials fallback), title and a group of round icon buttons 2px apart (New chat, Your chats, Close); no colour bar.",
-      "html": "<header class=\"ds-head\"><span class=\"ds-logo\" aria-hidden=\"true\">AC</span><h1 class=\"ds-title\">Ask the College</h1><div class=\"ds-actions\"><button class=\"ds-icon\" type=\"button\" aria-label=\"New chat\"><svg viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M12 5v14M5 12h14\"/></svg></button><button class=\"ds-icon\" type=\"button\" aria-label=\"Your chats\" aria-expanded=\"false\"><svg viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M9 6h11M9 12h11M9 18h11M4.5 6h.01M4.5 12h.01M4.5 18h.01\"/></svg></button><button class=\"ds-icon\" type=\"button\" aria-label=\"Close chat\"><svg viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M6 6l12 12M18 6 6 18\"/></svg></button></div></header>",
-      "css": ".ds-head{font-family:'Nunito Variable',Nunito,system-ui,sans-serif;display:flex;align-items:center;gap:12px;padding:20px 14px 10px 20px;background:#fbf3ea;color:#2b241f}.ds-logo{display:grid;place-items:center;flex:none;width:40px;height:40px;border-radius:12px;background:#fff;box-shadow:0 0 0 1px #e7dacb;font-weight:800;font-size:15px;letter-spacing:.02em}.ds-title{flex:1;margin:0;font-size:20px;font-weight:600;line-height:1.25}.ds-icon{display:grid;place-items:center;width:44px;height:44px;border:0;border-radius:50%;background:transparent;color:inherit;cursor:pointer;transition:background-color .15s ease-out}.ds-icon svg{width:22px;height:22px}.ds-icon:hover{background:rgba(43,36,31,.07)}.ds-icon:focus-visible{outline:3px solid #2b241f;outline-offset:2px}.ds-actions{display:flex;flex:none;gap:2px}"
-    },
-    {
-      "name": "Conversation",
-      "kind": "card",
-      "refersTo": "answer-card",
-      "description": "A visitor bubble on Soft Sand, an answer on a white card with its quiet copy action, and a card in the working state.",
-      "html": "<div class=\"ds-log\"><p class=\"ds-mine\">When does the library open?</p><article class=\"ds-card\"><p class=\"ds-text\">The library is open from 10:00 to 18:00 on Sundays.</p><button class=\"ds-quiet\" type=\"button\"><svg viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M8 8h11v11H8zM5 16V5h11\"/></svg>Copy answer</button></article><article class=\"ds-card\" aria-busy=\"true\"><span class=\"ds-dots\" role=\"img\" aria-label=\"Finding an answer\"><span></span><span></span><span></span></span></article></div>",
-      "css": ".ds-log{font-family:'Nunito Variable',Nunito,system-ui,sans-serif;display:flex;flex-direction:column;gap:12px;padding:16px;background:#fbf3ea;color:#2b241f;font-size:16px;line-height:1.55}.ds-mine{align-self:flex-end;max-width:85%;margin:0;padding:10px 14px;border-radius:18px;background:#e7dacb}.ds-card{display:flex;flex-direction:column;align-items:flex-start;gap:10px;min-height:52px;margin:0;padding:14px 16px;border-radius:18px;background:#fff;box-shadow:0 0 0 1px #e7dacb;text-wrap:pretty}.ds-text{margin:0}.ds-quiet{display:inline-flex;align-items:center;gap:6px;min-height:36px;margin-inline-start:-8px;padding:6px 10px;border:0;border-radius:999px;background:transparent;color:#6f625a;font:inherit;font-size:14px;font-weight:650;cursor:pointer}.ds-quiet svg{width:18px;height:18px}.ds-quiet:hover{background:rgba(43,36,31,.06);color:#2b241f}.ds-quiet:focus-visible{outline:3px solid #2b241f;outline-offset:2px}.ds-dots{display:inline-flex;gap:6px;padding:8px 0}.ds-dots span{width:7px;height:7px;border-radius:50%;background:#6f625a;animation:ds-breathe 1.2s ease-in-out infinite}.ds-dots span:nth-child(2){animation-delay:.15s}.ds-dots span:nth-child(3){animation-delay:.3s}@keyframes ds-breathe{0%,100%{opacity:.25}40%{opacity:1}}@media (prefers-reduced-motion:reduce){.ds-dots span{animation:none;opacity:.6}}"
-    },
-    {
-      "name": "Suggested-question pills",
-      "kind": "chip",
-      "refersTo": "suggestion-pill",
-      "description": "Brand-filled, fully round pills, text in --on-brand by contrast. Sample brand shown.",
-      "html": "<ul class=\"ds-prompts\" style=\"--brand:#5B2A86;--on-brand:#ffffff\"><li><button type=\"button\">When does the library open?</button></li><li><button type=\"button\">How do I book a room?</button></li></ul>",
-      "css": ".ds-prompts{font-family:'Nunito Variable',Nunito,system-ui,sans-serif;display:flex;flex-wrap:wrap;gap:8px;margin:0;padding:0;list-style:none}.ds-prompts button{min-height:44px;padding:10px 16px;border:0;border-radius:999px;background:var(--brand,#2b241f);color:var(--on-brand,#fff);font:inherit;font-size:15px;font-weight:650;line-height:1.3;text-align:start;cursor:pointer;transition:transform .4s cubic-bezier(.34,1.56,.64,1)}.ds-prompts button:active{transform:scale(.96);transition:transform .08s ease-out}.ds-prompts button:focus-visible{outline:3px solid #2b241f;outline-offset:2px}@media (prefers-reduced-motion:reduce){.ds-prompts button{transition:none;transform:none!important}}"
-    },
-    {
-      "name": "Composer with send",
-      "kind": "input",
-      "refersTo": "composer",
-      "description": "White 24px field with a soft ink shadow and sand edge, a 2px ink ring on focus, and the round brand send button inside. Sample brand shown.",
-      "html": "<form class=\"ds-compose\" style=\"--brand:#5B2A86;--on-brand:#ffffff\" onsubmit=\"return false\"><textarea rows=\"1\" aria-label=\"Your question\" placeholder=\"Type your question\"></textarea><button class=\"ds-send\" type=\"submit\" aria-label=\"Send\"><svg viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M12 19V5M5 12l7-7 7 7\"/></svg></button></form>",
-      "css": ".ds-compose{font-family:'Nunito Variable',Nunito,system-ui,sans-serif;display:flex;align-items:flex-end;gap:8px;padding:6px;padding-inline-start:18px;border-radius:24px;background:#fff;color:#2b241f;box-shadow:0 10px 24px -14px rgba(43,36,31,.4),0 0 0 1px #e7dacb}.ds-compose:focus-within{box-shadow:0 10px 24px -14px rgba(43,36,31,.4),0 0 0 2px #2b241f}.ds-compose textarea{flex:1;min-width:0;padding:10px 0;border:0;background:transparent;resize:none;font:inherit;font-size:16px;line-height:1.5;color:inherit;caret-color:#2b241f}.ds-compose textarea:focus-visible{outline:none}.ds-compose textarea::placeholder{color:#6f625a;opacity:1}.ds-send{display:grid;place-items:center;flex:none;width:44px;height:44px;border:0;border-radius:50%;background:var(--brand,#2b241f);color:var(--on-brand,#fff);cursor:pointer;transition:transform .4s cubic-bezier(.34,1.56,.64,1)}.ds-send svg{width:22px;height:22px}.ds-send:active{transform:scale(.92);transition:transform .08s ease-out}.ds-send:focus-visible{outline:3px solid #2b241f;outline-offset:2px}@media (prefers-reduced-motion:reduce){.ds-send{transition:none;transform:none!important}}"
-    },
-    {
-      "name": "Secondary action",
+      "name": "Console Secondary",
       "kind": "button",
-      "refersTo": "button-secondary",
-      "description": "'Try again' / 'Start a new chat': ink outline on white, sand fill on hover.",
-      "html": "<button class=\"ds-secondary\" type=\"button\">Try again</button>",
-      "css": ".ds-secondary{font-family:'Nunito Variable',Nunito,system-ui,sans-serif;display:inline-flex;align-items:center;gap:6px;min-height:36px;padding:8px 16px;border:1.5px solid #2b241f;border-radius:999px;background:#fff;color:#2b241f;font-size:14px;font-weight:650;cursor:pointer;transition:background-color .15s ease-out}.ds-secondary:hover{background:#e7dacb}.ds-secondary:focus-visible{outline:3px solid #2b241f;outline-offset:2px}"
+      "refersTo": "console-secondary",
+      "description": "Outlined secondary; destructive actions use it, set apart.",
+      "html": "<button class=\"ds-secondary\">Delete the widget</button>",
+      "css": ".ds-secondary{display:inline-flex;align-items:center;min-height:36px;padding:7px 14px;border:0;border-radius:8px;background:#fff;color:#111827;font:500 14px 'Inter Variable',Inter,system-ui,sans-serif;box-shadow:inset 0 0 0 1px #e5e7eb,0 1px 2px rgb(16 24 40/.05);cursor:pointer;transition:background-color .15s ease-out}.ds-secondary:hover{background:#f9fafb}.ds-secondary:focus-visible{outline:2px solid #4f46e5;outline-offset:2px}"
     },
     {
-      "name": "Your chats",
-      "kind": "nav",
-      "refersTo": "chat-list",
-      "description": "Earlier chats: heading with the secondary New chat, rows on one white sand-edged 18px card with sand hairlines; the open chat on Soft Sand with its date in ink; a sketch while loading.",
-      "html": "<nav class=\"ds-side\" aria-labelledby=\"ds-chats\"><div class=\"ds-side-head\"><h2 id=\"ds-chats\">Your chats</h2><button class=\"ds-secondary\" type=\"button\"><svg viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M12 5v14M5 12h14\"/></svg>New chat</button></div><ul class=\"ds-chats\"><li><button type=\"button\" aria-current=\"true\"><span class=\"ds-topic\">When does the library open on Sundays?</span><time>9:05</time></button></li><li><button type=\"button\"><span class=\"ds-topic\">How do I book a study room for a group of six?</span><time>Yesterday</time></button></li><li><button type=\"button\"><span class=\"ds-topic\">Council tax discount for students</span><time>2 Nov</time></button></li></ul><ul class=\"ds-chats ds-sketch\" aria-hidden=\"true\"><li><span></span><span></span></li><li><span></span><span></span></li><li><span></span><span></span></li></ul><button class=\"ds-quiet\" type=\"button\">Show older chats</button></nav>",
-      "css": ".ds-side{font-family:'Nunito Variable',Nunito,system-ui,sans-serif;display:flex;flex-direction:column;gap:12px;padding:16px;background:#fbf3ea;color:#2b241f;font-size:16px;max-width:320px}.ds-side-head{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:8px 12px;padding-inline-start:4px}.ds-side h2{margin:0;font-size:16px;font-weight:700;line-height:1.3}.ds-secondary{display:inline-flex;align-items:center;gap:6px;min-height:36px;padding:8px 16px;border:1.5px solid #2b241f;border-radius:999px;background:#fff;color:#2b241f;font:inherit;font-size:14px;font-weight:650;cursor:pointer;transition:background-color .15s ease-out}.ds-secondary svg{width:18px;height:18px;margin-inline-start:-4px}.ds-secondary:hover{background:#e7dacb}.ds-secondary:focus-visible{outline:3px solid #2b241f;outline-offset:2px}.ds-chats{margin:0;padding:0;list-style:none;overflow:hidden;border-radius:18px;background:#fff;box-shadow:0 0 0 1px #e7dacb}.ds-chats li+li{border-block-start:1px solid #e7dacb}.ds-chats button{display:flex;flex-direction:column;gap:2px;width:100%;min-height:60px;padding:10px 16px;border:0;background:transparent;color:inherit;font:inherit;text-align:start;cursor:pointer;transition:background-color .15s ease-out}.ds-chats button:hover{background:rgba(43,36,31,.05)}.ds-chats button[aria-current=true]{background:#e7dacb}.ds-chats button:focus-visible{outline:3px solid #2b241f;outline-offset:-3px}.ds-topic{display:-webkit-box;overflow:hidden;-webkit-box-orient:vertical;-webkit-line-clamp:2;line-clamp:2;font-weight:650;line-height:1.35;overflow-wrap:anywhere}.ds-chats time{font-size:14px;color:#6f625a}.ds-chats [aria-current=true] time{color:#2b241f}.ds-sketch li{display:grid;gap:10px;padding:16px}.ds-sketch span{height:12px;width:72%;border-radius:6px;background:#e7dacb;animation:ds-breathe 1.2s ease-in-out infinite}.ds-sketch span+span{width:32%;animation-delay:.15s}@keyframes ds-breathe{0%,100%{opacity:.25}40%{opacity:1}}.ds-quiet{align-self:center;display:inline-flex;align-items:center;min-height:36px;padding:6px 10px;border:0;border-radius:999px;background:transparent;color:#6f625a;font:inherit;font-size:14px;font-weight:650;cursor:pointer}.ds-quiet:hover{background:rgba(43,36,31,.06);color:#2b241f}.ds-quiet:focus-visible{outline:3px solid #2b241f;outline-offset:2px}@media (prefers-reduced-motion:reduce){.ds-sketch span{animation:none;opacity:.6}}@media (forced-colors:active){.ds-chats{border:1px solid CanvasText}.ds-chats button[aria-current=true]{outline:2px solid Highlight;outline-offset:-2px}}"
-    },
-    {
-      "name": "Rendered answer",
-      "kind": "card",
-      "refersTo": "code-inline",
-      "description": "Markdown in an answer card: shifted headings, umber list markers, ink links, a ground blockquote and inline code with a sand ring.",
-      "html": "<article class=\"ds-md\"><h2>Library hours</h2><p>Open daily. See the <a href=\"#\">full timetable</a> or run <code>hours --today</code>.</p><h3>Weekends</h3><ul><li>Saturday: 10:00 to 18:00</li><li>Sunday: 12:00 to 16:00</li></ul><h4>Exam weeks</h4><blockquote>Hours extend to 22:00 during exams.</blockquote></article>",
-      "css": ".ds-md{font-family:'Nunito Variable',Nunito,system-ui,sans-serif;display:flex;flex-direction:column;gap:10px;padding:14px 16px;border-radius:18px;background:#fff;box-shadow:0 0 0 1px #e7dacb;color:#2b241f;font-size:16px;line-height:1.55;text-wrap:pretty}.ds-md>*{margin:0}.ds-md :is(h2,h3,h4){margin-block-start:6px;line-height:1.3;font-weight:700;text-wrap:balance}.ds-md>:first-child{margin-block-start:0}.ds-md h2{font-size:18px}.ds-md h3{font-size:16px}.ds-md h4{font-size:15px;color:#6f625a}.ds-md ul{margin:0;display:flex;flex-direction:column;gap:4px;padding-inline-start:1.35em}.ds-md li::marker{color:#6f625a}.ds-md blockquote{padding:10px 14px;border-radius:12px;background:#fbf3ea}.ds-md a{color:#2b241f;text-decoration:underline;text-decoration-thickness:1px;text-underline-offset:3px}.ds-md a:hover{text-decoration-thickness:2px}.ds-md a:focus-visible{outline:3px solid #2b241f;outline-offset:2px}.ds-md code{padding:1px 6px;border-radius:6px;background:#fbf3ea;box-shadow:0 0 0 1px #e7dacb;font:0.9em ui-monospace,'Cascadia Mono','SF Mono',Menlo,Consolas,monospace}"
-    },
-    {
-      "name": "Code panel",
-      "kind": "custom",
-      "refersTo": "code-panel",
-      "description": "Code on the cream ground in a 12px sand-edged frame: language label, quiet copy, sideways scroll with the edge cue. No highlighting.",
-      "html": "<figure class=\"ds-code\"><figcaption><span>python</span><button class=\"ds-quiet\" type=\"button\"><svg viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M8 8h11v11H8zM5 16V5h11\"/></svg>Copy code</button></figcaption><pre tabindex=\"0\" role=\"region\" aria-label=\"python\"><code>def opening_hours(day: str) -&gt; str:\n    return TIMETABLE.get(day, \"Closed\")  # a long line scrolls sideways inside its own frame</code></pre></figure>",
-      "css": ".ds-code{font-family:'Nunito Variable',Nunito,system-ui,sans-serif;margin:0;overflow:hidden;border-radius:12px;background:#fbf3ea;box-shadow:0 0 0 1px #e7dacb;color:#2b241f;max-width:360px}.ds-code figcaption{display:flex;align-items:center;justify-content:space-between;gap:4px;padding:4px 6px 4px 14px;border-block-end:1px solid #e7dacb;white-space:nowrap;font-size:13px;font-weight:650;color:#6f625a}.ds-code figcaption>span{min-width:0;overflow:hidden;text-overflow:ellipsis}.ds-code pre{--edge:#fbf3ea;margin:0;padding:12px 14px;overflow-x:auto;font:13.5px/1.6 ui-monospace,'Cascadia Mono','SF Mono',Menlo,Consolas,monospace;tab-size:2;background:linear-gradient(to right,var(--edge) 40%,transparent) left/28px 100% no-repeat local,linear-gradient(to left,var(--edge) 40%,transparent) right/28px 100% no-repeat local,radial-gradient(farthest-side at 0 50%,rgba(43,36,31,.22),transparent) left/12px 100% no-repeat scroll,radial-gradient(farthest-side at 100% 50%,rgba(43,36,31,.22),transparent) right/12px 100% no-repeat scroll,var(--edge);scrollbar-width:thin;scrollbar-color:rgba(111,98,90,.6) transparent}.ds-code pre:focus-visible{outline:3px solid #2b241f;outline-offset:-3px}.ds-quiet{display:inline-flex;align-items:center;gap:6px;min-height:36px;padding:6px 10px;border:0;border-radius:999px;background:transparent;color:#6f625a;font:inherit;font-size:14px;font-weight:650;white-space:nowrap;flex-shrink:0;cursor:pointer}.ds-quiet svg{width:18px;height:18px}.ds-quiet:hover{background:rgba(43,36,31,.06);color:#2b241f}.ds-quiet:focus-visible{outline:3px solid #2b241f;outline-offset:2px}"
-    },
-    {
-      "name": "Table",
-      "kind": "custom",
-      "refersTo": "table-frame",
-      "description": "Data on paper in a 12px sand-edged frame: sticky sand header, sand hairlines and cell rules, no stripes, tabular figures; tools row with copy and show-all.",
-      "html": "<figure class=\"ds-table\"><div class=\"ds-scroll\" tabindex=\"0\" role=\"region\" aria-label=\"Table: Building, Room, Weekdays, Weekends\"><table><thead><tr><th>Building</th><th>Room</th><th>Weekdays</th><th>Weekends</th></tr></thead><tbody><tr><td>House 1</td><td>Basement A</td><td>07:00 to 23:00</td><td>08:00 to 22:00</td></tr><tr><td>House 2</td><td>Basement B</td><td>07:00 to 23:00</td><td>08:00 to 22:00</td></tr><tr><td>House 3</td><td>Basement C</td><td>07:00 to 21:00</td><td>Closed</td></tr></tbody></table></div><div class=\"ds-tools\"><button class=\"ds-quiet\" type=\"button\"><svg viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M8 8h11v11H8zM5 16V5h11\"/></svg>Copy as CSV</button><button class=\"ds-quiet\" type=\"button\">Show all 14 rows</button></div></figure>",
-      "css": ".ds-table{font-family:'Nunito Variable',Nunito,system-ui,sans-serif;margin:0;overflow:hidden;border-radius:12px;background:#fff;box-shadow:0 0 0 1px #e7dacb;color:#2b241f;max-width:360px}.ds-scroll{--edge:#fff;overflow:auto;background:linear-gradient(to right,var(--edge) 40%,transparent) left/28px 100% no-repeat local,linear-gradient(to left,var(--edge) 40%,transparent) right/28px 100% no-repeat local,radial-gradient(farthest-side at 0 50%,rgba(43,36,31,.22),transparent) left/12px 100% no-repeat scroll,radial-gradient(farthest-side at 100% 50%,rgba(43,36,31,.22),transparent) right/12px 100% no-repeat scroll,var(--edge);scrollbar-width:thin;scrollbar-color:rgba(111,98,90,.6) transparent}.ds-scroll:focus-visible{outline:3px solid #2b241f;outline-offset:-3px}.ds-table table{width:100%;border-collapse:separate;border-spacing:0;font-size:14.5px;line-height:1.45;font-variant-numeric:tabular-nums}.ds-table th{position:sticky;inset-block-start:0;padding:8px 12px;background:#e7dacb;font-weight:700;text-align:start;white-space:nowrap}.ds-table td{min-width:8ch;padding:8px 12px;border-block-start:1px solid #e7dacb;vertical-align:top}.ds-table :is(th,td)+:is(th,td){border-inline-start:1px solid #e7dacb}.ds-tools{display:flex;flex-wrap:wrap;align-items:center;gap:4px;padding:4px 6px;border-block-start:1px solid #e7dacb}.ds-quiet{display:inline-flex;align-items:center;gap:6px;min-height:36px;padding:6px 10px;border:0;border-radius:999px;background:transparent;color:#6f625a;font:inherit;font-size:14px;font-weight:650;white-space:nowrap;flex-shrink:0;cursor:pointer}.ds-quiet svg{width:18px;height:18px}.ds-quiet:hover{background:rgba(43,36,31,.06);color:#2b241f}.ds-quiet:focus-visible{outline:3px solid #2b241f;outline-offset:2px}"
-    },
-    {
-      "name": "Console primary action",
-      "kind": "button",
-      "refersTo": "console-button-primary",
-      "description": "The one Warm Ink action that ends a console form.",
-      "html": "<button class=\"ds-c-primary\" type=\"button\">Save</button>",
-      "css": ".ds-c-primary{font-family:'Nunito Variable',Nunito,system-ui,sans-serif;display:inline-flex;align-items:center;min-height:44px;padding:10px 22px;border:0;border-radius:999px;background:#2b241f;color:#fbf3ea;font-size:15px;font-weight:650;cursor:pointer;transition:background-color .15s ease-out}.ds-c-primary:hover{background:color-mix(in srgb,#2b241f 88%,#fbf3ea)}.ds-c-primary:focus-visible{outline:3px solid #2b241f;outline-offset:2px}.ds-c-primary:disabled{opacity:.45;cursor:default}"
-    },
-    {
-      "name": "Onboarding track",
-      "kind": "nav",
-      "refersTo": "console-station-dot",
-      "description": "Six stations to go-live, each signed with its minutes; the time left signed at the end.",
-      "html": "<section class=\"ds-track\" aria-label=\"Steps to go live\"><p class=\"ds-sign\">About 11 minutes to live</p><ol><li class=\"done\"><button type=\"button\"><span class=\"dot\"><svg viewBox=\"0 0 24 24\" width=\"18\" height=\"18\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M5 12.5l4.5 4.5L19 7.5\"/></svg></span><span class=\"name\">Agent</span><small>Done</small></button></li><li class=\"done\"><button type=\"button\"><span class=\"dot\"><svg viewBox=\"0 0 24 24\" width=\"18\" height=\"18\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M5 12.5l4.5 4.5L19 7.5\"/></svg></span><span class=\"name\">Sites</span><small>Done</small></button></li><li class=\"now\"><button type=\"button\" class=\"open\" aria-current=\"step\"><span class=\"dot\">3</span><span class=\"name\">Sign-in</span><small>about 3 min</small></button></li><li class=\"next\"><button type=\"button\"><span class=\"dot\">4</span><span class=\"name\">Look</span><small>about 4 min</small></button></li><li class=\"next\"><button type=\"button\"><span class=\"dot\">5</span><span class=\"name\">Install</span><small>about 3 min</small></button></li><li class=\"next\"><button type=\"button\"><span class=\"dot\">6</span><span class=\"name\">Go live</span><small>about 2 min</small></button></li></ol></section>",
-      "css": ".ds-track{font-family:'Nunito Variable',Nunito,system-ui,sans-serif;position:relative;color:#2b241f;font-size:15px}.ds-sign{position:absolute;top:0;inset-inline-end:0;margin:0;padding:5px 12px;border-radius:999px;background:#2b241f;color:#fbf3ea;font-size:13px;font-weight:650}.ds-track ol{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));margin:0;padding:48px 0 0;list-style:none}.ds-track li{position:relative}.ds-track li::before{content:'';position:absolute;top:13px;inset-inline:0;height:3px;background:#e7dacb}.ds-track li.done::before{background:#2b241f}.ds-track li:first-child::before{inset-inline-start:50%}.ds-track li:last-child::before{inset-inline-end:50%}.ds-track button{position:relative;display:grid;justify-items:center;gap:1px;width:100%;padding:0 4px 8px;border:0;border-radius:12px;background:none;font:inherit;color:inherit;cursor:pointer}.ds-track .dot{display:grid;place-items:center;width:28px;height:28px;margin-bottom:8px;border-radius:50%;background:#fff;box-shadow:0 0 0 2px #e7dacb;color:#6f625a;font-size:13px;font-weight:800}.ds-track .done .dot{background:#2b241f;box-shadow:none;color:#fbf3ea}.ds-track .now .dot{box-shadow:0 0 0 3px #2b241f;color:#2b241f}.ds-track .name{font-weight:650}.ds-track small{color:#6f625a;font-size:13px}.ds-track button:hover .name,.ds-track .open .name{text-decoration:underline 2px;text-underline-offset:5px}.ds-track button:focus-visible{outline:3px solid #2b241f;outline-offset:2px}"
-    },
-    {
-      "name": "Console field",
+      "name": "Console Field",
       "kind": "input",
       "refersTo": "console-field",
-      "description": "A labelled field with its hint; a 2px ink ring on focus.",
-      "html": "<div class=\"ds-c-field\"><label for=\"ds-c-f\">Title visitors will see</label><p>Shown at the top of the chat. You can change it later.</p><input id=\"ds-c-f\" type=\"text\" value=\"Ask Riverside\"></div>",
-      "css": ".ds-c-field{font-family:'Nunito Variable',Nunito,system-ui,sans-serif;display:grid;gap:4px;color:#2b241f}.ds-c-field label{font-size:14px;font-weight:650}.ds-c-field p{margin:0;color:#6f625a;font-size:13.5px}.ds-c-field input{font:inherit;font-size:15px;min-height:44px;padding:10px 14px;border:0;border-radius:12px;background:#fff;box-shadow:0 0 0 1px #e7dacb;color:#2b241f}.ds-c-field input:focus-visible{outline:2px solid transparent;box-shadow:0 0 0 2px #2b241f}"
+      "description": "A labelled console input with the accent focus ring.",
+      "html": "<label class=\"ds-field\"><span>Title</span><input value=\"Ask the College\"></label>",
+      "css": ".ds-field{display:grid;gap:4px;font:400 14px/1.55 'Inter Variable',Inter,system-ui,sans-serif;color:#111827}.ds-field span{font-weight:500}.ds-field input{min-height:38px;padding:8px 12px;border:0;border-radius:8px;background:#fff;color:inherit;font:inherit;box-shadow:0 0 0 1px #e5e7eb,0 1px 2px rgb(16 24 40/.05);caret-color:#4f46e5}.ds-field input:focus-visible{outline:2px solid transparent;box-shadow:0 0 0 1px #4f46e5,0 0 0 4px rgb(79 70 229/.2)}"
     },
     {
-      "name": "Console choice tiles",
-      "kind": "chip",
-      "refersTo": "console-choice-tile",
-      "description": "Radio choices as sand-edged tiles; the chosen one ringed in ink.",
-      "html": "<ul class=\"ds-choices\"><li><label><input type=\"radio\" name=\"ds-m\"><span><b>Anyone</b><small>No sign-in. For public pages.</small></span></label></li><li class=\"chosen\"><label><input type=\"radio\" name=\"ds-m\" checked><span><b>Only signed-in visitors</b><small>For a portal, where visitors have already signed in.</small></span></label></li></ul>",
-      "css": ".ds-choices{font-family:'Nunito Variable',Nunito,system-ui,sans-serif;display:grid;gap:6px;margin:0;padding:0;list-style:none;color:#2b241f;font-size:15px}.ds-choices li{padding:10px 12px;border-radius:12px;box-shadow:0 0 0 1px #e7dacb}.ds-choices li.chosen{box-shadow:0 0 0 2px #2b241f}.ds-choices label{display:flex;gap:12px;align-items:flex-start;cursor:pointer}.ds-choices input{width:18px;height:18px;margin:2px 0 0;accent-color:#2b241f}.ds-choices input:focus-visible{outline:3px solid #2b241f;outline-offset:2px}.ds-choices b{display:block;font-weight:650}.ds-choices small{color:#6f625a;font-size:13.5px}"
+      "name": "Station Track",
+      "kind": "nav",
+      "refersTo": "console-station-dot",
+      "description": "The six-station stepper: done, now, next.",
+      "html": "<ol class=\"ds-track\"><li class=\"done\"><span class=\"dot\"><svg viewBox=\"0 0 24 24\" width=\"16\" height=\"16\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M5 12.5l4.5 4.5L19 7.5\"/></svg></span>Agent<small>Done</small></li><li class=\"now\"><span class=\"dot\">2</span>Sites<small>about 2 min</small></li><li><span class=\"dot\">3</span>Sign-in<small>about 3 min</small></li></ol>",
+      "css": ".ds-track{display:grid;grid-template-columns:repeat(3,1fr);margin:0;padding:0;list-style:none;font:500 14px 'Inter Variable',Inter,system-ui,sans-serif;color:#111827;text-align:center}.ds-track li{display:grid;justify-items:center;gap:1px}.ds-track small{color:#6b7280;font-size:12.5px;font-weight:400}.ds-track .dot{display:grid;place-items:center;width:28px;height:28px;margin-bottom:8px;border-radius:50%;background:#fff;box-shadow:0 0 0 1.5px #e5e7eb;color:#6b7280;font-size:12.5px;font-weight:600}.ds-track .done .dot{background:#4f46e5;box-shadow:none;color:#fff}.ds-track .now .dot{color:#4338ca;box-shadow:0 0 0 2px #fff,0 0 0 4px #4f46e5,0 0 0 8px rgb(79 70 229/.2)}"
     },
     {
-      "name": "Console station card",
+      "name": "Answer Toggles",
+      "kind": "button",
+      "refersTo": "answer-toggle",
+      "description": "Pin and thumbs under a finished answer; chosen fills in ink, never the brand.",
+      "html": "<div class=\"ds-acts\"><button class=\"ds-toggle\" aria-label=\"Pin\" aria-pressed=\"true\"><svg viewBox=\"0 0 24 24\" width=\"16\" height=\"16\" fill=\"currentColor\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M9 3h6M10 3v6l-3 4h10l-3-4V3M12 13v8\"/></svg></button><button class=\"ds-toggle\" aria-label=\"Helpful\" aria-pressed=\"false\"><svg viewBox=\"0 0 24 24\" width=\"16\" height=\"16\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M7 10v11H4a1 1 0 0 1-1-1v-9a1 1 0 0 1 1-1zM7 10l4-7a2 2 0 0 1 3 2l-1 5h6a2 2 0 0 1 2 2.3l-1.4 7A2 2 0 0 1 17.6 21H7\"/></svg></button><span class=\"ds-rated\">Thanks</span></div>",
+      "css": ".ds-acts{display:flex;align-items:center;gap:2px}.ds-toggle{display:grid;place-items:center;width:32px;height:32px;padding:8px;border:0;border-radius:8px;background:transparent;color:#6b6a68;cursor:pointer;transition:background-color .15s ease-out,color .15s ease-out}.ds-toggle:hover{background:color-mix(in srgb,#1f1e1d 6%,transparent);color:#1f1e1d}.ds-toggle[aria-pressed=\"true\"]{color:#1f1e1d}.ds-toggle:focus-visible{outline:3px solid #1f1e1d;outline-offset:2px}.ds-rated{padding-inline:8px;font:400 13px 'Inter Variable',Inter,system-ui,sans-serif;color:#6b6a68}"
+    },
+    {
+      "name": "Place Row",
+      "kind": "nav",
+      "refersTo": "place-row",
+      "description": "Projects and Pinned above Your chats; the current place on Bubble Grey.",
+      "html": "<ul class=\"ds-places\"><li><button aria-current=\"page\">Projects</button></li><li><button>Pinned</button></li></ul>",
+      "css": ".ds-places{display:grid;gap:2px;margin:0;padding:0;list-style:none;max-width:288px}.ds-places button{display:flex;align-items:center;width:100%;min-height:40px;padding:8px 12px;border:0;border-radius:10px;background:transparent;color:#1f1e1d;font:500 15px 'Inter Variable',Inter,system-ui,sans-serif;text-align:start;cursor:pointer;transition:background-color .15s ease-out}.ds-places button:hover{background:color-mix(in srgb,#1f1e1d 5%,transparent)}.ds-places button[aria-current=\"page\"]{background:#f0efeb}.ds-places button:focus-visible{outline:3px solid #1f1e1d;outline-offset:2px}"
+    },
+    {
+      "name": "File Card",
       "kind": "card",
-      "refersTo": "console-station-card",
-      "description": "The open station: its heading and purpose, then its form or content.",
-      "html": "<section class=\"ds-stop\" aria-label=\"Sites\"><h2 tabindex=\"-1\">Sites</h2><p>The only sites that may show this chat.</p></section>",
-      "css": ".ds-stop{font-family:'Nunito Variable',Nunito,system-ui,sans-serif;display:grid;gap:2px;padding:24px;border-radius:18px;background:#fff;box-shadow:0 0 0 1px #e7dacb;color:#2b241f}.ds-stop h2{margin:0;font-size:18px}.ds-stop p{margin:0;color:#6f625a;font-size:15px}"
-    },
-    {
-      "name": "Console snippet",
-      "kind": "custom",
-      "refersTo": "console-snippet",
-      "description": "Code to copy on the cream ground, labelled, with a quiet Copy.",
-      "html": "<figure class=\"ds-snippet\"><figcaption><span>HTML</span><button type=\"button\">Copy</button></figcaption><pre tabindex=\"0\"><code>&lt;script async src=\"https://chat.example/loader.js\" data-widget-id=\"w_demo\"&gt;&lt;/script&gt;</code></pre></figure>",
-      "css": ".ds-snippet{font-family:'Nunito Variable',Nunito,system-ui,sans-serif;margin:0;border-radius:12px;overflow:hidden;background:#fbf3ea;box-shadow:0 0 0 1px #e7dacb;color:#2b241f}.ds-snippet figcaption{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:4px 6px 4px 14px;border-bottom:1px solid #e7dacb;color:#6f625a;font-size:13px;font-weight:650}.ds-snippet button{font:inherit;font-size:14px;min-height:36px;padding:8px 12px;border:0;border-radius:999px;background:none;color:#6f625a;cursor:pointer}.ds-snippet button:hover{background:rgba(43,36,31,.06);color:#2b241f}.ds-snippet button:focus-visible{outline:3px solid #2b241f;outline-offset:2px}.ds-snippet pre{margin:0;padding:12px 14px;overflow:auto;font:13px/1.6 ui-monospace,'Cascadia Mono','SF Mono',Menlo,Consolas,monospace}.ds-snippet pre:focus-visible{outline:3px solid #2b241f;outline-offset:-3px}"
+      "refersTo": "file-card",
+      "description": "An attached file: thumbnail, name, size, remove, and a thin ink line while it uploads.",
+      "html": "<div class=\"ds-file\"><span class=\"ds-file-thumb\"><svg viewBox=\"0 0 24 24\" width=\"18\" height=\"18\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z\"/><path d=\"M14 3v5h5\"/></svg></span><span class=\"ds-file-name\">Tenancy agreement.pdf</span><span class=\"ds-file-size\">240 KB</span><button class=\"ds-file-remove\" aria-label=\"Remove\"><svg viewBox=\"0 0 24 24\" width=\"16\" height=\"16\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\"><path d=\"M6 6l12 12M18 6L6 18\"/></svg></button><span class=\"ds-file-progress\"><span style=\"inline-size:60%\"></span></span></div>",
+      "css": ".ds-file{position:relative;display:grid;grid-template-columns:32px minmax(0,1fr) auto;grid-template-areas:\"thumb name remove\" \"thumb size remove\";align-items:center;column-gap:8px;max-width:220px;padding:6px 4px 6px 6px;border:1px solid #e6e4e0;border-radius:12px;background:#fff;color:#1f1e1d;font-family:'Inter Variable',Inter,system-ui,sans-serif}.ds-file-thumb{grid-area:thumb;display:grid;place-items:center;width:32px;height:32px;border-radius:8px;background:#f0efeb;color:#6b6a68}.ds-file-name{grid-area:name;overflow:hidden;font-size:13px;font-weight:500;line-height:1.3;white-space:nowrap;text-overflow:ellipsis}.ds-file-size{grid-area:size;font-size:12px;line-height:1.3;color:#6b6a68}.ds-file-remove{grid-area:remove;display:grid;place-items:center;width:28px;height:28px;padding:0;border:0;border-radius:8px;background:transparent;color:#6b6a68;cursor:pointer}.ds-file-remove:hover{background:color-mix(in srgb,#1f1e1d 6%,transparent);color:#1f1e1d}.ds-file-remove:focus-visible{outline:3px solid #1f1e1d;outline-offset:2px}.ds-file-progress{position:absolute;inset-inline:10px;inset-block-end:3px;height:2px;overflow:hidden;border-radius:1px;background:#e6e4e0}.ds-file-progress>span{display:block;height:100%;background:#1f1e1d}"
     }
   ],
   "narrative": {
-    "northStar": "The Polite Guest",
-    "overview": "The widget is a friendly consumer app sitting on someone else's page. It arrives as one small round button in the customer's colour and opens into a soft, warm-grounded panel that looks like an app the visitor already knows how to use. It does not dress up the host page or compete with it: the host's design comes first, the customer's colour comes second, and the world's own materials (a warm cream ground, a soft sand border, a deep warm ink) stay quiet underneath.\n\nInside, the chat is a calm warm page: answers on white cards, the visitor's own words in quiet sand bubbles, and the customer's colour only on suggested questions and the send button. Type is a rounded humanist sans, self-hosted, set in plain short sentences. Rich answers (headings, lists, code and tables) are made from the same materials: code sits on the cream ground, tables on paper, both framed by a sand edge, and anything too wide scrolls inside its own frame rather than stretching the conversation.\n\nDepth is long, soft and low-contrast, tinted with the world's ink rather than grey. Motion is small and physical: a press that settles back with a slight overshoot, a panel that rises a short way and fades in without bouncing, three dots that breathe while an answer is on its way, and sketch rows that breathe the same way while the list of chats loads. Under reduced motion every movement goes; only the fade stays, and the dots and sketch rows hold still.\n\nThe world refuses the category default for chat widgets: no coloured header bar, no avatar, no brand-coloured message bubbles. The customer's colour appears only on things that can be pressed.\n\nThe admin console (`web/console`) is a second surface in the same world, calmer and tuned for forms and tables. Administrators take each widget along a track of six stations to go-live (Agent, Sites, Sign-in, Look, Install, Go live), each signed with its minutes, the time left signed at the track's end. It uses the chat's ground, sand, ink and umber, white cards with a sand edge and round pills, and draws no customer colour of its own: the brand appears only inside the chat's own preview. It is flat apart from that preview, which floats on the chat's Panel shadow.",
+    "northStar": "The Familiar Window, Their Face",
+    "overview": "Three surfaces share one record. The **chat** is the familiar AI chat window, played straight with Claude's as the bar: a near-white page (charcoal in the dark), answers set as plain text beside the assistant's round mark, the visitor's words in a soft grey bubble, a white composer card at the foot. It wears the customer's identity in two places only: their assistant's picture (or logo, or initials) beside every answer, and their colour on what can be pressed. It refuses answer cards, brand-filled suggestion pills, a coloured header bar and rounded playful type.\n\nThe **launcher and panel frame** sit on someone else's page and take the least room they can: a 56px circle in the brand colour or filled with the assistant's picture, an optional greeting bubble beside it, and a 20px-rounded panel in the chat's own ground that rises a short way and fades in. The **admin console** is the category-standard admin at the craft of the Stripe Dashboard and Linear's settings: white cards on cool grey with one indigo accent in Light, and Graphite in Dark (panels a step above a graphite ground, split by hairline seams instead of shadows, one blue accent). The administrator chooses System, Light or Dark; System follows the computer.\n\nEverything is Inter, self-hosted, at modest sizes and weights; depth is hairlines first, shadow only where something floats.",
     "keyCharacteristics": [
-      "Warm tinted ground, soft border and warm ink; never pure grey.",
-      "The customer's brand colour fills only actionable elements: the launcher, suggested questions, send and stop.",
-      "Generous, friendly corners: 24px panel and composer, 18px cards and bubbles, fully round launcher, pills and send.",
-      "Long, soft, ink-tinted shadows; surfaces inside the chat are separated by a 1px sand edge instead.",
-      "A press spring on release, a short rise-and-fade on open, no entry bounce.",
-      "Full screen on small windows; a floating panel anchored to the launcher's corner elsewhere.",
-      "Code and tables in their own 12px frames that scroll sideways, with a soft ink cue at an edge only while more lies that way.",
-      "Earlier chats as rows on one white, sand-edged card: in place of the conversation on narrow frames, a 288px column beside it from 720px.",
-      "The admin console: the same materials, flat, with Warm Ink as its only action colour and the six-station track as its signature."
+      "Warm near-neutrals in the chat (#fcfcfb ground, #1f1e1d ink), cool greys in the console; neither carries an accent of its own except the console's one indigo or blue.",
+      "The customer's colour on the launcher and the send button only, giving way to light ink on the dark composer when under 3:1.",
+      "Answers are text, not cards; rich content (code, tables, diagrams, charts) sits in 12px hairline frames that scroll sideways inside themselves.",
+      "Inter throughout, 16px at 1.6 in the chat and 14px at 1.55 with tabular figures in the console.",
+      "Hairline rings (1px) do the separating; only the composer, the jump pill, the launcher, the greeting and the panel lift.",
+      "Every colour has a light and a dark value; the chat picks by the widget's scheme, the console by the administrator's.",
+      "Logical properties throughout, so a right-to-left language mirrors."
     ],
     "rules": [
       {
         "name": "The Pressable Colour Rule",
-        "body": "The customer's brand colour appears only on things that can be pressed. Never on a header bar, a background, a border or a message surface.",
+        "body": "The customer's colour sits only on what can be pressed: the launcher and the send button. Elsewhere it appears only as a trace under the pointer (a suggestion chip's edge at 55% and fill at 5%) and as the caret. Never on a header, a bubble, a background or the mark.",
         "section": "colors"
       },
       {
-        "name": "The Warm Neutral Rule",
-        "body": "Every neutral, including shadow tint, comes from the world's warm ink family. No cool or pure greys. The one exception is the dark scheme's shadow, which is black.",
+        "name": "The 3:1 Rule",
+        "body": "On the dark composer (#30302e) a brand colour under 3:1 gives way to Chat Ink Dark, and the ink on it is recomputed (`forDark`). The console's colour notes use the same line: they warn when the colour is under 3:1 against the light composer (#ffffff) or the dark one, and state the text-on-colour ratio.",
         "section": "colors"
       },
       {
-        "name": "The Vanishing Brand Rule",
-        "body": "On Night Ground a brand colour under 1.5:1 against it (a near-black) gives way to Cream Ink, with ink on brand recomputed. Any other brand keeps its colour. The launcher sits on the customer's page, not on our ground, so it always keeps the brand.",
+        "name": "The State-Only Rule",
+        "body": "In the console, green, amber and red mean state (live, unpublished, problem) and nothing else.",
         "section": "colors"
       },
       {
         "name": "The Light Sheet Rule",
-        "body": "A diagram keeps a Paper White sheet in both schemes, because its source's colours assume a light page. Its tools below stay in the scheme.",
-        "section": "colors"
-      },
-      {
-        "name": "The Ink Action Rule",
-        "body": "The console has no brand of its own: Warm Ink fills its primary action, and the customer's colour appears only inside the chat preview and the colour field's own swatch.",
+        "body": "A diagram keeps a white sheet in both schemes, because its source's colours assume a light page.",
         "section": "colors"
       },
       {
         "name": "The Pretty Wrap Rule",
-        "body": "Running text (the notice, cards and answer text) sets `text-wrap: pretty`, and anything user- or customer-supplied wraps anywhere rather than overflowing the panel. Code and tables are the exception: code never wraps and table cells wrap only between words (header cells not at all); both scroll sideways inside their own frame instead.",
+        "body": "Running text sets `text-wrap: pretty` and anything the customer or visitor supplies wraps anywhere. Code never wraps and table cells wrap only between words; both scroll sideways inside their own frame.",
         "section": "typography"
       },
       {
         "name": "The Own Frame Rule",
-        "body": "Content wider than the card (code, tables) scrolls sideways inside its own frame, never the card or the conversation. Each scroll region is reachable by keyboard and named for assistive technology. A table scrolls vertically only after the visitor has expanded it, and then within `min(70vh, 560px)`, so a short table never traps a thumb inside the conversation.",
+        "body": "Content wider than the column (code, tables, diagrams) scrolls sideways inside its own 12px frame, never the conversation. Each scroll region takes keyboard focus with its ring drawn inset. A soft shade shows at an inline edge only while more lies that way (a fixed radial of black at 22%, 12px, covered at each end by a 28px gradient of the frame's fill that scrolls with the content). Rows past the tenth fold behind \"Show all N rows\"; an expanded table scrolls vertically within `min(70vh, 560px)` with its header held.",
         "section": "layout"
       },
       {
-        "name": "The Long Soft Shadow Rule",
-        "body": "Shadows are long, soft, negatively spread and ink-tinted. No hard edges, no offsets without blur, no neutral black.",
+        "name": "The Seam Rule",
+        "body": "Graphite separates panels by 1px seams, never shadows.",
         "section": "elevation"
       }
     ],
     "dos": [
-      "**Do** keep the brand colour on pressable things only (launcher, suggested questions, send/stop), and pick the text and glyph colour on it (white or black) by contrast at runtime.",
-      "**Do** tint every shadow with Warm Ink (`rgba(43,36,31,…)`) and keep it long and soft.",
-      "**Do** use the two-tone focus ring (3px white outline, 7px Warm Ink band) on anything the widget draws over the host page, and the 3px Warm Ink outline 2px off inside the chat.",
-      "**Do** put answers on Paper White cards with a 1px Soft Sand edge, and the visitor's words on Soft Sand bubbles, both at 18px.",
-      "**Do** keep tap targets for pressable things at least 44px (36px for secondary and quiet actions inside a card).",
-      "**Do** open with a 12px rise and a 200ms fade on `cubic-bezier(.16,1,.3,1)`, and keep only the fade under reduced motion.",
-      "**Do** spring only on release (`cubic-bezier(.34,1.56,.64,1)`), never on entry.",
-      "**Do** go full screen under 600px wide or 520px tall, with no radius and no border.",
-      "**Do** self-host the chat's font.",
-      "**Do** let wide code and tables scroll sideways inside their own 12px frame, with the soft ink edge cue, never widening the card or the conversation.",
-      "**Do** start an answer's headings at h2 (18px, 700); the chat's title is the only h1.",
-      "**Do** sign every station of the console's track with its minutes, and the time left at the track's end.",
-      "**Do** end each console form with its one Warm Ink primary action, with the chat's own preview at 400px beside the four form stations."
+      "Do keep the customer's colour on the launcher and send only, with white or black on it by contrast, and let it give way to light ink on the dark composer under 3:1.",
+      "Do set answers as plain text beside the assistant's mark, and the visitor's words in a 20px Bubble Grey bubble.",
+      "Do separate surfaces with 1px hairline rings; lift only what floats (composer, jump circle, launcher, greeting, panel, preview).",
+      "Do give every chat colour a light and a dark value, and every console colour a Light and a Graphite value.",
+      "Do let wide code, tables and diagrams scroll inside their own 12px frame with the edge shade, never widening the conversation.",
+      "Do start an answer's headings at h2 (18px, 700); the chat's title is the only h1.",
+      "Do go full screen under 600px wide or 520px tall, with no radius and no border.",
+      "Do use the two-tone ring (3px white, 7px ink band) on anything drawn over the host page.",
+      "Do keep the console's green, amber and red for state alone.",
+      "Do fill a chosen toggle (a thumb, the pin) in Chat Ink; pressed state never takes the brand.",
+      "Do open the chat's own small cards (feedback comment, filing, confirmation, files) flat, in Chat Surface with a 1px hairline and a 12px corner, and give any field in them the composer's focus.",
+      "Do stop every animation while the panel is closed, and under reduced motion remove the rise, lift, press, spin and greeting animation, keeping only the fade; the dots and sketch bars hold still at 60%, and the found-answer wash still fades because it does not move.",
+      "Do give every edge drawn as a box-shadow a 1px `CanvasText` border under forced colours, mark the current chat's row, place or filing option with a 2px `Highlight` outline, give a field that shows focus by box-shadow a transparent outline, and draw an upload's progress line in `CanvasText`.",
+      "Do use logical properties, and mirror directional glyphs in right-to-left."
     ],
     "donts": [
-      "**Don't** use a coloured header bar, an avatar, or brand-coloured message bubbles.",
-      "**Don't** fill backgrounds, borders or message surfaces with the brand colour; a brand outline is a border and is not allowed.",
-      "**Don't** use cool or pure greys for neutrals or shadows.",
-      "**Don't** run any animation while the widget is closed.",
-      "**Don't** bounce the panel on entry.",
-      "**Don't** stripe table rows; rows are separated by Soft Sand hairlines.",
-      "**Don't** use the customer's colour anywhere in the console outside the chat preview and the colour field.",
-      "**Don't** name a console section by `aria-labelledby`; use `aria-label` (Firefox crashes when axe scans it)."
+      "Don't put answers on cards, fill suggestion chips with the brand, or colour the chat's header.",
+      "Don't put the customer's colour on a bubble, background, header, mark or border at rest.",
+      "Don't use rounded playful type or pill buttons in the console; it is 8px controls and 12px cards.",
+      "Don't add shadows in Graphite; seams separate its panels.",
+      "Don't let text wear a chart's series colours; a series is named by its key.",
+      "Don't stripe table rows.",
+      "Don't bounce anything on entry."
     ]
   }
 }

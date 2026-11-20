@@ -106,6 +106,30 @@
         }
       }
     },
+    "/admin/v1/overview": {
+      "get": {
+        "summary": "Each tenant's widgets counted by state: live, changes waiting, in setup",
+        "description": "The console's home in one call, however many tenants there are: every tenant for a platform administrator,\none's own for anyone else.",
+        "operationId": "overview_admin_v1_overview_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "additionalProperties": true,
+                    "type": "object"
+                  },
+                  "type": "array",
+                  "title": "Response Overview Admin V1 Overview Get"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/admin/v1/tenants/{tenant_id}": {
       "delete": {
         "summary": "Delete a tenant with no widgets left (platform administrators only); its people and secrets go too",
@@ -1283,6 +1307,100 @@
                     "additionalProperties": true
                   },
                   "title": "Response Compare Admin V1 Widgets  Widget Id  Compare Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/admin/v1/widgets/{widget_id}/feedback": {
+      "get": {
+        "summary": "Visitors' ratings of the widget's answers, the newest first",
+        "description": "Each rating with the visitor's comment, whether they were public or signed in (never who), and the question and\nanswer it is about. `next` continues the list.",
+        "operationId": "widget_feedback_admin_v1_widgets__widget_id__feedback_get",
+        "parameters": [
+          {
+            "name": "widget_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^[A-Za-z0-9_-]{1,64}$",
+              "description": "Our opaque ID. Never a PF ID.",
+              "title": "Widget Id"
+            },
+            "description": "Our opaque ID. Never a PF ID."
+          },
+          {
+            "name": "rating",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "enum": [
+                    "like",
+                    "dislike"
+                  ],
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Rating"
+            }
+          },
+          {
+            "name": "before",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "maxLength": 120
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Before"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 50,
+              "minimum": 1,
+              "default": 25,
+              "title": "Limit"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true,
+                  "title": "Response Widget Feedback Admin V1 Widgets  Widget Id  Feedback Get"
                 }
               }
             }

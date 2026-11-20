@@ -6,22 +6,28 @@ import json
 import logging
 from datetime import UTC, datetime
 from typing import Annotated
+from urllib.parse import quote
 
 from fastapi import APIRouter, Depends, Query, Request
 from fastapi.responses import JSONResponse, Response, StreamingResponse
 
-from ucp import protocol
+from ucp import files, protocol
 from ucp.gateway.pipeline import Problem
 from ucp.gateway.public import widgets_of
 from ucp.identity import Identity, expiry, verify_provider_token, verify_shared_secret
 from ucp.pf import PfConnector, PfProfile
+from ucp.scan import ScanUnavailable, scan
 from ucp.sessions import ANONYMOUS_SECONDS, Keys, Limiter, Session, anonymous_user
-from ucp.store import Owner, Store, TurnInProgress
+from ucp.store import Owner, Store, TurnInProgress, UnknownAttachment
 from ucp.turns import Turns
 from ucp.widgets import Widget
 
 log = logging.getLogger("ucp.gateway")
 REFUSALS_PER_MINUTE = 10  # host tokens refused from one address before it must wait
+FEEDBACK_PER_MINUTE = 30  # ratings from one visitor
+CHANGES_PER_MINUTE = 30  # projects started or renamed, and answers pinned, by one visitor
+UPLOADS_PER_MINUTE = 20  # files attached by one visitor
+FILE_TYPES = {kind: {} for kind in dict.fromkeys(files.TYPES.values())}  # for the API description, in a fixed order
 
 
 def same_origin(request: Request) -> None:
@@ -174,17 +180,47 @@ type Visitor = Annotated[Session, Depends(visitor)]
 type Limit = Annotated[int, Query(ge=1, le=50)]
 
 
-@router.post("/conversations", status_code=201, summary="Start a conversation")
-async def create_conversation(request: Request, session: Visitor) -> protocol.Conversation:
+def signed_in(session: Session) -> Session:
+    """Projects and pins belong to a signed-in visitor; an anonymous one has nothing to come back to."""
+    if session.mode != "signed_in":
+        raise Problem("forbidden")
+    return session
+
+
+@router.post("/conversations", status_code=201, summary="Start a conversation, inside a project if one is named")
+async def create_conversation(
+    request: Request, session: Visitor, body: protocol.Filing | None = None
+) -> protocol.Conversation:
     await _widget(request, session)
-    return await _store(request).create_conversation(owner(session))
+    project_id = body.project_id if body else None
+    if project_id:
+        signed_in(session)
+    conversation = await _store(request).create_conversation(owner(session), project_id)
+    if not conversation:
+        raise Problem("not_found")
+    return conversation
+
+
+@router.patch("/conversations/{conversation_id}", summary="File a conversation under a project, or under none")
+async def file_conversation(
+    conversation_id: protocol.Id, body: protocol.Filing, request: Request, session: Visitor
+) -> protocol.Conversation:
+    signed_in(session)
+    conversation = await _store(request).file_conversation(owner(session), conversation_id, body.project_id)
+    if not conversation:
+        raise Problem("not_found")
+    return conversation
 
 
 @router.get("/conversations", summary="The visitor's conversations, most recently active first")
 async def list_conversations(
-    request: Request, session: Visitor, before: protocol.Cursor | None = None, limit: Limit = 20
+    request: Request,
+    session: Visitor,
+    before: protocol.Cursor | None = None,
+    limit: Limit = 20,
+    project: protocol.Id | None = None,
 ) -> protocol.ConversationPage:
-    found = await _store(request).conversations(owner(session), _after(before), limit + 1)
+    found = await _store(request).conversations(owner(session), _after(before), limit + 1, project)
     more = len(found) > limit
     return protocol.ConversationPage(conversations=found[:limit], next=_cursor(found[limit - 1]) if more else None)
 
@@ -214,6 +250,143 @@ async def read_message(
     return message
 
 
+# Projects (signed-in visitors)
+
+
+@router.get("/projects", summary="The visitor's projects, most recently active first")
+async def list_projects(request: Request, session: Visitor) -> protocol.ProjectPage:
+    return protocol.ProjectPage(projects=await _store(request).projects(owner(signed_in(session))))
+
+
+@router.post("/projects", status_code=201, summary="Start a project")
+async def create_project(body: protocol.ProjectName, request: Request, session: Visitor) -> protocol.Project:
+    request.app.state.limiter.check(f"projects:{signed_in(session).user_id}", CHANGES_PER_MINUTE)
+    return await _store(request).create_project(owner(session), body.name.strip())
+
+
+@router.patch("/projects/{project_id}", summary="Rename a project")
+async def rename_project(
+    project_id: protocol.Id, body: protocol.ProjectName, request: Request, session: Visitor
+) -> protocol.Project:
+    request.app.state.limiter.check(f"projects:{signed_in(session).user_id}", CHANGES_PER_MINUTE)
+    project = await _store(request).rename_project(owner(session), project_id, body.name.strip())
+    if not project:
+        raise Problem("not_found")
+    return project
+
+
+@router.delete("/projects/{project_id}", status_code=204, summary="Delete a project; its conversations stay, unfiled")
+async def delete_project(project_id: protocol.Id, request: Request, session: Visitor) -> Response:
+    if not await _store(request).delete_project(owner(signed_in(session)), project_id):
+        raise Problem("not_found")
+    return Response(status_code=204)
+
+
+# Attachments (M10)
+
+
+@router.post(
+    "/conversations/{conversation_id}/files",
+    status_code=201,
+    summary="Attach a file (doc, docx, pdf, jpg, jpeg or png, at most 10 MB) as the body, named in `name`; send its "
+    "ID with the question",
+    openapi_extra={"requestBody": {"required": True, "content": FILE_TYPES}},
+)
+async def upload(
+    conversation_id: protocol.Id,
+    request: Request,
+    session: Visitor,
+    name: Annotated[str, Query(min_length=1, max_length=255)],
+) -> protocol.FileBlock:
+    widget = await _widget(request, session)
+    if not widget.config.attachments_enabled:
+        raise Problem("forbidden")
+    request.app.state.limiter.check(f"files:{session.user_id}", UPLOADS_PER_MINUTE)
+    data = await request.body()  # the pipeline refuses a body over 10 MB
+    try:
+        clean, kind = files.checked(name, data)
+    except ValueError as error:
+        raise Problem("invalid_request") from error
+    try:
+        found = await scan(request.app.state.scanner, data)
+    except ScanUnavailable as error:  # fails closed: a file nothing has scanned is never kept
+        log.error("an upload to widget %s was refused unscanned: %s", session.widget_id, error)
+        raise Problem("assistant_unavailable", retryable=True, retry_after=30) from error
+    if found:
+        log.warning("an upload to widget %s was refused: the scan found %s", session.widget_id, found)
+        raise Problem("unsafe_file")
+    block = await _store(request).add_file(owner(session), conversation_id, clean, kind, data)
+    if not block:
+        raise Problem("not_found")
+    return block
+
+
+@router.get(
+    "/conversations/{conversation_id}/files/{file_id}",
+    responses={200: {"content": FILE_TYPES}},
+    summary="A file attached to a question, always as a download",
+)
+async def download(conversation_id: protocol.Id, file_id: protocol.Id, request: Request, session: Visitor) -> Response:
+    found = await _store(request).file(owner(session), conversation_id, file_id)
+    if not found:
+        raise Problem("not_found")
+    # Saved, never shown: the browser offers it as a download, and the pipeline's policy lets nothing in it run.
+    headers = {
+        "content-disposition": f"attachment; filename*=UTF-8''{quote(found.name, safe='')}",
+        "cross-origin-resource-policy": "same-origin",
+    }
+    return Response(found.data, media_type=found.content_type, headers=headers)
+
+
+# Pinned answers (signed-in visitors)
+
+
+@router.get("/pins", summary="The visitor's pinned answers, the newest pin first")
+async def list_pins(request: Request, session: Visitor) -> protocol.PinPage:
+    return protocol.PinPage(pins=await _store(request).pinned(owner(signed_in(session))))
+
+
+@router.put(
+    "/conversations/{conversation_id}/messages/{message_id}/pin", status_code=204, summary="Pin a finished answer"
+)
+async def pin(conversation_id: protocol.Id, message_id: protocol.Id, request: Request, session: Visitor) -> Response:
+    request.app.state.limiter.check(f"pins:{signed_in(session).user_id}", CHANGES_PER_MINUTE)
+    if not await _store(request).pin(owner(session), conversation_id, message_id):
+        raise Problem("not_found")
+    return Response(status_code=204)
+
+
+@router.delete("/conversations/{conversation_id}/messages/{message_id}/pin", status_code=204, summary="Unpin an answer")
+async def unpin(conversation_id: protocol.Id, message_id: protocol.Id, request: Request, session: Visitor) -> Response:
+    await _store(request).unpin(owner(signed_in(session)), conversation_id, message_id)
+    return Response(status_code=204)
+
+
+@router.put(
+    "/conversations/{conversation_id}/messages/{message_id}/feedback",
+    status_code=204,
+    summary="Rate a finished answer, like or dislike, with an optional comment; a second rating replaces the first",
+)
+async def rate(
+    conversation_id: protocol.Id, message_id: protocol.Id, body: protocol.Feedback, request: Request, session: Visitor
+) -> Response:
+    request.app.state.limiter.check(f"feedback:{session.user_id}", FEEDBACK_PER_MINUTE)
+    comment = (body.comment or "").strip() or None
+    if not await _store(request).rate(owner(session), session.mode, conversation_id, message_id, body.rating, comment):
+        raise Problem("not_found")
+    return Response(status_code=204)
+
+
+@router.delete(
+    "/conversations/{conversation_id}/messages/{message_id}/feedback",
+    status_code=204,
+    summary="Take back a rating",
+)
+async def unrate(conversation_id: protocol.Id, message_id: protocol.Id, request: Request, session: Visitor) -> Response:
+    await _store(request).unrate(owner(session), conversation_id, message_id)
+    return Response(status_code=204)
+
+
 @router.post(
     "/conversations/{conversation_id}/messages",
     summary="Ask a question. The answer streams as StreamEvent lines, or arrives whole as a Message for "
@@ -224,6 +397,8 @@ async def send_message(
     conversation_id: protocol.Id, body: protocol.SendMessage, request: Request, session: Visitor
 ) -> Response:
     widget = await _widget(request, session)
+    if body.attachments and not widget.config.attachments_enabled:
+        raise Problem("forbidden")
     limits, profile = widget.document.limits, widget.document.agent_profile
     request.app.state.limiter.check(f"messages:{session.user_id}", limits.messages_per_minute_per_session)
     connector = await _connector(request, widget.document.tenant_id, profile)
@@ -232,13 +407,14 @@ async def send_message(
         raise Problem("assistant_unavailable", retryable=True)
     turns: Turns = request.app.state.turns
     turns.admit(widget.document.tenant_id, profile, limits.concurrent_turns)
-    mine = owner(session)
+    mine, store = owner(session), _store(request)
     try:
-        turn = await _store(request).start_turn(
-            mine, conversation_id, body.client_message_id, body.text, widget.version, connector.version
-        )
+        asked = (body.client_message_id, body.text, widget.version, connector.version, body.attachments)
+        turn = await store.start_turn(mine, conversation_id, *asked)
     except TurnInProgress as error:
         raise Problem("turn_in_progress", retryable=True, retry_after=5) from error
+    except UnknownAttachment as error:
+        raise Problem("invalid_request") from error
     if not turn:
         raise Problem("not_found")
 
@@ -250,7 +426,13 @@ async def send_message(
         stream = turns.replay(mine, turn)
     else:
         received = getattr(request.state, "received", None)
-        queue, task, timing = turns.start(turn, widget.document.tenant_id, profile, connector, body.text, received)
+        attached = await store.file_contents(conversation_id, body.attachments) if body.attachments else ()
+        # Read aloud only in a language the widget offers; otherwise the answer is text alone, as it always is.
+        voiced = widget.config.voice_enabled and body.speak in widget.config.voice_languages
+        speak = (request.app.state.speaker, body.speak) if voiced else None
+        queue, task, timing = turns.start(
+            turn, widget.document.tenant_id, profile, connector, body.text, received, attached, speak
+        )
         if whole:
             await asyncio.shield(task)  # a caller who leaves does not cancel the answer
             return JSONResponse((await turns.settled(mine, turn)).model_dump(mode="json"))

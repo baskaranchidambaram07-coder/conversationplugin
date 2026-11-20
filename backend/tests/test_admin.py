@@ -23,7 +23,7 @@ from ucp.admin.__main__ import main as command
 from ucp.admin.records import Records
 from ucp.gateway.app import create_app as gateway
 from ucp.settings import Settings
-from ucp.store import Store
+from ucp.store import Owner, Store
 from ucp.vault import Vault, new_key
 
 CONSOLE = "https://console.example.org"
@@ -237,6 +237,20 @@ def test_the_role_matrix(world, role):
     assert got == {name: statuses[ROLES.index(role)] for name, statuses in EXPECTED.items()}
 
 
+def test_the_overview_counts_each_tenants_widgets_by_state_and_shows_people_only_their_own(world):
+    a, b, platform = world.a, world.b, bearer(world, "platform")
+    world.post(f"/admin/v1/tenants/{a}/widgets", json={"document": document(tenant_id=a)}, headers=platform)  # in setup
+    changed = {"revision": 0, "document": document(tenant_id=b, public={**PUBLIC, "title": "Changed"})}
+    world.put(f"/admin/v1/widgets/w_{b}/draft", json=changed, headers=platform)  # live, with changes waiting
+
+    seen = {row["tenant_id"]: row for row in world.get("/admin/v1/overview", headers=platform).json()}
+    assert {key: seen[a][key] for key in ("live", "waiting", "setup")} == {"live": 1, "waiting": 0, "setup": 1}
+    assert {key: seen[b][key] for key in ("live", "waiting", "setup")} == {"live": 0, "waiting": 1, "setup": 0}
+    assert seen[f"t_c{world.tag}"] == {"tenant_id": f"t_c{world.tag}", "live": 0, "waiting": 0, "setup": 0}
+    theirs = world.get("/admin/v1/overview", headers=bearer(world, "viewer_a")).json()
+    assert [row["tenant_id"] for row in theirs] == [a]
+
+
 def test_a_tenants_people_see_only_their_own_tenant_and_audit(world):
     a, b = f"t_a{world.tag}", f"t_b{world.tag}"
 
@@ -421,6 +435,41 @@ def test_rollback_and_comparing_versions(world):
     assert world.get(f"{widget}/versions/9", headers=signed).status_code == 404
     entries = world.get(f"/admin/v1/audit?widget=w_{world.a}", headers=signed).json()
     assert [(e["action"], e["version"]) for e in entries[:3]] == [("rollback", 3), ("publish", 2), ("draft.save", None)]
+
+
+# Feedback (M10): visitors' ratings read in the console, by the widget's own tenant
+
+
+def test_a_widgets_feedback_is_read_with_its_question_and_answer_by_its_own_tenant_only(world, database_url):
+    widget = f"w_{world.a}"
+    ratings = [("like", None, "signed_in"), ("dislike", "Too vague.", "anonymous"), ("dislike", None, "anonymous")]
+
+    async def rate(records):
+        store = Store(records.engine)
+        for n, (rating, comment, kind) in enumerate(ratings):
+            owner = Owner(world.a, widget, f"u_{secrets.token_hex(4)}")
+            chat = await store.create_conversation(owner)
+            turn = await store.start_turn(owner, chat.id, f"k_{n}", f"Question {n}?", 1)
+            await store.finish(turn.answer_id, "complete", [{"type": "markdown", "text": f"Answer {n}."}], None)
+            await store.rate(owner, kind, chat.id, turn.answer_id, rating, comment)
+
+    run(database_url, rate)
+    signed, url = bearer(world, "viewer_a"), f"/admin/v1/widgets/{widget}/feedback"  # a viewer may read it
+
+    page = world.get(url, headers=signed).json()
+    assert page["counts"] == {"like": 1, "dislike": 2} and page["next"] is None
+    assert [(i["question"], i["answer"], i["rating"], i["comment"], i["visitor"]) for i in page["items"]] == [
+        ("Question 2?", "Answer 2.", "dislike", None, "anonymous"),
+        ("Question 1?", "Answer 1.", "dislike", "Too vague.", "anonymous"),
+        ("Question 0?", "Answer 0.", "like", None, "signed_in"),
+    ]
+    assert "u_" not in json.dumps(page)  # whether a visitor was signed in, never who
+
+    first = world.get(f"{url}?rating=dislike&limit=1", headers=signed).json()
+    rest = world.get(f"{url}?rating=dislike&limit=1&before={first['next']}", headers=signed).json()
+    assert [i["question"] for i in first["items"] + rest["items"]] == ["Question 2?", "Question 1?"]
+    assert rest["next"] is None
+    assert world.get(url, headers=bearer(world, "admin_b")).json()["code"] == "not_found"
 
 
 # Secrets (M8-T4, T5): sealed, never returned, scoped to their tenant

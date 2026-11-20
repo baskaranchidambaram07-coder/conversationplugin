@@ -40,7 +40,10 @@ test("an administrator signs in with the company provider and lands where they w
   await signIn(page, "/widgets/w_gateway/look", operator);
   await expect(page).toHaveURL(`${CONSOLE}/widgets/w_gateway/look`);
   await expect(page.getByRole("heading", { level: 1, name: "Ask the College" })).toBeVisible();
+  await page.getByRole("button", { name: "Account" }).click(); // who is signed in, behind the profile button
   await expect(page.getByText(`${operator} · platform administrator`)).toBeVisible();
+  await page.keyboard.press("Escape");
+  await expect(page.getByRole("button", { name: "Account" })).toBeFocused();
   await expect(page.getByRole("button", { name: /Look.*, open/ })).toBeVisible();
   await expect(page.getByLabel("Colour of buttons")).toHaveValue("#5B2A86");
   await expect(page.getByText("Live · version 1").first()).toBeVisible();
@@ -52,6 +55,7 @@ test("an administrator signs in with the company provider and lands where they w
   await page.goBack();
   await expect(page.getByRole("button", { name: /Look.*, open/ })).toBeVisible();
 
+  await page.getByRole("button", { name: "Account" }).click();
   await page.getByRole("button", { name: "Sign out" }).click();
   await expect(page.getByRole("heading", { name: "Sign in to set up your assistant" })).toBeVisible();
 });
@@ -170,6 +174,7 @@ test("an existing widget's settings are edited and saved; a viewer sees them but
   await expect(page.getByText("Saved. Visitors see it once you publish.")).toBeVisible();
   await expect(page.getByText("2 sites allowed")).toBeVisible();
 
+  await page.getByRole("button", { name: "Account" }).click();
   await page.getByRole("button", { name: "Sign out" }).click();
   await signIn(page, `/widgets/${widget}/agent`, viewer);
   await expect(page.getByText("You can look, but not change anything here.")).toBeVisible();
@@ -212,22 +217,55 @@ test("the look is edited beside the chat itself, which shows each change at once
   await expect(chat.getByRole("heading", { name: "Ask the Riverside desk" })).toBeVisible();
   await page.getByLabel("Suggested question 2").fill("Where do I park?");
   await expect(chat.getByRole("button", { name: "Where do I park?" })).toBeVisible();
+  // The assistant's picture: even an SVG with only a viewBox goes up as a 256 px square of plain pixels, and the
+  // preview shows it at once.
+  const svg = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><rect width="64" height="64" fill="#1F6F5C"/></svg>';
+  await page.getByLabel("Assistant picture").setInputFiles({ name: "eva.svg", mimeType: "image/svg+xml", buffer: Buffer.from(svg) });
+  await expect(page.getByRole("button", { name: "Remove" })).toBeVisible();
+  const picture = chat.locator(".head .mark img");
+  await expect(picture).toHaveAttribute("src", /^\/v1\/images\/[0-9a-f]{64}$/);
+  await expect.poll(() => picture.evaluate((image: HTMLImageElement) => image.naturalWidth)).toBe(256);
+  await page.getByLabel("Greeting").fill("Hi, I'm Riverside. Ask me anything.");
   await page.getByLabel("Colour of buttons").fill("#2B241F");
-  await expect(page.getByText("On dark screens this colour gives way to cream, so the buttons stay visible.")).toBeVisible();
+  await expect(page.getByText("On dark screens this colour gives way to a light grey, so the buttons stay visible.")).toBeVisible();
   await page.getByLabel("Colour of buttons").fill("#5B2A86");
   await expect(page.getByText("Text on it: white, 9.9 : 1")).toBeVisible();
-  const pill = chat.getByRole("button", { name: "Where do I park?" });
-  await expect.poll(() => pill.evaluate((button) => getComputedStyle(button).backgroundColor)).toBe("rgb(91, 42, 134)");
+  const send = chat.getByRole("button", { name: "Send" }); // the brand colour is on what visitors press
+  await expect.poll(() => send.evaluate((button) => getComputedStyle(button).backgroundColor)).toBe("rgb(91, 42, 134)");
+
+  await expect(chat.getByRole("button", { name: "Attach files" })).toHaveCount(0);
+  await page.getByLabel(/Visitors can attach files/).check(); // the paperclip appears in the preview, sending nothing
+  await expect(chat.getByRole("button", { name: "Attach files" })).toBeDisabled();
+
+  // Voice (M11): languages open onto their regions, each ticked on its own; the default is chosen from those ticked.
+  await page.getByLabel(/Visitors can speak their questions/).check();
+  const languages = page.locator("details.languages");
+  await languages.locator("> summary").click(); // the languages field, opening
+  const language = (name: string) => languages.locator("details > summary", { hasText: new RegExp(`^${name}`) });
+  await language("English").click(); // a language, opening onto its regions
+  await expect(page.getByRole("checkbox", { name: "English (United Kingdom)" })).toBeDisabled(); // the only one stays
+  await page.getByRole("checkbox", { name: "English (United States)" }).check();
+  await language("Hindi").click();
+  await page.getByRole("checkbox", { name: "Hindi (India)" }).check();
+  await expect(page.getByText("English (United Kingdom) and 2 more")).toBeVisible();
+  await page.getByLabel("Default language").selectOption("hi-IN");
+  await page.getByRole("radio", { name: /Also on the browser maker.s servers/ }).check();
+  if (info.project.name === "chromium") await page.screenshot({ path: test.info().outputPath("voice-settings.png"), fullPage: true });
 
   await page.getByRole("radio", { name: "Dark" }).check();
   await expect.poll(() => chat.locator("html").getAttribute("data-scheme")).toBe("dark");
   await page.getByRole("button", { name: "Save" }).click();
   await expect(page.getByText("Saved. Visitors see it once you publish.")).toBeVisible();
   await expect(page.getByRole("link", { name: /Ask the Riverside desk/ })).toBeVisible();
+  const saved = (await api("GET", `/widgets/${widget}/draft`)) as { document: { public: Record<string, unknown> } };
+  expect(saved.document.public).toMatchObject({ voice_enabled: true, voice_languages: ["hi-IN", "en-GB", "en-US"], browser_speech: "allowed" });
   expect(await serious(page)).toEqual([]);
   await page.getByRole("button", { name: "Continue to Install" }).click();
   await expect(page).toHaveURL(`${CONSOLE}/widgets/${widget}/install`);
   await expect(page.getByRole("heading", { level: 2, name: "Install" })).toBeFocused();
+  // With voice on, a site that limits the microphone is told what to allow (M11-T5).
+  await expect(page.getByRole("heading", { name: "If your site limits the microphone" })).toBeVisible();
+  await expect(page.getByText(/^Permissions-Policy: microphone=\(self "http/)).toBeVisible();
 });
 
 // Install (M9-T5): the code to add, filled in for the widget, and a check of a page of the customer's site.
@@ -338,6 +376,7 @@ test("a new administrator onboards a widget from the console alone, and a visito
   const started = Date.now();
 
   await signIn(page, "/", newcomer);
+  await page.getByRole("button", { name: "Account" }).click();
   await expect(page.getByText(`${newcomer} · administrator`)).toBeVisible();
   await page.getByRole("link", { name: "New widget" }).click();
   await page.getByLabel("Title visitors will see").fill(`Ask Riverside ${run.slice(-4)}`);
@@ -503,7 +542,7 @@ test("an organisation is made in the console; its widget and then the organisati
   await expect(page.getByText("To delete this organisation, first delete its widget, each from its Go live step.")).toBeVisible();
   await expect(page.getByRole("button", { name: "Delete the organisation" })).toHaveCount(0);
 
-  await page.getByRole("link", { name: new RegExp(`Ask ${name}`) }).click();
+  await page.getByRole("navigation", { name: "Widgets" }).getByRole("link", { name: new RegExp(`Ask ${name}`) }).click();
   await page.getByRole("button", { name: /Go live/ }).click();
   await page.getByRole("button", { name: "Delete the widget" }).click();
   const confirm = page.getByRole("button", { name: `Yes, delete “Ask ${name}”` });
@@ -524,4 +563,62 @@ test("an organisation is made in the console; its widget and then the organisati
   await expect(page.getByRole("option", { name })).toHaveCount(0);
   const kept = (await api("GET", "/tenants")) as { tenant_id: string }[];
   expect(kept.map((one) => one.tenant_id)).not.toContain(tenant);
+});
+
+test("home shows where things stand: the figures, an organisation's widgets, and every organisation by state", async ({ page }) => {
+  await signIn(page, "/", await platformAdministrator(page, "overview"));
+  await expect(page.getByRole("link", { name: "Home" })).toHaveAttribute("aria-current", "page");
+  await expect(page.getByLabel("At a glance")).toContainText("Organisations");
+
+  const organisations = page.locator(".panel", { has: page.getByRole("heading", { name: "Organisations" }) });
+  await expect(organisations.getByRole("link", { name: "New organisation" })).toBeVisible();
+  await page.getByRole("combobox", { name: "Organisation" }).selectOption({ label: "t_e2e" }); // the open one always shows
+  await expect(page.getByRole("heading", { level: 1, name: "t_e2e" })).toBeVisible();
+  await expect(organisations.getByRole("button", { name: /^t_e2e/ })).toHaveAttribute("aria-current", "true");
+  await expect(organisations.getByRole("button", { name: /^t_e2e/ })).toContainText(/\d+ live/);
+  const widgets = page.locator(".panel", { has: page.getByRole("heading", { name: "Widgets in t_e2e" }) });
+  await widgets.getByRole("link", { name: /Ask the College/ }).click();
+  await expect(page.getByRole("heading", { level: 1, name: "Ask the College" })).toBeVisible();
+  await page.getByRole("link", { name: "UCP Console" }).click(); // the name in the bar goes home too
+  await expect(page.getByRole("heading", { level: 1, name: "t_e2e" })).toBeVisible();
+  expect(await serious(page)).toEqual([]);
+});
+
+// Feedback (M10): a visitor's rating and comment, read under the widget's own Feedback tab.
+test("a visitor's rating and comment show under the widget's Feedback, with the question it was about", async ({
+  page,
+  browser,
+}, info) => {
+  const comment = `It left out the opening hours (${info.project.name} ${Date.now().toString(36)})`;
+  const visitor = await browser.newPage();
+  await visitor.goto("http://127.0.0.1:4174/hosts/gateway.html");
+  await visitor.getByRole("button", { name: "Ask the College" }).click();
+  const chat = visitor.frameLocator("[data-ucp] iframe");
+  const field = chat.getByRole("textbox", { name: "Your question" });
+  await field.fill("When is the gym open?");
+  await field.press("Enter");
+  await chat.getByRole("button", { name: "Not helpful" }).click({ timeout: 20_000 });
+  await chat.getByRole("textbox", { name: "What could be better?" }).fill(comment);
+  await chat.getByRole("button", { name: "Send feedback" }).click();
+  await expect(chat.getByRole("article").getByText("Thanks for your feedback.")).toBeVisible();
+  await visitor.close();
+
+  await signIn(page, "/widgets/w_gateway/feedback", await platformAdministrator(page, "reader"));
+  await expect(page.getByRole("heading", { level: 2, name: "Feedback" })).toBeVisible();
+  await expect(page.getByRole("navigation", { name: "This widget" }).getByRole("link", { name: "Feedback" })).toHaveAttribute(
+    "aria-current",
+    "page",
+  );
+  const entry = page.getByRole("listitem").filter({ hasText: comment });
+  await expect(entry).toContainText("Not helpful");
+  await expect(entry).toContainText("Public visitor");
+  await expect(entry).toContainText("When is the gym open?");
+  await entry.getByText("Show the answer").click();
+  await expect(entry.locator(".answer")).toBeVisible();
+  expect(await serious(page)).toEqual([]);
+
+  await page.getByRole("group", { name: "Show" }).getByRole("button", { name: "Helpful", exact: true }).click();
+  await expect(page.getByText(comment)).toHaveCount(0); // only the helpful ones now
+  await page.getByRole("navigation", { name: "This widget" }).getByRole("link", { name: "Set up" }).click();
+  await expect(page).toHaveURL(`${CONSOLE}/widgets/w_gateway`);
 });

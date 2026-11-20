@@ -36,7 +36,13 @@ test("a resident's chat comes back on their next visit, reopens exactly as it wa
   const user = resident("returning");
   let chat = await open(page, user);
   await ask(chat, "How does HTTPS work? [long]");
-  const streamed = await chat.getByRole("article").first().innerHTML();
+  // The answer as drawn, once its sequence diagram has loaded in place of its code. React numbers the ids that tie a
+  // drawing to its description by the order things mount, which a reopened chat need not repeat; all else must match.
+  const drawn = async () => {
+    await expect(chat.getByRole("article").first().locator("figure.diagram svg[role=img]")).toHaveCount(1);
+    return (await chat.getByRole("article").first().innerHTML()).replace(/_r_[0-9a-z]+_/g, "_r_");
+  };
+  const streamed = await drawn();
 
   await page.reload(); // a new visit: a new session, signed by the portal for the same resident
   chat = await open(page, user);
@@ -44,12 +50,12 @@ test("a resident's chat comes back on their next visit, reopens exactly as it wa
   await chat.getByRole("button", { name: /How does HTTPS work\?/ }).click();
 
   await expect(chat.getByRole("heading", { name: "How HTTPS Works" })).toBeVisible();
-  expect(await chat.getByRole("article").first().innerHTML()).toBe(streamed); // drawn from storage as it streamed
+  expect(await drawn()).toBe(streamed); // drawn from storage as it streamed
   await ask(chat, "Thank you. And HTTP/2?");
   await expect(chat.getByRole("article")).toHaveCount(2);
 
   await chat.getByRole("button", { name: "Your chats" }).click();
-  const rows = chat.getByRole("navigation", { name: "Your chats" }).getByRole("listitem");
+  const rows = chat.getByRole("navigation", { name: "Your chats" }).locator(".chats > li");
   await expect(rows).toHaveCount(1); // the follow-up went into the same chat
   await expect(rows.getByRole("button")).toHaveAttribute("aria-current", "true");
 });

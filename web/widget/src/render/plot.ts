@@ -71,7 +71,7 @@ export function chartOf(code: string): Chart | null {
 }
 
 /** Slices largest first; past eight, the smallest fold into one "Other". No negative slices, and not all empty. */
-function pieOf(chart: Chart): Chart | null {
+export function pieOf(chart: Chart): Chart | null {
   const slices = chart.xs.map((x, i) => [x, chart.values[0]?.[i] ?? 0] as [string | number, number]);
   if (slices.some(([, value]) => value < 0) || !slices.some(([, value]) => value > 0)) return null;
   slices.sort((a, b) => b[1] - a[1]);

@@ -55,6 +55,10 @@ async def test_the_config_is_exactly_the_public_settings_readable_from_any_site(
 
     assert response.status_code == 200
     assert WidgetConfig.model_validate_json(response.content).model_dump(mode="json") == {
+        "attachments_enabled": False,  # off unless the widget switches it on (R11)
+        "voice_enabled": False,  # likewise
+        "voice_languages": ["en-GB"],
+        "browser_speech": "on_device",  # the browser's recogniser only where no audio leaves the device
         **EXAMPLE,
         "widget_id": widget_id,
     }
@@ -81,7 +85,7 @@ async def test_the_chat_page_may_be_framed_only_by_the_widgets_sites_and_loads_o
     assert f'<html data-scheme="{PUBLIC["color_scheme"]}" lang="en">' in response.text  # painted in it from the start
     assert response.headers["content-security-policy"] == (
         "default-src 'none'; script-src 'self'; style-src 'self'; font-src 'self'; connect-src 'self'; "
-        "img-src 'self' https://example.org; base-uri 'none'; form-action 'none'; "
+        "img-src 'self' blob: https://example.org; base-uri 'none'; form-action 'none'; "
         "frame-ancestors https://www.example.org https://*.example.ac.uk"
     )
 

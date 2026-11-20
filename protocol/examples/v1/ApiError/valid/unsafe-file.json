@@ -1,0 +1,7 @@
+{
+  "code": "unsafe_file",
+  "message": "This file was refused: the virus scan found something harmful in it.",
+  "retryable": false,
+  "retry_after": null,
+  "reference": "r_Qw3Ls9Vb"
+}

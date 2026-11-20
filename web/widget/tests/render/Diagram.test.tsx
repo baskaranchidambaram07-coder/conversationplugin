@@ -60,7 +60,7 @@ test("nothing in a diagram can fetch, link or run: colours are plain, labels are
   const svg = container.querySelector("svg[role=img]")!;
   expect(svg.querySelector("rect")?.getAttribute("fill")).toBe("#ffffff");
   expect(svg.querySelector("rect")?.getAttribute("stroke")).toBe("red");
-  expect(svg.querySelector("text")?.getAttribute("fill")).toBe("#2b241f");
+  expect(svg.querySelector("text")?.getAttribute("fill")).toBe("#1f1e1d");
   expect([...svg.querySelectorAll("tspan")].map((t) => t.textContent)).toEqual(["Hello", "there"]);
   expect(container.querySelector("img, a, image, foreignObject, script, [href], [onerror]")).toBeNull();
 });
@@ -109,7 +109,7 @@ test("a Mermaid flowchart is drawn once its fence has closed, and copied to open
 
 test.each([
   ["a flowchart still arriving, its fence not closed", "Here it is:\n\n```mermaid\nflowchart TB\n  A --> B\n"],
-  ["a sequence diagram", "```mermaid\nsequenceDiagram\n  A->>B: Hi\n```"],
+  ["a class diagram", "```mermaid\nclassDiagram\n  Animal <|-- Duck\n```"],
   ["a flowchart that does not read", "```mermaid\nflowchart TB\n```"],
 ])("%s is shown as code", async (_, text) => {
   const { container } = render(<Markdown text={text} />);

@@ -59,7 +59,8 @@ def public_url(setting: str = "UCP_PUBLIC_ORIGIN") -> str:
     the hosted samples' (UCP_SAMPLES_ORIGIN) or the console's (UCP_ADMIN_ORIGINS). All are CloudFront's, and change
     only when the environment is rebuilt."""
     containers = aws("ecs", "describe-task-definition", "--task-definition", FAMILY)["taskDefinition"]
-    environment = [item for container in containers["containerDefinitions"] for item in container["environment"]]
+    # The scanner has no settings of its own, so its container may carry no environment at all.
+    environment = [item for one in containers["containerDefinitions"] for item in one.get("environment", [])]
     return next(item["value"] for item in environment if item["name"] == setting)
 
 
@@ -70,7 +71,8 @@ def release(image_tag: str | None) -> str:
     repository = aws("ecr", "describe-repositories", "--repository-names", REPOSITORY)["repositories"][0]
     spec = {key: current[key] for key in KEEP if key in current}
     for container in spec["containerDefinitions"]:
-        container["image"] = f"{repository['repositoryUri']}:{image_tag}"
+        if container["name"] != "scanner":  # ClamAV keeps its own pinned image (stack/variables.tf, scanner_image)
+            container["image"] = f"{repository['repositoryUri']}:{image_tag}"
     return aws("ecs", "register-task-definition", "--cli-input-json", json.dumps(spec))["taskDefinition"][
         "taskDefinitionArn"
     ]

@@ -67,8 +67,9 @@ def hand_signed(key: bytes) -> str:
 
 REFUSED = {
     "expired": lambda: host_token(iat=now - 400, exp=now - LEEWAY - 2),
-    "not yet valid": lambda: host_token(nbf=now + LEEWAY + 30),
-    "signed in the future": lambda: host_token(iat=now + LEEWAY + 30, exp=now + LEEWAY + 300),
+    # Read the clock when the test runs, not when the module loads: on a busy machine that is over 30 s later.
+    "not yet valid": lambda: host_token(nbf=int(time.time()) + LEEWAY + 30),
+    "signed in the future": lambda: host_token(iat=int(time.time()) + LEEWAY + 30, exp=int(time.time()) + LEEWAY + 300),
     "wrong audience": lambda: host_token("w_another"),
     "wrong issuer": lambda: host_token(iss="https://evil.example"),
     "bad signature": lambda: host_token(key="x" * 32),

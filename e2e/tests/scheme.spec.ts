@@ -3,33 +3,36 @@ import { expect, type Frame, type Page, test } from "@playwright/test";
 // The widget's colour scheme: auto follows the visitor's system, light and dark are fixed. The chat paints in it from
 // the first frame, the loader's panel matches it, and a diagram keeps its own light sheet.
 const CHAT = "http://localhost:4174/embed";
-const LIGHT = "rgb(251, 243, 234)";
+const LIGHT = "rgb(252, 252, 251)";
 const SHEET = "rgb(255, 255, 255)"; // the diagram's light sheet, as in the light scheme
-const DARK = "rgb(28, 24, 21)";
+const DARK = "rgb(38, 38, 36)";
 
 const ground = (page: Page | Frame) => page.evaluate(() => getComputedStyle(document.body).backgroundColor);
+// The brand colour is on what can be pressed: the send button.
 const pill = (page: Page) =>
   page
-    .getByRole("button", { name: "When does the library open?" })
+    .getByRole("button", { name: "Send" })
     .evaluate((button) => [getComputedStyle(button).backgroundColor, getComputedStyle(button).color]);
 
-test("auto follows the visitor's system, and the brand keeps its colour on the dark ground", async ({ page }) => {
+test("auto follows the visitor's system; a brand that would not stand out on the dark composer gives way", async ({
+  page,
+}) => {
   await page.emulateMedia({ colorScheme: "dark" });
   await page.goto(`${CHAT}/w_chat`);
   expect(await ground(page)).toBe(DARK);
-  expect(await pill(page)).toEqual(["rgb(91, 42, 134)", "rgb(255, 255, 255)"]);
+  expect(await pill(page)).toEqual(["rgb(245, 244, 239)", "rgb(0, 0, 0)"]); // the purple is 1.3:1 there
 
   await page.emulateMedia({ colorScheme: "light" });
   expect(await ground(page)).toBe(LIGHT);
 });
 
-test("dark and light are fixed whatever the system; a near-black brand gives way to cream on the dark ground", async ({
+test("dark and light are fixed whatever the system; a near-black brand gives way to the light ink on the dark ground", async ({
   page,
 }) => {
   await page.emulateMedia({ colorScheme: "light" });
   await page.goto(`${CHAT}/w_dark`);
   expect(await ground(page)).toBe(DARK);
-  expect(await pill(page)).toEqual(["rgb(242, 233, 223)", "rgb(0, 0, 0)"]);
+  expect(await pill(page)).toEqual(["rgb(245, 244, 239)", "rgb(0, 0, 0)"]);
 
   await page.emulateMedia({ colorScheme: "dark" });
   await page.goto(`${CHAT}/w_light`);

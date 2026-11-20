@@ -36,6 +36,7 @@ Status: 12 November 2026. Everything marked "verified" was run on that date, on 
 | Tokens | PyJWT with its cryptography extra | 2.15 | Signs and checks session tokens; checks host tokens, HMAC from a customer's backend or RSA and EC from an identity provider |
 | Identity-provider test | Keycloak (pipeline only, in a container) | 26.0.5 | A real OpenID Connect provider for the sign-in tests |
 | HTTP client for PF | httpx2 | 2.16 | Streams PF's replies; also FastAPI's test client |
+| Speech on AWS (M11) | Amazon Transcribe streaming and Polly neural voices, called with our own Signature Version 4 code over websockets and httpx2 | websockets 17.4 (already a Uvicorn dependency) | No AWS library, as decided on 14 November; the task role's credentials, in the deployment's region (`docs/voice.md`) |
 
 Added when first used: OpenTelemetry for traces and metrics.
 
@@ -46,6 +47,7 @@ The gateway reads its settings from the environment when it starts:
 - `UCP_HOST_SECRETS`: the widgets' shared secrets for host tokens, as JSON `{"name": "id:secret,…"}`.
 - `UCP_SIGNED_IN_SECONDS`: how long a signed-in session lasts before the chat renews it; 900 unless set.
 - `UCP_WEB_DIR`: where the built loader and chat are. The image sets this one.
+- `UCP_SPEECH`: the speech service for voice (M11): `none` (the default: the browser's own engines), `fake` (tests) or `aws`. `UCP_SPEECH_REGION`: AWS's region for it, `us-east-1` unless set.
 
 ## 3. Web
 
@@ -65,6 +67,9 @@ The gateway reads its settings from the environment when it starts:
 | Schema checks in tests | Ajv with ajv-formats | 8.20 / 3.0 | Checks the shared example files against the schema, so the TypeScript side reaches the same verdict as the Python models |
 
 | Answer Markdown | react-markdown with remark-gfm | 10.1 / 4.0 | Raw HTML is skipped rather than sanitised, so nothing in an answer is ever parsed as HTML; loaded only when the first answer arrives |
+| Code highlighting | lowlight with highlight.js grammars | 3.3.0 / 11.11.2 | Tokens come back as a tree and become React spans with classes; 25 languages; loaded only when an answer holds code in one |
+| Maths | temml | 0.14.0 | TeX to MathML, which browsers lay out themselves; its output is rebuilt from an allow-list of MathML elements and attributes, so no inline style or link reaches the page; loaded only when an answer holds a formula |
+| Voice in the chat (M11) | The browser's own speech recognition and voices (Web Speech API), an AudioWorklet of our own for the microphone, Web Audio for playback | the browsers' own | Nothing to install; all of it loads on the first press of a voice button (about 5 KB) |
 
 Added when first used: Recharts, Mermaid, Radix primitives.
 
@@ -103,7 +108,7 @@ Region `us-east-1`, built with Terraform 1.17.2. Every resource name starts with
 | VPC across two zones, with public and private subnets and security groups | The gateway in a public subnet with no NAT (your choice for dev), reachable only from the load balancer; the database private, with no route out |
 | CloudFront | HTTPS on an address AWS provides; caches the chat's files; stays while asleep and answers that the environment is asleep. The admin console has an address of its own |
 | Application load balancer | Only CloudFront's addresses with its secret header get in; holds long streamed replies open; removed while asleep |
-| ECS on Fargate | The gateway, one task of 1 vCPU and 2 GB; it serves the loader and the chat as well as the API. The admin API and console run beside it in the same task. Removed while asleep |
+| ECS on Fargate | The gateway, one task of 1 vCPU and 6 GB (ClamAV, which scans attachments, runs beside it); it serves the loader and the chat as well as the API. The admin API and console run beside it in the same task. Removed while asleep |
 | Cognito | The console's administrators: a user pool with no self sign-up and an authenticator app required, on Cognito's own sign-in pages |
 | RDS for PostgreSQL 17 | Conversation history and configuration; encrypted, seven days of point-in-time backups; stopped while asleep |
 | ECR | The gateway's images, scanned on push, commit tags fixed |

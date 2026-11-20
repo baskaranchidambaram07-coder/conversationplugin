@@ -12,16 +12,19 @@ What PF does that shapes this code:
 import asyncio
 import json
 import time
+from collections.abc import Sequence
 
 import httpx2
 from pydantic import BaseModel, ConfigDict, SecretStr
 
-from ucp.connector import Accepted, AgentError, AgentEvent, Failed, Final, Text
+from ucp.connector import Accepted, AgentError, AgentEvent, AgentFile, Failed, Final, Text
 from ucp.gateway.pipeline import correlation
 
 API = "/magicplatform/v1/genai/conversation"
 REFRESH_EARLY = 300  # log in again this many seconds before PF's stated expiry
 LOGIN_PAUSE = 300  # after PF refuses the credentials, try them again only this long after: repeats lock the account
+FILE_SECONDS = 90  # PF read a file in 4 to 9 s on staging; this long, and the turn fails
+SUMMARY_GRACE = 20  # a processed file still without a summary this long after is asked about anyway
 
 
 class PfProfile(BaseModel):
@@ -73,11 +76,19 @@ def _event(line: str) -> AgentEvent | None:
 
 class PfConnector:
     def __init__(
-        self, profile: PfProfile, client: httpx2.AsyncClient, *, recover_seconds: float = 120, poll_seconds: float = 2
+        self,
+        profile: PfProfile,
+        client: httpx2.AsyncClient,
+        *,
+        recover_seconds: float = 120,
+        poll_seconds: float = 2,
+        file_seconds: float = FILE_SECONDS,
+        file_poll_seconds: float = 1,
     ):
         self.profile, self.client = profile, client
         self.version = profile.agent_version_id
         self.recover_seconds, self.poll_seconds = recover_seconds, poll_seconds
+        self.file_seconds, self.file_poll_seconds = file_seconds, file_poll_seconds
         self._token: str | None = None
         self._expires = 0.0
         self._refused_until = 0.0
@@ -120,13 +131,14 @@ class PfConnector:
             "x-request-id": correlation.get(),  # our reference, so one question can be followed into PF's logs
         }
 
-    async def _call(self, method: str, path: str, body: dict | None = None) -> httpx2.Response:
-        """A plain call, logging in again once if PF refuses the token."""
+    async def _call(self, method: str, path: str, body: dict | None = None, **raw) -> httpx2.Response:
+        """A plain call, logging in again once if PF refuses the token. `raw` passes params, or a multipart body
+        (files and data), instead of a JSON one."""
         token = await self._login()
         for attempt in (1, 2):
             try:
                 reply = await self.client.request(
-                    method, f"{self.profile.base_url}{path}", json=body, headers=self._headers(token)
+                    method, f"{self.profile.base_url}{path}", json=body, headers=self._headers(token), **raw
                 )
             except httpx2.HTTPError as error:
                 raise AgentError("assistant_unavailable", True, f"{method} {path}: {type(error).__name__}") from error
@@ -151,8 +163,65 @@ class PfConnector:
         except (ValueError, KeyError, TypeError) as error:
             raise AgentError("assistant_unavailable", False, "create: unexpected reply") from error
 
-    async def send(self, conversation_id: str, text: str):
+    async def _upload(self, conversation_id: str, file: AgentFile) -> str:
+        """Puts one file into the conversation, where PF's agent finds it by itself: a question never names it (PF
+        refuses `ref_file_ids`). Returns PF's ID for it (pf-capability-sheet.md section 4a)."""
+        reply = await self._call(
+            "POST",
+            f"{API}/fileupload",
+            params={"conversation_id": conversation_id},
+            files={"files": (file.name, file.data, file.content_type)},
+            data={"doc_source": "UPLOAD"},
+        )
+        if reply.status_code >= 300:
+            failure = _failure(reply.status_code, "upload")
+            raise AgentError(failure.code, failure.retryable, failure.detail)
+        try:
+            return str(reply.json()[0]["file_id"])
+        except (ValueError, KeyError, TypeError, IndexError) as error:
+            raise AgentError("assistant_unavailable", False, "upload: unexpected reply") from error
+
+    async def _read(self, conversation_id: str, file_ids: list[str]) -> None:
+        """Waits until PF has read every file: processed, then summarised. Its agent finds a file's text only once the
+        summary exists; asked at FILE_PROCESS_SUCCESS alone, it could not (seen on staging, 18 November 2026). A file PF
+        cannot read, or files not read in time, fail the turn; asking again would not help."""
+        deadline = time.monotonic() + self.file_seconds
+        processed: dict[str, float] = {}  # when each file was first seen processed
+        while True:
+            reply = await self._call("GET", f"{API}/details/{conversation_id}")
+            if reply.status_code >= 300:
+                failure = _failure(reply.status_code, "file details")
+                raise AgentError(failure.code, False, failure.detail)
+            try:
+                found = {item["file_id"]: item for item in reply.json().get("file_details") or []}
+            except (ValueError, KeyError, TypeError, AttributeError) as error:
+                raise AgentError("assistant_unavailable", False, "file details: unexpected reply") from error
+            waiting = False
+            for file_id in file_ids:
+                item = found.get(file_id, {})
+                status = str(item.get("file_status", ""))
+                if "FAIL" in status or "ERROR" in status:  # shortcut: PF's failure names are unknown; any such word
+                    raise AgentError("assistant_unavailable", False, f"PF could not read a file: {status}")
+                if "PROCESS_SUCCESS" in status:
+                    since = processed.setdefault(file_id, time.monotonic())
+                    if item.get("summary") or time.monotonic() - since > SUMMARY_GRACE:
+                        continue
+                waiting = True
+            if not waiting:
+                return
+            if time.monotonic() > deadline:
+                raise AgentError("assistant_unavailable", False, f"files not read within {self.file_seconds:.0f} s")
+            await asyncio.sleep(self.file_poll_seconds)
+
+    async def send(self, conversation_id: str, text: str, files: Sequence[AgentFile] = ()):
         accepted: Accepted | None = None
+        try:
+            file_ids = [await self._upload(conversation_id, file) for file in files]
+            if file_ids:
+                await self._read(conversation_id, file_ids)
+        except AgentError as error:
+            yield Failed(error.code, error.retryable, error.detail)  # PF never had the question: asking again is safe
+            return
         try:
             async for event in self._stream(conversation_id, text):
                 yield event

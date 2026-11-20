@@ -1,15 +1,19 @@
 // The admin console (M9): sign in with the company identity provider, choose the organisation, and take each
 // widget along its track to go-live (the direction contract in .impeccable/surfaces/web-console.md).
-import { type ReactNode, useCallback, useEffect, useId, useState } from "react";
+import { type ReactNode, useCallback, useEffect, useId, useRef, useState } from "react";
 
 import { ApiProblem, call } from "./api";
 import { AgentEditor, Faults, SignInEditor, SitesEditor } from "./editors";
 import { GoLive } from "./golive";
 import { Install } from "./install";
 import { type Look, LookEditor, Preview } from "./look";
+import { FeedbackView } from "./feedback";
 import { Deletion, NewOrganisation } from "./organisations";
 import { begin, finish, type Provider, signOut, token } from "./signIn";
 import { strings as t } from "./strings";
+import { applyTheme, storedTheme, type Theme } from "./theme";
+import { Home } from "./home";
+import { Glyph, go, ICON, onRoute } from "./ui";
 import { type Station, type StationId, stations, timeLeft } from "./track";
 
 type Me = { subject: string; role: "platform" | "tenant" | "viewer"; tenant_id: string | null; gateway: string | null };
@@ -17,7 +21,7 @@ type Tenant = { tenant_id: string; name: string };
 type Row = { widget_id: string; title: string; version: number | null; unpublished: boolean };
 export type WidgetDocument = {
   tenant_id: string;
-  public: { title?: string; welcome_message?: string | null; suggested_prompts?: string[]; brand_color?: string };
+  public: { title?: string; welcome_message?: string | null; suggested_prompts?: string[]; brand_color?: string; voice_enabled?: boolean };
   allowed_domains: string[];
   sign_in: "anonymous" | "signed_in" | "both";
   agent_profile: string;
@@ -29,16 +33,86 @@ const TENANT = "ucp-console-tenant"; // a platform administrator's last organisa
 const CHECK = "M5 12.5l4.5 4.5L19 7.5";
 const PLUS = "M12 5v14M5 12h14";
 
-export function go(to: string) {
-  history.pushState(null, "", to);
-  dispatchEvent(new PopStateEvent("popstate"));
+const THEMES: Record<Theme, string> = {
+  system: "M4 5h16v11H4zM8 20h8M12 16v4",
+  light: "M12 3v1.5M12 19.5V21M4.6 4.6l1.1 1.1M18.3 18.3l1.1 1.1M3 12h1.5M19.5 12H21M4.6 19.4l1.1-1.1M18.3 5.7l1.1-1.1M12 8a4 4 0 1 0 0 8 4 4 0 0 0 0-8z",
+  dark: "M20 14.5A8 8 0 0 1 9.5 4a8 8 0 1 0 10.5 10.5z",
+};
+
+/** Who is signed in, behind a round button at the end of the top bar: their name and role, and Sign out. */
+function Profile({ me, onSignOut }: { me: Me; onSignOut: () => void }) {
+  const [open, setOpen] = useState(false);
+  const panel = useId();
+  const box = useRef<HTMLDivElement>(null);
+  const button = useRef<HTMLButtonElement>(null);
+
+  useEffect(() => {
+    if (!open) return;
+    const away = (event: Event) => box.current?.contains(event.target as Node) || setOpen(false);
+    const escape = (event: KeyboardEvent) => {
+      if (event.key !== "Escape") return;
+      setOpen(false);
+      button.current?.focus();
+    };
+    addEventListener("pointerdown", away);
+    addEventListener("focusin", away);
+    addEventListener("keydown", escape);
+    return () => {
+      removeEventListener("pointerdown", away);
+      removeEventListener("focusin", away);
+      removeEventListener("keydown", escape);
+    };
+  }, [open]);
+
+  return (
+    <div className="profile" ref={box}>
+      <button
+        type="button"
+        ref={button}
+        className="avatar"
+        aria-label={t.account}
+        aria-expanded={open}
+        aria-controls={panel}
+        title={me.subject}
+        onClick={() => setOpen(!open)}
+      >
+        <Glyph path={ICON.person} />
+      </button>
+      <div className="menu" id={panel} hidden={!open}>
+        <p className="who">
+          {me.subject} · {t.role[me.role]}
+        </p>
+        <button type="button" className="secondary" onClick={onSignOut}>
+          <Glyph path={ICON.out} />
+          {t.signOut}
+        </button>
+      </div>
+    </div>
+  );
 }
 
-function Glyph({ path }: { path: string }) {
+/** System, Light or Dark, in the top bar. */
+function ThemeSwitch() {
+  const [theme, setTheme] = useState(storedTheme);
   return (
-    <svg className="glyph" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-      <path d={path} />
-    </svg>
+    <div className="theme" role="group" aria-label={t.theme}>
+      {(Object.keys(THEMES) as Theme[]).map((one) => (
+        <button
+          key={one}
+          type="button"
+          className="quiet"
+          aria-pressed={theme === one}
+          aria-label={t.themes[one]}
+          title={t.themes[one]}
+          onClick={() => {
+            setTheme(one);
+            applyTheme(one, true);
+          }}
+        >
+          <Glyph path={THEMES[one]} />
+        </button>
+      ))}
+    </div>
   );
 }
 
@@ -206,9 +280,9 @@ function Console({ me, route, onEnded }: { me: Me; route: string; onEnded: () =>
   return (
     <>
       <header className="top">
-        <p className="mark">
+        <a className="mark" href="/" onClick={onRoute("/")}>
           {t.product} <span>{t.console}</span>
-        </p>
+        </a>
         <div className="tenant">
           <span className="hidden">{t.organisation}</span>
           {me.role === "platform" && tenants && tenants.length > 1 ? (
@@ -229,39 +303,22 @@ function Console({ me, route, onEnded }: { me: Me; route: string; onEnded: () =>
           ) : (
             <output aria-label={t.organisation}>{tenants?.find((one) => one.tenant_id === tenant)?.name ?? ""}</output>
           )}
-          {me.role === "platform" && (
-            <a
-              className="quiet"
-              href="/organisations/new"
-              aria-current={route === "/organisations/new" ? "page" : undefined}
-              onClick={(event) => {
-                event.preventDefault();
-                go("/organisations/new");
-              }}
-            >
-              <Glyph path={PLUS} />
-              {t.newOrganisation}
-            </a>
-          )}
         </div>
-        <p className="who">
-          <span>
-            {me.subject} · {t.role[me.role]}
-          </span>
-          <button
-            type="button"
-            className="quiet"
-            onClick={() => {
-              signOut();
-              onEnded();
-            }}
-          >
-            {t.signOut}
-          </button>
-        </p>
+        <ThemeSwitch />
+        <Profile
+          me={me}
+          onSignOut={() => {
+            signOut();
+            onEnded();
+          }}
+        />
       </header>
       <div className="shell">
         <nav className="column" aria-label={t.widgets}>
+          <a className="home-link" href="/" aria-current={route === "/" ? "page" : undefined} onClick={onRoute("/")}>
+            <Glyph path={ICON.home} />
+            {t.home}
+          </a>
           <h2>{t.widgets}</h2>
           {rows && (
             <ul>
@@ -276,7 +333,7 @@ function Console({ me, route, onEnded }: { me: Me; route: string; onEnded: () =>
                     }}
                   >
                     <b>{one.title}</b>
-                    <small>{standing(one)}</small>
+                    <small className={one.version === null ? undefined : one.unpublished ? "warn" : "good"}>{standing(one)}</small>
                   </a>
                 </li>
               ))}
@@ -349,10 +406,15 @@ function Console({ me, route, onEnded }: { me: Me; route: string; onEnded: () =>
               onProblem={guard}
             />
           ) : (
-            <div className="empty">
-              <h1>{tenants.find((one) => one.tenant_id === tenant)?.name}</h1>
-              <p className="sub">{t.organisationFacts(rows.length, tenant)}</p>
-              <p className="note">{rows.length ? t.chooseWidget : `${t.noWidgets} ${t.firstWidget}`}</p>
+            <Home
+              platform={me.role === "platform"}
+              canEdit={me.role !== "viewer"}
+              tenants={tenants}
+              tenant={tenant}
+              rows={rows}
+              onChoose={choose}
+              onProblem={guard}
+            >
               <output aria-live="polite" className="note">
                 {notice}
               </output>
@@ -377,7 +439,7 @@ function Console({ me, route, onEnded }: { me: Me; route: string; onEnded: () =>
                     onProblem={guard}
                   />
                 ))}
-            </div>
+            </Home>
           )}
         </main>
       </div>
@@ -401,7 +463,6 @@ function Track(props: {
   const { track, shown, sign, reachable, onOpen } = props;
   return (
     <section className="journey" aria-label={t.track}>
-      <p className="sign">{sign}</p>
       <ol className="track">
         {track.map((one, index) => (
           <li key={one.id} className={`station ${one.state}`}>
@@ -415,12 +476,16 @@ function Track(props: {
             >
               <span className="dot">{one.state === "done" ? <Glyph path={CHECK} /> : index + 1}</span>
               <span className="name">{t.station[one.id]}</span>
-              <small>{one.state === "done" ? t.done : t.minutes(one.minutes)}</small>
+              <small>
+                {t.minutes(one.minutes)}
+                {one.state === "done" && ` · ${t.done}`}
+              </small>
               {one.id === shown && <span className="hidden">{t.openNow}</span>}
             </button>
           </li>
         ))}
       </ol>
+      <p className={track.every((one) => one.state === "done") ? "sign live" : "sign"}>{sign}</p>
     </section>
   );
 }
@@ -452,6 +517,7 @@ function StationEditor(props: {
     return (
       <LookEditor
         value={document.public as Look}
+        tenant={tenant}
         signedIn={document.sign_in !== "anonymous"}
         onChange={(look) => onChange({ ...document, public: look })}
         readOnly={readOnly}
@@ -565,16 +631,43 @@ function Widget(props: {
     }
   }
 
+  const feedback = (open as string) === "feedback";
+  const views = (
+    <nav className="views" aria-label={t.widgetViews}>
+      {[
+        { label: t.setUp, href: `/widgets/${row.widget_id}`, current: !feedback },
+        { label: t.feedback, href: `/widgets/${row.widget_id}/feedback`, current: feedback },
+      ].map(({ label, href, current }) => (
+        <a key={href} href={href} aria-current={current ? "page" : undefined} onClick={onRoute(href)}>
+          {label}
+        </a>
+      ))}
+    </nav>
+  );
+  if (feedback) {
+    return (
+      <>
+        <h1>{row.title}</h1>
+        <p className="sub">
+          {t.sites(document.allowed_domains.length)} · {who(document)}
+        </p>
+        {views}
+        <FeedbackView widgetId={row.widget_id} onProblem={onProblem} />
+      </>
+    );
+  }
+
   return (
     <>
       <h1>{row.title}</h1>
       <p className="sub">
         {t.sites(document.allowed_domains.length)} · {who(document)}
       </p>
+      {views}
       <Track
         track={track}
         shown={shown}
-        sign={row.version !== null ? standing(row) : t.timeLeft(left)}
+        sign={row.version !== null ? `${standing(row)} · ${t.setUpIn(track.reduce((sum, one) => sum + one.minutes, 0))}` : t.timeLeft(left)}
         reachable={() => true}
         onOpen={openStation}
       />

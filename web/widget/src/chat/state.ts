@@ -12,6 +12,10 @@ export type Answer = {
   error: ApiError | null;
   /** The correlation ID, shown with any error so support can find the request. */
   reference: string | null;
+  /** The visitor's own rating of this answer, as stored. */
+  feedback: "like" | "dislike" | null;
+  /** The visitor pinned this answer (signed-in visitors). */
+  pinned: boolean;
 };
 
 export const pending = (): Answer => ({
@@ -22,7 +26,13 @@ export const pending = (): Answer => ({
   gap: false,
   error: null,
   reference: null,
+  feedback: null,
+  pinned: false,
 });
+
+/** A block's text, or "" for one without (a file). */
+export const textOf = (block: Block | undefined) =>
+  block && "text" in block && typeof block.text === "string" ? block.text : "";
 
 const settled = (answer: Answer) => ["complete", "failed", "stopped"].includes(answer.status);
 
@@ -48,7 +58,7 @@ export function apply(answer: Answer, event: StreamEvent): Answer {
       const block = blocks[event.index];
       // A delta whose start went missing starts a Markdown block of its own (the gap flag is already set).
       blocks[event.index] =
-        block && typeof block.text === "string"
+        block && "text" in block && typeof block.text === "string"
           ? ({ ...block, text: block.text + event.text } as Block)
           : { type: "markdown", text: event.text };
       return { ...next, blocks };
@@ -57,5 +67,7 @@ export function apply(answer: Answer, event: StreamEvent): Answer {
       return { ...next, status: "complete" };
     case "message.failed":
       return { ...next, status: "failed", error: event.error };
+    case "speech.audio":
+      return next; // played by the voice module, not drawn
   }
 }

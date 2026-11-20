@@ -38,8 +38,10 @@ One hosted widget, white-labelled per customer, that puts a Purple Fabric agent 
 
 ## Brand Commitments
 
-- The widget wears the customer's brand: their title, brand colour and logo, configured per widget. Nothing of ours appears except one small "Powered by Purple Fabric" note inside the open chat. The launcher carries only the customer's colour.
-- The closed launcher is small and out of the way: an icon-only round button with a spoken name, covering as little of the host page as possible.
+- The widget wears the customer's brand: their title, brand colour, logo and the assistant's picture, configured per widget. Nothing of ours appears except one small "Powered by Purple Fabric" note inside the open chat.
+- The closed launcher is small and out of the way: a round button with a spoken name, in the customer's colour or filled with the assistant's picture, covering as little of the host page as possible. A customer may add a short greeting beside it, shown a moment after each page loads until the visitor opens the chat or dismisses it (the loader stores nothing on the visitor's device).
+- The chat follows the familiar AI chat window, with Claude's as the bar (the user's choice, 17 November 2026): answers as plain text beside the assistant's picture, the visitor's words in soft bubbles, one rounded composer, the AI notice under it.
+- The admin console follows the category standard of a professional admin (Stripe Dashboard and Linear as the bar), in a light theme and a Graphite dark theme the administrator chooses (the user's choice, 17 November 2026).
 - Voice: plain and neutral. Short, literal sentences a non-native English reader understands on first read.
 
 ## Evidence on Hand

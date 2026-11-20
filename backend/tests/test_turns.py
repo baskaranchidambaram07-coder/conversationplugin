@@ -61,14 +61,16 @@ def widgets(database_url):
     return ids
 
 
-def settings_for(database_url: str, fake_pf: str) -> Settings:
+def settings_for(database_url: str, fake_pf: str, scanner: str | None = None) -> Settings:
     profiles = {"fake": pf_profile(fake_pf), "nowhere": pf_profile("http://127.0.0.1:9")}
-    return Settings(database_url=database_url, session_keys=KEYS, agent_profiles=json.dumps(profiles))
+    keys = {"session_keys": KEYS, "agent_profiles": json.dumps(profiles), "clamd_address": scanner}
+    return Settings(database_url=database_url, **keys)
 
 
 @pytest.fixture
-def gateway(database_url, fake_pf):
-    with TestClient(create_app(settings_for(database_url, fake_pf)), base_url="https://chat.example.net") as client:
+def gateway(database_url, fake_pf, fake_scanner):
+    app = create_app(settings_for(database_url, fake_pf, fake_scanner))
+    with TestClient(app, base_url="https://chat.example.net") as client:
         yield client
 
 

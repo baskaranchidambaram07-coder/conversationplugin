@@ -7,7 +7,7 @@ import type { WidgetConfig } from "@ucp/protocol/v1";
 export const VERSION = "0.1.0";
 
 const WIDGET_ID = /^[A-Za-z0-9_-]{1,64}$/;
-const INK = "#2b241f"; // the world's ink; also the launcher colour when a configuration has no valid brand colour
+const INK = "#1f1e1d"; // the chat's ink; also the launcher colour when a configuration has no valid brand colour
 
 /** The display settings the loader uses, each checked: a bad value falls back to a default, never into the page. */
 export function settings(config: Partial<WidgetConfig>) {
@@ -23,6 +23,7 @@ export function settings(config: Partial<WidgetConfig>) {
     // An image uploaded through the admin API, named by its SHA-256 and served from our own origin.
     avatar: typeof config.avatar === "string" && /^[0-9a-f]{64}$/.test(config.avatar) ? config.avatar : null,
     greeting: greeting || null,
+    voice: config.voice_enabled === true, // the frame may ask for the microphone only when the widget has voice on
   };
 }
 
@@ -37,9 +38,9 @@ const CSS = `
 .w{color-scheme:light}.dark{color-scheme:dark}.auto{color-scheme:light dark}
 .launcher{all:unset;box-sizing:border-box;position:fixed;z-index:2147483647;bottom:${EDGE};right:${SIDE("right")};
 width:56px;height:56px;border-radius:50%;display:grid;place-items:center;cursor:pointer;
-background:var(--brand);color:var(--ink);box-shadow:0 10px 24px -10px rgba(43,36,31,.55),0 2px 6px -2px rgba(43,36,31,.3);
-transition:transform .4s cubic-bezier(.34,1.56,.64,1),box-shadow .2s ${EASE}}
-@media (hover:hover){.launcher:hover{transform:translateY(-2px);box-shadow:0 14px 30px -10px rgba(43,36,31,.6),0 3px 8px -2px rgba(43,36,31,.32)}}
+background:var(--brand);color:var(--ink);box-shadow:0 10px 24px -10px rgba(0,0,0,.45),0 2px 6px -2px rgba(0,0,0,.25);
+transition:transform .2s ${EASE},box-shadow .2s ${EASE}}
+@media (hover:hover){.launcher:hover{transform:translateY(-2px);box-shadow:0 14px 30px -10px rgba(0,0,0,.5),0 3px 8px -2px rgba(0,0,0,.28)}}
 .launcher:active{transform:scale(.92);transition:transform .08s ease-out}
 .launcher:focus-visible,.greet button:focus-visible{outline:3px solid #fff;outline-offset:2px;box-shadow:0 0 0 7px ${INK}}
 .launcher svg{width:26px;height:26px}
@@ -63,14 +64,14 @@ font:15px/1.4 system-ui,-apple-system,"Segoe UI",sans-serif;animation:greet .4s 
 @keyframes greet{from{opacity:0;transform:translateY(8px)}}
 .panel{box-sizing:border-box;position:fixed;z-index:2147483646;right:${SIDE("right")};bottom:calc(${EDGE} + 72px);
 width:min(400px,calc(100vw - 48px));height:min(640px,calc(100vh - 120px));height:min(640px,calc(100dvh - 120px));
-border-radius:24px;overflow:hidden;background:light-dark(#fbf3ea,#1c1815);border:1px solid light-dark(#e7dacb,#3b332d);
-box-shadow:0 24px 60px -24px rgba(43,36,31,.45),0 8px 20px -12px rgba(43,36,31,.25);
+border-radius:20px;overflow:hidden;background:light-dark(#fcfcfb,#262624);border:1px solid light-dark(#e6e4e0,#3e3e3a);
+box-shadow:0 24px 60px -24px rgba(0,0,0,.4),0 8px 20px -12px rgba(0,0,0,.2);
 visibility:hidden;opacity:0;transform:translateY(12px);
 transition:opacity .2s ${EASE},transform .2s ${EASE},visibility 0s .2s}
 .open .panel{visibility:visible;opacity:1;transform:none;transition-delay:0s}
 /* a quiet loading mark until the chat page has loaded */
 .panel::before{content:"";position:absolute;inset:0;margin:auto;width:28px;height:28px;box-sizing:border-box;
-border-radius:50%;border:3px solid light-dark(#e7dacb,#3b332d);border-top-color:light-dark(#6f625a,#b5a69a)}
+border-radius:50%;border:3px solid light-dark(#e6e4e0,#3e3e3a);border-top-color:light-dark(#6b6a68,#b0aea5)}
 /* it spins only while the chat is open: a closed widget runs nothing on the host page */
 .open .panel::before{animation:spin .9s linear infinite}
 .ready::before{display:none}
@@ -161,7 +162,7 @@ function mount(origin: string, options: MountOptions, win: Window): Widget | und
       place = null;
     }
     if (!place) return say(`✗ no element on the page matches "${target}"`);
-    const { title, color, ink, left, scheme, avatar, greeting } = settings(config);
+    const { title, color, ink, left, scheme, avatar, greeting, voice } = settings(config);
     // Our own element name, so a host page's rules for div and friends miss it; important inline display and
     // height so even `* { all: unset !important }` cannot collapse it.
     host = doc.createElement("ucp-widget");
@@ -236,7 +237,7 @@ function mount(origin: string, options: MountOptions, win: Window): Widget | und
         iframe = doc.createElement("iframe");
         iframe.src = `${origin}/embed/${widgetId}`;
         iframe.title = title;
-        iframe.allow = "clipboard-write";
+        iframe.allow = voice ? "clipboard-write; microphone; on-device-speech-recognition" : "clipboard-write";
         iframe.addEventListener("load", () => panel.classList.add("ready"));
         panel.appendChild(iframe);
         timer = setTimeout(

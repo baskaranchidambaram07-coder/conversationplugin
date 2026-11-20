@@ -5,6 +5,7 @@ from someone else simply is not found. PF's own IDs are kept here and never leav
 """
 
 import secrets
+from collections.abc import Sequence
 from dataclasses import dataclass
 from datetime import datetime, timedelta
 
@@ -26,6 +27,7 @@ from sqlalchemy import (
     func,
     insert,
     select,
+    true,
     tuple_,
     update,
 )
@@ -33,7 +35,8 @@ from sqlalchemy.dialects.postgresql import JSONB, distinct_on
 from sqlalchemy.dialects.postgresql import insert as pg_insert
 from sqlalchemy.ext.asyncio import AsyncEngine
 
-from ucp.protocol import ApiError, Block, Conversation, Message
+from ucp.connector import AgentFile
+from ucp.protocol import ApiError, Block, Conversation, FileBlock, Message, Pin, Project
 
 metadata = MetaData()
 _BLOCK = TypeAdapter(Block)
@@ -130,6 +133,19 @@ images = Table(
     Column("created_by", Text, nullable=False),
 )
 
+# A signed-in visitor's folders of chats (0009). Deleting one leaves its chats, unfiled.
+projects = Table(
+    "projects",
+    metadata,
+    Column("id", Text, primary_key=True),
+    Column("tenant_id", Text, nullable=False),
+    Column("widget_id", Text, nullable=False),
+    Column("user_id", Text, nullable=False),
+    Column("name", Text, nullable=False),
+    *_times(),
+    Index("projects_by_owner", "tenant_id", "widget_id", "user_id"),
+)
+
 conversations = Table(
     "conversations",
     metadata,
@@ -140,7 +156,9 @@ conversations = Table(
     Column("agent_conversation_id", Text),
     Column("title", Text),
     *_times(),
+    Column("project_id", Text, ForeignKey("projects.id", ondelete="SET NULL")),
     Index("conversations_by_owner", "tenant_id", "widget_id", "user_id", "updated_at"),
+    Index("conversations_by_project", "project_id", "updated_at"),
 )
 
 messages = Table(
@@ -165,6 +183,70 @@ messages = Table(
     UniqueConstraint("conversation_id", "client_message_id"),
 )
 
+
+# A visitor's rating of an answer (M4-T10), tied to the answer and the question it answers. A public visitor's row
+# is marked anonymous; its user ID is the throwaway one that already owns the conversation.
+feedback = Table(
+    "feedback",
+    metadata,
+    Column("message_id", Text, ForeignKey("messages.id"), primary_key=True),
+    Column("question_id", Text, ForeignKey("messages.id")),
+    Column("conversation_id", Text, ForeignKey("conversations.id"), nullable=False),
+    Column("tenant_id", Text, nullable=False),
+    Column("widget_id", Text, nullable=False),
+    Column("user_id", Text, nullable=False),
+    Column("user_kind", Text, CheckConstraint("user_kind in ('anonymous', 'signed_in')"), nullable=False),
+    Column("rating", Text, CheckConstraint("rating in ('like', 'dislike')"), nullable=False),
+    Column("comment", Text),
+    *_times(),
+    Index("feedback_by_widget", "tenant_id", "widget_id", "created_at"),
+)
+
+
+# Files visitors attached (M10, 0011), kept with their conversation. A question's blocks name the files sent with it.
+# shortcut: bytes in PostgreSQL, unscanned; S3 behind a malware scan before production (ucp.files).
+files = Table(
+    "files",
+    metadata,
+    Column("id", Text, primary_key=True),
+    Column("conversation_id", Text, ForeignKey("conversations.id"), nullable=False),
+    Column("name", Text, nullable=False),
+    Column("content_type", Text, nullable=False),
+    Column("size", Integer, nullable=False),
+    Column("data", LargeBinary, nullable=False),
+    Column("created_at", DateTime(timezone=True), nullable=False, server_default=func.now()),
+    Index("files_by_conversation", "conversation_id"),
+)
+
+# Answers a signed-in visitor pinned to find again (0010).
+pins = Table(
+    "pins",
+    metadata,
+    Column("message_id", Text, ForeignKey("messages.id"), primary_key=True),
+    Column("conversation_id", Text, ForeignKey("conversations.id"), nullable=False),
+    Column("tenant_id", Text, nullable=False),
+    Column("widget_id", Text, nullable=False),
+    Column("user_id", Text, nullable=False),
+    Column("created_at", DateTime(timezone=True), nullable=False, server_default=func.now()),
+    Index("pins_by_owner", "tenant_id", "widget_id", "user_id", "created_at"),
+)
+
+
+# Voice consents (M11, 0012): a visitor accepted the voice notice, of this version, before their first recording.
+# No audio is ever kept: recognised words become the question, stored as any typed question is.
+voice_consents = Table(
+    "voice_consents",
+    metadata,
+    Column("id", BigInteger, primary_key=True, autoincrement=True),
+    Column("tenant_id", Text, nullable=False),
+    Column("widget_id", Text, nullable=False),
+    Column("user_id", Text, nullable=False),
+    Column("user_kind", Text, CheckConstraint("user_kind in ('anonymous', 'signed_in')"), nullable=False),
+    Column("version", Integer, nullable=False),
+    Column("engine", Text, CheckConstraint("engine in ('service', 'browser', 'device')"), nullable=False),
+    Column("created_at", DateTime(timezone=True), nullable=False, server_default=func.now()),
+    Index("voice_consents_by_owner", "tenant_id", "widget_id", "user_id"),
+)
 
 # A turn takes at most 5 minutes (ucp.turns), so an answer still in progress after 6 was abandoned.
 STALE = timedelta(minutes=6)
@@ -224,15 +306,34 @@ class TurnInProgress(Exception):
     pass
 
 
+class UnknownAttachment(Exception):
+    """A question named a file that is not in its conversation."""
+
+
 def _conversation(row) -> Conversation:
-    return Conversation(id=row.id, title=row.title, created_at=row.created_at, updated_at=row.updated_at)
+    return Conversation(
+        id=row.id, title=row.title, created_at=row.created_at, updated_at=row.updated_at, project_id=row.project_id
+    )
+
+
+def _project(row) -> Project:
+    return Project(id=row.id, name=row.name, created_at=row.created_at, updated_at=row.updated_at)
 
 
 def _message(row) -> Message:
     # Built field by field: PF IDs and the config version stay behind (D15).
     error = ApiError.model_validate(row.error) if row.error else None
     blocks = [_BLOCK.validate_python(block) for block in row.blocks]
-    return Message(id=row.id, role=row.role, status=row.status, blocks=blocks, error=error, created_at=row.created_at)
+    return Message(
+        id=row.id,
+        role=row.role,
+        status=row.status,
+        blocks=blocks,
+        error=error,
+        created_at=row.created_at,
+        feedback=row.rating,
+        pinned=bool(row.pinned),
+    )
 
 
 class Store:
@@ -376,9 +477,12 @@ class Store:
             & (conversations.c.user_id == owner.user_id)
         )
 
-    async def create_conversation(self, owner: Owner) -> Conversation:
-        values = {"id": new_id("c"), **owner.__dict__}
+    async def create_conversation(self, owner: Owner, project_id: str | None = None) -> Conversation | None:
+        """A new chat, filed under one of the owner's projects if named. None if the project is not theirs."""
+        values = {"id": new_id("c"), **owner.__dict__, "project_id": project_id}
         async with self.engine.begin() as db:
+            if project_id and not await self._project_of(db, owner, project_id):
+                return None
             row = (await db.execute(insert(conversations).values(values).returning(conversations))).one()
         return _conversation(row)
 
@@ -388,15 +492,87 @@ class Store:
             row = (await db.execute(query)).first()
         return _conversation(row) if row else None
 
-    async def conversations(self, owner: Owner, before: tuple[datetime, str] | None, limit: int) -> list[Conversation]:
-        """Most recently active first. `before` is the (updated_at, id) of the last one already shown: the ID breaks
-        ties, so two conversations active at the same instant are neither skipped nor shown twice."""
+    async def conversations(
+        self, owner: Owner, before: tuple[datetime, str] | None, limit: int, project_id: str | None = None
+    ) -> list[Conversation]:
+        """Most recently active first, of one project if named. `before` is the (updated_at, id) of the last one
+        already shown: the ID breaks ties, so two conversations active at the same instant are neither skipped nor
+        shown twice."""
         query = select(conversations).where(self._owned(owner))
+        if project_id:
+            query = query.where(conversations.c.project_id == project_id)
         if before:
             query = query.where(tuple_(conversations.c.updated_at, conversations.c.id) < tuple_(*before))
         query = query.order_by(conversations.c.updated_at.desc(), conversations.c.id.desc()).limit(limit)
         async with self.engine.connect() as db:
             return [_conversation(row) for row in await db.execute(query)]
+
+    async def file_conversation(
+        self, owner: Owner, conversation_id: str, project_id: str | None
+    ) -> Conversation | None:
+        """Files one of the owner's chats under one of their projects, or under none. None if either is not theirs.
+        The chat keeps its place in the list: filing it is not activity."""
+        async with self.engine.begin() as db:
+            if project_id and not await self._project_of(db, owner, project_id):
+                return None
+            query = (
+                update(conversations)
+                .where(self._owned(owner) & (conversations.c.id == conversation_id))
+                .values(project_id=project_id)
+                .returning(conversations)
+            )
+            row = (await db.execute(query)).first()
+        return _conversation(row) if row else None
+
+    # Projects (signed-in visitors)
+
+    def _projects_owned(self, owner: Owner):
+        return (
+            (projects.c.tenant_id == owner.tenant_id)
+            & (projects.c.widget_id == owner.widget_id)
+            & (projects.c.user_id == owner.user_id)
+        )
+
+    async def _project_of(self, db, owner: Owner, project_id: str):
+        query = select(projects.c.id).where(self._projects_owned(owner) & (projects.c.id == project_id))
+        return (await db.execute(query)).first()
+
+    async def projects(self, owner: Owner, limit: int = 100) -> list[Project]:
+        """The owner's projects, most recently active first: a project is as recent as its newest chat.
+        shortcut: the newest 100 with no paging; add a cursor when someone keeps more."""
+        active = func.greatest(projects.c.updated_at, func.max(conversations.c.updated_at)).label("active")
+        query = (
+            select(projects.c.id, projects.c.name, projects.c.created_at, active.label("updated_at"))
+            .select_from(projects.outerjoin(conversations, conversations.c.project_id == projects.c.id))
+            .where(self._projects_owned(owner))
+            .group_by(projects.c.id)
+            .order_by(active.desc(), projects.c.id.desc())
+            .limit(limit)
+        )
+        async with self.engine.connect() as db:
+            return [_project(row) for row in await db.execute(query)]
+
+    async def create_project(self, owner: Owner, name: str) -> Project:
+        values = {"id": new_id("p"), **owner.__dict__, "name": name}
+        async with self.engine.begin() as db:
+            return _project((await db.execute(insert(projects).values(values).returning(projects))).one())
+
+    async def rename_project(self, owner: Owner, project_id: str, name: str) -> Project | None:
+        query = (
+            update(projects)
+            .where(self._projects_owned(owner) & (projects.c.id == project_id))
+            .values(name=name, updated_at=func.now())
+            .returning(projects)
+        )
+        async with self.engine.begin() as db:
+            row = (await db.execute(query)).first()
+        return _project(row) if row else None
+
+    async def delete_project(self, owner: Owner, project_id: str) -> bool:
+        """Removes one of the owner's projects; its chats stay, unfiled (the key's ON DELETE SET NULL)."""
+        query = delete(projects).where(self._projects_owned(owner) & (projects.c.id == project_id))
+        async with self.engine.begin() as db:
+            return (await db.execute(query)).rowcount > 0
 
     async def set_agent_conversation(self, conversation_id: str, agent_conversation_id: str) -> None:
         async with self.engine.begin() as db:
@@ -416,8 +592,11 @@ class Store:
         text: str,
         config_version: int,
         agent_version: str | None = None,
+        attachments: Sequence[str] = (),
     ) -> Turn | None:
         """Stores a question and an empty answer, in one transaction. None if the conversation is not the owner's.
+        Files named in `attachments` must have been uploaded to this conversation (else UnknownAttachment); the
+        question's blocks name them after its text.
 
         The same client_message_id again returns the turn it started (repeat). A new question while an answer
         is still in progress raises TurnInProgress. The conversation row is locked first, in a statement of its own:
@@ -454,6 +633,7 @@ class Store:
             if found.busy:  # left in progress by a gateway that stopped mid-turn: give up on it, or the chat is stuck
                 stale = {"status": "failed", "error": STALE_ERROR, "updated_at": func.now()}
                 await db.execute(update(messages).where(messages.c.id == found.busy).values(stale))
+            attached = await self._attached(db, conversation_id, attachments) if attachments else []
             question_id, answer_id = new_id("m"), new_id("m")
             shared = {"conversation_id": conversation_id, "client_message_id": None, "reply_to": None}
             shared |= {"config_version": None, "agent_version": None}
@@ -466,7 +646,7 @@ class Store:
                             "seq": found.seq + 1,
                             "role": "user",
                             "status": "complete",
-                            "blocks": [{"type": "text", "text": text}],
+                            "blocks": [{"type": "text", "text": text}, *attached],
                             "client_message_id": client_message_id,
                         },
                         {
@@ -489,6 +669,53 @@ class Store:
                 .values(updated_at=func.now(), title=func.coalesce(conversations.c.title, text[:80]))
             )
         return Turn(conversation_id, question_id, answer_id, found.agent_conversation_id, repeat=False)
+
+    # Attachments (M10)
+
+    @staticmethod
+    async def _attached(db, conversation_id: str, attachments: Sequence[str]) -> list[dict]:
+        """The file blocks for a question's attachments, in the order named; each must be in the conversation."""
+        named = list(dict.fromkeys(attachments))
+        query = select(files.c.id, files.c.name, files.c.size, files.c.content_type).where(
+            (files.c.conversation_id == conversation_id) & files.c.id.in_(named)
+        )
+        found = {row.id: row for row in await db.execute(query)}
+        if len(found) != len(named):
+            raise UnknownAttachment
+        return [{"type": "file", **found[key]._mapping} for key in named]
+
+    async def add_file(
+        self, owner: Owner, conversation_id: str, name: str, content_type: str, data: bytes
+    ) -> FileBlock | None:
+        """Keeps a checked file in one of the owner's conversations. None if the conversation is not theirs."""
+        block = FileBlock(type="file", id=new_id("f"), name=name, size=len(data), content_type=content_type)
+        mine = select(conversations.c.id).where(self._owned(owner) & (conversations.c.id == conversation_id))
+        values = {"id": block.id, "conversation_id": conversation_id, "name": name, "content_type": content_type}
+        async with self.engine.begin() as db:
+            if not (await db.execute(mine)).first():
+                return None
+            await db.execute(insert(files).values({**values, "size": len(data), "data": data}))
+        return block
+
+    async def file(self, owner: Owner, conversation_id: str, file_id: str):
+        """One of the owner's files: (name, content_type, data), or None."""
+        query = (
+            select(files.c.name, files.c.content_type, files.c.data)
+            .join(conversations, files.c.conversation_id == conversations.c.id)
+            .where(self._owned(owner) & (conversations.c.id == conversation_id) & (files.c.id == file_id))
+        )
+        async with self.engine.connect() as db:
+            return (await db.execute(query)).first()
+
+    async def file_contents(self, conversation_id: str, file_ids: Sequence[str]) -> list[AgentFile]:
+        """The files a question was sent with, in the order named, for the agent. Read after start_turn checked them."""
+        named = list(dict.fromkeys(file_ids))
+        query = select(files.c.id, files.c.name, files.c.content_type, files.c.data).where(
+            (files.c.conversation_id == conversation_id) & files.c.id.in_(named)
+        )
+        async with self.engine.connect() as db:
+            found = {row.id: row for row in await db.execute(query)}
+        return [AgentFile(found[key].name, found[key].content_type, found[key].data) for key in named if key in found]
 
     async def finish(
         self,
@@ -515,11 +742,7 @@ class Store:
     ) -> tuple[list[Message], int | None]:
         """A page of messages, oldest first, ending just before message number `before` (the newest page when None),
         and the `before` that gives the page above it (None when this page reaches the first message)."""
-        query = (
-            select(messages)
-            .join(conversations, messages.c.conversation_id == conversations.c.id)
-            .where(self._owned(owner) & (conversations.c.id == conversation_id))
-        )
+        query = self._shown(owner, conversation_id)
         if before is not None:
             query = query.where(messages.c.seq < before)
         async with self.engine.connect() as db:
@@ -528,11 +751,183 @@ class Store:
         return [_message(row) for row in reversed(rows[:limit])], older
 
     async def message(self, owner: Owner, conversation_id: str, message_id: str) -> Message | None:
-        query = (
-            select(messages)
-            .join(conversations, messages.c.conversation_id == conversations.c.id)
-            .where(self._owned(owner) & (conversations.c.id == conversation_id) & (messages.c.id == message_id))
-        )
+        query = self._shown(owner, conversation_id).where(messages.c.id == message_id)
         async with self.engine.connect() as db:
             row = (await db.execute(query)).first()
         return _message(row) if row else None
+
+    def _shown(self, owner: Owner, conversation_id: str):
+        """A conversation's messages as the visitor sees them, with their own rating and pin of each."""
+        return (
+            select(messages, feedback.c.rating, pins.c.message_id.is_not(None).label("pinned"))
+            .join(conversations, messages.c.conversation_id == conversations.c.id)
+            .outerjoin(feedback, feedback.c.message_id == messages.c.id)
+            .outerjoin(pins, pins.c.message_id == messages.c.id)
+            .where(self._owned(owner) & (conversations.c.id == conversation_id))
+        )
+
+    def _finished_answer(self, owner: Owner, conversation_id: str, message_id: str):
+        """One of the owner's finished answers: what may be rated or pinned."""
+        return (
+            select(messages.c.id, messages.c.reply_to)
+            .join(conversations, messages.c.conversation_id == conversations.c.id)
+            .where(self._owned(owner) & (conversations.c.id == conversation_id) & (messages.c.id == message_id))
+            .where((messages.c.role == "assistant") & (messages.c.status == "complete"))
+        )
+
+    @staticmethod
+    def _mine(table: Table, owner: Owner, conversation_id: str, message_id: str):
+        """The owner's row about one message, in the feedback or pins table."""
+        return (
+            (table.c.message_id == message_id)
+            & (table.c.conversation_id == conversation_id)
+            & (table.c.tenant_id == owner.tenant_id)
+            & (table.c.widget_id == owner.widget_id)
+            & (table.c.user_id == owner.user_id)
+        )
+
+    # Feedback (M4-T10)
+
+    async def rate(
+        self, owner: Owner, user_kind: str, conversation_id: str, message_id: str, rating: str, comment: str | None
+    ) -> bool:
+        """Stores the visitor's rating of one of their finished answers, replacing an earlier one. False if there is
+        no such answer."""
+        async with self.engine.begin() as db:
+            found = (await db.execute(self._finished_answer(owner, conversation_id, message_id))).first()
+            if not found:
+                return False
+            row = {
+                "message_id": message_id,
+                "question_id": found.reply_to,
+                "conversation_id": conversation_id,
+                **owner.__dict__,
+                "user_kind": user_kind,
+                "rating": rating,
+                "comment": comment,
+            }
+            changed = {"rating": rating, "comment": comment, "updated_at": func.now()}
+            upsert = pg_insert(feedback).values(row).on_conflict_do_update(index_elements=["message_id"], set_=changed)
+            await db.execute(upsert)
+        return True
+
+    async def unrate(self, owner: Owner, conversation_id: str, message_id: str) -> None:
+        """Takes back the visitor's rating of an answer, if they gave one."""
+        async with self.engine.begin() as db:
+            await db.execute(delete(feedback).where(self._mine(feedback, owner, conversation_id, message_id)))
+
+    async def widget_feedback(
+        self, widget_id: str, rating: str | None, before: tuple[datetime, str] | None, limit: int
+    ) -> tuple[dict[str, int], list]:
+        """For the admin console: a widget's ratings counted by kind, and a page of them, the newest first, each with
+        the question and the answer it is about (rows: message_id, rating, comment, user_kind, updated_at, question
+        and answer blocks)."""
+        asked, answered = messages.alias("asked"), messages.alias("answered")
+        page = (
+            select(
+                feedback.c.message_id,
+                feedback.c.rating,
+                feedback.c.comment,
+                feedback.c.user_kind,
+                feedback.c.updated_at,
+                asked.c.blocks.label("question"),
+                answered.c.blocks.label("answer"),
+            )
+            .select_from(
+                feedback.join(answered, answered.c.id == feedback.c.message_id).outerjoin(
+                    asked, asked.c.id == feedback.c.question_id
+                )
+            )
+            .where(feedback.c.widget_id == widget_id)
+            .order_by(feedback.c.updated_at.desc(), feedback.c.message_id.desc())
+            .limit(limit)
+        )
+        if rating:
+            page = page.where(feedback.c.rating == rating)
+        if before:
+            page = page.where(tuple_(feedback.c.updated_at, feedback.c.message_id) < tuple_(*before))
+        counted = (
+            select(feedback.c.rating, func.count()).where(feedback.c.widget_id == widget_id).group_by(feedback.c.rating)
+        )
+        async with self.engine.connect() as db:
+            counts = {"like": 0, "dislike": 0} | {kind: count for kind, count in await db.execute(counted)}
+            return counts, list(await db.execute(page))
+
+    # Pins (signed-in visitors)
+
+    async def pin(self, owner: Owner, conversation_id: str, message_id: str) -> bool:
+        """Pins one of the owner's finished answers; pinning it again changes nothing. False if there is no such
+        answer."""
+        async with self.engine.begin() as db:
+            if not (await db.execute(self._finished_answer(owner, conversation_id, message_id))).first():
+                return False
+            row = {"message_id": message_id, "conversation_id": conversation_id, **owner.__dict__}
+            await db.execute(pg_insert(pins).values(row).on_conflict_do_nothing())
+        return True
+
+    async def consent_to_voice(self, owner: Owner, user_kind: str, version: int, engine: str) -> None:
+        """Records that the visitor accepted the voice notice (M11-T2)."""
+        async with self.engine.begin() as db:
+            await db.execute(
+                insert(voice_consents).values(**owner.__dict__, user_kind=user_kind, version=version, engine=engine)
+            )
+
+    async def consented_to_voice(self, owner: Owner, engine: str) -> bool:
+        """Whether the visitor accepted the voice notice for that engine."""
+        mine = (
+            (voice_consents.c.tenant_id == owner.tenant_id)
+            & (voice_consents.c.widget_id == owner.widget_id)
+            & (voice_consents.c.user_id == owner.user_id)
+            & (voice_consents.c.engine == engine)
+        )
+        async with self.engine.connect() as db:
+            return (await db.execute(select(voice_consents.c.id).where(mine).limit(1))).first() is not None
+
+    async def unpin(self, owner: Owner, conversation_id: str, message_id: str) -> None:
+        async with self.engine.begin() as db:
+            await db.execute(delete(pins).where(self._mine(pins, owner, conversation_id, message_id)))
+
+    async def pinned(self, owner: Owner, limit: int = 100) -> list[Pin]:
+        """The owner's pinned answers, the newest pin first, each with its question and chat.
+        shortcut: the newest 100 with no paging; add a cursor when someone keeps more."""
+        asked = messages.alias("asked")
+        chat = conversations.c
+        query = (
+            select(
+                messages,
+                feedback.c.rating,
+                true().label("pinned"),
+                pins.c.created_at.label("pinned_at"),
+                chat.title.label("chat_title"),
+                chat.created_at.label("chat_created_at"),
+                chat.updated_at.label("chat_updated_at"),
+                chat.project_id.label("chat_project_id"),
+                asked.c.blocks.label("question_blocks"),
+            )
+            .select_from(
+                pins.join(messages, messages.c.id == pins.c.message_id)
+                .join(conversations, conversations.c.id == messages.c.conversation_id)
+                .outerjoin(asked, asked.c.id == messages.c.reply_to)
+                .outerjoin(feedback, feedback.c.message_id == messages.c.id)
+            )
+            .where(self._owned(owner))
+            .order_by(pins.c.created_at.desc(), pins.c.message_id.desc())
+            .limit(limit)
+        )
+        async with self.engine.connect() as db:
+            rows = list(await db.execute(query))
+        return [
+            Pin(
+                conversation=Conversation(
+                    id=row.conversation_id,
+                    title=row.chat_title,
+                    created_at=row.chat_created_at,
+                    updated_at=row.chat_updated_at,
+                    project_id=row.chat_project_id,
+                ),
+                question=next((block["text"] for block in row.question_blocks or [] if block["type"] == "text"), None),
+                message=_message(row),
+                pinned_at=row.pinned_at,
+            )
+            for row in rows
+        ]

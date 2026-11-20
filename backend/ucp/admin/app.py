@@ -37,6 +37,7 @@ from ucp.admin import install
 from ucp.admin.records import Records
 from ucp.connector import AgentError
 from ucp.gateway import pipeline, public
+from ucp.gateway.api import _after as after_cursor
 from ucp.gateway.api import visitor_address
 from ucp.gateway.pipeline import CODES, Problem, api_error
 from ucp.identity import Identity, ProviderKeys, verify_provider_token
@@ -169,6 +170,19 @@ def _tenant(row) -> dict:
 @router.get("/tenants", summary="Every tenant (a platform administrator), or one's own")
 async def list_tenants(admin: Signed, kept: Kept) -> list[dict]:
     return [_tenant(row) for row in await kept.tenants(None if admin.role == "platform" else admin.tenant_id)]
+
+
+@router.get("/overview", summary="Each tenant's widgets counted by state: live, changes waiting, in setup")
+async def overview(admin: Signed, kept: Kept) -> list[dict]:
+    """The console's home in one call, however many tenants there are: every tenant for a platform administrator,
+    one's own for anyone else."""
+    mine = None if admin.role == "platform" else admin.tenant_id
+    counts = {row.tenant_id: {"live": 0, "waiting": 0, "setup": 0} for row in await kept.tenants(mine)}
+    for widget in await kept.widgets(mine):
+        state = "setup" if widget["version"] is None else "waiting" if widget["unpublished"] else "live"
+        if widget["tenant_id"] in counts:  # a deleted tenant's widgets are not counted
+            counts[widget["tenant_id"]][state] += 1
+    return [{"tenant_id": tenant_id, **each} for tenant_id, each in counts.items()]
 
 
 @router.post("/tenants", status_code=201, summary="A new tenant (platform administrators only)")
@@ -625,6 +639,41 @@ async def compare(
     if not one or not two:
         raise Problem("not_found")
     return changes(one.document, two.document)
+
+
+def _words(blocks: list[dict] | None) -> str:
+    return "\n\n".join(block["text"] for block in blocks or [] if block.get("type") in ("text", "markdown"))
+
+
+@router.get("/widgets/{widget_id}/feedback", summary="Visitors' ratings of the widget's answers, the newest first")
+async def widget_feedback(
+    widget_id: Id,
+    admin: Signed,
+    kept: Kept,
+    published: Published,
+    rating: Literal["like", "dislike"] | None = None,
+    before: Annotated[str | None, Query(max_length=120)] = None,
+    limit: Annotated[int, Query(ge=1, le=50)] = 25,
+) -> dict:
+    """Each rating with the visitor's comment, whether they were public or signed in (never who), and the question and
+    answer it is about. `next` continues the list."""
+    await _widget(kept, admin, widget_id)
+    counts, rows = await published.widget_feedback(widget_id, rating, after_cursor(before), limit + 1)
+    items = [
+        {
+            "id": row.message_id,
+            "rating": row.rating,
+            "comment": row.comment,
+            "visitor": row.user_kind,
+            "at": row.updated_at,
+            "question": _words(row.question),
+            "answer": _words(row.answer),
+        }
+        for row in rows[:limit]
+    ]
+    last = rows[limit - 1] if len(rows) > limit else None
+    stamp = last and last.updated_at.astimezone(UTC).isoformat().replace("+00:00", "Z")
+    return {"counts": counts, "items": items, "next": f"{stamp}_{last.message_id}" if last else None}
 
 
 def create_app(settings: Settings | None = None) -> FastAPI:

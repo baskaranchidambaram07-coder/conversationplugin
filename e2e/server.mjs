@@ -22,7 +22,7 @@ const configs = {
   w_light: { ...example, widget_id: "w_light", color_scheme: "light" },
 };
 // These widgets open the stand-in chat (e2e/chat-stub.html), which lets the loader be tested on its own.
-const STAND_IN = new Set(["w_test", "w_left", "w_greet"]);
+const STAND_IN = new Set(["w_test", "w_left"]);
 // The picture w_greet's avatar names, as the gateway serves uploaded images: by digest, to any site.
 const PICTURE =
   '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><rect width="64" height="64" fill="#5B2A86"/>' +
@@ -59,7 +59,7 @@ async function answerFor(question) {
 // is refused.
 const policyFor = (widget) =>
   "default-src 'none'; script-src 'self'; style-src 'self'; font-src 'self'; connect-src 'self'; " +
-  `img-src 'self' ${new URL(configs[widget].logo_url).origin}; base-uri 'none'; form-action 'none'`;
+  `img-src 'self' blob: ${new URL(configs[widget].logo_url).origin}; base-uri 'none'; form-action 'none'`;
 
 async function file(path) {
   if (path === "/loader.js") return [200, types.js, await readFile(new URL("web/loader/dist/loader.js", root))];

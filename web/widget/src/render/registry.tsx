@@ -4,6 +4,7 @@
 import type { Block } from "@ucp/protocol/v1";
 import { Component, type ComponentType, lazy, type ReactNode, Suspense } from "react";
 
+import { textOf } from "../chat/state";
 import { strings as t } from "../strings";
 import { Code } from "./Code";
 
@@ -31,13 +32,39 @@ const Chart = (props: FenceProps) => (
   </Suspense>
 );
 
+const LazyMaths = lazy(() => import("./maths"));
+
+// A formula on a line of its own: its TeX, as code, until the maths renderer has loaded.
+const Maths = (props: FenceProps) => (
+  <Suspense fallback={<Code {...props} />}>
+    <LazyMaths {...props} />
+  </Suspense>
+);
+
+/** A fenced block of TeX that is a formula, not a whole LaTeX document. */
+const isFormula = (language: string, code: string) =>
+  language === "math" ||
+  (/^(?:latex|tex)$/i.test(language) && code.length < 2_000 && !/\\(?:documentclass|usepackage|begin\{document\})/.test(code));
+
+const PLOTTING = /\b(?:plt|ax\w*|px)\.(?:plot|bar|barh|scatter|step|pie|line|area)\s*\(/;
+
 /** Fenced-block languages with a renderer of their own. Anything else is code. */
 const FENCES: Record<string, ComponentType<FenceProps>> = { chart: Chart };
 
+/** Whether text holds two or more boxes drawn with box-drawing characters, as agents draw flowcharts in plain text. */
+export const isBoxArt = (code: string) =>
+  (code.match(/[┌╭┏╔][─━═]/g)?.length ?? 0) >= 2 && /[└╰┗╚][─━═]/.test(code) && /[│┃║]/.test(code);
+
 /** The renderer for a fenced block: by its content for diagrams (agents label draw.io XML as "xml"), else its language.
- *  A Mermaid chart is drawn only once its fence has closed: until then every prefix of it is a chart, still growing. */
+ *  A Mermaid chart, or a flowchart drawn in text, is drawn only once its fence has closed: until then it is still
+ *  growing. */
 export function fenceRenderer(language: string, code = "", closed = true): ComponentType<FenceProps> {
-  if (language === "mermaid") return closed ? Diagram : Code;
+  if (isFormula(language, code)) return closed ? Maths : Code;
+  // A Mermaid pie is a chart, read like any other; the rest of Mermaid is drawn as a diagram.
+  if (language === "mermaid" && closed && /^(?:\s*%%.*\n)*\s*pie\b/.test(code)) return Chart;
+  if (language === "mermaid" || (language !== "chart" && isBoxArt(code))) return closed ? Diagram : Code;
+  // Python that plots: its chart is drawn over it when the values are written into the code (derive.ts).
+  if (closed && /^(?:python3?|py)$/i.test(language) && PLOTTING.test(code)) return Chart;
   return isDiagram(code) ? Diagram : (FENCES[language] ?? Code);
 }
 
@@ -62,7 +89,7 @@ class Isolated extends Component<{ fallback: ReactNode; children: ReactNode }, {
 }
 
 export function BlockView({ block }: { block: Block }) {
-  const text = typeof block.text === "string" ? block.text : "";
+  const text = textOf(block);
   if (!text && (block.type === "text" || block.type === "markdown")) return null;
   const plain = <p className="text">{text}</p>;
   if (block.type === "text" || (block.type === "markdown" && tooHeavy(text))) return plain;

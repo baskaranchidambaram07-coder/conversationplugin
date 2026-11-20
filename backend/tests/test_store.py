@@ -137,7 +137,8 @@ async def test_a_finished_answer_frees_the_conversation_and_reads_back_without_a
     answer = await store.message(mine, conversation.id, first.answer_id)
 
     assert not second.repeat
-    assert answer.model_dump(mode="json").keys() == {"id", "role", "status", "blocks", "error", "created_at"}
+    shown = {"id", "role", "status", "blocks", "error", "created_at", "feedback", "pinned"}
+    assert answer.model_dump(mode="json").keys() == shown
     assert (answer.status, answer.error.code, answer.blocks[0].text) == ("failed", "assistant_unavailable", "Partial")
     assert "pf-message-id" not in answer.model_dump_json()
 
