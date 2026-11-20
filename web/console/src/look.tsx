@@ -77,7 +77,7 @@ export function colourNotes(colour: string): { text: string; warnings: string[] 
   const text = t.textOn(ink === "#ffffff" ? t.white : t.black, contrast(colour, ink).toFixed(1));
   const warnings = [];
   if (contrast(colour, LIGHT) < 3) warnings.push(t.faintOnLight); // WCAG's line for a control
-  if (contrast(colour, NIGHT) < 3) warnings.push(t.creamOnDark);
+  if (contrast(colour, NIGHT) < 3) warnings.push(t.greyOnDark);
   return { text, warnings };
 }
 
