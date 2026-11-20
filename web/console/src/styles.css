@@ -1,85 +1,76 @@
-/* The admin console: a calm professional admin in two themes. Light is the category standard (white cards on a
-   cool grey, one indigo accent); dark is Graphite (panels a step above a graphite ground, split by hairlines, one
-   blue accent). The administrator picks System, Light or Dark in the top bar; System follows the computer.
-   Logical properties throughout, so a right-to-left language mirrors. */
+/* The admin console, in the PF design language (PFDL 2.3.0, its Cobalt theme): white cards on a slate canvas, one
+   cobalt primary, Roboto, and flat surfaces with a shadow only under what floats. The administrator picks System,
+   Light or Dark in the top bar; System follows the computer. Logical properties throughout, so a right-to-left
+   language mirrors. */
 :root {
-  --ground: #f9fafb;
-  --surface: #ffffff;
-  --line: #e5e7eb;
-  --ink: #111827;
-  --muted: #6b7280;
-  --accent: #4f46e5;
-  --accent-hover: #4338ca;
-  --on-accent: #ffffff;
-  --accent-soft: #eef2ff;
-  --accent-text: #4338ca;
-  --accent-ring: rgb(79 70 229 / 0.2);
-  --hover: rgb(17 24 39 / 0.05);
-  --problem: #b42318;
-  --good: #067647;
-  --good-soft: #ecfdf3;
-  --warn: #b54708;
-  --shadow: 0 1px 2px rgb(16 24 40 / 0.05);
-  --field: #ffffff;
-  --live: #079455;
-  --waiting: #dc6803;
-  --setup: #7b86ad;
-  --chevron: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%236b7280' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9.5l6 6 6-6'/%3E%3C/svg%3E");
+  /* PFDL's tokens, their values written out here until @purple-fabric/ui's stylesheet supplies them: delete this
+     group then. Rules read these names, or the short names after them. */
+  --surface-canvas: light-dark(#f1f5f9, #070c1e);
+  --surface-card: light-dark(#ffffff, #121b2d);
+  --text-strong: light-dark(#0f172a, #f1f5f9);
+  --text-muted: light-dark(#606f86, #8494a9);
+  --text-on-primary: #ffffff;
+  --border-default: light-dark(#e2e8f0, #222c3f);
+  --border-control: light-dark(#77879d, #64748b);
+  --action-primary: light-dark(#0047ab, #3870be);
+  --action-primary-hover: light-dark(#003785, #5484c7);
+  --nav-active-bg: light-dark(#e8f1fe, #343a4b);
+  --badge-count-text: light-dark(#0047ab, #e8f1fe);
+  --status-success: light-dark(#15803d, #4ade80);
+  --status-success-bg: light-dark(#f0fdf4, #11261a);
+  --status-caution: light-dark(#c2410c, #fb923c);
+  --status-danger: light-dark(#c81b3f, #f87171);
+  --status-neutral: light-dark(#606f86, #8494a9);
+  --focus-ring-color: light-dark(#1d4ed8, #8ea6eb);
+  --shadow-menu: 0 10px 30px light-dark(rgba(24, 24, 27, 0.1), rgba(0, 0, 0, 0.45));
+  --shadow-modal: 0 24px 60px light-dark(rgba(9, 9, 11, 0.22), rgba(0, 0, 0, 0.6));
+  --fs-page-title-fluid: clamp(20px, calc(18px + 0.5vw), 24px);
+  --tracking-title: -0.017em;
+  --tracking-card: -0.01em;
+  --font-sans: "Roboto Variable", "Roboto", "Noto Sans Arabic", "Noto Sans Devanagari", "Noto Sans Bengali",
+    "Noto Sans Tamil", "Noto Sans Telugu", "Noto Sans Kannada", "Noto Sans Malayalam", "Noto Sans Gujarati",
+    "Noto Sans Gurmukhi", "Noto Sans Oriya", -apple-system, BlinkMacSystemFont, "Segoe UI", "Helvetica Neue",
+    Helvetica, sans-serif;
+
+  --ground: var(--surface-canvas);
+  --surface: var(--surface-card);
+  --line: var(--border-default);
+  --ink: var(--text-strong);
+  --muted: var(--text-muted);
+  --accent: var(--action-primary);
+  --accent-hover: var(--action-primary-hover);
+  --on-accent: var(--text-on-primary);
+  --accent-soft: var(--nav-active-bg);
+  --accent-text: var(--badge-count-text);
+  --accent-ring: color-mix(in srgb, var(--focus-ring-color) 25%, transparent);
+  --hover: color-mix(in srgb, var(--text-strong) 6%, transparent);
+  --problem: var(--status-danger);
+  --good: var(--status-success);
+  --good-soft: var(--status-success-bg);
+  --warn: var(--status-caution);
+  --field: var(--surface-card);
+  --live: var(--status-success);
+  --waiting: var(--status-caution);
+  --setup: var(--status-neutral);
+  --chat-ground: #ffffff; /* the chat's own light ground, behind its frame until it loads, whatever the theme here */
+  --chevron: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23606f86' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9.5l6 6 6-6'/%3E%3C/svg%3E");
+  color-scheme: light dark; /* System: follow the computer */
+}
+
+:root[data-theme="light"] {
   color-scheme: light;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root:not([data-theme="light"]) {
-    --ground: #111315;
-    --surface: #1b1e21;
-    --line: #2a2e33;
-    --ink: #e6e8ea;
-    --muted: #9aa1a9;
-    --accent: #4f8cff;
-    --accent-hover: #6b9dff;
-    --on-accent: #0b1220;
-    --accent-soft: rgb(79 140 255 / 0.14);
-    --accent-text: #8fb4ff;
-    --accent-ring: rgb(79 140 255 / 0.3);
-    --hover: rgb(255 255 255 / 0.06);
-    --problem: #f97066;
-    --good: #47cd89;
-    --good-soft: rgb(71 205 137 / 0.14);
-    --warn: #fdb022;
-    --shadow: 0 0 #0000; /* none, but still a valid entry in a shadow list */
-    --field: #15171a;
-  --live: #079455;
-  --waiting: #dc6803;
-  --setup: #6b78a6;
-    --live: #079455;
-    --waiting: #dc6803;
-    --setup: #6b78a6;
-    --chevron: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%239aa1a9' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9.5l6 6 6-6'/%3E%3C/svg%3E");
-    color-scheme: dark;
-  }
+:root[data-theme="dark"] {
+  --chevron: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%238494a9' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9.5l6 6 6-6'/%3E%3C/svg%3E");
+  color-scheme: dark;
 }
 
-:root[data-theme="dark"] {
-  --ground: #111315;
-  --surface: #1b1e21;
-  --line: #2a2e33;
-  --ink: #e6e8ea;
-  --muted: #9aa1a9;
-  --accent: #4f8cff;
-  --accent-hover: #6b9dff;
-  --on-accent: #0b1220;
-  --accent-soft: rgb(79 140 255 / 0.14);
-  --accent-text: #8fb4ff;
-  --accent-ring: rgb(79 140 255 / 0.3);
-  --hover: rgb(255 255 255 / 0.06);
-  --problem: #f97066;
-  --good: #47cd89;
-  --good-soft: rgb(71 205 137 / 0.14);
-  --warn: #fdb022;
-  --shadow: 0 0 #0000; /* none, but still a valid entry in a shadow list */
-  --field: #15171a;
-  --chevron: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%239aa1a9' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9.5l6 6 6-6'/%3E%3C/svg%3E");
-  color-scheme: dark;
+/* The chevron is a picture, so it cannot follow the scheme by itself as the colours do. */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --chevron: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%238494a9' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9.5l6 6 6-6'/%3E%3C/svg%3E");
+  }
 }
 
 * {
@@ -95,8 +86,8 @@ body {
   min-height: 100vh;
   background: var(--ground);
   color: var(--ink);
-  font: 400 14px/1.55 "Inter Variable", "Inter", system-ui, sans-serif;
-  font-feature-settings: "cv11", "ss01", "tnum";
+  font: 400 14px/1.5 var(--font-sans);
+  font-feature-settings: "tnum" 1;
   -webkit-font-smoothing: antialiased;
 }
 
@@ -106,7 +97,7 @@ body {
 }
 
 :focus-visible {
-  outline: 2px solid var(--accent);
+  outline: 2px solid var(--focus-ring-color);
   outline-offset: 2px;
 }
 
@@ -143,7 +134,7 @@ button {
   border: 0;
   border-radius: 8px;
   font-size: 14px;
-  font-weight: 500;
+  font-weight: 600;
   text-decoration: none;
   transition: background-color 0.15s ease-out, box-shadow 0.15s ease-out;
 }
@@ -153,7 +144,6 @@ button {
   padding: 8px 16px;
   background: var(--accent);
   color: var(--on-accent);
-  box-shadow: var(--shadow);
 }
 
 .primary:hover {
@@ -161,10 +151,10 @@ button {
 }
 
 .secondary {
-  min-height: 36px;
-  padding: 7px 14px;
+  min-height: 38px;
+  padding: 8px 14px;
   background: var(--surface);
-  box-shadow: inset 0 0 0 1px var(--line), var(--shadow);
+  box-shadow: inset 0 0 0 1px var(--line);
 }
 
 .secondary:hover {
@@ -172,8 +162,8 @@ button {
 }
 
 .quiet {
-  min-height: 36px;
-  padding: 7px 10px;
+  min-height: 38px;
+  padding: 8px 10px;
   white-space: nowrap;
   background: none;
   color: var(--muted);
@@ -209,12 +199,13 @@ button {
 .card {
   background: var(--surface);
   border-radius: 12px;
-  box-shadow: 0 0 0 1px var(--line), var(--shadow);
+  box-shadow: 0 0 0 1px var(--line);
   padding: 24px;
 }
 
 .card h1 {
   font-size: 22px;
+  letter-spacing: var(--tracking-title);
 }
 
 .card p {
@@ -291,7 +282,7 @@ button {
   border: 0;
   border-radius: 8px;
   background: var(--surface);
-  box-shadow: 0 0 0 1px var(--line), var(--shadow);
+  box-shadow: 0 0 0 1px var(--line);
   font-weight: 500;
 }
 
@@ -368,7 +359,7 @@ button {
   padding: 14px;
   border-radius: 10px;
   background: var(--surface);
-  box-shadow: 0 0 0 1px var(--line), 0 12px 32px -12px rgb(0 0 0 / 0.3);
+  box-shadow: 0 0 0 1px var(--line), var(--shadow-menu);
 }
 
 .menu[hidden] {
@@ -378,7 +369,7 @@ button {
 .menu .who {
   margin: 0;
   color: var(--ink);
-  font-size: 13.5px;
+  font-size: 13px;
   overflow-wrap: anywhere;
 }
 
@@ -457,7 +448,7 @@ button {
 
 .column small {
   color: var(--muted);
-  font-size: 12.5px;
+  font-size: 12px;
 }
 
 .column a small.good {
@@ -466,6 +457,14 @@ button {
 
 .column a small.warn {
   color: var(--warn); /* live, with changes not published */
+}
+
+/* On the soft primary fill (the current widget, a chosen tile) a state colour takes a fifth of the ink, to hold
+   4.5:1 against it in both themes. */
+.column a[aria-current="page"],
+.choices li.chosen {
+  --good: color-mix(in srgb, var(--status-success) 80%, var(--ink));
+  --warn: color-mix(in srgb, var(--status-caution) 80%, var(--ink));
 }
 
 .column a.secondary {
@@ -481,10 +480,10 @@ button {
 
 .work h1 {
   margin: 0;
-  font-size: 24px;
-  font-weight: 600;
+  font-size: var(--fs-page-title-fluid); /* 20px on a phone, up to 24px on a wide screen */
+  font-weight: 700;
   line-height: 1.25;
-  letter-spacing: -0.02em;
+  letter-spacing: var(--tracking-title);
   text-wrap: balance;
   overflow-wrap: anywhere;
 }
@@ -525,7 +524,8 @@ button {
 
 .deletion h3 {
   margin: 0;
-  font-size: 16px;
+  font-size: 15px;
+  font-weight: 600;
 }
 
 .deletion form {
@@ -551,7 +551,7 @@ button {
   overflow: hidden;
   border-radius: 12px;
   background: var(--line);
-  box-shadow: 0 0 0 1px var(--line), var(--shadow);
+  box-shadow: 0 0 0 1px var(--line);
 }
 
 .figure {
@@ -571,8 +571,8 @@ button {
 
 .figure dd {
   margin: 0;
-  font-size: 28px;
-  font-weight: 600;
+  font-size: 26px;
+  font-weight: 700;
   line-height: 1.1;
   letter-spacing: -0.02em;
   font-variant-numeric: tabular-nums;
@@ -592,7 +592,7 @@ button {
   padding: 20px;
   border-radius: 12px;
   background: var(--surface);
-  box-shadow: 0 0 0 1px var(--line), var(--shadow);
+  box-shadow: 0 0 0 1px var(--line);
 }
 
 .panel-head {
@@ -605,8 +605,9 @@ button {
 
 .panel h2 {
   margin: 0;
-  font-size: 16px;
-  font-weight: 600;
+  font-size: 17px;
+  font-weight: 500;
+  letter-spacing: var(--tracking-card);
 }
 
 .panel .note {
@@ -654,7 +655,7 @@ button {
 
 .widgets small {
   color: var(--muted);
-  font-size: 12.5px;
+  font-size: 12px;
 }
 
 .state {
@@ -684,7 +685,7 @@ button {
   gap: 4px 16px;
   margin: 0;
   color: var(--muted);
-  font-size: 12.5px;
+  font-size: 12px;
 }
 
 .legend span {
@@ -748,7 +749,7 @@ button {
 .organisations small {
   grid-area: counts;
   color: var(--muted);
-  font-size: 12.5px;
+  font-size: 12px;
 }
 
 .organisations button[aria-current="true"] small {
@@ -837,7 +838,7 @@ button {
   background: var(--surface);
   box-shadow: 0 0 0 1.5px var(--line);
   color: var(--muted);
-  font-size: 12.5px;
+  font-size: 12px;
   font-weight: 600;
 }
 
@@ -849,7 +850,7 @@ button {
 
 .now .dot,
 .station .open .dot {
-  box-shadow: 0 0 0 2px var(--surface), 0 0 0 4px var(--accent), 0 0 0 8px var(--accent-ring);
+  box-shadow: 0 0 0 5px var(--accent-ring); /* a soft halo: a gap and a 2px ring mean keyboard focus only */
 }
 
 .now .dot {
@@ -866,7 +867,7 @@ button {
 
 .station small {
   color: var(--muted);
-  font-size: 12.5px;
+  font-size: 12px;
 }
 
 .station button:hover .name {
@@ -982,6 +983,10 @@ button {
 }
 
 .feedback summary {
+  display: flex;
+  gap: 2px;
+  align-items: center;
+  list-style: none; /* the console's own chevron follows, in place of the browser's triangle */
   width: fit-content;
   color: var(--muted);
   font-size: 13px;
@@ -1014,7 +1019,8 @@ button {
 .stop header h2 {
   margin: 0;
   font-size: 17px;
-  font-weight: 600;
+  font-weight: 500;
+  letter-spacing: var(--tracking-card);
 }
 
 .stop header p {
@@ -1096,14 +1102,7 @@ button {
   border: 0;
   border-radius: 8px;
   background: var(--field);
-  box-shadow: 0 0 0 1px var(--line), var(--shadow);
-}
-
-.field input:focus-visible,
-.field textarea:focus-visible {
-  outline: 2px solid transparent;
-  outline-offset: 0;
-  box-shadow: 0 0 0 1px var(--accent), 0 0 0 4px var(--accent-ring);
+  box-shadow: 0 0 0 1px var(--border-control);
 }
 
 .field input[aria-invalid="true"] {
@@ -1247,7 +1246,8 @@ legend {
 
 .add h3 {
   margin: 0;
-  font-size: 16px;
+  font-size: 15px;
+  font-weight: 600;
 }
 
 /* A button inside a form keeps the width of its words. */
@@ -1344,7 +1344,7 @@ legend {
   border: 0;
   border-radius: 8px;
   background: var(--field);
-  box-shadow: 0 0 0 1px var(--line), var(--shadow);
+  box-shadow: 0 0 0 1px var(--border-control);
   color: var(--ink);
 }
 
@@ -1360,8 +1360,22 @@ legend {
   border: 0;
   border-radius: 8px;
   background: var(--field);
-  box-shadow: 0 0 0 1px var(--line);
+  box-shadow: 0 0 0 1px var(--border-control);
   cursor: pointer;
+}
+
+.colour input[type="color"]::-webkit-color-swatch-wrapper {
+  padding: 0;
+}
+
+.colour input[type="color"]::-webkit-color-swatch {
+  border: 0;
+  border-radius: 5px;
+}
+
+.colour input[type="color"]::-moz-color-swatch {
+  border: 0;
+  border-radius: 5px;
 }
 
 .colour input[type="text"] {
@@ -1409,11 +1423,11 @@ legend {
 
 .preview .panel {
   height: min(560px, 70vh);
-  border-radius: 20px;
+  border-radius: 14px;
   overflow: hidden;
-  background: #fcfcfb; /* the chat's own ground, whatever the console's theme */
+  background: var(--chat-ground);
   border: 1px solid var(--line);
-  box-shadow: 0 24px 60px -24px rgb(0 0 0 / 0.35), 0 8px 20px -12px rgb(0 0 0 / 0.2);
+  box-shadow: var(--shadow-modal);
 }
 
 .preview iframe {
@@ -1473,7 +1487,8 @@ legend {
 
 .install h3 {
   margin: 0;
-  font-size: 16px;
+  font-size: 15px;
+  font-weight: 600;
 }
 
 .snippet {
@@ -1493,7 +1508,7 @@ legend {
   padding: 4px 6px 4px 14px;
   border-block-end: 1px solid var(--line);
   color: var(--muted);
-  font-size: 12.5px;
+  font-size: 12px;
   font-weight: 500;
 }
 
@@ -1528,7 +1543,7 @@ legend {
   margin: 0;
   padding: 0;
   list-style: none;
-  font-size: 14.5px;
+  font-size: 14px;
 }
 
 .checks li {
@@ -1552,7 +1567,8 @@ legend {
 
 .golive h3 {
   margin: 0;
-  font-size: 16px;
+  font-size: 15px;
+  font-weight: 600;
 }
 
 .changes {
@@ -1561,7 +1577,7 @@ legend {
   border-radius: 10px;
   overflow: hidden;
   box-shadow: 0 0 0 1px var(--line);
-  font-size: 14.5px;
+  font-size: 14px;
 }
 
 .changes th,
@@ -1576,7 +1592,7 @@ legend {
 .changes thead th {
   background: var(--ground);
   color: var(--muted);
-  font-size: 12.5px;
+  font-size: 12px;
   font-weight: 600;
 }
 
@@ -1740,9 +1756,6 @@ code {
     margin-block-end: 10px;
   }
 
-  .work h1 {
-    font-size: 21px;
-  }
 
   .sub {
     margin-block-end: 20px;
@@ -1810,11 +1823,13 @@ code {
   cursor: pointer;
 }
 
-.languages summary::-webkit-details-marker {
+.languages summary::-webkit-details-marker,
+.feedback summary::-webkit-details-marker {
   display: none;
 }
 
-.languages summary::after {
+.languages summary::after,
+.feedback summary::after {
   content: "";
   flex: none;
   inline-size: 16px;
@@ -1825,7 +1840,8 @@ code {
 }
 
 .languages[open] > summary::after,
-.languages details[open] > summary::after {
+.languages details[open] > summary::after,
+.feedback details[open] > summary::after {
   rotate: 180deg;
 }
 
@@ -1834,12 +1850,7 @@ code {
   padding: 8px 12px;
   border-radius: 8px;
   background: var(--field);
-  box-shadow: 0 0 0 1px var(--line), var(--shadow);
-}
-
-.languages > summary:focus-visible {
-  outline: 2px solid transparent;
-  box-shadow: 0 0 0 1px var(--accent), 0 0 0 4px var(--accent-ring);
+  box-shadow: 0 0 0 1px var(--border-control);
 }
 
 .languages > ul {
@@ -1867,8 +1878,7 @@ code {
 }
 
 .languages details > summary:focus-visible {
-  outline: 2px solid var(--accent);
-  outline-offset: -2px;
+  outline-offset: -2px; /* the list clips its rows, so the ring is drawn inside */
 }
 
 .languages small {
@@ -1896,7 +1906,8 @@ code {
     animation: none;
   }
 
-  .languages summary::after {
+  .languages summary::after,
+  .feedback summary::after {
     transition: none;
   }
 }
@@ -1957,7 +1968,7 @@ code {
 }
 
 .picture input:focus-visible + label {
-  outline: 2px solid var(--accent);
+  outline: 2px solid var(--focus-ring-color);
   outline-offset: 2px;
 }
 

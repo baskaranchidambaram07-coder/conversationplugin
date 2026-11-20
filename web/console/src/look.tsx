@@ -29,7 +29,7 @@ export type Look = {
 };
 
 const LIGHT = "#ffffff"; // the chat's composer, where the send button sits, in the light scheme
-const NIGHT = "#30302e"; // and in the dark
+const NIGHT = "#1a2537"; // and in the dark
 const QUESTIONS = 4;
 const SIDE = 256; // px: the picture as stored, twice the largest place it is shown
 
@@ -141,7 +141,7 @@ export function LookEditor(props: {
             <input
               type="color"
               aria-label={t.colourPicker}
-              value={isColor(colour) ? colour.toLowerCase() : "#1f1e1d"}
+              value={isColor(colour) ? colour.toLowerCase() : "#0047ab"}
               onChange={(event) => change({ brand_color: event.target.value.toUpperCase() })}
             />
             <input
