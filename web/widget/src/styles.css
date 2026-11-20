@@ -161,7 +161,7 @@ button {
 }
 
 /* Who answers: the assistant's picture, round; else the customer's logo, on a small white tile; else the title's
-   initials on the bubble's grey (the brand colour stays on what can be pressed). The same mark heads the chat, opens an empty one and sits beside every answer. */
+   initials on the bubble's grey (the widget's colour is kept for send, the caret and the visitor's bubble). The same mark heads the chat, opens an empty one and sits beside every answer. */
 .mark {
   --size: 32px;
   display: grid;
@@ -356,7 +356,7 @@ h1 {
   margin-inline-start: -8px;
 }
 
-/* Helpful or not: 32px icon buttons; the chosen thumb fills in ink, never the brand (the Pressable Colour Rule). */
+/* Helpful or not: 32px icon buttons; the chosen thumb fills in ink, never the widget's colour (the Stand-In Rule). */
 .acts .thumb {
   padding: 8px;
 }
@@ -842,7 +842,7 @@ h1 {
   gap: 6px;
 }
 
-/* The reading: values lead in the ink, names follow in the quieter umber, each beside its series' key. */
+/* The reading: values lead in the ink, names follow in the muted ink, each beside its series' key. */
 .chart .tip {
   position: absolute;
   top: 2px;
@@ -1388,7 +1388,7 @@ textarea::placeholder {
   color: var(--ink); /* the muted ink on the current row's fill is short of AA for small text */
 }
 
-/* While the list loads: rows sketched in sand, breathing like the working dots */
+/* While the list loads: rows sketched in the hairline colour, breathing like the working dots */
 .sketch li {
   display: grid;
   gap: 10px;
