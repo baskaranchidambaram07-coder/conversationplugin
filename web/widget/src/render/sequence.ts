@@ -13,10 +13,10 @@ const SIZE = 13; // px: a message's or note's words
 const LEAD = 1.25;
 const WIDEST = 260; // px: a message's or note's words wrap past this
 const GAP = 48; // px at least between two participants' boxes
-const QUIET = "#8a8580"; // lifelines and block frames
+const QUIET = "#64748b"; // lifelines and block frames
 const NOTE = "#fbf3d5";
 const NOTE_EDGE = "#d9c37a";
-const TAB = "#f6efe6"; // a block's name tag, the flowchart's subgraph ground
+const TAB = "#f1f5f9"; // a block's name tag, the flowchart's subgraph ground
 
 type Participant = { id: string; label: string; actor: boolean };
 type Arrow = { dashed: boolean; end: boolean; start: boolean; cross: boolean };

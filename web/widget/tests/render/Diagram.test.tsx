@@ -60,7 +60,7 @@ test("nothing in a diagram can fetch, link or run: colours are plain, labels are
   const svg = container.querySelector("svg[role=img]")!;
   expect(svg.querySelector("rect")?.getAttribute("fill")).toBe("#ffffff");
   expect(svg.querySelector("rect")?.getAttribute("stroke")).toBe("red");
-  expect(svg.querySelector("text")?.getAttribute("fill")).toBe("#1f1e1d");
+  expect(svg.querySelector("text")?.getAttribute("fill")).toBe("#0f172a");
   expect([...svg.querySelectorAll("tspan")].map((t) => t.textContent)).toEqual(["Hello", "there"]);
   expect(container.querySelector("img, a, image, foreignObject, script, [href], [onerror]")).toBeNull();
 });

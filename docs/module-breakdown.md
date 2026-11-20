@@ -372,6 +372,19 @@ State on 17 November 2026 (pull request 117, into `develop` with 119). At your r
 - The brand colour is only on what can be pressed. On the dark composer a brand under 3:1 gives way to the light ink, replacing the old rule of 1.5:1 against the ground.
 - Two independent finish reviews were run, with verdict passes, and their fixes made.
 
+State on 20 November 2026 (pull request 156 into `module/m02-conversation-ui`; not in `develop` yet). At your request the launcher and the chat were re-skinned in the PF design language (PFDL 2.3.0, its Cobalt theme). This is an interim step: the `@purple-fabric/ui` package is not on the public registry, so its components are not used, and the design language's token values are written out at the top of `web/widget/src/styles.css` and in the loader's stylesheet string.
+
+- Changed:
+  - **Typeface:** Roboto in place of Inter, self-hosted, upright and italic.
+  - **Colour:** slate surfaces and inks in light and dark. The visitor's words sit in a bubble of the widget's colour, in both schemes. A widget with no colour of its own takes the cobalt primary, in the chat and on the launcher.
+  - **Shape and depth:** corners of 14, 12, 10 and 8px; flat surfaces, with a shadow only under what floats; the design language's focus ring.
+  - **Type:** weights of 700 for page titles only and 600 for headings and buttons; no text under 12px, so the AI notice and the credit share a line down to a 360px frame and stack below that.
+  - **Answers:** charts take the design language's eight series colours; diagrams drawn from Mermaid and from text take slate inks and frames.
+- Unchanged: layout, behaviour, the words (they already met the design language's copy rules), code colouring, and a drawn diagram's own colours.
+- Checks: the design language's linter (`pfdl lint`) over the loader, chat and console sources reports no errors and one warning (the table shown under a chart has no caption).
+- When the package can be installed: replace the written-out tokens with its stylesheet and the hand-built parts with its components and AI elements, then measure the 100 KB first load again.
+- M3's screenshot baselines, if they reach `develop` first, must be redrawn after this merges: every colour and the typeface changed.
+
 ---
 
 ### M3 — Response rendering engine

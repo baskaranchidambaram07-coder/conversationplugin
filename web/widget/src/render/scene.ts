@@ -45,8 +45,8 @@ export type Line = {
 
 export type Scene = { kind: "draw.io" | "Excalidraw" | "Mermaid" | "text"; shapes: Shape[]; lines: Line[] };
 
-export const INK = "#1f1e1d";
-const PAPER = "#ffffff";
+export const INK = "#0f172a"; // --text-strong, in its light value: a diagram keeps a light sheet in both schemes
+export const PAPER = "#ffffff";
 const MAX_ITEMS = 500;
 
 /** A colour the diagram may use: #rgb or #rrggbb, a plain colour name, or none. Never a url() or anything else. */

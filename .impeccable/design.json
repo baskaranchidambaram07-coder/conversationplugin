@@ -1,721 +1,908 @@
 {
   "schemaVersion": 2,
-  "generatedAt": "2026-11-18T12:00:00.000Z",
+  "generatedAt": "2026-11-20T12:00:00.000Z",
   "title": "Design System: Conversation Plugin",
   "extensions": {
     "colorMeta": {
-      "chat-ground": {
+      "surface-canvas": {
         "role": "neutral",
-        "displayName": "Chat Ground",
-        "canonical": "#fcfcfb",
-        "tonalRamp": [
-          "#0b0b0b",
-          "#242423",
-          "#40403f",
-          "#5e5e5d",
-          "#80807f",
-          "#a4a4a4",
-          "#cacaca",
-          "#eeeeee"
-        ]
-      },
-      "chat-surface": {
-        "role": "neutral",
-        "displayName": "Chat Surface",
-        "canonical": "#ffffff",
-        "tonalRamp": [
-          "#0b0b0b",
-          "#242424",
-          "#404040",
-          "#5d5d5d",
-          "#808080",
-          "#a4a4a4",
-          "#cacaca",
-          "#eeeeee"
-        ]
-      },
-      "chat-bubble": {
-        "role": "neutral",
-        "displayName": "Bubble Grey",
-        "canonical": "#f0efeb",
-        "tonalRamp": [
-          "#0b0b0a",
-          "#242422",
-          "#40403d",
-          "#5e5e5a",
-          "#81807d",
-          "#a5a4a2",
-          "#cbcac8",
-          "#efeeec"
-        ]
-      },
-      "chat-line": {
-        "role": "neutral",
-        "displayName": "Hairline",
-        "canonical": "#e6e4e0",
-        "tonalRamp": [
-          "#0c0b0a",
-          "#252422",
-          "#41403d",
-          "#5f5d5a",
-          "#82807d",
-          "#a6a4a1",
-          "#cccac8",
-          "#efeeec"
-        ]
-      },
-      "chat-ink": {
-        "role": "neutral",
-        "displayName": "Chat Ink",
-        "canonical": "#1f1e1d",
-        "tonalRamp": [
-          "#0b0b0b",
-          "#242423",
-          "#403f3f",
-          "#5e5d5c",
-          "#81807f",
-          "#a5a4a3",
-          "#cbcac9",
-          "#efeeed"
-        ]
-      },
-      "chat-muted": {
-        "role": "neutral",
-        "displayName": "Chat Muted",
-        "canonical": "#6b6a68",
-        "tonalRamp": [
-          "#0b0b0a",
-          "#242423",
-          "#40403e",
-          "#5e5d5c",
-          "#81807e",
-          "#a5a4a3",
-          "#cbcac9",
-          "#efeeed"
-        ]
-      },
-      "chat-ground-dark": {
-        "role": "neutral",
-        "displayName": "Chat Ground Dark",
-        "canonical": "#262624",
-        "tonalRamp": [
-          "#0b0b0a",
-          "#242423",
-          "#40403e",
-          "#5e5e5c",
-          "#80807e",
-          "#a5a5a3",
-          "#cacac9",
-          "#eeeeed"
-        ]
-      },
-      "chat-surface-dark": {
-        "role": "neutral",
-        "displayName": "Chat Surface Dark",
-        "canonical": "#30302e",
-        "tonalRamp": [
-          "#0b0b0a",
-          "#242423",
-          "#40403e",
-          "#5e5e5c",
-          "#80807e",
-          "#a5a5a3",
-          "#cacac9",
-          "#eeeeed"
-        ]
-      },
-      "chat-bubble-dark": {
-        "role": "neutral",
-        "displayName": "Chat Bubble Dark",
-        "canonical": "#393936",
-        "tonalRamp": [
-          "#0b0b0a",
-          "#242422",
-          "#40403d",
-          "#5e5e5b",
-          "#80807d",
-          "#a5a5a2",
-          "#cbcbc8",
-          "#eeeeec"
-        ]
-      },
-      "chat-line-dark": {
-        "role": "neutral",
-        "displayName": "Chat Line Dark",
-        "canonical": "#3e3e3a",
-        "tonalRamp": [
-          "#0b0b0a",
-          "#242422",
-          "#40403d",
-          "#5e5e5a",
-          "#80807c",
-          "#a5a5a1",
-          "#cbcbc7",
-          "#efefec"
-        ]
-      },
-      "chat-ink-dark": {
-        "role": "neutral",
-        "displayName": "Chat Ink Dark",
-        "canonical": "#f5f4ef",
-        "tonalRamp": [
-          "#0b0b0a",
-          "#242422",
-          "#40403d",
-          "#5e5e5a",
-          "#81807c",
-          "#a5a5a1",
-          "#cbcac7",
-          "#efeeec"
-        ]
-      },
-      "chat-muted-dark": {
-        "role": "neutral",
-        "displayName": "Chat Muted Dark",
-        "canonical": "#b0aea5",
-        "tonalRamp": [
-          "#0c0b08",
-          "#252420",
-          "#41403a",
-          "#5f5e56",
-          "#828078",
-          "#a6a59e",
-          "#cccbc5",
-          "#f0eeea"
-        ]
-      },
-      "chart-blue": {
-        "role": "tertiary",
-        "displayName": "Chart Blue",
-        "canonical": "#2a78d6",
-        "tonalRamp": [
-          "#000a20",
-          "#01234c",
-          "#013e7f",
-          "#125caf",
-          "#3980d9",
-          "#6ba7f4",
-          "#a8cdff",
-          "#e5f0fe"
-        ]
-      },
-      "chart-orange": {
-        "role": "tertiary",
-        "displayName": "Chart Orange",
-        "canonical": "#eb6834",
-        "tonalRamp": [
-          "#1a0400",
-          "#421200",
-          "#6e2401",
-          "#9f3601",
-          "#ce5624",
-          "#ed845d",
-          "#feb79e",
-          "#fee9e2"
-        ]
-      },
-      "chart-aqua": {
-        "role": "tertiary",
-        "displayName": "Chart Aqua",
-        "canonical": "#1baf7a",
-        "tonalRamp": [
-          "#000f07",
-          "#012c1c",
-          "#014c32",
-          "#006f4b",
-          "#059868",
-          "#5bba8f",
-          "#92deb8",
-          "#c3ffe0"
-        ]
-      },
-      "chart-yellow": {
-        "role": "tertiary",
-        "displayName": "Chart Yellow",
-        "canonical": "#eda100",
-        "tonalRamp": [
-          "#130900",
-          "#331f00",
-          "#573902",
-          "#7e5404",
-          "#ab7304",
-          "#d3983a",
-          "#f3c17a",
-          "#ffebd2"
-        ]
-      },
-      "chart-magenta": {
-        "role": "tertiary",
-        "displayName": "Chart Magenta",
-        "canonical": "#e87ba4",
-        "tonalRamp": [
-          "#1d000b",
-          "#440824",
-          "#6a2040",
-          "#94385e",
-          "#bd5b81",
-          "#dd86a5",
-          "#fcb2cb",
-          "#ffe7ee"
-        ]
-      },
-      "chart-green": {
-        "role": "tertiary",
-        "displayName": "Chart Green",
-        "canonical": "#008300",
-        "tonalRamp": [
-          "#001000",
-          "#012e01",
-          "#014f01",
-          "#017201",
-          "#349830",
-          "#6bbb65",
-          "#9dde97",
-          "#ccffc6"
-        ]
-      },
-      "chart-violet": {
-        "role": "tertiary",
-        "displayName": "Chart Violet",
-        "canonical": "#6250d6",
-        "tonalRamp": [
-          "#0a002e",
-          "#210f5e",
-          "#3a2a8c",
-          "#5645bd",
-          "#766ae9",
-          "#9996fe",
-          "#c3c4fe",
-          "#ecedff"
-        ]
-      },
-      "chart-red": {
-        "role": "tertiary",
-        "displayName": "Chart Red",
-        "canonical": "#e34948",
-        "tonalRamp": [
-          "#1f0001",
-          "#4b0106",
-          "#7c0010",
-          "#aa1e25",
-          "#d64846",
-          "#f57a73",
-          "#feb5ae",
-          "#fee9e7"
-        ]
-      },
-      "console-ground": {
-        "role": "neutral",
-        "displayName": "Console Ground",
-        "canonical": "#f9fafb",
-        "tonalRamp": [
-          "#0b0b0b",
-          "#242424",
-          "#3f4040",
-          "#5d5e5e",
-          "#7f8081",
-          "#a4a5a5",
-          "#cacacb",
-          "#eeeeef"
-        ]
-      },
-      "console-surface": {
-        "role": "neutral",
-        "displayName": "Console Surface",
-        "canonical": "#ffffff",
-        "tonalRamp": [
-          "#0b0b0b",
-          "#242424",
-          "#404040",
-          "#5d5d5d",
-          "#808080",
-          "#a4a4a4",
-          "#cacaca",
-          "#eeeeee"
-        ]
-      },
-      "console-line": {
-        "role": "neutral",
-        "displayName": "Console Line",
-        "canonical": "#e5e7eb",
-        "tonalRamp": [
-          "#0a0b0c",
-          "#232426",
-          "#3e4042",
-          "#5c5e61",
-          "#7e8084",
-          "#a3a4a7",
-          "#c9cacd",
-          "#edeef0"
-        ]
-      },
-      "console-ink": {
-        "role": "neutral",
-        "displayName": "Console Ink",
-        "canonical": "#111827",
-        "tonalRamp": [
-          "#080b12",
-          "#1f242e",
-          "#39404d",
-          "#555e6f",
-          "#778093",
-          "#9da5b5",
-          "#c4cbd9",
-          "#e9effa"
-        ]
-      },
-      "console-muted": {
-        "role": "neutral",
-        "displayName": "Console Muted",
-        "canonical": "#6b7280",
-        "tonalRamp": [
-          "#090b10",
-          "#20242c",
-          "#3b404a",
-          "#585e6a",
-          "#7a808e",
-          "#9fa5b1",
-          "#c5cbd5",
-          "#eaeff7"
-        ]
-      },
-      "console-accent": {
-        "role": "primary",
-        "displayName": "Console Indigo",
-        "canonical": "#4f46e5",
-        "tonalRamp": [
-          "#070031",
-          "#1b086a",
-          "#30259b",
-          "#4842d0",
-          "#6668fd",
-          "#8e9afe",
-          "#bdc7fe",
-          "#eaedff"
-        ]
-      },
-      "console-accent-hover": {
-        "role": "primary",
-        "displayName": "Console Accent Hover",
-        "canonical": "#4338ca",
-        "tonalRamp": [
-          "#070031",
-          "#1a0e65",
-          "#302a95",
-          "#4946c8",
-          "#676bf5",
-          "#8e9afe",
-          "#bdc6ff",
-          "#eaedff"
-        ]
-      },
-      "console-accent-soft": {
-        "role": "primary",
-        "displayName": "Console Accent Soft",
-        "canonical": "#eef2ff",
-        "tonalRamp": [
-          "#0a0b0f",
-          "#22242a",
-          "#3d3f47",
-          "#5a5d67",
-          "#7c808b",
-          "#a1a4ae",
-          "#c8cad2",
-          "#eceef5"
-        ]
-      },
-      "console-problem": {
-        "role": "tertiary",
-        "displayName": "Console Problem",
-        "canonical": "#b42318",
-        "tonalRamp": [
-          "#1f0000",
-          "#4b0000",
-          "#7a0c06",
-          "#a7271c",
-          "#d34d3e",
-          "#f27e6e",
-          "#feb6aa",
-          "#ffe9e5"
-        ]
-      },
-      "console-good": {
-        "role": "tertiary",
-        "displayName": "Console Good",
-        "canonical": "#067647",
-        "tonalRamp": [
-          "#001005",
-          "#002d17",
-          "#014d2c",
-          "#136f44",
-          "#3e9465",
-          "#71b68d",
-          "#a2dab7",
-          "#cefcdf"
-        ]
-      },
-      "console-good-soft": {
-        "role": "tertiary",
-        "displayName": "Console Good Soft",
-        "canonical": "#ecfdf3",
-        "tonalRamp": [
-          "#070d09",
-          "#1e2622",
-          "#38433d",
-          "#54615a",
-          "#76847c",
-          "#9ca8a1",
-          "#c3cec7",
-          "#e8f1ec"
-        ]
-      },
-      "console-warn": {
-        "role": "tertiary",
-        "displayName": "Console Warn",
-        "canonical": "#b54708",
-        "tonalRamp": [
-          "#1a0400",
-          "#401401",
-          "#6c2701",
-          "#9b3b02",
-          "#c65d2e",
-          "#e58963",
-          "#feb79b",
-          "#feeae1"
-        ]
-      },
-      "graphite-ground": {
-        "role": "neutral",
-        "displayName": "Graphite Ground",
-        "canonical": "#111315",
-        "tonalRamp": [
-          "#0a0b0c",
-          "#232426",
-          "#3e4042",
-          "#5c5e60",
-          "#7e8083",
-          "#a3a5a7",
-          "#c9cbcd",
-          "#edeff0"
-        ]
-      },
-      "graphite-surface": {
-        "role": "neutral",
-        "displayName": "Graphite Surface",
-        "canonical": "#1b1e21",
-        "tonalRamp": [
-          "#0a0b0d",
-          "#222426",
-          "#3d4043",
-          "#5b5e61",
-          "#7d8184",
-          "#a2a5a8",
-          "#c8cbcd",
-          "#eceff1"
-        ]
-      },
-      "graphite-field": {
-        "role": "neutral",
-        "displayName": "Graphite Field",
-        "canonical": "#15171a",
-        "tonalRamp": [
-          "#0a0b0d",
-          "#232426",
-          "#3e4043",
-          "#5b5e61",
-          "#7e8084",
-          "#a2a5a8",
-          "#c9cbcd",
-          "#edeef1"
-        ]
-      },
-      "graphite-line": {
-        "role": "neutral",
-        "displayName": "Graphite Line",
-        "canonical": "#2a2e33",
-        "tonalRamp": [
-          "#0a0b0d",
-          "#222427",
-          "#3d4044",
-          "#5a5e63",
-          "#7c8186",
-          "#a1a5aa",
-          "#c7cbcf",
-          "#eceff2"
-        ]
-      },
-      "graphite-ink": {
-        "role": "neutral",
-        "displayName": "Graphite Ink",
-        "canonical": "#e6e8ea",
-        "tonalRamp": [
-          "#0b0b0c",
-          "#232425",
-          "#3f4041",
-          "#5c5e5f",
-          "#7f8082",
-          "#a3a5a6",
-          "#c9cbcc",
-          "#edeef0"
-        ]
-      },
-      "graphite-muted": {
-        "role": "neutral",
-        "displayName": "Graphite Muted",
-        "canonical": "#9aa1a9",
+        "displayName": "Canvas",
+        "canonical": "#f1f5f9",
         "tonalRamp": [
           "#090b0e",
-          "#212428",
-          "#3c4046",
-          "#585e65",
-          "#7b8188",
-          "#a0a5ac",
-          "#c6cbd0",
+          "#24272a",
+          "#424549",
+          "#63666a",
+          "#868a8d",
+          "#abaeb2",
+          "#ced1d5",
           "#ebeff3"
         ]
       },
-      "graphite-accent": {
-        "role": "primary",
-        "displayName": "Graphite Blue",
-        "canonical": "#4f8cff",
+      "surface-canvas-dark": {
+        "role": "neutral",
+        "displayName": "Canvas Dark",
+        "canonical": "#070c1e",
         "tonalRamp": [
-          "#000728",
-          "#001c5c",
-          "#0e388a",
-          "#2256ba",
-          "#437be5",
-          "#71a3ff",
-          "#aecbff",
-          "#e6effe"
+          "#090b11",
+          "#222631",
+          "#3f4554",
+          "#5e667a",
+          "#8089a0",
+          "#a6aec2",
+          "#cad1e2",
+          "#e9eefc"
         ]
       },
-      "graphite-accent-hover": {
-        "role": "primary",
-        "displayName": "Graphite Accent Hover",
-        "canonical": "#6b9dff",
+      "surface-card": {
+        "role": "neutral",
+        "displayName": "Card",
+        "canonical": "#ffffff",
         "tonalRamp": [
-          "#00062b",
-          "#071f53",
-          "#1b3b7e",
-          "#3059ac",
-          "#507dd6",
-          "#7ba4f1",
-          "#b0cbff",
-          "#e7effe"
+          "#0b0b0b",
+          "#262626",
+          "#454545",
+          "#666666",
+          "#898989",
+          "#aeaeae",
+          "#d1d1d1",
+          "#eeeeee"
         ]
       },
-      "graphite-on-accent": {
-        "role": "primary",
-        "displayName": "Graphite On Accent",
-        "canonical": "#0b1220",
+      "surface-card-dark": {
+        "role": "neutral",
+        "displayName": "Card Dark",
+        "canonical": "#121b2d",
+        "tonalRamp": [
+          "#080b11",
+          "#212731",
+          "#3e4554",
+          "#5c667a",
+          "#7e89a0",
+          "#a4aec1",
+          "#c9d1e1",
+          "#e8effc"
+        ]
+      },
+      "surface-raised": {
+        "role": "neutral",
+        "displayName": "Raised",
+        "canonical": "#ffffff",
+        "tonalRamp": [
+          "#0b0b0b",
+          "#262626",
+          "#454545",
+          "#666666",
+          "#898989",
+          "#aeaeae",
+          "#d1d1d1",
+          "#eeeeee"
+        ]
+      },
+      "surface-raised-dark": {
+        "role": "neutral",
+        "displayName": "Raised Dark",
+        "canonical": "#1a2537",
+        "tonalRamp": [
+          "#080b11",
+          "#212730",
+          "#3d4553",
+          "#5b6779",
+          "#7d8a9f",
+          "#a3afc1",
+          "#c8d2e1",
+          "#e7effc"
+        ]
+      },
+      "surface-hover": {
+        "role": "neutral",
+        "displayName": "Neutral Fill",
+        "canonical": "#f1f5f9",
+        "tonalRamp": [
+          "#090b0e",
+          "#24272a",
+          "#424549",
+          "#63666a",
+          "#868a8d",
+          "#abaeb2",
+          "#ced1d5",
+          "#ebeff3"
+        ]
+      },
+      "surface-hover-dark": {
+        "role": "neutral",
+        "displayName": "Neutral Fill Dark",
+        "canonical": "#1e283b",
+        "tonalRamp": [
+          "#080b11",
+          "#212731",
+          "#3d4554",
+          "#5c667a",
+          "#7e8aa0",
+          "#a4aec2",
+          "#c9d1e1",
+          "#e8effc"
+        ]
+      },
+      "text-strong": {
+        "role": "neutral",
+        "displayName": "Ink",
+        "canonical": "#0f172a",
+        "tonalRamp": [
+          "#080b11",
+          "#212631",
+          "#3e4555",
+          "#5d667b",
+          "#7e89a1",
+          "#a4aec3",
+          "#c9d1e2",
+          "#e8effd"
+        ]
+      },
+      "text-strong-dark": {
+        "role": "neutral",
+        "displayName": "Ink Dark",
+        "canonical": "#f1f5f9",
+        "tonalRamp": [
+          "#090b0e",
+          "#24272a",
+          "#424549",
+          "#63666a",
+          "#868a8d",
+          "#abaeb2",
+          "#ced1d5",
+          "#ebeff3"
+        ]
+      },
+      "text-muted": {
+        "role": "neutral",
+        "displayName": "Muted",
+        "canonical": "#606f86",
         "tonalRamp": [
           "#080b12",
-          "#1f242e",
-          "#39404d",
-          "#555e6e",
-          "#778192",
-          "#9da5b5",
-          "#c4cbd8",
-          "#e9effa"
+          "#202731",
+          "#3c4655",
+          "#5a677b",
+          "#7b8aa1",
+          "#a2afc3",
+          "#c7d2e2",
+          "#e6effd"
         ]
       },
-      "graphite-accent-text": {
+      "text-muted-dark": {
+        "role": "neutral",
+        "displayName": "Muted Dark",
+        "canonical": "#8494a9",
+        "tonalRamp": [
+          "#080b11",
+          "#202730",
+          "#3c4653",
+          "#5a6778",
+          "#7b8b9e",
+          "#a2afc0",
+          "#c7d2e0",
+          "#e6effb"
+        ]
+      },
+      "text-on-primary": {
         "role": "primary",
-        "displayName": "Graphite Accent Text",
-        "canonical": "#8fb4ff",
+        "displayName": "On Primary",
+        "canonical": "#ffffff",
         "tonalRamp": [
-          "#020824",
-          "#102248",
-          "#263d6f",
-          "#3e5b99",
-          "#5e7fc1",
-          "#87a4df",
-          "#b2cbfd",
-          "#e7effe"
+          "#0b0b0b",
+          "#262626",
+          "#454545",
+          "#666666",
+          "#898989",
+          "#aeaeae",
+          "#d1d1d1",
+          "#eeeeee"
         ]
       },
-      "graphite-problem": {
-        "role": "tertiary",
-        "displayName": "Graphite Problem",
-        "canonical": "#f97066",
+      "text-link": {
+        "role": "primary",
+        "displayName": "Link",
+        "canonical": "#0047ab",
         "tonalRamp": [
-          "#1f0001",
-          "#4b0104",
-          "#771414",
-          "#a32d29",
-          "#ce524a",
-          "#ed8177",
-          "#feb5ad",
-          "#ffe9e6"
+          "#000925",
+          "#062453",
+          "#184285",
+          "#2c63ba",
+          "#4986eb",
+          "#79aeff",
+          "#a7d2ff",
+          "#ccf0ff"
         ]
       },
-      "graphite-good": {
-        "role": "tertiary",
-        "displayName": "Graphite Good",
-        "canonical": "#47cd89",
+      "text-link-dark": {
+        "role": "primary",
+        "displayName": "Link Dark",
+        "canonical": "#7795e8",
         "tonalRamp": [
-          "#000f06",
-          "#002d18",
-          "#004d2c",
-          "#007043",
-          "#04985d",
-          "#5abb86",
-          "#92dfb1",
-          "#c4ffda"
+          "#04091f",
+          "#182448",
+          "#304275",
+          "#4a62a6",
+          "#6985d3",
+          "#92acee",
+          "#bad0ff",
+          "#dceeff"
         ]
       },
-      "graphite-warn": {
-        "role": "tertiary",
-        "displayName": "Graphite Warn",
-        "canonical": "#fdb022",
+      "border-default": {
+        "role": "neutral",
+        "displayName": "Hairline",
+        "canonical": "#e2e8f0",
         "tonalRamp": [
-          "#130900",
-          "#332000",
-          "#573903",
-          "#7d5403",
-          "#ab7403",
-          "#d39838",
-          "#f3c179",
-          "#ffebd1"
+          "#080b10",
+          "#22272d",
+          "#41454c",
+          "#61676d",
+          "#848a91",
+          "#a9aeb6",
+          "#ccd1d9",
+          "#e9eff7"
+        ]
+      },
+      "border-default-dark": {
+        "role": "neutral",
+        "displayName": "Hairline Dark",
+        "canonical": "#222c3f",
+        "tonalRamp": [
+          "#080b11",
+          "#212731",
+          "#3d4554",
+          "#5c6679",
+          "#7e8aa0",
+          "#a4aec1",
+          "#c9d1e1",
+          "#e8effc"
+        ]
+      },
+      "border-control": {
+        "role": "neutral",
+        "displayName": "Control Edge",
+        "canonical": "#77879d",
+        "tonalRamp": [
+          "#070b11",
+          "#202731",
+          "#3c4654",
+          "#5a6779",
+          "#7b8aa0",
+          "#a2afc1",
+          "#c7d2e1",
+          "#e6effc"
+        ]
+      },
+      "border-control-dark": {
+        "role": "neutral",
+        "displayName": "Control Edge Dark",
+        "canonical": "#64748b",
+        "tonalRamp": [
+          "#070b12",
+          "#202731",
+          "#3b4655",
+          "#59677b",
+          "#7b8aa1",
+          "#a1afc3",
+          "#c7d2e2",
+          "#e6effd"
+        ]
+      },
+      "action-primary": {
+        "role": "primary",
+        "displayName": "Cobalt Primary",
+        "canonical": "#0047ab",
+        "tonalRamp": [
+          "#000925",
+          "#062453",
+          "#184285",
+          "#2c63ba",
+          "#4986eb",
+          "#79aeff",
+          "#a7d2ff",
+          "#ccf0ff"
+        ]
+      },
+      "action-primary-dark": {
+        "role": "primary",
+        "displayName": "Cobalt Primary Dark",
+        "canonical": "#3870be",
+        "tonalRamp": [
+          "#010a20",
+          "#0c2649",
+          "#204577",
+          "#3666a9",
+          "#538ad6",
+          "#82b0f1",
+          "#add3ff",
+          "#d2f1ff"
+        ]
+      },
+      "action-primary-hover": {
+        "role": "primary",
+        "displayName": "Cobalt Primary Hover",
+        "canonical": "#003785",
+        "tonalRamp": [
+          "#010a21",
+          "#0d254b",
+          "#22447a",
+          "#3865ac",
+          "#5589da",
+          "#83aff4",
+          "#aed3ff",
+          "#d2f0ff"
+        ]
+      },
+      "action-primary-hover-dark": {
+        "role": "primary",
+        "displayName": "Cobalt Primary Hover Dark",
+        "canonical": "#5484c7",
+        "tonalRamp": [
+          "#020b1d",
+          "#112644",
+          "#274570",
+          "#3f679f",
+          "#5c8bcb",
+          "#89b0e7",
+          "#b3d3ff",
+          "#d6f1ff"
+        ]
+      },
+      "nav-active-bg": {
+        "role": "primary",
+        "displayName": "Soft Primary Fill",
+        "canonical": "#e8f1fe",
+        "tonalRamp": [
+          "#060b14",
+          "#202730",
+          "#3e4650",
+          "#5f6772",
+          "#828a96",
+          "#a6afbb",
+          "#c9d2de",
+          "#e6effc"
+        ]
+      },
+      "nav-active-bg-dark": {
+        "role": "primary",
+        "displayName": "Soft Primary Fill Dark",
+        "canonical": "#343a4b",
+        "tonalRamp": [
+          "#090b10",
+          "#23262f",
+          "#404551",
+          "#606676",
+          "#82899c",
+          "#a8aebe",
+          "#ccd1de",
+          "#eaeef9"
+        ]
+      },
+      "badge-count-text": {
+        "role": "primary",
+        "displayName": "Accent Text",
+        "canonical": "#0047ab",
+        "tonalRamp": [
+          "#000925",
+          "#062453",
+          "#184285",
+          "#2c63ba",
+          "#4986eb",
+          "#79aeff",
+          "#a7d2ff",
+          "#ccf0ff"
+        ]
+      },
+      "badge-count-text-dark": {
+        "role": "primary",
+        "displayName": "Accent Text Dark",
+        "canonical": "#e8f1fe",
+        "tonalRamp": [
+          "#060b14",
+          "#202730",
+          "#3e4650",
+          "#5f6772",
+          "#828a96",
+          "#a6afbb",
+          "#c9d2de",
+          "#e6effc"
+        ]
+      },
+      "focus-ring": {
+        "role": "primary",
+        "displayName": "Focus",
+        "canonical": "#1d4ed8",
+        "tonalRamp": [
+          "#00052c",
+          "#081e5e",
+          "#193b95",
+          "#2c5ad1",
+          "#477eff",
+          "#76a9ff",
+          "#a3cfff",
+          "#c9eeff"
+        ]
+      },
+      "focus-ring-dark": {
+        "role": "primary",
+        "displayName": "Focus Dark",
+        "canonical": "#8ea6eb",
+        "tonalRamp": [
+          "#050a1b",
+          "#1b2542",
+          "#35436c",
+          "#51639a",
+          "#7086c6",
+          "#99ace3",
+          "#bfd0fe",
+          "#e0eeff"
+        ]
+      },
+      "status-success": {
+        "role": "tertiary",
+        "displayName": "State Green",
+        "canonical": "#15803d",
+        "tonalRamp": [
+          "#001102",
+          "#003011",
+          "#115327",
+          "#25793f",
+          "#449f5d",
+          "#7ac189",
+          "#a8e2b3",
+          "#cefcd6"
+        ]
+      },
+      "status-success-dark": {
+        "role": "tertiary",
+        "displayName": "State Green Dark",
+        "canonical": "#4ade80",
+        "tonalRamp": [
+          "#001200",
+          "#003309",
+          "#00571d",
+          "#007e32",
+          "#00a54f",
+          "#5ec77f",
+          "#96e7ab",
+          "#c0ffd0"
+        ]
+      },
+      "status-success-bg": {
+        "role": "tertiary",
+        "displayName": "State Green Soft",
+        "canonical": "#f0fdf4",
+        "tonalRamp": [
+          "#050d08",
+          "#1f2923",
+          "#3e4841",
+          "#5e6962",
+          "#818d85",
+          "#a5b2a9",
+          "#c8d5cc",
+          "#e5f2e9"
+        ]
+      },
+      "status-success-bg-dark": {
+        "role": "tertiary",
+        "displayName": "State Green Soft Dark",
+        "canonical": "#11261a",
+        "tonalRamp": [
+          "#070d09",
+          "#1f2923",
+          "#3a4940",
+          "#586c5f",
+          "#799081",
+          "#a0b4a7",
+          "#c5d6cb",
+          "#e5f2ea"
+        ]
+      },
+      "status-caution": {
+        "role": "tertiary",
+        "displayName": "State Amber",
+        "canonical": "#c2410c",
+        "tonalRamp": [
+          "#1f0000",
+          "#4a0e00",
+          "#782504",
+          "#ab3d15",
+          "#da5d33",
+          "#f78d6b",
+          "#ffb89c",
+          "#ffdbc3"
+        ]
+      },
+      "status-caution-dark": {
+        "role": "tertiary",
+        "displayName": "State Amber Dark",
+        "canonical": "#fb923c",
+        "tonalRamp": [
+          "#1c0300",
+          "#441700",
+          "#703000",
+          "#9f4b00",
+          "#cc6c07",
+          "#ea985b",
+          "#ffc090",
+          "#ffe1ba"
+        ]
+      },
+      "status-danger": {
+        "role": "tertiary",
+        "displayName": "State Red",
+        "canonical": "#c81b3f",
+        "tonalRamp": [
+          "#220002",
+          "#4f0011",
+          "#801227",
+          "#b5273e",
+          "#e6485b",
+          "#ff7f88",
+          "#ffaeb1",
+          "#ffd3d5"
+        ]
+      },
+      "status-danger-dark": {
+        "role": "tertiary",
+        "displayName": "State Red Dark",
+        "canonical": "#f87171",
+        "tonalRamp": [
+          "#1f0002",
+          "#490d11",
+          "#772327",
+          "#a93b3e",
+          "#d85a5c",
+          "#f68a88",
+          "#ffb5b1",
+          "#ffd9d5"
+        ]
+      },
+      "viz-1": {
+        "role": "tertiary",
+        "displayName": "Series 1 Blue",
+        "canonical": "#245fd4",
+        "tonalRamp": [
+          "#000728",
+          "#072257",
+          "#193f8c",
+          "#2c5fc4",
+          "#4883f6",
+          "#78acff",
+          "#a5d1ff",
+          "#cbefff"
+        ]
+      },
+      "viz-1-dark": {
+        "role": "tertiary",
+        "displayName": "Series 1 Blue Dark",
+        "canonical": "#427ff7",
+        "tonalRamp": [
+          "#000728",
+          "#072257",
+          "#193f8c",
+          "#2d5fc4",
+          "#4883f6",
+          "#79acff",
+          "#a5d1ff",
+          "#cbefff"
+        ]
+      },
+      "viz-2": {
+        "role": "tertiary",
+        "displayName": "Series 2 Orange",
+        "canonical": "#d45e00",
+        "tonalRamp": [
+          "#1e0100",
+          "#471200",
+          "#752a00",
+          "#a64400",
+          "#d5641a",
+          "#f2925f",
+          "#ffbb93",
+          "#ffdebd"
+        ]
+      },
+      "viz-2-dark": {
+        "role": "tertiary",
+        "displayName": "Series 2 Orange Dark",
+        "canonical": "#e26b1b",
+        "tonalRamp": [
+          "#1e0100",
+          "#471200",
+          "#752a00",
+          "#a64400",
+          "#d56418",
+          "#f2925e",
+          "#ffbc92",
+          "#ffdebc"
+        ]
+      },
+      "viz-3": {
+        "role": "tertiary",
+        "displayName": "Series 3 Teal",
+        "canonical": "#00978e",
+        "tonalRamp": [
+          "#00100e",
+          "#002f2b",
+          "#00514c",
+          "#00776f",
+          "#249d94",
+          "#6abfb7",
+          "#9ee0d9",
+          "#c6fbf5"
+        ]
+      },
+      "viz-3-dark": {
+        "role": "tertiary",
+        "displayName": "Series 3 Teal Dark",
+        "canonical": "#00a49a",
+        "tonalRamp": [
+          "#00100e",
+          "#002f2b",
+          "#00524c",
+          "#007870",
+          "#0c9e94",
+          "#64c0b7",
+          "#9ae1d9",
+          "#c3fcf5"
+        ]
+      },
+      "viz-4": {
+        "role": "tertiary",
+        "displayName": "Series 4 Ochre",
+        "canonical": "#bc8800",
+        "tonalRamp": [
+          "#150800",
+          "#382100",
+          "#5f3e00",
+          "#885d00",
+          "#b17f00",
+          "#d0a759",
+          "#eecc8f",
+          "#ffebba"
+        ]
+      },
+      "viz-5": {
+        "role": "tertiary",
+        "displayName": "Series 5 Magenta",
+        "canonical": "#b8338a",
+        "tonalRamp": [
+          "#1d0012",
+          "#460831",
+          "#731d55",
+          "#a3337b",
+          "#d152a2",
+          "#f084c3",
+          "#ffb1e3",
+          "#ffd5fd"
+        ]
+      },
+      "viz-5-dark": {
+        "role": "tertiary",
+        "displayName": "Series 5 Magenta Dark",
+        "canonical": "#d14ba0",
+        "tonalRamp": [
+          "#1d0012",
+          "#460731",
+          "#731c55",
+          "#a4337b",
+          "#d252a2",
+          "#f084c3",
+          "#ffb0e3",
+          "#ffd5fd"
+        ]
+      },
+      "viz-6": {
+        "role": "tertiary",
+        "displayName": "Series 6 Green",
+        "canonical": "#1d8b3d",
+        "tonalRamp": [
+          "#001101",
+          "#00300d",
+          "#0b5421",
+          "#1f7937",
+          "#3fa055",
+          "#77c383",
+          "#a6e3ae",
+          "#cdfdd2"
+        ]
+      },
+      "viz-6-dark": {
+        "role": "tertiary",
+        "displayName": "Series 6 Green Dark",
+        "canonical": "#3aa151",
+        "tonalRamp": [
+          "#001100",
+          "#00300c",
+          "#0b5420",
+          "#207a37",
+          "#3fa054",
+          "#77c382",
+          "#a6e3ae",
+          "#cdfdd2"
+        ]
+      },
+      "viz-7": {
+        "role": "tertiary",
+        "displayName": "Series 7 Violet",
+        "canonical": "#773ac1",
+        "tonalRamp": [
+          "#110125",
+          "#301452",
+          "#522c84",
+          "#7746b9",
+          "#9c67e9",
+          "#bd95ff",
+          "#ddbeff",
+          "#f8e0ff"
+        ]
+      },
+      "viz-7-dark": {
+        "role": "tertiary",
+        "displayName": "Series 7 Violet Dark",
+        "canonical": "#955be3",
+        "tonalRamp": [
+          "#110125",
+          "#301352",
+          "#522c83",
+          "#7746b9",
+          "#9d67e9",
+          "#be95ff",
+          "#debeff",
+          "#f9e0ff"
+        ]
+      },
+      "viz-8": {
+        "role": "tertiary",
+        "displayName": "Series 8 Red",
+        "canonical": "#b32228",
+        "tonalRamp": [
+          "#200000",
+          "#4b090b",
+          "#7b1e1f",
+          "#ae3534",
+          "#de5551",
+          "#fb877f",
+          "#ffb3ab",
+          "#ffd7d0"
+        ]
+      },
+      "viz-8-dark": {
+        "role": "tertiary",
+        "displayName": "Series 8 Red Dark",
+        "canonical": "#d74745",
+        "tonalRamp": [
+          "#200000",
+          "#4b080b",
+          "#7b1e1f",
+          "#ae3534",
+          "#de5551",
+          "#fb877f",
+          "#ffb3ab",
+          "#ffd7cf"
+        ]
+      },
+      "diagram-body": {
+        "role": "tertiary",
+        "displayName": "Diagram Body",
+        "canonical": "#475569",
+        "tonalRamp": [
+          "#080b11",
+          "#202730",
+          "#3c4653",
+          "#5a6779",
+          "#7c8a9f",
+          "#a2afc1",
+          "#c7d2e1",
+          "#e7effc"
+        ]
+      },
+      "diagram-quiet": {
+        "role": "tertiary",
+        "displayName": "Diagram Quiet",
+        "canonical": "#64748b",
+        "tonalRamp": [
+          "#070b12",
+          "#202731",
+          "#3b4655",
+          "#59677b",
+          "#7b8aa1",
+          "#a1afc3",
+          "#c7d2e2",
+          "#e6effd"
+        ]
+      },
+      "diagram-frame-edge": {
+        "role": "tertiary",
+        "displayName": "Diagram Frame Edge",
+        "canonical": "#cbd5e1",
+        "tonalRamp": [
+          "#060c13",
+          "#202730",
+          "#3e4650",
+          "#5e6771",
+          "#818a95",
+          "#a5afbb",
+          "#c8d2de",
+          "#e5f0fc"
+        ]
+      },
+      "diagram-note": {
+        "role": "tertiary",
+        "displayName": "Diagram Note",
+        "canonical": "#fbf3d5",
+        "tonalRamp": [
+          "#0d0b05",
+          "#2a261a",
+          "#4a4534",
+          "#6c664f",
+          "#90896f",
+          "#b4ae98",
+          "#d6d1bf",
+          "#f3efe0"
+        ]
+      },
+      "diagram-note-edge": {
+        "role": "tertiary",
+        "displayName": "Diagram Note Edge",
+        "canonical": "#d9c37a",
+        "tonalRamp": [
+          "#100a00",
+          "#2f2603",
+          "#514413",
+          "#766527",
+          "#9c8843",
+          "#bead76",
+          "#ded1a4",
+          "#f9eeca"
         ]
       }
     },
     "darkPairs": {
-      "chat-ground": "chat-ground-dark",
-      "chat-surface": "chat-surface-dark",
-      "chat-bubble": "chat-bubble-dark",
-      "chat-line": "chat-line-dark",
-      "chat-ink": "chat-ink-dark",
-      "chat-muted": "chat-muted-dark",
-      "chart-blue": "#3987e5",
-      "chart-orange": "#d95926",
-      "chart-aqua": "#199e70",
-      "chart-yellow": "#c98500",
-      "chart-magenta": "#d55181",
-      "chart-green": "#008300",
-      "chart-violet": "#9085e9",
-      "chart-red": "#e66767",
-      "console-ground": "graphite-ground",
-      "console-surface": "graphite-surface",
-      "console-line": "graphite-line",
-      "console-ink": "graphite-ink",
-      "console-muted": "graphite-muted",
-      "console-accent": "graphite-accent",
-      "console-accent-hover": "graphite-accent-hover",
-      "console-accent-soft": "rgb(79 140 255 / 0.14)",
-      "console-problem": "graphite-problem",
-      "console-good": "graphite-good",
-      "console-good-soft": "rgb(71 205 137 / 0.14)",
-      "console-warn": "graphite-warn"
+      "surface-canvas": "surface-canvas-dark",
+      "surface-card": "surface-card-dark",
+      "surface-raised": "surface-raised-dark",
+      "surface-hover": "surface-hover-dark",
+      "text-strong": "text-strong-dark",
+      "text-muted": "text-muted-dark",
+      "text-link": "text-link-dark",
+      "border-default": "border-default-dark",
+      "border-control": "border-control-dark",
+      "action-primary": "action-primary-dark",
+      "action-primary-hover": "action-primary-hover-dark",
+      "nav-active-bg": "nav-active-bg-dark",
+      "badge-count-text": "badge-count-text-dark",
+      "focus-ring": "focus-ring-dark",
+      "status-success": "status-success-dark",
+      "status-success-bg": "status-success-bg-dark",
+      "status-caution": "status-caution-dark",
+      "status-danger": "status-danger-dark",
+      "viz-1": "viz-1-dark",
+      "viz-2": "viz-2-dark",
+      "viz-3": "viz-3-dark",
+      "viz-5": "viz-5-dark",
+      "viz-6": "viz-6-dark",
+      "viz-7": "viz-7-dark",
+      "viz-8": "viz-8-dark"
     },
     "runtimeColors": [
       {
         "name": "brand",
-        "purpose": "The customer's colour (#rrggbb, per widget). Launcher and send only; on the dark composer (#30302e) it gives way to #f5f4ef when under 3:1 (forDark). Falls back to #1f1e1d."
+        "purpose": "A widget's own colour (#rrggbb), standing in for the primary on send and the caret; the launcher wears it too. On the dark composer (#1a2537) it gives way to #f1f5f9 when under 3:1 (forDark). Without one, action-primary shows."
       },
       {
         "name": "on-brand",
         "purpose": "White or black, whichever contrasts more with the brand (inkOn). Computed, never configured."
+      },
+      {
+        "name": "mine",
+        "purpose": "The visitor's bubble: the widget's colour as it is, in both schemes, because the bubble is not a control."
+      },
+      {
+        "name": "on-mine",
+        "purpose": "The ink that reads on the bubble (inkOn), also its inner 1px edge at 16% and its selection tint at 30%."
       }
     ],
     "typographyMeta": {
@@ -723,9 +910,13 @@
         "displayName": "Chat body",
         "purpose": "Answers, the visitor's words, the composer."
       },
+      "chat-title": {
+        "displayName": "Chat title",
+        "purpose": "The header and the 'Your chats' heading."
+      },
       "chat-welcome": {
         "displayName": "Welcome",
-        "purpose": "An empty chat's first line; 26px on wide frames."
+        "purpose": "An empty chat's first line; 20px in the panel, up to 24px on a wide frame."
       },
       "chat-page-title": {
         "displayName": "Page title",
@@ -735,80 +926,105 @@
         "displayName": "Answer heading",
         "purpose": "A rendered answer's h2 (Markdown h1). The chat's title is the only h1."
       },
+      "chat-action": {
+        "displayName": "Chat action",
+        "purpose": "Quiet and secondary actions, the code caption."
+      },
       "chat-caption": {
         "displayName": "Caption",
-        "purpose": "The AI notice, the credit, the character count."
+        "purpose": "The AI notice, the credit, the character count: the smallest size."
+      },
+      "code": {
+        "displayName": "Code",
+        "purpose": "The platform's monospace; PF Mono is not available."
       },
       "greeting": {
         "displayName": "Greeting",
-        "purpose": "The launcher's greeting on the host page, in the host's system face."
+        "purpose": "The launcher's greeting on the host page, in the host's Roboto or system face."
       },
       "console-body": {
         "displayName": "Console body",
         "purpose": "The console's text, with tabular figures."
       },
-      "console-group-label": {
-        "displayName": "Group label",
-        "purpose": "The widget column's 'Widgets' heading only; uppercase."
+      "console-page-title": {
+        "displayName": "Console page title",
+        "purpose": "20px on a phone, up to 24px on a wide screen."
+      },
+      "console-card-title": {
+        "displayName": "Card title",
+        "purpose": "A station's card and a home panel."
+      },
+      "console-action": {
+        "displayName": "Console action",
+        "purpose": "Primary, secondary and quiet buttons."
+      },
+      "console-figure": {
+        "displayName": "Figure",
+        "purpose": "The home strip's counts."
       }
     },
     "shadows": [
       {
-        "name": "composer",
-        "value": "0 8px 24px -16px rgb(0 0 0 / 0.4)",
-        "purpose": "The chat's composer card."
-      },
-      {
-        "name": "composer-focus",
-        "value": "0 8px 24px -16px rgb(0 0 0 / 0.4), 0 0 0 3px color-mix(in srgb, var(--ink) 8%, transparent)",
-        "purpose": "The composer while it holds focus."
-      },
-      {
-        "name": "jump",
-        "value": "0 6px 16px -8px rgb(0 0 0 / 0.35)",
-        "purpose": "The 'latest message' circle."
-      },
-      {
-        "name": "hairline",
-        "value": "0 0 0 1px var(--line)",
-        "purpose": "Every framed surface: code, tables, charts, the list of chats, console cards and fields."
+        "name": "popover",
+        "value": "0 8px 24px rgba(0,0,0,.12)",
+        "purpose": "The chat's 'latest message' circle."
       },
       {
         "name": "launcher",
-        "value": "0 10px 24px -10px rgba(0,0,0,.45), 0 2px 6px -2px rgba(0,0,0,.25)",
+        "value": "0 8px 24px rgba(0,0,0,.12), 0 0 0 1px rgba(0,0,0,.06)",
         "purpose": "The launcher at rest."
       },
       {
         "name": "launcher-hover",
-        "value": "0 14px 30px -10px rgba(0,0,0,.5), 0 3px 8px -2px rgba(0,0,0,.28)",
+        "value": "0 20px 40px rgba(0,0,0,.2), 0 0 0 1px rgba(0,0,0,.06)",
         "purpose": "Pointer hover, with a 2px lift."
       },
       {
         "name": "greeting",
-        "value": "0 12px 32px -12px rgba(0,0,0,.35), 0 2px 6px -2px rgba(0,0,0,.12)",
-        "purpose": "The greeting bubble."
+        "value": "0 10px 30px rgba(24,24,27,.14)",
+        "purpose": "The greeting card."
       },
       {
-        "name": "panel",
-        "value": "0 24px 60px -24px rgba(0,0,0,.4), 0 8px 20px -12px rgba(0,0,0,.2)",
-        "purpose": "The floating panel (the console preview at .35/.2)."
+        "name": "menu",
+        "value": "0 10px 30px light-dark(rgba(24,24,27,.1), rgba(0,0,0,.45))",
+        "purpose": "The console's account menu, over a 1px hairline ring."
       },
       {
-        "name": "console-whisper",
-        "value": "0 1px 2px rgb(16 24 40 / 0.05)",
-        "purpose": "Light theme controls and cards; none in Graphite."
+        "name": "modal",
+        "value": "0 24px 60px light-dark(rgba(9,9,11,.22), rgba(0,0,0,.6))",
+        "purpose": "The console's chat preview; the floating panel uses the light value in both schemes."
       },
       {
-        "name": "console-focus-field",
-        "value": "0 0 0 1px var(--accent), 0 0 0 4px var(--accent-ring)",
-        "purpose": "A console field holding focus."
+        "name": "hairline",
+        "value": "0 0 0 1px var(--border-default)",
+        "purpose": "Every framed surface: code, tables, charts, the list of chats, console cards."
+      },
+      {
+        "name": "control-edge",
+        "value": "0 0 0 1px var(--border-control)",
+        "purpose": "Console fields; the chat's composer and name field draw the same edge as a border."
+      },
+      {
+        "name": "focus-ring",
+        "value": "0 0 0 2px var(--surface-card), 0 0 0 4px var(--focus-ring-color)",
+        "purpose": "Focus drawn as a box-shadow: the composer, the comment card, the name field. Elsewhere a 2px outline, 2px off."
+      },
+      {
+        "name": "focus-ring-host",
+        "value": "outline: 2px solid #fff; box-shadow: 0 0 0 4px #1d4ed8",
+        "purpose": "The launcher and the greeting's buttons, on any host page."
+      },
+      {
+        "name": "station-halo",
+        "value": "0 0 0 5px color-mix(in srgb, var(--focus-ring-color) 25%, transparent)",
+        "purpose": "The stepper's current and open station. A halo, never a gap and ring."
       }
     ],
     "motion": [
       {
-        "name": "ease-out-expo",
-        "value": "cubic-bezier(.16,1,.3,1)",
-        "purpose": "Panel rise and fade (200ms, 12px), greeting rise (400ms, 8px), launcher return (200ms)."
+        "name": "ease-emphasized",
+        "value": "cubic-bezier(.2,0,0,1)",
+        "purpose": "Panel rise and fade (180ms, 12px), greeting rise (240ms, 8px), launcher lift and return (180ms)."
       },
       {
         "name": "hover",
@@ -837,13 +1053,23 @@
       },
       {
         "name": "found",
-        "value": "Bubble Grey wash (8px spread) to transparent, 2.4s ease-out, once",
+        "value": "Neutral Fill wash (8px spread) to transparent, 2.4s ease-out, once",
         "purpose": "An answer opened from the Pinned page. It does not move, so it plays under reduced motion."
       },
       {
         "name": "upload",
         "value": "inline-size 0.15s linear",
         "purpose": "A file card's 2px ink progress line."
+      },
+      {
+        "name": "chart-draw-in",
+        "value": "520ms bars, 760ms lines, 600ms washes and slices, cubic-bezier(0.22, 1, 0.36, 1)",
+        "purpose": "A chart when it appears or changes kind; none under reduced motion."
+      },
+      {
+        "name": "chevron",
+        "value": "rotate 160ms cubic-bezier(0.16, 1, 0.3, 1)",
+        "purpose": "The console's disclosure chevrons."
       }
     ],
     "breakpoints": [
@@ -851,6 +1077,11 @@
         "name": "chat-narrow",
         "value": "340px",
         "purpose": "Below: 10px gutter, wider bubbles, header New chat hidden."
+      },
+      {
+        "name": "chat-foot-line",
+        "value": "356px",
+        "purpose": "Below: the credit moves under the AI notice."
       },
       {
         "name": "loader-full-screen",
@@ -865,12 +1096,17 @@
       {
         "name": "console-phone",
         "value": "640px",
-        "purpose": "Below: three-row bar, dot-only track."
+        "purpose": "Below: three-row bar, dot-only track, figures in two columns."
       },
       {
         "name": "console-narrow",
         "value": "900px",
         "purpose": "Below: widget column above the work."
+      },
+      {
+        "name": "console-home",
+        "value": "1100px",
+        "purpose": "Below: home panels in one column."
       },
       {
         "name": "console-preview",
@@ -884,33 +1120,33 @@
       "name": "Send Button",
       "kind": "button",
       "refersTo": "send-button",
-      "description": "The composer's send, in the customer's colour.",
+      "description": "The composer's send, in the widget's colour or the cobalt primary.",
       "html": "<button class=\"ds-send\" aria-label=\"Send\"><svg viewBox=\"0 0 24 24\" width=\"18\" height=\"18\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M12 19V5M5 12l7-7 7 7\"/></svg></button>",
-      "css": ".ds-send{--brand:#5b2a86;display:grid;place-items:center;width:36px;height:36px;border:0;border-radius:10px;background:var(--brand);color:#fff;cursor:pointer;transition:transform .12s ease-out}.ds-send:active{transform:scale(.94)}.ds-send:focus-visible{outline:3px solid #1f1e1d;outline-offset:2px}.ds-send:disabled{opacity:.3}"
+      "css": ".ds-send{--brand:#0047ab;display:grid;place-items:center;width:36px;height:36px;border:0;border-radius:10px;background:var(--brand);color:#fff;cursor:pointer;transition:transform .12s ease-out}.ds-send:active{transform:scale(.94)}.ds-send:focus-visible{outline:2px solid #1d4ed8;outline-offset:2px}.ds-send:disabled{opacity:.3}"
     },
     {
       "name": "Composer",
       "kind": "input",
       "refersTo": "composer",
-      "description": "The chat's white composer card with the send inside.",
+      "description": "The chat's composer: a flat field with a control edge, the send inside, the focus ring around the whole of it.",
       "html": "<div class=\"ds-compose\"><textarea rows=\"1\" placeholder=\"Ask anything\"></textarea><button class=\"ds-compose-send\" aria-label=\"Send\"><svg viewBox=\"0 0 24 24\" width=\"18\" height=\"18\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M12 19V5M5 12l7-7 7 7\"/></svg></button></div>",
-      "css": ".ds-compose{display:flex;align-items:flex-end;gap:8px;padding:8px 8px 8px 16px;border:1px solid #e6e4e0;border-radius:20px;background:#fff;box-shadow:0 8px 24px -16px rgb(0 0 0/.4);font:400 16px/1.5 'Inter Variable',Inter,system-ui,sans-serif;transition:border-color .15s ease-out}.ds-compose:focus-within{border-color:color-mix(in srgb,#1f1e1d 40%,#e6e4e0);box-shadow:0 8px 24px -16px rgb(0 0 0/.4),0 0 0 3px color-mix(in srgb,#1f1e1d 8%,transparent)}.ds-compose textarea{flex:1;border:0;background:transparent;resize:none;padding:6px 0;font:inherit;color:#1f1e1d;outline:none}.ds-compose textarea::placeholder{color:#6b6a68}.ds-compose-send{display:grid;place-items:center;width:36px;height:36px;border:0;border-radius:10px;background:#5b2a86;color:#fff}"
+      "css": ".ds-compose{display:flex;align-items:flex-end;gap:8px;padding:8px 8px 8px 16px;border:1px solid #77879d;border-radius:14px;background:#fff;font:400 16px/1.5 'Roboto Variable',Roboto,-apple-system,'Segoe UI',sans-serif}.ds-compose:focus-within{box-shadow:0 0 0 2px #fff,0 0 0 4px #1d4ed8}.ds-compose textarea{flex:1;border:0;background:transparent;resize:none;padding:6px 0;font:inherit;color:#0f172a;outline:none;caret-color:#0047ab}.ds-compose textarea::placeholder{color:#606f86}.ds-compose-send{display:grid;place-items:center;width:36px;height:36px;border:0;border-radius:10px;background:#0047ab;color:#fff}"
     },
     {
       "name": "Suggestion Chip",
       "kind": "chip",
       "refersTo": "suggestion-chip",
-      "description": "An outlined suggested question; the brand only at its edge under the pointer.",
+      "description": "An outlined suggested question; the widget's colour only at its edge under the pointer.",
       "html": "<button class=\"ds-chip\">When does the library open?</button>",
-      "css": ".ds-chip{--brand:#5b2a86;min-height:40px;padding:8px 14px;border:1px solid #e6e4e0;border-radius:12px;background:#fff;color:#1f1e1d;font:400 14px/1.35 'Inter Variable',Inter,system-ui,sans-serif;cursor:pointer;transition:border-color .15s ease-out,background-color .15s ease-out}.ds-chip:hover{border-color:color-mix(in srgb,var(--brand) 55%,#e6e4e0);background:color-mix(in srgb,var(--brand) 5%,#fff)}.ds-chip:focus-visible{outline:3px solid #1f1e1d;outline-offset:2px}"
+      "css": ".ds-chip{--brand:#0047ab;min-height:40px;padding:8px 14px;border:1px solid #e2e8f0;border-radius:12px;background:#fff;color:#0f172a;font:400 14px/1.35 'Roboto Variable',Roboto,-apple-system,'Segoe UI',sans-serif;cursor:pointer;transition:border-color .15s ease-out,background-color .15s ease-out}.ds-chip:hover{border-color:color-mix(in srgb,var(--brand) 55%,#e2e8f0);background:color-mix(in srgb,var(--brand) 5%,#fff)}.ds-chip:focus-visible{outline:2px solid #1d4ed8;outline-offset:2px}"
     },
     {
       "name": "Answer with Mark",
       "kind": "custom",
       "refersTo": "chat-mark",
-      "description": "An answer as plain text beside the assistant's 28px mark; the visitor's bubble above.",
+      "description": "An answer as plain text beside the assistant's 28px mark; the visitor's bubble in the primary above.",
       "html": "<div class=\"ds-turn\"><p class=\"ds-mine\">How do I book a guest room?</p><div class=\"ds-answer\"><span class=\"ds-mark\">AC</span><p>Book through the porters' lodge, up to two weeks ahead.</p></div></div>",
-      "css": ".ds-turn{display:flex;flex-direction:column;gap:24px;font:400 16px/1.6 'Inter Variable',Inter,system-ui,sans-serif;color:#1f1e1d;background:#fcfcfb;padding:16px}.ds-mine{align-self:flex-end;max-width:85%;margin:0;padding:10px 16px;border-radius:20px;background:#f0efeb}.ds-answer{display:grid;grid-template-columns:auto minmax(0,1fr);column-gap:12px}.ds-answer p{margin:0}.ds-mark{display:grid;place-items:center;width:28px;height:28px;border-radius:50%;background:#f0efeb;font-size:10.6px;font-weight:650}"
+      "css": ".ds-turn{display:flex;flex-direction:column;gap:24px;font:400 16px/1.6 'Roboto Variable',Roboto,-apple-system,'Segoe UI',sans-serif;color:#0f172a;background:#fff;padding:16px}.ds-mine{align-self:flex-end;max-width:85%;margin:0;padding:10px 16px;border-radius:14px;background:#0047ab;color:#fff;box-shadow:inset 0 0 0 1px color-mix(in srgb,#fff 16%,transparent)}.ds-answer{display:grid;grid-template-columns:auto minmax(0,1fr);column-gap:12px}.ds-answer p{margin:0}.ds-mark{display:grid;place-items:center;width:28px;height:28px;border-radius:50%;background:#f1f5f9;font-size:10.6px;font-weight:600;letter-spacing:.01em}"
     },
     {
       "name": "Quiet Action",
@@ -918,7 +1154,7 @@
       "refersTo": "button-quiet",
       "description": "Copy, show code, show all rows: quiet until wanted.",
       "html": "<button class=\"ds-quiet\"><svg viewBox=\"0 0 24 24\" width=\"16\" height=\"16\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><rect x=\"9\" y=\"9\" width=\"11\" height=\"11\" rx=\"2\"/><path d=\"M5 15V6a2 2 0 0 1 2-2h9\"/></svg>Copy answer</button>",
-      "css": ".ds-quiet{display:inline-flex;align-items:center;gap:6px;min-height:32px;padding:6px 8px;border:0;border-radius:8px;background:transparent;color:#6b6a68;font:500 13px 'Inter Variable',Inter,system-ui,sans-serif;cursor:pointer}.ds-quiet:hover{background:color-mix(in srgb,#1f1e1d 6%,transparent);color:#1f1e1d}.ds-quiet:focus-visible{outline:3px solid #1f1e1d;outline-offset:2px}"
+      "css": ".ds-quiet{display:inline-flex;align-items:center;gap:6px;min-height:32px;padding:6px 8px;border:0;border-radius:8px;background:transparent;color:#606f86;font:600 13px 'Roboto Variable',Roboto,-apple-system,'Segoe UI',sans-serif;cursor:pointer;transition:background-color .15s ease-out,color .15s ease-out}.ds-quiet:hover{background:color-mix(in srgb,#0f172a 6%,transparent);color:#0f172a}.ds-quiet:focus-visible{outline:2px solid #1d4ed8;outline-offset:2px}"
     },
     {
       "name": "Code Panel",
@@ -926,23 +1162,23 @@
       "refersTo": "code-panel",
       "description": "Code in its own hairline frame, captioned and scrolling sideways.",
       "html": "<figure class=\"ds-code\"><figcaption><span>python</span><button>Copy code</button></figcaption><pre tabindex=\"0\">print(\"hello\")</pre></figure>",
-      "css": ".ds-code{margin:0;overflow:hidden;border-radius:12px;background:#fcfcfb;box-shadow:0 0 0 1px #e6e4e0}.ds-code figcaption{display:flex;justify-content:space-between;align-items:center;padding:4px 6px 4px 14px;border-bottom:1px solid #e6e4e0;font:650 13px 'Inter Variable',Inter,system-ui,sans-serif;color:#6b6a68}.ds-code button{border:0;background:none;color:#6b6a68;font:500 13px 'Inter Variable',Inter,system-ui,sans-serif;padding:6px 8px;border-radius:8px}.ds-code button:hover{background:color-mix(in srgb,#1f1e1d 6%,transparent);color:#1f1e1d}.ds-code pre{margin:0;padding:12px 14px;overflow-x:auto;font:13.5px/1.6 ui-monospace,'Cascadia Mono',Menlo,Consolas,monospace;color:#1f1e1d}.ds-code pre:focus-visible{outline:3px solid #1f1e1d;outline-offset:-3px}"
+      "css": ".ds-code{margin:0;overflow:hidden;border-radius:12px;background:#fff;box-shadow:0 0 0 1px #e2e8f0}.ds-code figcaption{display:flex;justify-content:space-between;align-items:center;padding:4px 6px 4px 14px;border-bottom:1px solid #e2e8f0;font:600 13px 'Roboto Variable',Roboto,-apple-system,'Segoe UI',sans-serif;color:#606f86}.ds-code button{border:0;background:none;color:#606f86;font:600 13px 'Roboto Variable',Roboto,-apple-system,'Segoe UI',sans-serif;padding:6px 8px;border-radius:8px;cursor:pointer}.ds-code button:hover{background:color-mix(in srgb,#0f172a 6%,transparent);color:#0f172a}.ds-code button:focus-visible{outline:2px solid #1d4ed8;outline-offset:2px}.ds-code pre{margin:0;padding:12px 14px;overflow-x:auto;font:13.5px/1.6 ui-monospace,'Cascadia Mono',Menlo,Consolas,monospace;color:#0f172a}.ds-code pre:focus-visible{outline:2px solid #1d4ed8;outline-offset:-2px}"
     },
     {
       "name": "Launcher",
       "kind": "button",
       "refersTo": "launcher",
-      "description": "The round launcher on the customer's page, with the two-tone focus ring.",
+      "description": "The round launcher on the customer's page, with the white-then-blue focus ring.",
       "html": "<button class=\"ds-launcher\" aria-label=\"Chat\"><svg viewBox=\"0 0 24 24\" width=\"26\" height=\"26\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M20 11.5a7.5 7.5 0 0 1-11.1 6.6L4 19.5l1.4-4.6A7.5 7.5 0 1 1 20 11.5z\"/></svg></button>",
-      "css": ".ds-launcher{display:grid;place-items:center;width:56px;height:56px;border:0;border-radius:50%;background:#5b2a86;color:#fff;cursor:pointer;box-shadow:0 10px 24px -10px rgba(0,0,0,.45),0 2px 6px -2px rgba(0,0,0,.25);transition:transform .2s cubic-bezier(.16,1,.3,1),box-shadow .2s cubic-bezier(.16,1,.3,1)}.ds-launcher:hover{transform:translateY(-2px);box-shadow:0 14px 30px -10px rgba(0,0,0,.5),0 3px 8px -2px rgba(0,0,0,.28)}.ds-launcher:active{transform:scale(.92);transition:transform .08s ease-out}.ds-launcher:focus-visible{outline:3px solid #fff;outline-offset:2px;box-shadow:0 0 0 7px #1f1e1d}"
+      "css": ".ds-launcher{display:grid;place-items:center;width:56px;height:56px;border:0;border-radius:50%;background:#0047ab;color:#fff;cursor:pointer;box-shadow:0 8px 24px rgba(0,0,0,.12),0 0 0 1px rgba(0,0,0,.06);transition:transform .18s cubic-bezier(.2,0,0,1),box-shadow .18s cubic-bezier(.2,0,0,1)}.ds-launcher:hover{transform:translateY(-2px);box-shadow:0 20px 40px rgba(0,0,0,.2),0 0 0 1px rgba(0,0,0,.06)}.ds-launcher:active{transform:scale(.92);transition:transform .08s ease-out}.ds-launcher:focus-visible{outline:2px solid #fff;outline-offset:0;box-shadow:0 0 0 4px #1d4ed8}"
     },
     {
       "name": "Console Primary",
       "kind": "button",
       "refersTo": "console-primary",
-      "description": "The console's one accent action, ending a form.",
+      "description": "The console's one primary action, ending a form.",
       "html": "<button class=\"ds-primary\">Continue to Sites</button>",
-      "css": ".ds-primary{display:inline-flex;align-items:center;min-height:38px;padding:8px 16px;border:0;border-radius:8px;background:#4f46e5;color:#fff;font:500 14px 'Inter Variable',Inter,system-ui,sans-serif;box-shadow:0 1px 2px rgb(16 24 40/.05);cursor:pointer;transition:background-color .15s ease-out}.ds-primary:hover{background:#4338ca}.ds-primary:focus-visible{outline:2px solid #4f46e5;outline-offset:2px}.ds-primary:disabled{opacity:.45}"
+      "css": ".ds-primary{display:inline-flex;align-items:center;min-height:38px;padding:8px 16px;border:0;border-radius:8px;background:#0047ab;color:#fff;font:600 14px 'Roboto Variable',Roboto,-apple-system,'Segoe UI',sans-serif;cursor:pointer;transition:background-color .15s ease-out}.ds-primary:hover{background:#003785}.ds-primary:focus-visible{outline:2px solid #1d4ed8;outline-offset:2px}.ds-primary:disabled{opacity:.45}"
     },
     {
       "name": "Console Secondary",
@@ -950,39 +1186,39 @@
       "refersTo": "console-secondary",
       "description": "Outlined secondary; destructive actions use it, set apart.",
       "html": "<button class=\"ds-secondary\">Delete the widget</button>",
-      "css": ".ds-secondary{display:inline-flex;align-items:center;min-height:36px;padding:7px 14px;border:0;border-radius:8px;background:#fff;color:#111827;font:500 14px 'Inter Variable',Inter,system-ui,sans-serif;box-shadow:inset 0 0 0 1px #e5e7eb,0 1px 2px rgb(16 24 40/.05);cursor:pointer;transition:background-color .15s ease-out}.ds-secondary:hover{background:#f9fafb}.ds-secondary:focus-visible{outline:2px solid #4f46e5;outline-offset:2px}"
+      "css": ".ds-secondary{display:inline-flex;align-items:center;min-height:38px;padding:8px 14px;border:0;border-radius:8px;background:#fff;color:#0f172a;font:600 14px 'Roboto Variable',Roboto,-apple-system,'Segoe UI',sans-serif;box-shadow:inset 0 0 0 1px #e2e8f0;cursor:pointer;transition:background-color .15s ease-out}.ds-secondary:hover{background:#f1f5f9}.ds-secondary:focus-visible{outline:2px solid #1d4ed8;outline-offset:2px}"
     },
     {
       "name": "Console Field",
       "kind": "input",
       "refersTo": "console-field",
-      "description": "A labelled console input with the accent focus ring.",
+      "description": "A labelled console input with the control edge and the focus ring.",
       "html": "<label class=\"ds-field\"><span>Title</span><input value=\"Ask the College\"></label>",
-      "css": ".ds-field{display:grid;gap:4px;font:400 14px/1.55 'Inter Variable',Inter,system-ui,sans-serif;color:#111827}.ds-field span{font-weight:500}.ds-field input{min-height:38px;padding:8px 12px;border:0;border-radius:8px;background:#fff;color:inherit;font:inherit;box-shadow:0 0 0 1px #e5e7eb,0 1px 2px rgb(16 24 40/.05);caret-color:#4f46e5}.ds-field input:focus-visible{outline:2px solid transparent;box-shadow:0 0 0 1px #4f46e5,0 0 0 4px rgb(79 70 229/.2)}"
+      "css": ".ds-field{display:grid;gap:4px;font:400 14px/1.5 'Roboto Variable',Roboto,-apple-system,'Segoe UI',sans-serif;color:#0f172a}.ds-field span{font-weight:500}.ds-field input{min-height:38px;padding:8px 12px;border:0;border-radius:8px;background:#fff;color:inherit;font:inherit;box-shadow:0 0 0 1px #77879d;caret-color:#0047ab}.ds-field input:focus-visible{outline:2px solid #1d4ed8;outline-offset:2px}"
     },
     {
       "name": "Station Track",
       "kind": "nav",
       "refersTo": "console-station-dot",
-      "description": "The six-station stepper: done, now, next.",
+      "description": "The six-station stepper: done, now (a soft halo, never a gap and ring), next.",
       "html": "<ol class=\"ds-track\"><li class=\"done\"><span class=\"dot\"><svg viewBox=\"0 0 24 24\" width=\"16\" height=\"16\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M5 12.5l4.5 4.5L19 7.5\"/></svg></span>Agent<small>Done</small></li><li class=\"now\"><span class=\"dot\">2</span>Sites<small>about 2 min</small></li><li><span class=\"dot\">3</span>Sign-in<small>about 3 min</small></li></ol>",
-      "css": ".ds-track{display:grid;grid-template-columns:repeat(3,1fr);margin:0;padding:0;list-style:none;font:500 14px 'Inter Variable',Inter,system-ui,sans-serif;color:#111827;text-align:center}.ds-track li{display:grid;justify-items:center;gap:1px}.ds-track small{color:#6b7280;font-size:12.5px;font-weight:400}.ds-track .dot{display:grid;place-items:center;width:28px;height:28px;margin-bottom:8px;border-radius:50%;background:#fff;box-shadow:0 0 0 1.5px #e5e7eb;color:#6b7280;font-size:12.5px;font-weight:600}.ds-track .done .dot{background:#4f46e5;box-shadow:none;color:#fff}.ds-track .now .dot{color:#4338ca;box-shadow:0 0 0 2px #fff,0 0 0 4px #4f46e5,0 0 0 8px rgb(79 70 229/.2)}"
+      "css": ".ds-track{display:grid;grid-template-columns:repeat(3,1fr);margin:0;padding:8px 0;list-style:none;font:500 14px 'Roboto Variable',Roboto,-apple-system,'Segoe UI',sans-serif;color:#0f172a;text-align:center}.ds-track li{display:grid;justify-items:center;gap:1px}.ds-track small{color:#606f86;font-size:12px;font-weight:400}.ds-track .dot{display:grid;place-items:center;width:28px;height:28px;margin-bottom:8px;border-radius:50%;background:#fff;box-shadow:0 0 0 1.5px #e2e8f0;color:#606f86;font-size:12px;font-weight:600}.ds-track .done .dot{background:#0047ab;box-shadow:none;color:#fff}.ds-track .now .dot{color:#0047ab;box-shadow:0 0 0 5px rgb(29 78 216/.25)}"
     },
     {
       "name": "Answer Toggles",
       "kind": "button",
       "refersTo": "answer-toggle",
-      "description": "Pin and thumbs under a finished answer; chosen fills in ink, never the brand.",
+      "description": "Pin and thumbs under a finished answer; chosen fills in ink, never the widget's colour.",
       "html": "<div class=\"ds-acts\"><button class=\"ds-toggle\" aria-label=\"Pin\" aria-pressed=\"true\"><svg viewBox=\"0 0 24 24\" width=\"16\" height=\"16\" fill=\"currentColor\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M9 3h6M10 3v6l-3 4h10l-3-4V3M12 13v8\"/></svg></button><button class=\"ds-toggle\" aria-label=\"Helpful\" aria-pressed=\"false\"><svg viewBox=\"0 0 24 24\" width=\"16\" height=\"16\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M7 10v11H4a1 1 0 0 1-1-1v-9a1 1 0 0 1 1-1zM7 10l4-7a2 2 0 0 1 3 2l-1 5h6a2 2 0 0 1 2 2.3l-1.4 7A2 2 0 0 1 17.6 21H7\"/></svg></button><span class=\"ds-rated\">Thanks</span></div>",
-      "css": ".ds-acts{display:flex;align-items:center;gap:2px}.ds-toggle{display:grid;place-items:center;width:32px;height:32px;padding:8px;border:0;border-radius:8px;background:transparent;color:#6b6a68;cursor:pointer;transition:background-color .15s ease-out,color .15s ease-out}.ds-toggle:hover{background:color-mix(in srgb,#1f1e1d 6%,transparent);color:#1f1e1d}.ds-toggle[aria-pressed=\"true\"]{color:#1f1e1d}.ds-toggle:focus-visible{outline:3px solid #1f1e1d;outline-offset:2px}.ds-rated{padding-inline:8px;font:400 13px 'Inter Variable',Inter,system-ui,sans-serif;color:#6b6a68}"
+      "css": ".ds-acts{display:flex;align-items:center;gap:2px}.ds-toggle{display:grid;place-items:center;width:32px;height:32px;padding:8px;border:0;border-radius:8px;background:transparent;color:#606f86;cursor:pointer;transition:background-color .15s ease-out,color .15s ease-out}.ds-toggle:hover{background:color-mix(in srgb,#0f172a 6%,transparent);color:#0f172a}.ds-toggle[aria-pressed=\"true\"]{color:#0f172a}.ds-toggle:focus-visible{outline:2px solid #1d4ed8;outline-offset:2px}.ds-rated{padding-inline:8px;font:400 13px 'Roboto Variable',Roboto,-apple-system,'Segoe UI',sans-serif;color:#606f86}"
     },
     {
       "name": "Place Row",
       "kind": "nav",
       "refersTo": "place-row",
-      "description": "Projects and Pinned above Your chats; the current place on Bubble Grey.",
+      "description": "Projects and Pinned above Your chats; the current place on the soft primary fill.",
       "html": "<ul class=\"ds-places\"><li><button aria-current=\"page\">Projects</button></li><li><button>Pinned</button></li></ul>",
-      "css": ".ds-places{display:grid;gap:2px;margin:0;padding:0;list-style:none;max-width:288px}.ds-places button{display:flex;align-items:center;width:100%;min-height:40px;padding:8px 12px;border:0;border-radius:10px;background:transparent;color:#1f1e1d;font:500 15px 'Inter Variable',Inter,system-ui,sans-serif;text-align:start;cursor:pointer;transition:background-color .15s ease-out}.ds-places button:hover{background:color-mix(in srgb,#1f1e1d 5%,transparent)}.ds-places button[aria-current=\"page\"]{background:#f0efeb}.ds-places button:focus-visible{outline:3px solid #1f1e1d;outline-offset:2px}"
+      "css": ".ds-places{display:grid;gap:2px;margin:0;padding:0;list-style:none;max-width:288px}.ds-places button{display:flex;align-items:center;width:100%;min-height:40px;padding:8px 12px;border:0;border-radius:10px;background:transparent;color:#0f172a;font:500 15px 'Roboto Variable',Roboto,-apple-system,'Segoe UI',sans-serif;text-align:start;cursor:pointer;transition:background-color .15s ease-out}.ds-places button:hover{background:color-mix(in srgb,#0f172a 5%,transparent)}.ds-places button[aria-current=\"page\"]{background:#e8f1fe}.ds-places button:focus-visible{outline:2px solid #1d4ed8;outline-offset:2px}"
     },
     {
       "name": "File Card",
@@ -990,40 +1226,41 @@
       "refersTo": "file-card",
       "description": "An attached file: thumbnail, name, size, remove, and a thin ink line while it uploads.",
       "html": "<div class=\"ds-file\"><span class=\"ds-file-thumb\"><svg viewBox=\"0 0 24 24\" width=\"18\" height=\"18\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z\"/><path d=\"M14 3v5h5\"/></svg></span><span class=\"ds-file-name\">Tenancy agreement.pdf</span><span class=\"ds-file-size\">240 KB</span><button class=\"ds-file-remove\" aria-label=\"Remove\"><svg viewBox=\"0 0 24 24\" width=\"16\" height=\"16\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\"><path d=\"M6 6l12 12M18 6L6 18\"/></svg></button><span class=\"ds-file-progress\"><span style=\"inline-size:60%\"></span></span></div>",
-      "css": ".ds-file{position:relative;display:grid;grid-template-columns:32px minmax(0,1fr) auto;grid-template-areas:\"thumb name remove\" \"thumb size remove\";align-items:center;column-gap:8px;max-width:220px;padding:6px 4px 6px 6px;border:1px solid #e6e4e0;border-radius:12px;background:#fff;color:#1f1e1d;font-family:'Inter Variable',Inter,system-ui,sans-serif}.ds-file-thumb{grid-area:thumb;display:grid;place-items:center;width:32px;height:32px;border-radius:8px;background:#f0efeb;color:#6b6a68}.ds-file-name{grid-area:name;overflow:hidden;font-size:13px;font-weight:500;line-height:1.3;white-space:nowrap;text-overflow:ellipsis}.ds-file-size{grid-area:size;font-size:12px;line-height:1.3;color:#6b6a68}.ds-file-remove{grid-area:remove;display:grid;place-items:center;width:28px;height:28px;padding:0;border:0;border-radius:8px;background:transparent;color:#6b6a68;cursor:pointer}.ds-file-remove:hover{background:color-mix(in srgb,#1f1e1d 6%,transparent);color:#1f1e1d}.ds-file-remove:focus-visible{outline:3px solid #1f1e1d;outline-offset:2px}.ds-file-progress{position:absolute;inset-inline:10px;inset-block-end:3px;height:2px;overflow:hidden;border-radius:1px;background:#e6e4e0}.ds-file-progress>span{display:block;height:100%;background:#1f1e1d}"
+      "css": ".ds-file{position:relative;display:grid;grid-template-columns:32px minmax(0,1fr) auto;grid-template-areas:\"thumb name remove\" \"thumb size remove\";align-items:center;column-gap:8px;max-width:220px;padding:6px 4px 6px 6px;border:1px solid #e2e8f0;border-radius:12px;background:#fff;color:#0f172a;font-family:'Roboto Variable',Roboto,-apple-system,'Segoe UI',sans-serif}.ds-file-thumb{grid-area:thumb;display:grid;place-items:center;width:32px;height:32px;border-radius:8px;background:#f1f5f9;color:#606f86}.ds-file-name{grid-area:name;overflow:hidden;font-size:13px;font-weight:500;line-height:1.3;white-space:nowrap;text-overflow:ellipsis}.ds-file-size{grid-area:size;font-size:12px;line-height:1.3;color:#606f86}.ds-file-remove{grid-area:remove;display:grid;place-items:center;width:28px;height:28px;padding:0;border:0;border-radius:8px;background:transparent;color:#606f86;cursor:pointer}.ds-file-remove:hover{background:color-mix(in srgb,#0f172a 6%,transparent);color:#0f172a}.ds-file-remove:focus-visible{outline:2px solid #1d4ed8;outline-offset:2px}.ds-file-progress{position:absolute;inset-inline:10px;inset-block-end:3px;height:2px;overflow:hidden;border-radius:1px;background:#e2e8f0}.ds-file-progress>span{display:block;height:100%;background:#0f172a}"
     }
   ],
   "narrative": {
     "northStar": "The Familiar Window, Their Face",
-    "overview": "Three surfaces share one record. The **chat** is the familiar AI chat window, played straight with Claude's as the bar: a near-white page (charcoal in the dark), answers set as plain text beside the assistant's round mark, the visitor's words in a soft grey bubble, a white composer card at the foot. It wears the customer's identity in two places only: their assistant's picture (or logo, or initials) beside every answer, and their colour on what can be pressed. It refuses answer cards, brand-filled suggestion pills, a coloured header bar and rounded playful type.\n\nThe **launcher and panel frame** sit on someone else's page and take the least room they can: a 56px circle in the brand colour or filled with the assistant's picture, an optional greeting bubble beside it, and a 20px-rounded panel in the chat's own ground that rises a short way and fades in. The **admin console** is the category-standard admin at the craft of the Stripe Dashboard and Linear's settings: white cards on cool grey with one indigo accent in Light, and Graphite in Dark (panels a step above a graphite ground, split by hairline seams instead of shadows, one blue accent). The administrator chooses System, Light or Dark; System follows the computer.\n\nEverything is Inter, self-hosted, at modest sizes and weights; depth is hairlines first, shadow only where something floats.",
+    "overview": "Three surfaces share one record, and all three are drawn in the PF design language (PFDL 2.3.0, its default Cobalt theme), Intellect's own design system: slate surfaces and inks, one cobalt primary, Roboto, flat surfaces with hairlines. The **chat** is the familiar AI chat window: a white page (deep navy in the dark), answers set as plain text beside the assistant's round mark, the visitor's words in a bubble of the primary colour, a bordered composer field at the foot. It wears the customer's identity in two ways: their assistant's picture (or logo, or initials) beside every answer, and their colour standing in for the primary. It refuses answer cards, brand-filled suggestion chips, a coloured header bar, a second accent, gradients, glass, and a shadow on anything that does not float.\n\nThe **launcher and panel frame** sit on someone else's page and take the least room they can: a 56px circle in the widget's colour or filled with the assistant's picture, an optional greeting card beside it, and a 14px-cornered panel in the chat's own ground that rises a short way and fades in. The **admin console** is a working admin in the same language: white cards on a slate canvas with one cobalt primary, in light and dark. The administrator chooses System, Light or Dark; System follows the computer.\n\nEverything is Roboto, self-hosted, at modest sizes and weights; depth is hairlines first, shadow only where something floats.\n\nThis is an interim re-skin, and three gaps are known and accepted. The design language's component package (`@purple-fabric/ui`) cannot be installed yet, so each stylesheet writes out the token values at its top (the loader writes them as plain colours) and every part is still the product's own; the names in this document are the design language's token names, so the values can be dropped when the package supplies them. Status words stay capitalised (\"Live\", \"In setup\") although the design language writes them lowercase, because the same strings serve as headings and labels. The console's widget column heads its list with one all-caps group label (\"Widgets\", 12px, 600, 0.04em), which the design language allows for four words or fewer; it is that one heading, not a pattern for other surfaces.",
     "keyCharacteristics": [
-      "Warm near-neutrals in the chat (#fcfcfb ground, #1f1e1d ink), cool greys in the console; neither carries an accent of its own except the console's one indigo or blue.",
-      "The customer's colour on the launcher and the send button only, giving way to light ink on the dark composer when under 3:1.",
+      "Slate surfaces and inks in every surface (#ffffff cards, #f1f5f9 canvas, #0f172a ink), each with a dark value; one cobalt primary (#0047ab, #3870be in the dark).",
+      "A widget's own colour stands in for the primary on the launcher, send, the caret and the visitor's bubble; send gives way to light ink on the dark composer when the colour is under 3:1.",
       "Answers are text, not cards; rich content (code, tables, diagrams, charts) sits in 12px hairline frames that scroll sideways inside themselves.",
-      "Inter throughout, 16px at 1.6 in the chat and 14px at 1.55 with tabular figures in the console.",
-      "Hairline rings (1px) do the separating; only the composer, the jump pill, the launcher, the greeting and the panel lift.",
-      "Every colour has a light and a dark value; the chat picks by the widget's scheme, the console by the administrator's.",
+      "Roboto throughout, 16px at 1.6 in the chat and 14px at 1.5 with tabular figures in the console; no running text under 12px.",
+      "Flat surfaces with 1px hairlines; only the launcher, the greeting, the panel, the \"latest message\" circle, the console's account menu and its chat preview carry a shadow.",
+      "Focus is one ring everywhere: 2px of the focus colour, 2px off.",
+      "The chat picks light or dark by the widget's scheme, the console by the administrator's; both write each colour once with `light-dark()`.",
       "Logical properties throughout, so a right-to-left language mirrors."
     ],
     "rules": [
       {
-        "name": "The Pressable Colour Rule",
-        "body": "The customer's colour sits only on what can be pressed: the launcher and the send button. Elsewhere it appears only as a trace under the pointer (a suggestion chip's edge at 55% and fill at 5%) and as the caret. Never on a header, a bubble, a background or the mark.",
+        "name": "The Stand-In Rule",
+        "body": "A widget's colour stands in for the primary and goes nowhere else: the launcher, the send button, the caret and the visitor's bubble. Elsewhere it appears only as a trace (a suggestion chip's edge at 55% and fill at 5% under the pointer, and the selection tint at 22%). Never on a header, a background, the mark or a chosen toggle.",
         "section": "colors"
       },
       {
         "name": "The 3:1 Rule",
-        "body": "On the dark composer (#30302e) a brand colour under 3:1 gives way to Chat Ink Dark, and the ink on it is recomputed (`forDark`). The console's colour notes use the same line: they warn when the colour is under 3:1 against the light composer (#ffffff) or the dark one, and state the text-on-colour ratio.",
+        "body": "On the dark composer (#1a2537) a widget colour under 3:1 gives way to the light ink (#f1f5f9) on the send button and the caret, and the ink on it is recomputed (`forDark`). The visitor's bubble is not a control, so it keeps the widget's colour in both schemes, with the ink that reads on it and an inner 1px edge of that ink at 16% for a colour close to the page's own. The console's colour notes use the same line: they warn when the colour is under 3:1 against the light composer (#ffffff) or the dark one, and state the text-on-colour ratio.",
         "section": "colors"
       },
       {
         "name": "The State-Only Rule",
-        "body": "In the console, green, amber and red mean state (live, unpublished, problem) and nothing else.",
+        "body": "Green, amber and red mean state (live, unpublished, problem) and nothing else. On the Soft Primary Fill a state colour takes a fifth of the ink (80% colour, 20% ink) to hold 4.5:1.",
         "section": "colors"
       },
       {
         "name": "The Light Sheet Rule",
-        "body": "A diagram keeps a white sheet in both schemes, because its source's colours assume a light page.",
+        "body": "A diagram keeps a white sheet in both schemes, with slate inks and frames; a drawn diagram keeps its source's own colours, which assume a light page.",
         "section": "colors"
       },
       {
@@ -1032,37 +1269,54 @@
         "section": "typography"
       },
       {
+        "name": "The Twelve Floor Rule",
+        "body": "No running text is set under 12px, in the chat or the console.",
+        "section": "typography"
+      },
+      {
         "name": "The Own Frame Rule",
         "body": "Content wider than the column (code, tables, diagrams) scrolls sideways inside its own 12px frame, never the conversation. Each scroll region takes keyboard focus with its ring drawn inset. A soft shade shows at an inline edge only while more lies that way (a fixed radial of black at 22%, 12px, covered at each end by a 28px gradient of the frame's fill that scrolls with the content). Rows past the tenth fold behind \"Show all N rows\"; an expanded table scrolls vertically within `min(70vh, 560px)` with its header held.",
         "section": "layout"
       },
       {
-        "name": "The Seam Rule",
-        "body": "Graphite separates panels by 1px seams, never shadows.",
+        "name": "The Floats Only Rule",
+        "body": "A shadow means the thing floats over the page. Nothing that sits in the page (a card, a control, the composer) has one.",
+        "section": "elevation"
+      },
+      {
+        "name": "The One Ring Rule",
+        "body": "Keyboard focus is a 2px ring of the focus colour, 2px off, and that geometry (a gap, then a ring) means focus and nothing else. Where an outline would be clipped or the focus belongs to a whole group (the composer, the chat's name field and comment card), the same ring is drawn as a box-shadow (`0 0 0 2px` of the card, `0 0 0 4px` of the focus colour) with a transparent outline for forced colours; inside a clipped card the outline is drawn 2px inset. On the host page the launcher and the greeting's buttons take 2px of white, then 2px of #1d4ed8, so the ring holds on any page and any colour.",
         "section": "elevation"
       }
     ],
     "dos": [
-      "Do keep the customer's colour on the launcher and send only, with white or black on it by contrast, and let it give way to light ink on the dark composer under 3:1.",
-      "Do set answers as plain text beside the assistant's mark, and the visitor's words in a 20px Bubble Grey bubble.",
-      "Do separate surfaces with 1px hairline rings; lift only what floats (composer, jump circle, launcher, greeting, panel, preview).",
-      "Do give every chat colour a light and a dark value, and every console colour a Light and a Graphite value.",
+      "Do read colours, corners and shadows from the design language's tokens (`--surface-card`, `--action-primary`, `--radius-card-lg`, `--shadow-popover`), written out at the top of each stylesheet until `@purple-fabric/ui` supplies them.",
+      "Do let a widget's colour stand in for the primary on the launcher, send, the caret and the visitor's bubble, with white or black on it by contrast, and let send give way to light ink on the dark composer under 3:1.",
+      "Do set answers as plain text beside the assistant's mark, and the visitor's words in a 14px bubble of the widget's colour with a faint inner edge.",
+      "Do keep surfaces flat with 1px hairlines; put a shadow only under what floats (launcher, greeting, panel, the \"latest message\" circle, the account menu, the preview).",
+      "Do give anything typed into the Control Edge (#77879d, #64748b in the dark), not the hairline.",
+      "Do draw focus as the 2px ring of the focus colour, 2px off; as a box-shadow on the composer and the chat's small fields; as 2px white then 2px #1d4ed8 on anything drawn over the host page.",
+      "Do mark the stepper's current station with a soft halo; a gap and a ring mean keyboard focus.",
+      "Do give every colour a light and a dark value, written once with `light-dark()`.",
       "Do let wide code, tables and diagrams scroll inside their own 12px frame with the edge shade, never widening the conversation.",
-      "Do start an answer's headings at h2 (18px, 700); the chat's title is the only h1.",
+      "Do start an answer's headings at h2 (18px, 600); the chat's title is the only h1.",
+      "Do keep 700 for page titles, the welcome and the home figures; 600 for headings and buttons; 500 for labels, row and card titles.",
       "Do go full screen under 600px wide or 520px tall, with no radius and no border.",
-      "Do use the two-tone ring (3px white, 7px ink band) on anything drawn over the host page.",
-      "Do keep the console's green, amber and red for state alone.",
-      "Do fill a chosen toggle (a thumb, the pin) in Chat Ink; pressed state never takes the brand.",
-      "Do open the chat's own small cards (feedback comment, filing, confirmation, files) flat, in Chat Surface with a 1px hairline and a 12px corner, and give any field in them the composer's focus.",
+      "Do keep green, amber and red for state alone, and mix a fifth of the ink into them on the Soft Primary Fill.",
+      "Do fill a chosen toggle (a thumb, the pin) in Ink; pressed state never takes the widget's colour.",
+      "Do open the chat's own small cards (feedback comment, filing, confirmation, files) flat, Raised with a 1px hairline and a 12px corner, and give any field in them the composer's focus.",
+      "Do take chart series from the eight series colours in their order, and keep a diagram on its white sheet in both schemes.",
       "Do stop every animation while the panel is closed, and under reduced motion remove the rise, lift, press, spin and greeting animation, keeping only the fade; the dots and sketch bars hold still at 60%, and the found-answer wash still fades because it does not move.",
       "Do give every edge drawn as a box-shadow a 1px `CanvasText` border under forced colours, mark the current chat's row, place or filing option with a 2px `Highlight` outline, give a field that shows focus by box-shadow a transparent outline, and draw an upload's progress line in `CanvasText`.",
       "Do use logical properties, and mirror directional glyphs in right-to-left."
     ],
     "donts": [
-      "Don't put answers on cards, fill suggestion chips with the brand, or colour the chat's header.",
-      "Don't put the customer's colour on a bubble, background, header, mark or border at rest.",
+      "Don't put answers on cards, fill suggestion chips with the widget's colour, or colour the chat's header.",
+      "Don't put the widget's colour on a background, header, mark, chosen toggle or border at rest.",
+      "Don't add a second accent, a gradient or glass.",
+      "Don't put a shadow under a card, a control or the composer.",
+      "Don't set text under 12px, or download a monospace face.",
       "Don't use rounded playful type or pill buttons in the console; it is 8px controls and 12px cards.",
-      "Don't add shadows in Graphite; seams separate its panels.",
       "Don't let text wear a chart's series colours; a series is named by its key.",
       "Don't stripe table rows.",
       "Don't bounce anything on entry."

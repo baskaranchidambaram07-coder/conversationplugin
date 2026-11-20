@@ -109,7 +109,7 @@ test("a table downloads as a CSV file, and the chart drawn from it redraws as an
   await expect(page.getByRole("group", { name: "Bar chart: Synthetic Monthly Revenue (2023-2024)" })).toBeVisible();
   await expect(page.locator("figure.chart path.bar")).toHaveCount(24);
   // The first series' blue, not the ink of the chat's avatar, which once shared the bars' class name.
-  expect(await page.locator("figure.chart path.bar").first().evaluate((bar) => getComputedStyle(bar).fill)).toBe("rgb(42, 120, 214)");
+  expect(await page.locator("figure.chart path.bar").first().evaluate((bar) => getComputedStyle(bar).fill)).toBe("rgb(36, 95, 212)");
   await page.getByRole("button", { name: "Hide chart" }).click();
   await expect(page.locator("figure.chart")).toHaveCount(0);
 });
