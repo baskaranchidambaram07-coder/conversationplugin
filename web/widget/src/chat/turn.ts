@@ -2,7 +2,7 @@
 // it back, or a dead connection) or drops, the finished answer is fetched instead, because PF finishes an answer
 // even when nobody is listening (pf-capability-sheet.md section 6). Kept apart from the interface so every path
 // can be tested.
-import type { Message } from "@ucp/protocol/v1";
+import type { Message, SpeechAudio, VoiceLanguage } from "@ucp/protocol/v1";
 
 import { type Api, Failure } from "./api";
 import { type Answer, apply, pending } from "./state";
@@ -33,6 +33,8 @@ export function fromRecord(record: Message, previous: Answer): Answer {
     status: record.status === "in_progress" ? "streaming" : record.status,
     error: record.error,
     gap: false,
+    feedback: record.feedback ?? null,
+    pinned: record.pinned ?? false,
   };
 }
 
@@ -48,6 +50,8 @@ export async function runTurn(
   key: string,
   signal: AbortSignal,
   onAnswer: (answer: Answer) => void,
+  attachments: string[] = [],
+  voice?: { language: VoiceLanguage; onSpeech: (piece: SpeechAudio) => void },
 ): Promise<Answer> {
   let answer = pending();
   const show = (next: Answer) => {
@@ -66,8 +70,17 @@ export async function runTurn(
   };
 
   try {
-    const reply = await api.send(conversationId, { text: question, client_message_id: key }, stream.signal);
-    const feed = eventReader((event) => show(apply(answer, event)), alive);
+    const body = {
+      text: question,
+      client_message_id: key,
+      ...(attachments.length ? { attachments } : {}),
+      ...(voice ? { speak: voice.language } : {}),
+    };
+    const reply = await api.send(conversationId, body, stream.signal);
+    const feed = eventReader((event) => {
+      if (event.type === "speech.audio") voice?.onSpeech(event); // read aloud, never drawn; it still counts in order
+      show(apply(answer, event));
+    }, alive);
     const reader = (reply.body as ReadableStream<Uint8Array>).getReader();
     for (let chunk = await reader.read(); !chunk.done; chunk = await reader.read()) feed(chunk.value);
   } catch (error) {

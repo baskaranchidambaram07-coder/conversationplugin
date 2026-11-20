@@ -77,6 +77,8 @@ class Limits(BaseModel):
     sessions_per_minute_per_address: Annotated[int, Field(gt=0)] = 20
     messages_per_minute_per_session: Annotated[int, Field(gt=0)] = 10
     concurrent_turns: Annotated[int, Field(gt=0)] = 50  # across the tenant, on one gateway instance
+    utterances_per_minute_per_session: Annotated[int, Field(gt=0)] = 10  # voice questions spoken (M11)
+    concurrent_listeners: Annotated[int, Field(gt=0)] = 20  # voice sockets open across the tenant, on one instance
 
 
 class WidgetDocument(BaseModel):

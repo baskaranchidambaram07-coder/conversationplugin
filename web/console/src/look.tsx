@@ -2,7 +2,9 @@
 // itself (web/widget, at /preview on the console's own address), sent the draft's settings as they are typed.
 // Colours are judged with the same rules the loader and the chat use (@ucp/protocol/brand).
 import { contrast, inkOn, isColor } from "@ucp/protocol/brand";
-import { useEffect, useRef, useState } from "react";
+import type { VoiceLanguage } from "@ucp/protocol/v1";
+import { languageGroups, languageName } from "@ucp/protocol/voice";
+import { useEffect, useId, useRef, useState } from "react";
 
 import { call } from "./api";
 import { Field } from "./editors";
@@ -20,6 +22,10 @@ export type Look = {
   color_scheme?: "light" | "dark" | "auto";
   launcher_position?: "bottom-right" | "bottom-left";
   history_enabled?: boolean;
+  attachments_enabled?: boolean;
+  voice_enabled?: boolean;
+  voice_languages?: VoiceLanguage[];
+  browser_speech?: "never" | "on_device" | "allowed";
 };
 
 const LIGHT = "#ffffff"; // the chat's composer, where the send button sits, in the light scheme
@@ -264,7 +270,107 @@ export function LookEditor(props: {
           <span>{t.history}</span>
         </label>
       )}
+      <label className="check">
+        <input
+          type="checkbox"
+          checked={Boolean(value.attachments_enabled)}
+          onChange={(event) => change({ attachments_enabled: event.target.checked })}
+        />
+        <span>{t.attachments}</span>
+      </label>
+      <label className="check">
+        <input type="checkbox" checked={Boolean(value.voice_enabled)} onChange={(event) => change({ voice_enabled: event.target.checked })} />
+        <span>{t.voice}</span>
+      </label>
+      {value.voice_enabled && <VoiceSettings value={value} change={change} />}
     </fieldset>
+  );
+}
+
+/** The widget's voice languages after ticking or clearing one. The default stays first, and the last one stays. */
+export function withLanguage(chosen: VoiceLanguage[], code: VoiceLanguage, on: boolean): VoiceLanguage[] {
+  if (on) return chosen.includes(code) ? chosen : [...chosen, code];
+  const left = chosen.filter((item) => item !== code);
+  return left.length ? left : chosen;
+}
+
+export const asDefault = (chosen: VoiceLanguage[], code: VoiceLanguage) => [code, ...chosen.filter((item) => item !== code)];
+
+/** Which languages visitors may speak, each language opening onto its regions, and the browser's own recogniser. */
+function VoiceSettings({ value, change }: { value: Look; change: (changes: Look) => void }) {
+  const chosen: VoiceLanguage[] = value.voice_languages?.length ? value.voice_languages : ["en-GB"];
+  const browser = value.browser_speech ?? "on_device";
+  const label = useId();
+  return (
+    <div className="voice">
+      <div className="field">
+        <span className="label" id={label}>
+          {t.voiceLanguages}
+        </span>
+        <p className="hint">{t.languagesHint}</p>
+        <details className="languages">
+          <summary aria-describedby={label}>{t.languagesChosen(chosen.map(languageName))}</summary>
+          <ul>
+            {languageGroups().map((group) => {
+              const ticked = group.variants.filter((variant) => chosen.includes(variant.code)).length;
+              return (
+                <li key={group.name}>
+                  <details>
+                    <summary>
+                      {group.name}
+                      {ticked > 0 && <small>{t.chosenOf(ticked, group.variants.length)}</small>}
+                    </summary>
+                    <ul>
+                      {group.variants.map(({ code, region }) => (
+                        <li key={code}>
+                          <label className="check">
+                            <input
+                              type="checkbox"
+                              aria-label={languageName(code)}
+                              checked={chosen.includes(code)}
+                              disabled={chosen.length === 1 && chosen[0] === code}
+                              onChange={(event) => change({ voice_languages: withLanguage(chosen, code, event.target.checked) })}
+                            />
+                            <span>{region}</span>
+                          </label>
+                        </li>
+                      ))}
+                    </ul>
+                  </details>
+                </li>
+              );
+            })}
+          </ul>
+        </details>
+      </div>
+      <Field label={t.defaultLanguage} hint={t.defaultLanguageHint}>
+        {(id) => (
+          <select id={id} value={chosen[0]} onChange={(event) => change({ voice_languages: asDefault(chosen, event.target.value as VoiceLanguage) })}>
+            {chosen.map((code) => (
+              <option key={code} value={code}>
+                {languageName(code)}
+              </option>
+            ))}
+          </select>
+        )}
+      </Field>
+      <fieldset>
+        <legend>{t.browserSpeech}</legend>
+        <ul className="choices">
+          {(["on_device", "allowed", "never"] as const).map((choice) => (
+            <li key={choice} className={browser === choice ? "chosen" : undefined}>
+              <label>
+                <input type="radio" name="browser-speech" checked={browser === choice} onChange={() => change({ browser_speech: choice })} />
+                <span>
+                  <b>{t.browserSpeechChoices[choice][0]}</b>
+                  <small>{t.browserSpeechChoices[choice][1]}</small>
+                </span>
+              </label>
+            </li>
+          ))}
+        </ul>
+      </fieldset>
+    </div>
   );
 }
 

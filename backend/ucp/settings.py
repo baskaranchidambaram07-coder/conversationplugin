@@ -4,6 +4,7 @@ the platform (Secrets Manager on AWS) and never written to a file in the image."
 import os
 from dataclasses import dataclass
 from pathlib import Path
+from typing import Literal
 
 
 @dataclass(frozen=True)
@@ -31,6 +32,11 @@ class Settings:
     admin_user_claim: str = "sub"
     admin_origins: str | None = None  # comma-separated
     gateway_origin: str | None = None  # the chat's public address, for the console's install snippets and checker
+    clamd_address: str | None = None  # host:port of the ClamAV every attachment passes (ucp.scan); none: all refused
+    # Voice (M11): the speech service behind ucp.speech. "none" leaves listening and speaking to the browser's own
+    # engines; "fake" is for tests; "aws" is Transcribe and Polly in speech_region (the deployment's own region).
+    speech: Literal["none", "fake", "aws"] = "none"
+    speech_region: str = "us-east-1"
 
     @classmethod
     def from_env(cls) -> "Settings":
@@ -51,4 +57,7 @@ class Settings:
             admin_user_claim=os.environ.get("UCP_ADMIN_USER_CLAIM", "sub"),
             admin_origins=os.environ.get("UCP_ADMIN_ORIGINS"),
             gateway_origin=os.environ.get("UCP_GATEWAY_ORIGIN"),
+            clamd_address=os.environ.get("UCP_CLAMD_ADDRESS"),
+            speech=os.environ.get("UCP_SPEECH", "none"),  # type: ignore[arg-type]  # checked when the gateway starts
+            speech_region=os.environ.get("UCP_SPEECH_REGION", "us-east-1"),
         )

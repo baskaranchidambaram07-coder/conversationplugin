@@ -23,7 +23,7 @@ from ucp.admin.__main__ import main as command
 from ucp.admin.records import Records
 from ucp.gateway.app import create_app as gateway
 from ucp.settings import Settings
-from ucp.store import Store
+from ucp.store import Owner, Store
 from ucp.vault import Vault, new_key
 
 CONSOLE = "https://console.example.org"
@@ -435,6 +435,41 @@ def test_rollback_and_comparing_versions(world):
     assert world.get(f"{widget}/versions/9", headers=signed).status_code == 404
     entries = world.get(f"/admin/v1/audit?widget=w_{world.a}", headers=signed).json()
     assert [(e["action"], e["version"]) for e in entries[:3]] == [("rollback", 3), ("publish", 2), ("draft.save", None)]
+
+
+# Feedback (M10): visitors' ratings read in the console, by the widget's own tenant
+
+
+def test_a_widgets_feedback_is_read_with_its_question_and_answer_by_its_own_tenant_only(world, database_url):
+    widget = f"w_{world.a}"
+    ratings = [("like", None, "signed_in"), ("dislike", "Too vague.", "anonymous"), ("dislike", None, "anonymous")]
+
+    async def rate(records):
+        store = Store(records.engine)
+        for n, (rating, comment, kind) in enumerate(ratings):
+            owner = Owner(world.a, widget, f"u_{secrets.token_hex(4)}")
+            chat = await store.create_conversation(owner)
+            turn = await store.start_turn(owner, chat.id, f"k_{n}", f"Question {n}?", 1)
+            await store.finish(turn.answer_id, "complete", [{"type": "markdown", "text": f"Answer {n}."}], None)
+            await store.rate(owner, kind, chat.id, turn.answer_id, rating, comment)
+
+    run(database_url, rate)
+    signed, url = bearer(world, "viewer_a"), f"/admin/v1/widgets/{widget}/feedback"  # a viewer may read it
+
+    page = world.get(url, headers=signed).json()
+    assert page["counts"] == {"like": 1, "dislike": 2} and page["next"] is None
+    assert [(i["question"], i["answer"], i["rating"], i["comment"], i["visitor"]) for i in page["items"]] == [
+        ("Question 2?", "Answer 2.", "dislike", None, "anonymous"),
+        ("Question 1?", "Answer 1.", "dislike", "Too vague.", "anonymous"),
+        ("Question 0?", "Answer 0.", "like", None, "signed_in"),
+    ]
+    assert "u_" not in json.dumps(page)  # whether a visitor was signed in, never who
+
+    first = world.get(f"{url}?rating=dislike&limit=1", headers=signed).json()
+    rest = world.get(f"{url}?rating=dislike&limit=1&before={first['next']}", headers=signed).json()
+    assert [i["question"] for i in first["items"] + rest["items"]] == ["Question 2?", "Question 1?"]
+    assert rest["next"] is None
+    assert world.get(url, headers=bearer(world, "admin_b")).json()["code"] == "not_found"
 
 
 # Secrets (M8-T4, T5): sealed, never returned, scoped to their tenant

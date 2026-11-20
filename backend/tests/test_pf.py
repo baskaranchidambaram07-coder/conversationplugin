@@ -8,7 +8,7 @@ import httpx2
 import pytest
 
 from fakepf.app import FINAL
-from ucp.connector import Accepted, AgentError, Failed, Final, Text
+from ucp.connector import Accepted, AgentError, AgentFile, Failed, Final, Text
 from ucp.gateway.pipeline import correlation
 from ucp.pf import PfConnector, PfProfile, check_profiles
 
@@ -170,3 +170,49 @@ async def test_test_connection_names_each_profile_and_its_outcome_and_nothing_se
     assert lines[1].startswith("wrong: not connected, check the profile's credentials")
     assert lines[2].startswith("down: not connected, try again later")
     assert not re.search(r"fake-password|wrong\b.*wrong|127\.0\.0\.1|fake-tenant|fake-api-key", "\n".join(lines))
+
+
+async def test_attached_files_are_uploaded_then_named_with_the_question(fake_pf, client):
+    connector = PfConnector(profile(fake_pf), client)
+    conversation = await connector.create_conversation("c_ours")
+    files = [AgentFile("lease.pdf", "application/pdf", b"%PDF-1.7"), AgentFile("meter.png", "image/png", b"\x89PNG")]
+
+    events = [event async for event in connector.send(conversation, "What do these say?", files)]
+
+    assert events[-1].text.endswith("I read lease.pdf, meter.png.")
+    uploaded = (await client.get(f"{fake_pf}/_fake/uploads")).json().values()
+    assert [(item["name"], item["content_type"]) for item in uploaded][-2:] == [
+        ("lease.pdf", "application/pdf"),
+        ("meter.png", "image/png"),
+    ]
+
+
+async def test_a_failed_upload_fails_before_the_question_is_asked_so_asking_again_is_safe(fake_pf, client):
+    connector = PfConnector(profile(fake_pf), client)
+    files = [AgentFile("lease.pdf", "application/pdf", b"%PDF-1.7")]
+
+    events = [event async for event in connector.send("no-such-conversation", "Read it", files)]
+
+    assert len(events) == 1 and isinstance(events[0], Failed)
+    assert (events[0].code, events[0].detail) == ("assistant_unavailable", "upload: PF status 404")
+
+
+async def test_a_file_pf_cannot_read_fails_the_turn_without_asking_and_is_not_asked_again(fake_pf, client):
+    connector = PfConnector(profile(fake_pf), client)
+    conversation = await connector.create_conversation("c_ours")
+    files = [AgentFile("unreadable scan.pdf", "application/pdf", b"%PDF-1.7")]
+
+    events = [event async for event in connector.send(conversation, "Read it", files)]
+
+    assert len(events) == 1 and isinstance(events[0], Failed)
+    assert (events[0].retryable, events[0].detail) == (False, "PF could not read a file: FILE_PROCESS_FAILED")
+
+
+async def test_files_not_read_in_time_fail_the_turn(fake_pf, client):
+    connector = PfConnector(profile(fake_pf), client, file_seconds=0, file_poll_seconds=0)
+    conversation = await connector.create_conversation("c_ours")
+    files = [AgentFile("lease.pdf", "application/pdf", b"%PDF-1.7")]
+
+    events = [event async for event in connector.send(conversation, "Read it", files)]
+
+    assert isinstance(events[-1], Failed) and events[-1].detail == "files not read within 0 s"

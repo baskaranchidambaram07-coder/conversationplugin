@@ -23,6 +23,7 @@ export function settings(config: Partial<WidgetConfig>) {
     // An image uploaded through the admin API, named by its SHA-256 and served from our own origin.
     avatar: typeof config.avatar === "string" && /^[0-9a-f]{64}$/.test(config.avatar) ? config.avatar : null,
     greeting: greeting || null,
+    voice: config.voice_enabled === true, // the frame may ask for the microphone only when the widget has voice on
   };
 }
 
@@ -161,7 +162,7 @@ function mount(origin: string, options: MountOptions, win: Window): Widget | und
       place = null;
     }
     if (!place) return say(`✗ no element on the page matches "${target}"`);
-    const { title, color, ink, left, scheme, avatar, greeting } = settings(config);
+    const { title, color, ink, left, scheme, avatar, greeting, voice } = settings(config);
     // Our own element name, so a host page's rules for div and friends miss it; important inline display and
     // height so even `* { all: unset !important }` cannot collapse it.
     host = doc.createElement("ucp-widget");
@@ -236,7 +237,7 @@ function mount(origin: string, options: MountOptions, win: Window): Widget | und
         iframe = doc.createElement("iframe");
         iframe.src = `${origin}/embed/${widgetId}`;
         iframe.title = title;
-        iframe.allow = "clipboard-write";
+        iframe.allow = voice ? "clipboard-write; microphone; on-device-speech-recognition" : "clipboard-write";
         iframe.addEventListener("load", () => panel.classList.add("ready"));
         panel.appendChild(iframe);
         timer = setTimeout(

@@ -66,6 +66,12 @@ typography:
     fontWeight: 600
     lineHeight: 1.35
     letterSpacing: "-0.015em"
+  chat-page-title:
+    fontFamily: "Inter Variable, Inter, system-ui, sans-serif"
+    fontSize: "20px"
+    fontWeight: 600
+    lineHeight: 1.3
+    letterSpacing: "-0.015em"
   chat-welcome-wide:
     fontFamily: "Inter Variable, Inter, system-ui, sans-serif"
     fontSize: "26px"
@@ -269,6 +275,77 @@ components:
     height: "56px"
   chats-row-current:
     backgroundColor: "{colors.chat-bubble}"
+  answer-toggle:
+    textColor: "{colors.chat-muted}"
+    rounded: "{rounded.control}"
+    padding: "8px"
+    size: "32px"
+  answer-toggle-pressed:
+    textColor: "{colors.chat-ink}"
+  feedback-card:
+    backgroundColor: "{colors.chat-surface}"
+    textColor: "{colors.chat-ink}"
+    rounded: "{rounded.card}"
+    padding: "10px 12px"
+    width: "400px"
+  place-row:
+    textColor: "{colors.chat-ink}"
+    rounded: "{rounded.icon}"
+    padding: "8px 12px"
+    height: "40px"
+  place-row-current:
+    backgroundColor: "{colors.chat-bubble}"
+  page-title:
+    textColor: "{colors.chat-ink}"
+    typography: "{typography.chat-page-title}"
+  confirm-card:
+    backgroundColor: "{colors.chat-surface}"
+    rounded: "{rounded.card}"
+    padding: "12px 14px"
+  pins-card:
+    backgroundColor: "{colors.chat-surface}"
+    rounded: "{rounded.card}"
+  pin-row:
+    textColor: "{colors.chat-ink}"
+    padding: "11px 6px 11px 14px"
+  filing-card:
+    backgroundColor: "{colors.chat-surface}"
+    rounded: "{rounded.card}"
+    padding: "6px"
+    width: "320px"
+  filing-option:
+    textColor: "{colors.chat-ink}"
+    rounded: "{rounded.control}"
+    padding: "8px 10px"
+    height: "40px"
+  name-field:
+    backgroundColor: "{colors.chat-surface}"
+    textColor: "{colors.chat-ink}"
+    rounded: "{rounded.icon}"
+    padding: "8px 12px"
+    height: "40px"
+  attach-button:
+    textColor: "{colors.chat-muted}"
+    rounded: "{rounded.icon}"
+    size: "36px"
+  file-card:
+    backgroundColor: "{colors.chat-surface}"
+    textColor: "{colors.chat-ink}"
+    rounded: "{rounded.card}"
+    padding: "6px 4px 6px 6px"
+    width: "220px"
+  file-thumb:
+    backgroundColor: "{colors.chat-bubble}"
+    textColor: "{colors.chat-muted}"
+    rounded: "{rounded.control}"
+    size: "32px"
+  file-remove:
+    textColor: "{colors.chat-muted}"
+    rounded: "{rounded.control}"
+    size: "28px"
+  answer-found:
+    backgroundColor: "{colors.chat-bubble}"
+    rounded: "{rounded.card}"
   console-primary:
     backgroundColor: "{colors.console-accent}"
     textColor: "{colors.console-surface}"
@@ -368,10 +445,10 @@ Two neutral families and one accent each: warm near-neutrals with the customer's
 ### Neutral
 - **Chat Ground** (chat-ground / chat-ground-dark): the page, the panel frame before the chat loads, code panels and inline code.
 - **Chat Surface** (chat-surface / chat-surface-dark): the composer, suggestion chips, the secondary action, table, diagram and chart cards, the list of chats, the greeting bubble.
-- **Bubble Grey** (chat-bubble / chat-bubble-dark): the visitor's bubble, blockquotes, the initials mark, the open chat's row, the secondary action's hover; mixed 45% into the ground for the wide chats column.
-- **Hairline** (chat-line / chat-line-dark): every 1px edge and rule, the table's header fill, the loading sketch bars and the ring's track.
-- **Chat Ink** (chat-ink / chat-ink-dark): text, links, the focus outline, hover washes (5 to 6%), the composer's focus ring (8%) and the brand fallback.
-- **Muted** (chat-muted / chat-muted-dark): the AI notice, credit, placeholder, meta lines, quiet actions, header icons at rest, list markers, axis numbers, the working dots.
+- **Bubble Grey** (chat-bubble / chat-bubble-dark): the visitor's bubble, blockquotes, the initials mark, the open chat's row, the current place (Projects, Pinned), the file thumbnail tile and a sent file's hover, the found-answer wash, the secondary action's hover; mixed 45% into the ground for the wide chats column.
+- **Hairline** (chat-line / chat-line-dark): every 1px edge and rule, the table's header fill, the loading sketch bars, the ring's track and an upload's track.
+- **Chat Ink** (chat-ink / chat-ink-dark): text, links, the focus outline, hover washes (5 to 6%), the composer's focus ring (8%), a chosen thumb or pin (filled), an upload's progress line and the brand fallback.
+- **Muted** (chat-muted / chat-muted-dark): the AI notice, credit, placeholder, meta lines, quiet actions, header icons at rest, a pinned answer's question, a file's size, list markers, axis numbers, the working dots.
 - **Console Ground, Surface, Line, Ink, Muted** and their Graphite counterparts take the same roles in the console. Graphite adds a separate field fill (graphite-field) a step below the panel.
 
 ### Named Rules
@@ -394,11 +471,13 @@ Two neutral families and one accent each: warm near-neutrals with the customer's
 ### Hierarchy
 - **Chat welcome** (600, 20px, 1.35, -0.015em, balanced, at most 28ch; 26px on wide frames): an empty chat's first line, centred under the 52px mark.
 - **Chat title** (600, 16px, 1.3, -0.01em): the header; wraps anywhere.
+- **Page title** (600, 20px, 1.3, -0.015em, balanced, wraps anywhere): the h2 of a page shown in the conversation's place (Projects, a project, Pinned).
 - **Chat body** (400, 16px, 1.6): answers, the visitor's words, the composer (1.5 in the field).
 - **Answer headings** (700, 1.3, balanced): h2 18px, h3 16px, h4 to h6 15px. A Markdown h1 renders as h2: the chat's title is the only h1.
 - **Chat label** (400, 14px, 1.35): suggestion chips, meta and "unknown part" lines.
 - **Chat action** (500, 13px): quiet and secondary actions; the code caption is 650 at 13px in Muted.
-- **Chat caption** (400, 12px, 1.45, centred, balanced): the AI notice, the credit and the character count.
+- **Chat caption** (400, 12px, 1.45, centred, balanced): the character count.
+- **Chat foot line** (400, 11px on 16px; 10.5px at 380px wide and under, 10px at 340px and under; Muted): the AI notice and the credit on one centred line, a middle dot between, whole from a 400px panel down to a 340px frame. Narrower, the credit moves under the notice; a notice too long for a line of its own ends in an ellipsis, its full text kept for screen readers and on hover.
 - **Table** (400, 14.5px, 1.45, tabular figures), header cells 700. **Code** (mono, 13.5px, 1.6, tabs at 2).
 - **Console page title** (600, 24px, 1.25, -0.02em; 21px on phones). **Card title** (600, 17px). **Section title** (h3, 16px).
 - **Console body** (400, 14px, 1.55). **Label** (500, 14px): field labels, legends, buttons. **Hint** (13px, Muted). **Small** (12.5px, Muted): state lines, minutes, table head cells. **Group label** (600, 12px, 0.04em, uppercase, Muted): the "Widgets" heading of the column only.
@@ -417,6 +496,7 @@ Two neutral families and one accent each: warm near-neutrals with the customer's
 **Chat.** One column: header (mark, title, actions), the scrolling conversation, then one foot landmark (composer, count, notice, credit). Gutter 16px, 10px under 340px wide, where the visitor's bubble may widen from 85% to 92% and the header's New chat hides when three actions would show. Turns stack 24px apart; rendered Markdown 10px; list items 4px with a 1.35em indent. The conversation fades over its top and bottom 14px (a mask, not an overlay). A "Go to the latest message" circle appears centred above the composer when the visitor scrolls up.
 - **Wide frames (720px and wider):** the conversation, composer, notice and credit share one centred column of at most 760px; the visitor's bubble at most 75%. With history on, a 288px "Your chats" column runs the full height at the inline start on Bubble Grey 45% into the ground, its chats as 12px-rounded rows with no card. An empty chat holds the welcome above the middle, the composer at the middle, the suggestions centred under it.
 - **Narrow frames:** "Your chats" swaps the list in for the conversation in the same scrolling region, with no motion.
+- **Places and pages (signed-in visitors):** the places (Projects, Pinned) sit above "Your chats" as rows 2px apart. A place opens as a page in the conversation's own scrolling region, never a dialog: its parts 14px apart, 10px clear of the top fade. An open chat carries its filing control at the top of the conversation.
 
 **The Own Frame Rule.** Content wider than the column (code, tables, diagrams) scrolls sideways inside its own 12px frame, never the conversation. Each scroll region takes keyboard focus with its ring drawn inset. A soft shade shows at an inline edge only while more lies that way (a fixed radial of black at 22%, 12px, covered at each end by a 28px gradient of the frame's fill that scrolls with the content). Rows past the tenth fold behind "Show all N rows"; an expanded table scrolls vertically within `min(70vh, 560px)` with its header held.
 
@@ -424,7 +504,7 @@ Two neutral families and one accent each: warm near-neutrals with the customer's
 
 ## Elevation & Depth
 
-Hairlines first. Inside the chat and the console, surfaces separate from the ground by a 1px ring in the line colour (drawn as a box-shadow so it never shifts layout). Only what floats lifts: in the chat, the composer and the jump circle; on the host page, the launcher, the greeting and the panel; in the console, the chat preview. Chat and loader shadows mix from pure black so they read in both schemes. The console's Light theme adds a 1px whisper under controls and cards; Graphite has no shadow at all and relies on seams.
+Hairlines first. Inside the chat and the console, surfaces separate from the ground by a 1px ring in the line colour (drawn as a box-shadow so it never shifts layout). Only what floats lifts: in the chat, the composer and the jump circle; on the host page, the launcher, the greeting and the panel; in the console, the chat preview. The small cards the chat opens in place (the feedback comment, filing, a delete confirmation, file cards) are flat: Chat Surface with a 1px hairline border, no shadow. Chat and loader shadows mix from pure black so they read in both schemes. The console's Light theme adds a 1px whisper under controls and cards; Graphite has no shadow at all and relies on seams.
 
 ### Shadow Vocabulary
 - **Composer** (`box-shadow: 0 8px 24px -16px rgb(0 0 0 / .4)`, plus `0 0 0 3px` ink at 8% on focus-within): the composer card.
@@ -439,7 +519,7 @@ Hairlines first. Inside the chat and the console, surfaces separate from the gro
 
 ## Shapes
 
-Soft, unshowy corners on a small scale. Chat: the panel, composer and visitor bubble 20px (the composer 24px on wide frames); suggestion chips, code, table, diagram and chart frames, blockquotes and the list of chats 12px; header icons, send and the chart tip 10px; quiet and secondary actions and the logo tile 8px; inline code and sketch bars 6px; the mark, launcher and jump circle round. The greeting is 16px with its corner nearest the launcher pinched to 4px (mirrored when the launcher is on the left). Console: controls 8px, cards 12px, choice tiles, snippets, faults, the add panel and the changes table 10px, the theme segment's buttons 6px, the swatch 4px, the Live chip fully round, station dots round. Glyphs are inline SVG on a 24 grid, 2px round strokes in `currentColor`.
+Soft, unshowy corners on a small scale. Chat: the panel, composer and visitor bubble 20px (the composer 24px on wide frames); suggestion chips, code, table, diagram and chart frames, blockquotes, the list of chats, the pinned list, file cards and the feedback, filing and confirmation cards 12px; header icons, send, the attach clip, place rows, the name field and the chart tip 10px; quiet and secondary actions, the answer toggles, filing options, file thumbnails and a file's remove, and the logo tile 8px; inline code and sketch bars 6px; the mark, launcher and jump circle round. The greeting is 16px with its corner nearest the launcher pinched to 4px (mirrored when the launcher is on the left). Console: controls 8px, cards 12px, choice tiles, snippets, faults, the add panel and the changes table 10px, the theme segment's buttons 6px, the swatch 4px, the Live chip fully round, station dots round. Glyphs are inline SVG on a 24 grid, 2px round strokes in `currentColor`.
 
 ## Components
 
@@ -460,8 +540,9 @@ A short line (at most 120 characters) beside the closed launcher: Chat Surface w
 - **Actions:** 40px icons, 10px radius, Muted, 20px glyphs, 2px apart; on hover a 6% ink wash and Chat Ink. New chat, Your chats / Back (mirrored chevron in right-to-left), Open / Exit full screen, Close, each only where it applies.
 
 ### Answers and the visitor's words
-- **Answer:** text on the page beside the 28px mark, 12px apart: no card, no edge. Finished answers carry quiet actions underneath ("Copy answer").
-- **Visitor bubble:** Bubble Grey, 20px, 10px 16px, at the end of the line.
+- **Answer:** text on the page beside the 28px mark, 12px apart: no card, no edge. Finished answers carry quiet actions underneath, wrapping, 2px apart: "Copy answer", then for signed-in visitors the pin, then the two thumbs.
+- **Found answer:** an answer opened from the Pinned page scrolls 24px clear of the top fade, takes focus, and its text is washed in Bubble Grey (12px, the wash spread 8px past the text) that fades to nothing over 2.4s ease-out. It does not move, so it plays under reduced motion too.
+- **Visitor bubble:** Bubble Grey, 20px, 10px 16px, at the end of the line. Files sent with it follow as file cards at the end of the line, 8px under the bubble rather than a turn's distance.
 - **Working:** three 7px Muted dots breathe (opacity .25 to 1, 1.2s, staggered .15s).
 - **Problem:** a short sentence (its first line at 600), an optional Meta reference, an optional secondary action.
 
@@ -475,12 +556,48 @@ A short line (at most 120 characters) beside the closed launcher: Chat Surface w
 ### Composer
 Chat Surface, 20px, a hairline and the Composer shadow; the field grows to 160px. Focus: the edge darkens to ink 40% into the line and gains a 3px ink 8% halo; the field itself shows no outline. The caret is the brand.
 
+### Feedback and pin
+- **Toggles:** the pin and the thumbs ("Helpful", "Not helpful") are quiet 32px icon buttons (8px padding, 16px glyph, 8px radius) with `aria-pressed`. Chosen, the glyph fills and turns Chat Ink, never the brand. The pin shows only to signed-in visitors.
+- **Comment card:** after a thumb, a small card under the actions, at most 400px, level with the answer text: Chat Surface, 1px hairline, 12px, 10px 12px. A 500 14px label, a 15px field, then a secondary Send (45% opacity until something is typed) and a quiet Close; Escape closes it. It focuses like the composer: edge ink 40% into the line, a 3px ink 8% halo.
+- **Thanks:** a 13px Muted line after the thumbs ("Thanks"), or the failure in its place.
+
+### Attachments
+- **Clip:** a quiet 36px button (10px, 20px paperclip glyph, Muted; 6% ink wash and ink on hover; 45% when disabled) at the composer's start; the composer's start padding drops to 8px when it shows.
+- **File card:** Chat Surface, 1px hairline, 12px, at most 220px: a 32px thumbnail (a picture cropped to fill, or a page glyph on Bubble Grey, both 8px), the name in 500 13px on one line with an ellipsis over its size in 12px Muted, and a 28px quiet remove. Files line up above the composer's field, 6px apart. While a file uploads, a 2px ink line fills a hairline track along the card's foot. A sent file opens or saves from its card, Bubble Grey on hover.
+- **Dropping:** while files are dragged over it, the composer's edge turns dashed, ink 40% into the line, with the focus halo.
+- **Refusal:** a one-line note (13px, pretty wrap) above the composer, aligned with it. A card the gateway refused stays at full strength, never faded: its edge turns dashed and "Not attached" replaces its size, in ink.
+
+### Voice
+- **Microphone:** a quiet 36px button (10px, 20px mic glyph, Muted), the clip's twin, just before send. It dictates into the box: "Speak your question".
+- **Voice conversation:** with nothing typed, the send button itself starts one: the same brand-filled 36px square, its glyph five rising bars ("Start a voice conversation"). Once anything is typed, it is send again.
+- **Voice bar:** dictating, a row across the top of the composer over a 1px hairline, with the words going into the box. In a conversation, it is the composer itself: the same card, 20px.
+  - The row: four 3px ink bars, a 15px state line, then the controls kept together at the end, moving under the words as one when room runs short.
+  - The bars follow the microphone's loudness, or breathe while the answer is read (1.1s, staggered 0.18s). Under reduced motion they hold at 60%.
+  - The state line is Muted 14px ("Listening", "Finding an answer", "Reading the answer aloud", "Paused"). The words heard are Ink 15px, clamped to two lines.
+  - The controls: the language as a quiet action naming it ("British English", truncating at 10em); then Done (secondary), or Pause/Resume and Stop as 36px quiet icons; then a 36px cross to cancel or end.
+  - The language opens as `.options` rows inside the bar, over a hairline, the chosen one checked.
+- **Consent:** in place of the bar, before the first recording: "Use your voice?" in 500 14px, one Muted 14px sentence naming who hears the voice, then Continue (secondary) and Cancel (quiet). It is never a modal.
+- **States are announced** through a hidden polite status: the state, never every word heard. Escape ends voice.
+
+### Places and pages
+- **Places:** Projects and Pinned as rows above "Your chats": at least 40px, 8px 12px, 10px, 500 15px with an 18px Muted glyph. Hover 5% ink wash; the current place Bubble Grey.
+- **Page:** the page title over its content, quiet actions to its end (on a project, Rename and Delete). A project page opens with a quiet back link. A project's chats are rows as in "Your chats".
+- **Confirmation:** deleting asks in a flat card (Chat Surface, hairline, 12px, 12px 14px): one sentence over its actions 6px apart.
+- **Pinned:** one Chat Surface card, 12px, hairline ring, rows split by hairlines. Each row: the question in Muted 13px on one line, two lines of the answer at 15px/1.45, then the chat and its time in Muted 13px; the pin to its end in ink, to unpin. Hover 5% ink wash; the focus ring drawn inside.
+- **Filing:** at the top of an open chat, a quiet action naming the chat's project opens a card (Chat Surface, hairline, 12px, 6px, at most 320px) of project options: rows at least 40px, 8px 10px, 8px, 15px, the chosen one marked with a check; a new project is named in place.
+- **Name field:** a 500 14px label over an input and its actions, 6px apart. The input at least 40px, 8px 12px, 10px, Chat Surface with a 1px hairline, the brand caret, and the composer's focus (edge ink 40% into the line, 3px ink 8% halo) with a transparent outline for forced colours; its secondary action matches its 40px.
+
 ### Rendered answers
 Links in Chat Ink, 1px underline 3px below, 2px on hover. Blockquote on Bubble Grey, 12px, 10px 14px, no side rule. Inline code mono 0.9em on Chat Ground with a hairline ring. Horizontal rule a hairline. Task items hang their 18px box where the bullet would be.
 - **Code panel:** Chat Ground, hairline ring, 12px, clipped; a caption row (language in 650 13px Muted, quiet Copy) over a hairline; the body in Code, 12px 14px.
-- **Table:** Chat Surface frame; header row filled with the hairline colour, 700, sticky; cells 8px 12px, at least 8ch, top-aligned, hairlines between rows and columns, no striping; a tools row (Copy as CSV, Show all) under a hairline.
+- **Table:** Chat Surface frame; header row filled with the hairline colour, 700, sticky; cells 8px 12px, at least 8ch, top-aligned, hairlines between rows and columns, no striping; a tools row (Copy as CSV, Download CSV, Show as chart or Hide chart, Show all) under a hairline, wrapping on a narrow chat. A table of numbers is drawn as a chart over it when the answer asks for one, its points named by the first column of words with any dates beside it (Jan 2023).
 - **Diagram:** a white sheet in both schemes; the source's own plain colours kept; tools to copy it or show its code.
-- **Chart:** title 650 15px; legend Muted 13px, each name after its key (10px square, 14px stroke, or dot); series in the fixed palette; 1px hairline grid, the zero line at ink 30%, 12px Muted ticks in even figures; lines 2px round, areas a 10% wash, dots and slices ringed and gapped by the surface; a floating tip (surface, hairline, 10px) with values in ink 650 before their names. "Show as table" opens the numbers right-aligned.
+- **Flowchart drawn in text:** box-drawing art redrawn on the same sheet: 10px-cornered cards with an ink edge, a bold 14px heading over a 13px body in warm grey (#44403c), lists flush left with their further lines hanging, cards as wide as two side by side allow at the drawing's smallest size (180 to 320px). Its tools are "Copy text" and "Show text"; the text, like any drawing left as text, is set at 1.15 so its strokes join.
+- **Sequence diagram (Mermaid):** on the same white sheet: participants as 6px-cornered boxes (an actor as a stick figure) at the top and again at the foot, bold 14px names; dashed lifelines in quiet umber (#8a8580); messages 1.5px ink lines, replies dashed, the words 13px above the arrow; activation bars 10px white with an ink edge, each nested one 4px right; notes on pale butter (#fbf3d5, edge #d9c37a); loop, alt, opt and par blocks as thin umber frames with a bold 12px tag on the subgraph ground (#f6efe6) and their condition in brackets, alternatives split by a dashed rule.
+- **Pie (Mermaid):** drawn as a chart, with its Bar, Line, Area and Pie segment, "Copy for Mermaid" and "Show as table".
+- **Highlighted code:** eight quiet hues on the code ground, each above 5:1 in both schemes: keywords plum, strings green, numbers and literals burnt orange, functions and titles blue, types and built-ins ochre, attributes and properties brick, meta violet, deletions red; comments the muted ink in italic; anything else the ink.
+- **Formula:** MathML in the system maths face (Cambria Math, STIX Two Math), 1.12em so it sits level with Inter; inline within the sentence, or on its own line centred, scrolling sideways in place when wider than the answer (and only then taking a tab stop). A formula that cannot be read shows its TeX as inline code.
+- **Chart:** title 650 15px; legend Muted 13px, each name after its key (10px square, 14px stroke, or dot); series in the fixed palette; 1px hairline grid, the zero line at ink 30%, 12px Muted ticks in even figures; lines 2px round, areas a 10% wash, dots and slices ringed and gapped by the surface; a floating tip (surface, hairline, 10px) with values in ink 650 before their names. "Show as table" opens the numbers right-aligned. A chart type segment (Bar, Line, Area, and Pie for one series of eight or fewer parts) sits first in its tools row: 8px, the Ground inside a hairline, 2px padding, 28px buttons rounded 6px in Muted 13px 500, the chosen one on the Surface in ink 600 with a 1px hairline and a soft 1px shadow. The one moment a chart moves: drawn in when it appears or changes kind, bars rising from the baseline in 520ms, lines drawing from the left in 760ms, washes and slices settling in 600ms, all on cubic-bezier(0.22, 1, 0.36, 1); none under reduced motion.
 
 ### Your chats
 One Chat Surface card, 12px, hairlines between rows (rows on the column's ground, 12px each, on wide frames). Rows at least 56px: the topic at 500 15px clamped to two lines over its time in 13px Muted. Hover 5% ink wash; the current row Bubble Grey, its time in ink. Loading: sketched hairline-colour bars breathing like the dots.
@@ -497,6 +614,8 @@ One Chat Surface card, 12px, hairlines between rows (rows on the column's ground
 - **Track:** six equal stations on a 2px rail through 28px dots, the rail accent under done stations. Dots: next Surface with a 1.5px line ring and the number in Muted 600 12.5px; done accent with a check in on-accent; now and open ringed `0 0 0 2px surface, 0 0 0 4px accent, 0 0 0 8px accent-ring`. Names 500 (600 when open), minutes under them in Small. Not-yet-reachable stations show a Muted name and a not-allowed cursor. The **sign** at the end, set off by a hairline: 600 13px in accent text, green once live.
 - **Card:** Surface, 12px, hairline ring and whisper, 24px padding; header (card title and one Muted sentence) then parts 18px apart.
 - **Preview:** the chat itself in an iframe, 20px, hairline, the Panel shadow, `min(560px, 70vh)` tall, captioned in 13px Muted with Light/Dark toggles when the scheme follows the device.
+- **Widget views:** under the widget's title, "Set up" and "Feedback" in the theme segment's form, with words: links at least 30px, 5px 12px, 500 14px Muted; the current one on accent-soft in accent text (a `Highlight` outline under forced colours).
+- **Feedback:** one card, the tally first (tabular figures), then an All / Helpful / Not helpful segment, then each rating as a row between hairlines, 16px apart: a 16px Muted thumb, the rating at 600, the visitor's kind and time in 13px Muted; the comment on Ground in an 8px box; "Question" in 13px Muted 500 beside the question; the answer behind a quiet "Show the answer", in an 8px hairline box at most 320px tall that scrolls and takes focus. A rating wears no green or red: the State-Only Rule.
 
 ### Console: fields
 Label (500 14px), optional hint, input 4px apart. Inputs on the field fill, 8px, hairline ring and whisper, at least 38px, 8px 12px, accent caret. Focus: `0 0 0 1px accent, 0 0 0 4px accent-ring` with a transparent outline for forced colours. Invalid: a 2px problem ring with the reason linked. Choice tiles: Surface, 10px, hairline, 10px 12px; chosen on accent-soft with a 1.5px accent ring, its muted text softened ink so it holds 4.5:1. The colour field: a 38px picker tile, a mono hex field, and polite notes (text-on ratio in green, 3:1 warnings in amber). Snippets: Ground, 10px, hairline, caption row over a hairline, mono 13px body at most 320px tall.
@@ -513,8 +632,10 @@ Label (500 14px), optional hint, input 4px apart. Inputs on the field fill, 8px,
 - **Do** go full screen under 600px wide or 520px tall, with no radius and no border.
 - **Do** use the two-tone ring (3px white, 7px ink band) on anything drawn over the host page.
 - **Do** keep the console's green, amber and red for state alone.
-- **Do** stop every animation while the panel is closed, and under reduced motion remove the rise, lift, press, spin and greeting animation, keeping only the fade; the dots and sketch bars hold still at 60%.
-- **Do** give every edge drawn as a box-shadow a 1px `CanvasText` border under forced colours, and mark the current chat's row with a 2px `Highlight` outline.
+- **Do** fill a chosen toggle (a thumb, the pin) in Chat Ink; pressed state never takes the brand.
+- **Do** open the chat's own small cards (feedback comment, filing, confirmation, files) flat, in Chat Surface with a 1px hairline and a 12px corner, and give any field in them the composer's focus.
+- **Do** stop every animation while the panel is closed, and under reduced motion remove the rise, lift, press, spin and greeting animation, keeping only the fade; the dots and sketch bars hold still at 60%, and the found-answer wash still fades because it does not move.
+- **Do** give every edge drawn as a box-shadow a 1px `CanvasText` border under forced colours, mark the current chat's row, place or filing option with a 2px `Highlight` outline, give a field that shows focus by box-shadow a transparent outline, and draw an upload's progress line in `CanvasText`.
 - **Do** use logical properties, and mirror directional glyphs in right-to-left.
 
 ### Don't:

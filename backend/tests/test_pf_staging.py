@@ -20,8 +20,9 @@ import httpx2
 import pytest
 
 from devstack import staging_profile
-from fakepf.app import FINAL, RECORDED, TEMPLATES
-from ucp.connector import Accepted, Final, Text
+from fakepf.app import FINAL, RECORDED, REF_REFUSED, TEMPLATES
+from fakescan import word_document
+from ucp.connector import Accepted, AgentFile, Final, Text
 from ucp.pf import API, PfConnector, PfProfile
 
 SETTINGS = ("PF_BASE_URL", "PF_TENANT", "PF_API_KEY", "PF_USERNAME", "PF_PASSWORD", "PF_WORKSPACE_ID", "PF_AGENT_ID")
@@ -206,3 +207,47 @@ async def test_our_connector_answers_and_after_a_restart_with_a_dead_token_pf_st
         assert all(isinstance(event, Text) for event in events[1:-1])
     assert len(logins) == 2  # the check, whose token the first connector reuses, and one quiet login after the 401
     assert two[-1].usage["prompt_tokens"] > one[-1].usage["prompt_tokens"]  # PF kept the first turn in its context
+
+
+# Files in a conversation (M10-T4; pf-capability-sheet.md section 4a)
+
+MARKER = "MARIGOLD"  # a word only the document holds
+WORD = "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+
+
+def test_pf_reads_a_file_then_summarises_it_and_refuses_a_question_that_names_it_as_the_fake_does(client, pf):
+    conversation = create(client, pf).json()["conversation_details"]["conversation_id"]
+    document = ("ucp-test.docx", word_document(f"The test passphrase is {MARKER}."), WORD)
+
+    upload = {"params": {"conversation_id": conversation}, "data": {"doc_source": "UPLOAD"}}
+    uploaded = client.post("/fileupload", files={"files": document}, **upload)
+    assert uploaded.status_code == 201
+    first = uploaded.json()[0]
+    assert (first["file_status"], first["file_name"]) == ("UPLOAD_SUCCESS", "ucp-test.docx")
+
+    statuses, entry, deadline = [], {}, time.monotonic() + 90
+    while time.monotonic() < deadline and not entry.get("summary"):
+        time.sleep(2)
+        details = client.get(f"/details/{conversation}").json()["file_details"]
+        entry = next(item for item in details if item["file_id"] == first["file_id"])
+        statuses.append(entry["file_status"])
+    assert statuses[-1] == "FILE_PROCESS_SUCCESS" and entry["summary"]
+    # The fields the connector and the fake PF rely on.
+    assert {"file_id", "file_name", "file_ref_id", "file_status", "mode", "mime_type", "summary"} <= set(entry)
+
+    named = {"conversation_id": conversation, "query": "Read it.", "ref_file_ids": [first["file_id"]]}
+    refused = client.post("/addmessage/stream", json=named)
+    assert refused.status_code == 400 and refused.json()["message"] == REF_REFUSED["message"]
+
+
+@pytest.mark.anyio
+async def test_a_file_reaches_the_agent_through_our_connector_once_pf_has_read_it(pf):
+    files = [AgentFile("ucp-test.docx", WORD, word_document(f"The test passphrase is {MARKER} FORTY-TWO."))]
+    async with httpx2.AsyncClient(timeout=httpx2.Timeout(30, read=180)) as http:
+        connector = PfConnector(pf, http)
+        conversation = await connector.create_conversation(f"ucp-test-{secrets.token_hex(4)}")
+        question = "What is the test passphrase in the attached document? Reply with the passphrase alone."
+        events = [event async for event in connector.send(conversation, question, files)]
+
+    assert isinstance(events[0], Accepted) and isinstance(events[-1], Final)
+    assert MARKER in events[-1].text.upper()

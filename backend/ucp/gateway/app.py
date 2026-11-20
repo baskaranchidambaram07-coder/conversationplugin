@@ -2,6 +2,7 @@
 
 import asyncio
 import json
+from collections import Counter
 from contextlib import AsyncExitStack, asynccontextmanager
 
 import httpx2
@@ -9,12 +10,13 @@ from fastapi import FastAPI, Request
 from sqlalchemy import text
 from sqlalchemy.ext.asyncio import create_async_engine
 
-from ucp.gateway import api, pipeline, public
+from ucp.gateway import api, pipeline, public, voice
 from ucp.gateway.pipeline import Problem
 from ucp.identity import ProviderKeys
 from ucp.pf import PfConnector, PfProfile
 from ucp.sessions import Keys, Limiter
 from ucp.settings import Settings
+from ucp.speech import speech_service
 from ucp.store import Store
 from ucp.turns import Turns
 from ucp.vault import Sealed, Vault
@@ -23,6 +25,8 @@ from ucp.widgets import Widgets
 
 def create_app(settings: Settings | None = None) -> FastAPI:
     settings = settings or Settings.from_env()
+    if settings.speech not in ("none", "fake", "aws"):
+        raise ValueError(f"UCP_SPEECH must be none, fake or aws, not {settings.speech!r}")
     pipeline.install_logging(settings.log_level)
 
     @asynccontextmanager
@@ -47,6 +51,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
             app.state.connectors = {name: PfConnector(PfProfile(**value), client) for name, value in profiles.items()}
             app.state.provider_keys = ProviderKeys(client)
             app.state.client = client
+            app.state.listener, app.state.speaker = speech_service(settings.speech, settings.speech_region, client)
             yield
             # Answers still being written finish and are stored before the connections they need close.
             running = getattr(app.state, "turns", None) and app.state.turns.tasks
@@ -74,8 +79,12 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     app.state.signed_in_seconds = settings.signed_in_seconds
     app.state.public_origin = settings.public_origin
     app.state.visitor_address_header = settings.visitor_address_header
+    app.state.scanner = settings.clamd_address
+    app.state.listening = Counter()  # voice sockets open, per tenant
     app.include_router(public.router)
     app.include_router(api.router)
+    app.include_router(voice.router)
+    app.include_router(voice.sockets)
     if settings.web_dir:
         app.include_router(public.files(settings.web_dir))
 

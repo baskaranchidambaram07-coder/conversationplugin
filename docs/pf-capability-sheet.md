@@ -54,6 +54,21 @@ Points that matter for the connector:
 - **Each word event is large.** About 220 bytes carry a few characters of text. The gateway re-sends them in a compact form.
 - **Short answers arrive at once; long answers stream steadily.** See section 7.
 
+## 4a. Files in a conversation
+
+The flow below was supplied by you on 18 November 2026 from PF's own web app, then confirmed the same day against staging with the service account. `backend/tests/test_pf_staging.py` checks it on demand.
+
+| Step | Call | Result |
+|---|---|---|
+| Upload | `POST .../conversation/fileupload?conversation_id=<id>`, multipart with the file in `files` and `doc_source=UPLOAD` | HTTP 201: a list with one entry per file: `file_id`, `file_name`, `file_ref_id`, `mime_type`, `mode` `DRAFT`, `file_status` `UPLOAD_SUCCESS` |
+| Follow | `GET .../conversation/details/<id>` | The conversation's record, its `file_details` listing each file. The status becomes `FILE_PROCESS_SUCCESS` 2 to 4 s after the upload, and a `summary` of the file appears 2 to 4 s after that |
+| Ask | the usual stream call, **without naming the file** | The agent finds the conversation's files by itself and quotes them |
+
+- **Wait for the summary, not only the status.** Asked at `FILE_PROCESS_SUCCESS` before the summary existed, the agent could not find the document's text. Asked once the summary was there, it quoted it, from both a Word document and a PDF. The connector therefore waits for both, at most 90 s, and asks anyway if a processed file has no summary 20 s on.
+- **`ref_file_ids` is refused.** The stored message has that field, but naming a file in it gets HTTP 400 `property ref_file_ids should not exist`.
+- **Not seen yet:** the status of a file PF cannot read. The connector treats any status containing FAIL or ERROR as a failure; the fake PF uses `FILE_PROCESS_FAILED`.
+- The upload's reply and the details carry PF's IDs, its document store's reference and a summary of the visitor's file. None of it reaches the browser: the gateway keeps its own file IDs.
+
 ## 5. Sending without a stream, and fetching the answer
 
 - The non-streaming call returns immediately with the message record marked `IN_PROGRESS`.
@@ -121,6 +136,8 @@ Still open:
 4. Does the agent version ID change when the agent is republished?
 5. Can per-user context be passed to the agent?
 6. How are files attached to a conversation message, and is there speech-to-text or text-to-speech for conversation agents?
+
+   Files answered on 18 November 2026: PF takes doc, docx, pdf, jpg, jpeg and png, and the flow is in section 4a, confirmed against staging. Speech answered on 19 November 2026: PF has none (you confirmed); voice is built outside PF, with speech before the question and after the answer (`voice.md`).
 
 ## 11. Recorded samples
 

@@ -10,7 +10,7 @@ Run every command from the repository root, in Git Bash, with the AWS command li
 |---|---|---|
 | CloudFront: HTTPS on its own `*.cloudfront.net` address, which the customer's script tag uses | Serves the loader, the chat and the API; caches the chat's files | Stays, so the address never changes; answers every request with "This test environment is asleep" (503), so a customer's page simply shows no chat |
 | Load balancer: reachable only from CloudFront, which proves itself with a secret header | Runs | Removed |
-| Gateway: one container on Fargate (1 vCPU, 2 GB), in a public subnet with no inbound except from the load balancer | Runs | Removed (the cluster, the release and the images stay) |
+| Gateway: one container on Fargate (1 vCPU, 6 GB, shared with the admin API and the virus scanner), in a public subnet with no inbound except from the load balancer | Runs | Removed (the cluster, the release and the images stay) |
 | The admin console and its API (`console.tf`): a second container in the gateway's task, from the same image, behind a CloudFront address of its own | Runs; administrators sign in with the Cognito pool `ucp-dev-admins` (an authenticator app required, no self sign-up) | Answers "asleep"; the pool and its users stay |
 | PostgreSQL 17: private, encrypted, seven days of point-in-time backups | Runs | Stopped (AWS starts it again after seven days; `sleep` stops it again) |
 | Secrets Manager `ucp-dev/*`, image registry, logs, network | Stay | Stay |

@@ -11,7 +11,10 @@ With `--pf staging` the widgets answer from PF staging instead, with the PF_* se
 costs a real answer and leaves a conversation in the staging workspace.
 
 Uses UCP_DATABASE_URL, or else TEST_DATABASE_URL. FAKE_PF_SPEED scales the fake PF's recorded timing
-(1 is real time). Never point it at a database whose data matters: it migrates and publishes into it.
+(1 is real time). UCP_SPEECH picks the speech service for voice (M11): none (the default) leaves listening and
+speaking to the browser's own engines, fake is the stand-in the browser journeys use, and aws is Transcribe and Polly
+in UCP_SPEECH_REGION with this machine's AWS credentials. Never point it at a database whose data matters: it
+migrates and publishes into it.
 """
 
 import argparse
@@ -37,6 +40,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse, RedirectResponse, Response
 from sqlalchemy.ext.asyncio import create_async_engine
 
+import fakescan
 from tests.fakeidp import FakeProvider
 from ucp import migrate
 from ucp.admin.app import create_app as admin_api
@@ -195,6 +199,7 @@ def main() -> None:
     migrate.upgrade(url)
     asyncio.run(_publish(url))
     pf = None if staging else _start_fake_pf()
+    scanner = fakescan.start(8310)  # the stand-in for ClamAV, which finds the EICAR test file
     settings = Settings(
         database_url=url,
         web_dir=ROOT / "web",
@@ -203,6 +208,9 @@ def main() -> None:
         host_secrets=json.dumps(_widgets_file()["test_host_secrets"]),
         signed_in_seconds=int(os.environ.get("UCP_SIGNED_IN_SECONDS", "900")),
         secrets_key=new_key(),  # the admin API seals tenants' secrets with it, the gateway opens them
+        clamd_address=f"127.0.0.1:{scanner}",
+        speech=os.environ.get("UCP_SPEECH", "none"),  # type: ignore[arg-type]  # the gateway checks it
+        speech_region=os.environ.get("UCP_SPEECH_REGION", "us-east-1"),
     )
     _start_control_plane(url, settings)
     try:

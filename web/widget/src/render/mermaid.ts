@@ -8,13 +8,23 @@
 import { type Box, INK, type Line, type Point, rim, type Scene, type Shape, shape, text } from "./scene";
 
 type Direction = "TB" | "BT" | "LR" | "RL";
-type Node = { label: string; kind: Shape["kind"]; round: "square" | "soft" | "pill"; group: number | null };
-type Edge = { from: string; to: string; label: string; dashed: boolean; thick: boolean; start: boolean; end: boolean; hidden: boolean };
+/** A node's words. A box drawn in text (boxart.ts) may add a body under them: its paragraphs, one per line. */
+export type Node = {
+  label: string;
+  kind: Shape["kind"];
+  round: "square" | "soft" | "pill";
+  group: number | null;
+  body?: string;
+  list?: boolean; // the body is a list, so it is set flush left
+};
+export type Edge = { from: string; to: string; label: string; dashed: boolean; thick: boolean; start: boolean; end: boolean; hidden: boolean };
 type Group = { title: string; parent: number | null };
 
 const MAX_NODES = 200;
 const MAX_EDGES = 400;
 const SIZE = 14; // px: a node's words
+const BODY = 13; // px: a box's body, under its words
+const BODY_INK = "#44403c";
 const MAX_WAYPOINTS = 2_000; // an arrow over many layers bends through one in each; past this the chart is code
 const CHAR = 0.55; // an average character's width, in ems, as Diagram.tsx measures
 const LEAD = 1.25;
@@ -138,7 +148,7 @@ function linkAt(s: string, at: number): [Link, number] | null {
   return [link, at + m[0].length];
 }
 
-type Chart = { direction: Direction; nodes: Map<string, Node>; edges: Edge[]; groups: Group[] };
+export type Chart = { direction: Direction; nodes: Map<string, Node>; edges: Edge[]; groups: Group[] };
 
 /** The chart's nodes, arrows and subgraphs, or null when it is not a flowchart or holds nothing to draw. */
 export function readFlowchart(code: string): Chart | null {
@@ -211,26 +221,39 @@ export function readFlowchart(code: string): Chart | null {
 
 // --- laying out --------------------------------------------------------------------------------------------------
 
-/** Words wrapped to the widest a node may be, as lines. */
-function wrap(label: string): string[] {
-  const fits = Math.floor((WIDEST - 24) / (SIZE * CHAR));
+/** About how wide words are in the chat's typeface, in ems: capitals are wider than lower case, spaces narrower. */
+export function ems(words: string, bold = false): number {
+  let sum = 0;
+  for (const ch of words) sum += /[A-Z]/.test(ch) ? 0.7 : /[a-z]/.test(ch) ? 0.57 : /[  ]/.test(ch) ? 0.27 : /[.,:;'()|!-]/.test(ch) ? 0.34 : 0.62;
+  return sum * (bold ? 1.04 : 1);
+}
+
+const MARK = /^(?:[•●◦▪‣]|\d{1,2}[.)])\s+/u;
+
+/** Words wrapped to the widest a node may be, as lines. A list item's further lines hang under its words. */
+function wrap(label: string, widest = WIDEST, size = SIZE, bold = false): string[] {
+  const room = widest - 24;
   return label.split("\n").flatMap((paragraph) => {
+    const hang = " ".repeat(Math.round(ems(MARK.exec(paragraph)?.[0] ?? "") / 0.27));
     const out: string[] = [];
     let line = "";
     for (const word of paragraph.split(/\s+/)) {
-      if (line && line.length + 1 + word.length > fits) {
+      const next = line ? `${line} ${word}` : word;
+      if (line && ems(next, bold) * size > room) {
         out.push(line);
-        line = word;
-      } else line = line ? `${line} ${word}` : word;
+        line = hang + word;
+      } else line = next;
     }
     return [...out, line];
   });
 }
 
-/** A node's box for its wrapped words and its shape. */
-function size(node: Node, lines: string[]): { w: number; h: number } {
-  const w = Math.max(...lines.map((line) => line.length)) * SIZE * CHAR + 24;
-  const h = lines.length * SIZE * LEAD + 18;
+const widthOf = (lines: string[], size: number, bold = false) => Math.max(0, ...lines.map((line) => ems(line, bold) * size));
+
+/** A node's box for its wrapped words, its body and its shape. */
+function size(node: Node, lines: string[], body: string[]): { w: number; h: number } {
+  const w = Math.max(widthOf(lines, SIZE, Boolean(node.body)), widthOf(body, BODY)) + 24;
+  const h = lines.length * SIZE * LEAD + (body.length ? 6 + body.length * BODY * LEAD : 0) + 18;
   if (node.kind === "rhombus") return { w: Math.max(w + h, 70), h: Math.max(w + h, 70) * 0.75 };
   if (node.kind === "ellipse") {
     const d = Math.hypot(w, h);
@@ -244,13 +267,19 @@ const mean = (values: number[]) => values.reduce((sum, v) => sum + v, 0) / value
 /** A flowchart drawn as a scene, or null when the source is not one this reads. */
 export function fromMermaid(code: string): Scene | null {
   const chart = readFlowchart(code);
-  if (!chart) return null;
+  const drawn = chart && layout(chart);
+  return drawn && { kind: "Mermaid", ...drawn };
+}
+
+/** A chart's nodes in layers along its direction and its arrows between them, or null when it is too big to draw. */
+export function layout(chart: Chart, widest = WIDEST): Pick<Scene, "shapes" | "lines"> | null {
   const { direction, nodes, edges, groups } = chart;
   const across = direction === "TB" || direction === "BT" ? "w" : "h";
   const along = across === "w" ? "h" : "w";
   const ids = [...nodes.keys()];
-  const lines = new Map(ids.map((id) => [id, wrap(nodes.get(id)!.label)]));
-  const boxes = new Map(ids.map((id) => [id, size(nodes.get(id)!, lines.get(id)!)]));
+  const lines = new Map(ids.map((id) => [id, wrap(nodes.get(id)!.label, widest, SIZE, Boolean(nodes.get(id)!.body))]));
+  const bodies = new Map(ids.map((id) => [id, nodes.get(id)!.body ? wrap(nodes.get(id)!.body!, widest, BODY) : []]));
+  const boxes = new Map(ids.map((id) => [id, size(nodes.get(id)!, lines.get(id)!, bodies.get(id)!)]));
 
   // Layers: an arrow back up the chart is turned round to find them, so a loop still reads top to bottom.
   const outgoing = new Map(ids.map((id) => [id, [] as Edge[]]));
@@ -420,7 +449,20 @@ export function fromMermaid(code: string): Scene | null {
     const node = nodes.get(id)!;
     const b = boxOf(id);
     const radius = node.round === "pill" ? b.h / 2 : node.round === "soft" ? 10 : 2;
-    shapes.push(shape({ ...b, radius, fill: FILL, stroke: INK, width: 1.5, label: lines.get(id)!.join("\n"), size: SIZE, wrap: false }));
+    const body = bodies.get(id)!;
+    if (!body.length) {
+      shapes.push(shape({ ...b, radius, fill: FILL, stroke: INK, width: 1.5, label: lines.get(id)!.join("\n"), size: SIZE, wrap: false }));
+      continue;
+    }
+    // Its words in bold over its body, both set from the top of the box.
+    const head = lines.get(id)!.length * SIZE * LEAD;
+    const words = { kind: "text" as const, valign: "top" as const, wrap: false };
+    const left = node.list ? { x: b.x + 12, w: b.w - 24, align: "start" as const } : { x: b.x, w: b.w, align: "middle" as const };
+    shapes.push(
+      shape({ ...b, radius, fill: FILL, stroke: INK, width: 1.5 }),
+      shape({ ...words, x: b.x, y: b.y + 9, w: b.w, h: head, label: lines.get(id)!.join("\n"), size: SIZE, bold: true }),
+      shape({ ...words, ...left, y: b.y + 15 + head, h: b.h - 24 - head, label: body.join("\n"), size: BODY, color: BODY_INK }),
+    );
   }
 
   const drawn: Line[] = [];
@@ -450,5 +492,5 @@ export function fromMermaid(code: string): Scene | null {
     const [right, y] = [b.x + b.w, b.y + b.h / 2];
     drawn.push(line(e, [[right, y - 8], [right + 22, y - 8], [right + 22, y + 8], [right, y + 8]]));
   }
-  return { kind: "Mermaid", shapes, lines: drawn };
+  return { shapes, lines: drawn };
 }

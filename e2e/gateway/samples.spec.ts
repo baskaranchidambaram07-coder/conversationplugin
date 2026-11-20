@@ -34,7 +34,7 @@ async function earlierChats(page: Page) {
   await page.getByRole("button", { name: "Ask the College" }).click();
   const chat = page.frameLocator("[data-ucp] iframe");
   await chat.getByRole("button", { name: "Your chats" }).click();
-  return chat.getByRole("navigation", { name: "Your chats" }).getByRole("listitem");
+  return chat.getByRole("navigation", { name: "Your chats" }).locator(".chats > li");
 }
 
 test("the public sample answers a visitor who is not signed in", async ({ page }) => {
@@ -107,7 +107,7 @@ test("the full-page sample is the assistant itself, signed in through the portal
 
   await page.reload();
   const list = page.frameLocator("#assistant iframe").getByRole("navigation", { name: "Your chats" });
-  await expect(list.getByRole("listitem")).toHaveCount(1);
+  await expect(list.locator(".chats > li")).toHaveCount(1);
 });
 
 test("the hosted full page asks for a name first, then is the assistant", async ({ page }) => {
