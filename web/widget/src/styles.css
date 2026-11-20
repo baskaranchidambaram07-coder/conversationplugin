@@ -562,10 +562,124 @@ h1 {
   scrollbar-width: thin;
 }
 
+/* A formula: MathML the browser lays out in a maths face (temml's stylesheet), a step larger so it sits level with
+   Inter. One on its own line is centred and scrolls sideways in place when wider than the answer. temml spaces a
+   matrix's cells with inline styles, which the content policy refuses, so they are spaced here. */
+.maths math {
+  font-size: 1.12em;
+}
+
+.maths.block {
+  overflow-x: auto;
+  overflow-y: hidden;
+  padding-block: 2px;
+  scrollbar-width: thin;
+}
+
+.maths.block:focus-visible {
+  outline-offset: -3px;
+}
+
+.maths.block math {
+  display: block math; /* MathML's own block, which centres the formula; temml asks for it inline */
+}
+
+.maths mtd {
+  padding-inline: 0.4em; /* a matrix's cells */
+}
+
+.maths mtable.tml-jot mtd {
+  padding-inline: 0; /* aligned steps sit tight on their = signs */
+}
+
+/* Highlighted code: a few quiet hues on the code's cream ground, each above 5:1 in either scheme. Comments step back
+   in the muted ink and italic; anything without a class stays the ink. */
+.code {
+  --hl-keyword: light-dark(#a1306f, #e88cc4);
+  --hl-string: light-dark(#2a7a3b, #94cf96);
+  --hl-number: light-dark(#b04a00, #f2a86a);
+  --hl-title: light-dark(#2459b8, #93b7ff);
+  --hl-type: light-dark(#8a5200, #e2b866);
+  --hl-attr: light-dark(#9a3b28, #f09c86);
+  --hl-meta: light-dark(#6a4bb0, #bba4f2);
+  --hl-deletion: light-dark(#b3261e, #ff9b93);
+}
+
+.hljs-keyword,
+.hljs-selector-tag,
+.hljs-doctag,
+.hljs-name {
+  color: var(--hl-keyword);
+}
+
+.hljs-string,
+.hljs-regexp,
+.hljs-addition,
+.hljs-char {
+  color: var(--hl-string);
+}
+
+.hljs-number,
+.hljs-literal,
+.hljs-symbol,
+.hljs-bullet {
+  color: var(--hl-number);
+}
+
+.hljs-title,
+.hljs-section {
+  color: var(--hl-title);
+}
+
+.hljs-type,
+.hljs-built_in,
+.hljs-title.class_,
+.hljs-title.class_.inherited__ {
+  color: var(--hl-type);
+}
+
+.hljs-attr,
+.hljs-attribute,
+.hljs-property,
+.hljs-variable,
+.hljs-template-variable,
+.hljs-selector-attr,
+.hljs-selector-class,
+.hljs-selector-id {
+  color: var(--hl-attr);
+}
+
+.hljs-meta,
+.hljs-meta .hljs-keyword {
+  color: var(--hl-meta);
+}
+
+.hljs-deletion {
+  color: var(--hl-deletion);
+}
+
+.hljs-comment,
+.hljs-quote {
+  color: var(--muted);
+  font-style: italic;
+}
+
+.hljs-emphasis {
+  font-style: italic;
+}
+
+.hljs-strong {
+  font-weight: 650;
+}
+
 /* A drawing in box-drawing characters: lines set close enough that its upright strokes join. */
 .code pre.art,
 .diagram pre.art {
   line-height: 1.15; /* Consolas's box strokes part at 1.2 */
+}
+
+.tools {
+  flex-wrap: wrap; /* a narrow chat stacks a chart's or table's tools rather than squeeze them */
 }
 
 .code .quiet,
@@ -765,7 +879,7 @@ h1 {
   font-variant-numeric: tabular-nums;
 }
 
-.chart .mark {
+.chart .bar {
   fill: currentColor;
 }
 
@@ -791,6 +905,88 @@ h1 {
 
 .chart .hover {
   fill: color-mix(in srgb, var(--ink) 6%, transparent);
+}
+
+/* The one moment a chart moves: drawn in when it appears or the visitor picks another kind. Bars rise from the
+   baseline, lines draw from the left, washes and slices settle in. */
+.chart .bar {
+  transform-box: fill-box;
+  transform-origin: 50% 100%;
+  animation: chart-rise 520ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.chart .bar.below {
+  transform-origin: 50% 0;
+}
+
+.chart path.line {
+  stroke-dasharray: 1;
+  animation: chart-draw 760ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.chart .wash,
+.chart .slice {
+  animation: chart-settle 600ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.chart .slice {
+  transform-box: view-box;
+  transform-origin: center;
+}
+
+@keyframes chart-rise {
+  from {
+    transform: scaleY(0);
+  }
+}
+
+@keyframes chart-draw {
+  from {
+    stroke-dashoffset: 1;
+  }
+}
+
+@keyframes chart-settle {
+  from {
+    opacity: 0;
+    transform: scale(0.96);
+  }
+}
+
+/* Which kind the chart is drawn as: a small segment of quiet choices, the chosen one lifted onto the surface. */
+.chart .kinds {
+  display: inline-flex;
+  gap: 2px;
+  padding: 2px;
+  border-radius: 8px;
+  background: var(--ground);
+  box-shadow: inset 0 0 0 1px var(--line);
+}
+
+.chart .kinds button {
+  min-height: 28px;
+  padding: 0 10px;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--muted);
+}
+
+.chart .kinds button:hover {
+  color: var(--ink);
+}
+
+.chart .kinds button[aria-pressed="true"] {
+  background: var(--surface);
+  box-shadow: 0 1px 2px color-mix(in srgb, var(--shade) 12%, transparent), 0 0 0 1px var(--line);
+  font-weight: 600;
+  color: var(--ink);
+}
+
+.chart .kinds + .quiet {
+  margin-inline-start: 4px;
 }
 
 .chart .cross {
@@ -1516,7 +1712,9 @@ textarea::placeholder {
   padding-inline-start: 8px;
 }
 
-.clip {
+.clip,
+.mic,
+.voice-icon {
   display: grid;
   place-items: center;
   flex: none;
@@ -1530,17 +1728,22 @@ textarea::placeholder {
   transition: background-color 0.15s ease-out, color 0.15s ease-out;
 }
 
-.clip:hover:not(:disabled) {
+.clip:hover:not(:disabled),
+.mic:hover:not(:disabled),
+.voice-icon:hover {
   background: color-mix(in srgb, var(--ink) 6%, transparent);
   color: var(--ink);
 }
 
-.clip:disabled {
+.clip:disabled,
+.mic:disabled {
   opacity: 0.45;
   cursor: default;
 }
 
-.clip .glyph {
+.clip .glyph,
+.mic .glyph,
+.voice-icon .glyph {
   width: 20px;
   height: 20px;
 }
@@ -1865,6 +2068,144 @@ textarea::placeholder {
   }
 }
 
+/* Voice (M11): while dictating, a bar across the top of the composer, over a hairline, with the words going into
+   the box; during a voice conversation, the composer itself, holding the state, the language and the controls. Four
+   ink bars follow the microphone's loudness, or breathe while the answer is read. */
+.voice-bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 6px;
+  flex-basis: 100%;
+  min-width: 0;
+  min-height: 36px;
+}
+
+.voice-bar.dictation {
+  margin-block-end: 2px;
+  padding-block-end: 6px;
+  border-block-end: 1px solid var(--line);
+}
+
+.compose.voicing {
+  padding-inline-start: 14px;
+}
+
+.levels {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  flex: none;
+  block-size: 20px;
+}
+
+.levels i {
+  display: block;
+  inline-size: 3px;
+  block-size: 30%;
+  border-radius: 2px;
+  background: var(--ink);
+  transition: block-size 0.1s ease-out;
+}
+
+.levels.moving i {
+  animation: voice-level 1.1s ease-in-out infinite;
+}
+
+.levels.moving i:nth-child(2) {
+  animation-delay: 0.18s;
+}
+
+.levels.moving i:nth-child(3) {
+  animation-delay: 0.36s;
+}
+
+.levels.moving i:nth-child(4) {
+  animation-delay: 0.54s;
+}
+
+@keyframes voice-level {
+  0%,
+  100% {
+    block-size: 30%;
+  }
+  50% {
+    block-size: 100%;
+  }
+}
+
+.voice-state {
+  flex: 1 1 96px;
+  min-width: 0;
+  margin: 0;
+  color: var(--muted);
+  font-size: 14px;
+}
+
+.voice-state span {
+  display: -webkit-box;
+  overflow: hidden;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  overflow-wrap: anywhere;
+}
+
+.voice-state.heard {
+  color: var(--ink);
+  font-size: 15px;
+}
+
+/* The controls keep together; short of room, they move under the words as one, at the end. */
+.voice-controls {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin-inline-start: auto;
+}
+
+.voice-bar .language {
+  max-inline-size: 10em;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.voice-bar .secondary .glyph {
+  width: 16px;
+  height: 16px;
+}
+
+.voice-languages {
+  flex-basis: 100%;
+  padding-block-start: 4px;
+  border-block-start: 1px solid var(--line);
+}
+
+.voice-bar.consent {
+  display: grid;
+  gap: 6px;
+  padding: 2px 0 4px;
+}
+
+.voice-ask {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.voice-note {
+  margin: 0;
+  color: var(--muted);
+  font-size: 14px;
+  text-wrap: pretty;
+}
+
+.voice-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
 /* The loader has closed the panel: nothing may keep animating out of sight. */
 .paused,
 .paused * {
@@ -1874,8 +2215,17 @@ textarea::placeholder {
 @media (prefers-reduced-motion: reduce) {
   .ring,
   .dots span,
-  .sketch span {
+  .sketch span,
+  .chart .bar,
+  .chart path.line,
+  .chart .wash,
+  .chart .slice,
+  .levels.moving i {
     animation: none;
+  }
+
+  .levels.moving i {
+    block-size: 60%;
   }
 
   .dots span,
@@ -1902,6 +2252,11 @@ textarea::placeholder {
   .chats,
   .pins {
     border: 1px solid CanvasText;
+  }
+
+  .levels i {
+    forced-color-adjust: none;
+    background: CanvasText;
   }
 
   .file-progress > span {

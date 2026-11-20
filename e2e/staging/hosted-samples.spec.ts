@@ -25,7 +25,8 @@ async function ask(page: Page): Promise<FrameLocator> {
   const field = chat.getByRole("textbox", { name: "Your question" });
   await field.fill("Reply with the single word READY.");
   await field.press("Enter");
-  await expect(chat.getByRole("button", { name: "Send" })).toBeVisible({ timeout: 120_000 });
+  // Answered: the button is Send again, or, with voice on and nothing typed, the voice conversation's (M11).
+  await expect(chat.getByRole("button", { name: /^(Send|Start a voice conversation)$/ })).toBeVisible({ timeout: 120_000 });
   await expect(chat.getByRole("article").last()).toContainText("READY");
   await expect(chat.getByRole("alert")).toHaveCount(0);
   return chat;

@@ -30,7 +30,7 @@ test("every chart in an answer is drawn from its data, and one that does not hol
 test("bars grow from one baseline, square there and rounded at their value; a legend names two series", () => {
   const figure = render(<Chart code={bars} language="chart" />).container;
 
-  const marks = [...figure.querySelectorAll(".c1 .mark, .c2 .mark")];
+  const marks = [...figure.querySelectorAll(".c1 .bar, .c2 .bar")];
   expect(marks).toHaveLength(12);
   const bases = marks.map((mark) => mark.getAttribute("d")!.match(/^M[\d.]+,([\d.]+)V/)![1]);
   expect(new Set(bases).size).toBe(1);

@@ -1,4 +1,5 @@
 import { expect, type Page, test } from "@playwright/test";
+import { readFile } from "node:fs/promises";
 
 // Rendered answers (M3) on every engine: the example gallery, the injection corpus under the chat's content policy,
 // copying, keyboard scrolling, and a wide table in a narrow panel. The fake gateway in e2e/server.mjs answers with
@@ -28,11 +29,15 @@ const refused = (page: Page) => page.evaluate(() => (window as unknown as { refu
 
 const EXAMPLES = [
   { name: "formatting", question: "[gallery:formatting]", parts: ":is(h2, h3, h4, h5, h6)", count: 6 },
-  { name: "code", question: "[gallery:code]", parts: "figure.code", count: 6 },
+  { name: "code", question: "[gallery:code]", parts: "figure.code", count: 5 }, // its sequence diagram is drawn
   { name: "tables", question: "[gallery:tables]", parts: "figure.table", count: 2 },
   { name: "diagrams", question: "[gallery:diagrams]", parts: "figure.diagram svg[role=img]", count: 3 },
   { name: "drawings", question: "[gallery:drawings]", parts: "figure.diagram svg[role=img]", count: 2 },
   { name: "charts", question: "[gallery:charts]", parts: "figure.chart .plot svg", count: 5 },
+  { name: "revenue", question: "[gallery:revenue]", parts: "figure.chart .plot svg", count: 1 },
+  { name: "plotted", question: "[gallery:plotted]", parts: "figure.chart .plot svg", count: 2 },
+  { name: "mermaid", question: "[gallery:mermaid]", parts: ":is(figure.diagram svg[role=img], figure.chart .plot svg)", count: 2 },
+  { name: "maths", question: "[gallery:maths]", parts: ".maths math", count: 14 },
   { name: "Purple Fabric's recorded long", question: "[long]", parts: "figure", count: 3 },
 ];
 
@@ -87,6 +92,41 @@ test("a table copies as CSV, and code copies exactly", async ({ page, context, b
   await expect(page.getByRole("button", { name: "Copied" })).toBeVisible();
   const code = (await page.evaluate(() => navigator.clipboard.readText())).replace(/\r\n/g, "\n"); // Windows' line ends
   expect(code).toMatch(/^import socket\n[\s\S]*return False$/);
+});
+
+test("a table downloads as a CSV file, and the chart drawn from it redraws as another kind", async ({ page }) => {
+  await ask(page, "[gallery:revenue]");
+  const chart = page.getByRole("group", { name: "Area chart: Synthetic Monthly Revenue (2023-2024)" });
+  await expect(chart).toBeVisible();
+
+  const [download] = await Promise.all([page.waitForEvent("download"), page.getByRole("button", { name: "Download CSV" }).click()]);
+  expect(download.suggestedFilename()).toBe("month-year-revenue.csv");
+  const lines = (await readFile((await download.path())!, "utf8")).split("\r\n");
+  expect(lines.slice(0, 2)).toEqual([`${String.fromCharCode(0xfeff)}Month,Year,Revenue ($)`, 'Jan,2023,"45,200"']); // the mark, for spreadsheets
+  expect(lines).toHaveLength(25);
+
+  await page.getByRole("button", { name: "Bar", exact: true }).click();
+  await expect(page.getByRole("group", { name: "Bar chart: Synthetic Monthly Revenue (2023-2024)" })).toBeVisible();
+  await expect(page.locator("figure.chart path.bar")).toHaveCount(24);
+  // The first series' blue, not the ink of the chat's avatar, which once shared the bars' class name.
+  expect(await page.locator("figure.chart path.bar").first().evaluate((bar) => getComputedStyle(bar).fill)).toBe("rgb(42, 120, 214)");
+  await page.getByRole("button", { name: "Hide chart" }).click();
+  await expect(page.locator("figure.chart")).toHaveCount(0);
+});
+
+test("code is coloured in the palette, copies as written, and a formula is drawn by the browser itself", async ({ page }) => {
+  await ask(page, "[gallery:code]");
+  const python = page.getByRole("region", { name: "python" });
+  const keyword = python.locator(".hljs-keyword").first();
+  await expect(keyword).toBeVisible();
+  expect(await keyword.evaluate((token) => getComputedStyle(token).color)).toBe("rgb(161, 48, 111)");
+  expect(await python.textContent()).toMatch(/^import socket\n/);
+
+  await ask(page, "[gallery:maths]");
+  const formula = page.locator(".maths.block math").first();
+  await expect(formula).toBeVisible();
+  expect((await formula.boundingBox())!.height).toBeGreaterThan(20); // laid out as maths, not a line of TeX
+  await expect(page.locator(".md").getByText(/Rents are \$650 a month and fees \$1,200 a year/)).toBeVisible(); // money, not maths
 });
 
 test("wide code scrolls sideways from the keyboard", async ({ page }) => {

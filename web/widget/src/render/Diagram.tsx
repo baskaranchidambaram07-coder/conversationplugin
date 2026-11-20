@@ -8,7 +8,8 @@ import { CopyButton, Icon } from "../Icon";
 import { strings as t } from "../strings";
 import { Code } from "./Code";
 import { fromBoxArt, widestFor } from "./boxart";
-import { fromMermaid } from "./mermaid";
+import { ems, fromMermaid } from "./mermaid";
+import { fromSequence } from "./sequence";
 import { type Line, type Point, sceneOf, type Shape } from "./scene";
 import { type FenceProps, isBoxArt } from "./registry";
 import { useRoom } from "./room";
@@ -120,8 +121,9 @@ function Head({ tip, from, line }: { tip: Point; from: Point; line: Line }) {
 
 function labelBox(line: Line) {
   const lines = line.label.split("\n");
-  const [x, y] = along(line.points, line.at);
-  const w = Math.max(...lines.map((l) => l.length)) * line.size * CHAR + 8;
+  const [x, at] = along(line.points, line.at);
+  const y = at + (line.shift ?? 0);
+  const w = Math.max(...lines.map((l) => ems(l))) * line.size + 8;
   const h = lines.length * line.size * LEADING + 2;
   return { lines, x, y, w, h };
 }
@@ -158,7 +160,7 @@ export default function Diagram({ code, language }: FenceProps) {
   const art = language !== "mermaid" && isBoxArt(code);
   const widest = art ? widestFor(room) : 0; // a drawing from text is laid out to fit the frame
   const scene = useMemo(
-    () => (language === "mermaid" ? fromMermaid(code) : art ? fromBoxArt(code, widest) : sceneOf(code)),
+    () => (language === "mermaid" ? (fromSequence(code) ?? fromMermaid(code)) : art ? fromBoxArt(code, widest) : sceneOf(code)),
     [code, language, art, widest],
   );
   const [showCode, setShowCode] = useState(false);
@@ -193,8 +195,10 @@ export default function Diagram({ code, language }: FenceProps) {
   const fromText = scene.kind === "text"; // drawn from box-drawing characters, so its source is text, not code
   const flat = (words: string) => words.replace(/\s+/g, " ").trim();
   const description = [
-    ...scene.shapes.map((s) => flat(s.label)).filter(Boolean),
-    ...scene.lines.map((l) => t.diagramLine(flat(l.from), flat(l.to), flat(l.label))),
+    // Each named thing once: a sequence diagram draws each participant at its top and again at its foot.
+    ...new Set(scene.shapes.map((s) => flat(s.label)).filter(Boolean)),
+    // A line that joins nothing and says nothing, such as a lifeline, is drawing, not content.
+    ...scene.lines.filter((l) => l.from || l.to || l.label).map((l) => t.diagramLine(flat(l.from), flat(l.to), flat(l.label))),
   ]
     .map((sentence) => (/[.!?]$/.test(sentence) ? sentence : `${sentence}.`))
     .join(" ");

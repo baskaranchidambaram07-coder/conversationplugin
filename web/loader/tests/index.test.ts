@@ -318,6 +318,15 @@ test("the chat page is requested only when the visitor first opens the chat, and
   expect(frame()).toBe(iframe);
 });
 
+test("the chat frame may ask for the microphone only when the widget has voice switched on", async () => {
+  serve(async () => Response.json({ ...CONFIG, voice_enabled: true }));
+  start(script({ "data-widget-id": "w_1" }), host);
+  await settle();
+  launcher().click();
+  expect((frame() as HTMLIFrameElement).allow).toBe("clipboard-write; microphone; on-device-speech-recognition");
+  expect(settings({ voice_enabled: "yes" } as never).voice).toBe(false);
+});
+
 test("Escape closes the chat and puts focus back on the launcher", async () => {
   serve();
   start(script({ "data-widget-id": "w_1" }), host);

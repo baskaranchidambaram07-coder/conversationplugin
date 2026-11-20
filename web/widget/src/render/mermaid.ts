@@ -222,7 +222,7 @@ export function readFlowchart(code: string): Chart | null {
 // --- laying out --------------------------------------------------------------------------------------------------
 
 /** About how wide words are in the chat's typeface, in ems: capitals are wider than lower case, spaces narrower. */
-function ems(words: string, bold = false): number {
+export function ems(words: string, bold = false): number {
   let sum = 0;
   for (const ch of words) sum += /[A-Z]/.test(ch) ? 0.7 : /[a-z]/.test(ch) ? 0.57 : /[  ]/.test(ch) ? 0.27 : /[.,:;'()|!-]/.test(ch) ? 0.34 : 0.62;
   return sum * (bold ? 1.04 : 1);

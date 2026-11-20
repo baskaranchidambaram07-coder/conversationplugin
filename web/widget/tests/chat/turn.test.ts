@@ -178,3 +178,25 @@ test("recovery keeps trying through network blips, and gives up after two minute
   await vi.advanceTimersByTimeAsync(125_000);
   await expect(abandoned).rejects.toMatchObject({ status: 0 });
 });
+
+test("a question asked with voice says so, and its spoken pieces go to the player while the answer stays whole", async () => {
+  const gw = gateway();
+  const pieces: string[] = [];
+  const voice = { language: "en-GB" as const, onSpeech: (piece: { text: string }) => pieces.push(piece.text) };
+  const answer = runTurn(gw.api, "c_1", "When does the library open?", "cm_1", stop.signal, () => {}, [], voice);
+  await flush();
+  expect((gw.api.send as unknown as ReturnType<typeof vi.fn>).mock.calls[0]![1]).toMatchObject({ speak: "en-GB" });
+  gw.event(started);
+  gw.event(opened);
+  gw.event(delta(2, "Nine."));
+  gw.event({ ...envelope, seq: 3, type: "speech.audio", part: 0, text: "Nine.", audio: null });
+  gw.event(done(4, "Nine."));
+  gw.event(completed(5));
+  gw.event({ ...envelope, seq: 6, type: "speech.audio", part: 1, text: "There is more.", audio: "UklGRg==" });
+  gw.end();
+  await flush();
+  const finished = await answer;
+  expect(pieces).toEqual(["Nine.", "There is more."]);
+  expect(finished).toMatchObject({ status: "complete", gap: false, blocks: [{ type: "markdown", text: "Nine." }] });
+  expect(gw.api.message).not.toHaveBeenCalled(); // spoken pieces count in order: no gap, nothing to recover
+});

@@ -1,14 +1,16 @@
 // Markdown in an answer (M3-T2). Loaded only when the first answer arrives, so the chat's first load stays small.
 // Raw HTML is never rendered, links open safely in a new tab, and images are never fetched: an image address can
 // carry data out of the conversation, so it becomes a link the visitor chooses to follow.
-import { createContext, type ReactNode, useContext } from "react";
+import { lazy, type ReactNode, Suspense, useContext } from "react";
 import ReactMarkdown, { type Components } from "react-markdown";
 import remarkGfm from "remark-gfm";
 
 import { Icon } from "../Icon";
 import { strings as t } from "../strings";
 import { safeHref } from "./links";
+import { INLINE, markMaths } from "./mathsyntax";
 import { fenceRenderer, isBoxArt } from "./registry";
+import { Source } from "./source";
 import { Table } from "./Table";
 
 function Link({ href, children }: { href: string | null; children: ReactNode }) {
@@ -21,8 +23,6 @@ function Link({ href, children }: { href: string | null; children: ReactNode }) 
   );
 }
 
-// The answer's own text, so a fenced block can tell whether its closing fence has arrived yet.
-const Source = createContext("");
 
 /** A fenced block whose closing fence has arrived: its source ends with a line of backticks or tildes. */
 function Fence({ language, text, start, end }: { language: string; text: string; start?: number; end?: number }) {
@@ -31,6 +31,8 @@ function Fence({ language, text, start, end }: { language: string; text: string;
   const Drawn = fenceRenderer(language, text, closed);
   return <Drawn code={text.replace(/\n$/, "")} language={language} />;
 }
+
+const InlineMaths = lazy(() => import("./maths").then((m) => ({ default: m.InlineMaths })));
 
 // The chat's title is the page's top heading, so an answer's headings start one level below it.
 const shifted = (level: 2 | 3 | 4 | 5 | 6) => {
@@ -48,6 +50,17 @@ const components: Components = {
   h5: shifted(6),
   h6: shifted(6),
   table: Table,
+  // An inline formula (mathsyntax.ts) is a code span opening with INLINE; until the renderer loads it shows as TeX.
+  code: ({ className, children }) => {
+    const text = typeof children === "string" ? children : "";
+    if (className || !text.startsWith(INLINE)) return <code className={className}>{children}</code>;
+    const tex = text.slice(INLINE.length).trim();
+    return (
+      <Suspense fallback={<code>{tex}</code>}>
+        <InlineMaths tex={tex} />
+      </Suspense>
+    );
+  },
   // A task list's box is a mark, not a control, so it is drawn as one and named.
   input: ({ checked }) => (
     <span className="task" role="img" aria-label={checked ? t.taskDone : t.taskOpen}>
@@ -99,7 +112,8 @@ export function fenceDrawings(text: string): string {
 }
 
 export default function Markdown({ text: given }: { text: string }) {
-  const text = DRAWN.test(given) ? fenceDrawings(given) : given;
+  const drawn = DRAWN.test(given) ? fenceDrawings(given) : given;
+  const text = /\$|\\[([]/.test(drawn) ? markMaths(drawn) : drawn;
   return (
     <div className="md">
       {/* Every address is judged once, by safeHref in the components above; the library's own filter would drop tel: */}

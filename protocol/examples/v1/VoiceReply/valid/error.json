@@ -1,0 +1,10 @@
+{
+  "type": "error",
+  "error": {
+    "code": "assistant_unavailable",
+    "message": "Voice is not available right now. Please type your question.",
+    "retryable": true,
+    "retry_after": null,
+    "reference": "r_7Hn4Kp2D"
+  }
+}
