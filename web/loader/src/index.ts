@@ -7,12 +7,14 @@ import type { WidgetConfig } from "@ucp/protocol/v1";
 export const VERSION = "0.1.0";
 
 const WIDGET_ID = /^[A-Za-z0-9_-]{1,64}$/;
-const INK = "#1f1e1d"; // the chat's ink; also the launcher colour when a configuration has no valid brand colour
+// The launcher and the frame wear the PF design language (PFDL, Cobalt); its token values are written out below,
+// because nothing of ours but this file loads on the customer's page.
+const PRIMARY = "#0047ab"; // --action-primary: the launcher's colour when a configuration has no valid brand colour
 
 /** The display settings the loader uses, each checked: a bad value falls back to a default, never into the page. */
 export function settings(config: Partial<WidgetConfig>) {
   const title = typeof config.title === "string" ? config.title.trim().slice(0, 80) : "";
-  const color = isColor(config.brand_color) ? config.brand_color : INK;
+  const color = isColor(config.brand_color) ? config.brand_color : PRIMARY;
   const greeting = typeof config.greeting === "string" ? config.greeting.trim().slice(0, 120) : "";
   return {
     title: title || "Chat",
@@ -32,17 +34,17 @@ export const fullScreen = (width: number, height: number) => width < 600 || heig
 
 const EDGE = "max(24px,env(safe-area-inset-bottom))";
 const SIDE = (side: string) => `max(24px,env(safe-area-inset-${side}))`;
-const EASE = "cubic-bezier(.16,1,.3,1)";
+const EASE = "cubic-bezier(.2,0,0,1)";
 const CSS = `
 :host{all:initial;display:block}
 .w{color-scheme:light}.dark{color-scheme:dark}.auto{color-scheme:light dark}
 .launcher{all:unset;box-sizing:border-box;position:fixed;z-index:2147483647;bottom:${EDGE};right:${SIDE("right")};
 width:56px;height:56px;border-radius:50%;display:grid;place-items:center;cursor:pointer;
-background:var(--brand);color:var(--ink);box-shadow:0 10px 24px -10px rgba(0,0,0,.45),0 2px 6px -2px rgba(0,0,0,.25);
-transition:transform .2s ${EASE},box-shadow .2s ${EASE}}
-@media (hover:hover){.launcher:hover{transform:translateY(-2px);box-shadow:0 14px 30px -10px rgba(0,0,0,.5),0 3px 8px -2px rgba(0,0,0,.28)}}
+background:var(--brand);color:var(--ink);box-shadow:0 8px 24px rgba(0,0,0,.12),0 0 0 1px rgba(0,0,0,.06);
+transition:transform .18s ${EASE},box-shadow .18s ${EASE}}
+@media (hover:hover){.launcher:hover{transform:translateY(-2px);box-shadow:0 20px 40px rgba(0,0,0,.2),0 0 0 1px rgba(0,0,0,.06)}}
 .launcher:active{transform:scale(.92);transition:transform .08s ease-out}
-.launcher:focus-visible,.greet button:focus-visible{outline:3px solid #fff;outline-offset:2px;box-shadow:0 0 0 7px ${INK}}
+.launcher:focus-visible,.greet button:focus-visible{outline:2px solid #fff;outline-offset:0;box-shadow:0 0 0 4px #1d4ed8}
 .launcher svg{width:26px;height:26px}
 .launcher img{position:absolute;inset:0;width:100%;height:100%;border-radius:50%;object-fit:cover;
 box-shadow:inset 0 0 0 2px #fff}
@@ -50,28 +52,28 @@ box-shadow:inset 0 0 0 2px #fff}
 .open .launcher .x{display:block}
 /* the greeting: a short line beside the closed launcher, until the visitor opens the chat or dismisses it */
 .greet{position:fixed;z-index:2147483646;right:${SIDE("right")};bottom:calc(${EDGE} + 68px);display:flex;align-items:start;
-max-width:min(280px,calc(100vw - 48px));background:light-dark(#fff,#30302e);color:light-dark(${INK},#f5f4ef);
-border:1px solid light-dark(#e6e4e0,#3e3e3a);border-radius:16px 16px 4px 16px;
-box-shadow:0 12px 32px -12px rgba(0,0,0,.35),0 2px 6px -2px rgba(0,0,0,.12);
-font:15px/1.4 system-ui,-apple-system,"Segoe UI",sans-serif;animation:greet .4s ${EASE} both}
-.greet button{all:unset;box-sizing:border-box;cursor:pointer;border-radius:12px}
+max-width:min(280px,calc(100vw - 48px));background:light-dark(#fff,#1a2537);color:light-dark(#0f172a,#f1f5f9);
+border:1px solid light-dark(#e2e8f0,#222c3f);border-radius:12px 12px 4px 12px;
+box-shadow:0 10px 30px rgba(24,24,27,.14);
+font:15px/1.4 Roboto,system-ui,-apple-system,"Segoe UI",sans-serif;animation:greet .24s ${EASE} both}
+.greet button{all:unset;box-sizing:border-box;cursor:pointer;border-radius:8px}
 .greet .say{padding:12px 4px 12px 16px;overflow-wrap:anywhere}
-.greet .bye{flex:none;display:grid;place-items:center;width:32px;height:32px;margin:6px 6px 0 0;color:light-dark(#6b6a68,#b0aea5)}
+.greet .bye{flex:none;display:grid;place-items:center;width:32px;height:32px;margin:6px 6px 0 0;color:light-dark(#606f86,#8494a9)}
 .greet .bye svg{width:16px;height:16px}
-@media (hover:hover){.greet .bye:hover{background:light-dark(#f1f0ee,#3e3e3a)}}
-.left .greet{right:auto;left:${SIDE("left")};border-radius:16px 16px 16px 4px}
+@media (hover:hover){.greet .bye:hover{background:light-dark(#f1f5f9,#1e283b)}}
+.left .greet{right:auto;left:${SIDE("left")};border-radius:12px 12px 12px 4px}
 .open .greet{display:none}
 @keyframes greet{from{opacity:0;transform:translateY(8px)}}
 .panel{box-sizing:border-box;position:fixed;z-index:2147483646;right:${SIDE("right")};bottom:calc(${EDGE} + 72px);
 width:min(400px,calc(100vw - 48px));height:min(640px,calc(100vh - 120px));height:min(640px,calc(100dvh - 120px));
-border-radius:20px;overflow:hidden;background:light-dark(#fcfcfb,#262624);border:1px solid light-dark(#e6e4e0,#3e3e3a);
-box-shadow:0 24px 60px -24px rgba(0,0,0,.4),0 8px 20px -12px rgba(0,0,0,.2);
+border-radius:14px;overflow:hidden;background:light-dark(#fff,#121b2d);border:1px solid light-dark(#e2e8f0,#222c3f);
+box-shadow:0 24px 60px rgba(9,9,11,.22);
 visibility:hidden;opacity:0;transform:translateY(12px);
-transition:opacity .2s ${EASE},transform .2s ${EASE},visibility 0s .2s}
+transition:opacity .18s ${EASE},transform .18s ${EASE},visibility 0s .18s}
 .open .panel{visibility:visible;opacity:1;transform:none;transition-delay:0s}
 /* a quiet loading mark until the chat page has loaded */
 .panel::before{content:"";position:absolute;inset:0;margin:auto;width:28px;height:28px;box-sizing:border-box;
-border-radius:50%;border:3px solid light-dark(#e6e4e0,#3e3e3a);border-top-color:light-dark(#6b6a68,#b0aea5)}
+border-radius:50%;border:3px solid light-dark(#e2e8f0,#222c3f);border-top-color:light-dark(#606f86,#8494a9)}
 /* it spins only while the chat is open: a closed widget runs nothing on the host page */
 .open .panel::before{animation:spin .9s linear infinite}
 .ready::before{display:none}
