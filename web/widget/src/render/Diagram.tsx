@@ -10,7 +10,7 @@ import { Code } from "./Code";
 import { fromBoxArt, widestFor } from "./boxart";
 import { ems, fromMermaid } from "./mermaid";
 import { fromSequence } from "./sequence";
-import { type Line, type Point, sceneOf, type Shape } from "./scene";
+import { INK, type Line, PAPER, type Point, sceneOf, type Shape } from "./scene";
 import { type FenceProps, isBoxArt } from "./registry";
 import { useRoom } from "./room";
 
@@ -40,7 +40,7 @@ function wrapped(label: string, width: number, size: number, wrap: boolean): str
 function Words(props: { lines: string[]; x: number; y: number; size: number; color: string; bold?: boolean; align: Shape["align"] }) {
   const { lines, x, y, size, color, bold, align } = props;
   return (
-    <text x={x} fontSize={size} fill={color === "none" ? "#1f1e1d" : color} fontWeight={bold ? 700 : 400} textAnchor={align} dominantBaseline="central">
+    <text x={x} fontSize={size} fill={color === "none" ? INK : color} fontWeight={bold ? 700 : 400} textAnchor={align} dominantBaseline="central">
       {lines.map((line, i) => (
         <tspan key={i} x={x} y={y + i * size * LEADING}>
           {line}
@@ -146,7 +146,7 @@ function LineView({ line }: { line: Line }) {
       {line.start && <Head tip={p[0]!} from={p[1]!} line={line} />}
       {box && (
         <g>
-          <rect x={box.x - box.w / 2} y={box.y - box.h / 2} width={box.w} height={box.h} rx={4} fill="#ffffff" />
+          <rect x={box.x - box.w / 2} y={box.y - box.h / 2} width={box.w} height={box.h} rx={4} fill={PAPER} />
           <Words lines={box.lines} x={box.x} y={box.y - ((box.lines.length - 1) * line.size * LEADING) / 2} size={line.size} color={line.color} align="middle" />
         </g>
       )}

@@ -13,6 +13,7 @@ An embeddable chat assistant that any website adds with one script tag, powered 
 
 - Use the ponytail skill at level full for all code: the smallest change that fully solves the task.
 - Load the impeccable skill before designing or changing any user interface (loader, chat, admin console). The interface must not look machine-made.
+- The interface follows the PF design language (PFDL), Intellect's design system; `DESIGN.md` records how. Its component package, `@purple-fabric/ui`, cannot be installed yet, so each stylesheet writes out the design language's token values at its top and the components are our own. Use those token names, never a new raw colour. On the build machine the `pfdl` plugin supplies the design language's skill and checks.
 - Every module ships with its tests, in the categories listed for it in the module breakdown. A task is finished only when its tests pass on the build machine and in the GitHub pipeline.
 - Start each module in a new conversation with `/start-module`, for example `/start-module M1`.
 - A hook in `.claude/settings.json` runs the publish scan before every push and blocks the push if the scan finds anything.

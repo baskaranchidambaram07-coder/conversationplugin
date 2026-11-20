@@ -36,15 +36,14 @@ const VoiceBar = lazy(() => import("./voice/Voice")); // all voice code loads on
 
 const LIMIT = 4000;
 const WARN_AT = 3600; // the character count appears only near the limit
-const INK = "#1f1e1d";
 
 /** The brand on the dark composer: a colour under 3:1 against it (WCAG's line for a control) gives way to the light
- *  ink, so the send button always stands out. */
-export const forDark = (color: string) => (contrast(color, "#30302e") >= 3 ? color : "#f5f4ef");
+ *  ink, so the send button always stands out. Both values are the stylesheet's: --surface-raised and --text-strong. */
+export const forDark = (color: string) => (contrast(color, "#1a2537") >= 3 ? color : "#f1f5f9");
 
 type Settings = {
   title: string;
-  color: string;
+  color: string | null; // null: no valid colour, so the stylesheet's own primary shows
   logo: string | null;
   picture: string | null;
   welcome: string | null;
@@ -84,7 +83,7 @@ export function readConfig(config: Partial<WidgetConfig>): Settings {
   const prompts = Array.isArray(config.suggested_prompts) ? config.suggested_prompts : [];
   return {
     title: text(config.title, 80) || "Chat",
-    color: isColor(config.brand_color) ? config.brand_color : INK,
+    color: isColor(config.brand_color) ? config.brand_color : null,
     logo: typeof config.logo_url === "string" && /^https:\/\/[!-~]+$/.test(config.logo_url) ? config.logo_url : null,
     // The assistant's picture, uploaded through the admin API and served on this address by its SHA-256.
     picture: typeof config.avatar === "string" && /^[0-9a-f]{64}$/.test(config.avatar) ? `/v1/images/${config.avatar}` : null,
@@ -722,11 +721,19 @@ export function App({ widgetId, win = window, preview = false }: { widgetId: str
     );
     return mode === "conversation" ? <div className="compose voicing">{bar}</div> : bar;
   };
-  const dark = forDark(settings.color);
-  const theme = {
-    "--brand": `light-dark(${settings.color}, ${dark})`,
-    "--on-brand": `light-dark(${inkOn(settings.color)}, ${inkOn(dark)})`,
-  } as CSSProperties;
+  // Without a colour of the widget's own, the stylesheet's primary shows, in its light and dark values.
+  const { color } = settings;
+  const dark = color ? forDark(color) : "";
+  const theme = (
+    color
+      ? {
+          "--brand": `light-dark(${color}, ${dark})`,
+          "--on-brand": `light-dark(${inkOn(color)}, ${inkOn(dark)})`,
+          "--mine": color, // the visitor's bubble keeps the colour in the dark too: it is not a control
+          "--on-mine": inkOn(color),
+        }
+      : {}
+  ) as CSSProperties;
   const left = LIMIT - draft.length;
   const list = (
     <ChatList

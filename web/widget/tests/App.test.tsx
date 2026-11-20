@@ -112,7 +112,7 @@ test("a configuration that cannot load shows a plain problem and a retry that lo
 test("configuration values are read safely", () => {
   expect(
     readConfig({ title: "  ", brand_color: "purple", logo_url: "javascript:alert(1)", suggested_prompts: ["", "Hi", 5] as never }),
-  ).toMatchObject({ title: "Chat", color: "#1f1e1d", logo: null, picture: null, prompts: ["Hi"], notice: t.notice });
+  ).toMatchObject({ title: "Chat", color: null, logo: null, picture: null, prompts: ["Hi"], notice: t.notice });
   expect(readConfig({ avatar: "https://evil.example/x.png" }).picture).toBeNull();
   expect(readConfig({ avatar: AVATAR }).picture).toBe(`/v1/images/${AVATAR}`);
 });
@@ -121,10 +121,10 @@ test("on the dark composer a brand keeps its colour only where it stands out, at
   expect(["#F59E0B", "#60A5FA", "#7C3AED", "#5B2A86", "#000000", "#333333"].map(forDark)).toEqual([
     "#F59E0B",
     "#60A5FA",
-    "#f5f4ef", // 2.3:1, a violet that would not stand out as a control
-    "#f5f4ef",
-    "#f5f4ef",
-    "#f5f4ef",
+    "#f1f5f9", // 2.7:1, a violet that would not stand out as a control
+    "#f1f5f9",
+    "#f1f5f9",
+    "#f1f5f9",
   ]);
 });
 

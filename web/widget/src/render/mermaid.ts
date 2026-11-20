@@ -24,15 +24,15 @@ const MAX_NODES = 200;
 const MAX_EDGES = 400;
 const SIZE = 14; // px: a node's words
 const BODY = 13; // px: a box's body, under its words
-const BODY_INK = "#44403c";
+const BODY_INK = "#475569"; // --text-body
 const MAX_WAYPOINTS = 2_000; // an arrow over many layers bends through one in each; past this the chart is code
 const CHAR = 0.55; // an average character's width, in ems, as Diagram.tsx measures
 const LEAD = 1.25;
 const WIDEST = 200; // px: a node's words wrap past this
 const GAP = 36; // px between nodes in a layer
 const FILL = "#ffffff";
-const FRAME = "#f6efe6"; // a subgraph's ground
-const FRAME_EDGE = "#cdbfae";
+const FRAME = "#f1f5f9"; // a subgraph's ground: --surface-sunken
+const FRAME_EDGE = "#cbd5e1"; // --border-strong
 const TITLE = 26; // px: a subgraph's title band
 
 // --- reading -----------------------------------------------------------------------------------------------------
