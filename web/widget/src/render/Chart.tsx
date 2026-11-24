@@ -3,11 +3,11 @@
 // more series, every value readable by pointer or by the arrow keys, and the same numbers as a table.
 import { type KeyboardEvent, type PointerEvent, useContext, useId, useMemo, useRef, useState } from "react";
 
-import { Icon } from "../Icon";
+import { CopyButton, Icon } from "../Icon";
 import { strings as t } from "../strings";
 import { type Chart as Data, chartOf, format, type Kind, pieOf, type Plot, plotOf, rowsOf, share, summary } from "./plot";
 import { Code } from "./Code";
-import { specOfCode } from "./derive";
+import { specOfCode, specOfMermaidPie } from "./derive";
 import { Source } from "./source";
 import type { FenceProps } from "./registry";
 import { useRoom } from "./room";
@@ -140,12 +140,17 @@ function kindsOf(chart: Data): Kind[] {
   return pie ? ["bar", "line", "area", "pie"] : ["bar", "line", "area"];
 }
 
-/** A chart block, or Python plotting code whose values are written into it (drawn over the code), or a table's
- *  numbers (given as a chart block, without a second table under it). */
+/** A chart block; a Mermaid pie; Python plotting code whose values are written into it (drawn over the code); or a
+ *  table's numbers (given as a chart block, without a second table under it). */
 export default function Chart({ code, language, table: tabled = true }: FenceProps & { table?: boolean }) {
   const answer = useContext(Source);
   const base = useMemo(
-    () => chartOf(language === "chart" ? code : JSON.stringify(specOfCode(code, answer))),
+    () =>
+      chartOf(
+        language === "chart"
+          ? code
+          : JSON.stringify(language === "mermaid" ? specOfMermaidPie(code) : specOfCode(code, answer)),
+      ),
     [code, language, answer],
   );
   const [kind, setKind] = useState<Kind | null>(null); // null until the visitor picks another
@@ -291,6 +296,7 @@ export default function Chart({ code, language, table: tabled = true }: FencePro
               ))}
             </div>
           )}
+          {language === "mermaid" && <CopyButton text={code} label={t.copyFor("Mermaid")} />}
           {tabled && (
             <button type="button" className="quiet" aria-expanded={table} onClick={() => setTable(!table)}>
               <Icon path="M3 5h18v14H3zM3 10h18M9 10v9" />
@@ -299,7 +305,7 @@ export default function Chart({ code, language, table: tabled = true }: FencePro
           )}
         </div>
       </figure>
-      {language !== "chart" && <Code code={code} language={language} />}
+      {language !== "chart" && language !== "mermaid" && <Code code={code} language={language} />}
       {tabled && table && (
         <Table rows={rows}>
           <thead>

@@ -28,7 +28,7 @@ const GALLERY = [
 ].map(([name, text]) => [name.split("/").pop(), text] as const);
 
 test("the gallery holds our examples and every recorded Purple Fabric answer", () => {
-  expect(GALLERY.map(([name]) => name).sort()).toEqual(["charts.md", "code.md", "diagrams.md", "drawings.md", "formatting.md", "long.sse", "plotted.md", "revenue.md", "short.sse", "tables.md"]);
+  expect(GALLERY.map(([name]) => name).sort()).toEqual(["charts.md", "code.md", "diagrams.md", "drawings.md", "formatting.md", "long.sse", "maths.md", "mermaid.md", "plotted.md", "revenue.md", "short.sse", "tables.md"]);
   for (const [, text] of GALLERY) expect(text.length).toBeGreaterThan(0);
 });
 

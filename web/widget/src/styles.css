@@ -1,16 +1,54 @@
-/* The chat: a calm AI chat window in the manner of the familiar assistants, wearing the customer's colour on what
-   can be pressed and their picture beside each answer. Logical properties throughout, so a right-to-left language
-   mirrors. Each colour has a light and a dark value; the widget's color_scheme, stamped on <html>, picks. */
+/* The chat, in the PF design language (PFDL 2.3.0, its Cobalt theme): slate surfaces, Roboto, and the primary
+   colour on the send button and the visitor's own words. A widget's own colour stands in for that primary.
+   Logical properties throughout, so a right-to-left language mirrors. Each colour has a light and a dark value;
+   the widget's color_scheme, stamped on <html>, picks. */
 :root {
-  --ground: light-dark(#fcfcfb, #262624);
-  --line: light-dark(#e6e4e0, #3e3e3a);
-  --ink: light-dark(#1f1e1d, #f5f4ef);
-  --muted: light-dark(#6b6a68, #b0aea5);
-  --surface: light-dark(#ffffff, #30302e);
-  --bubble: light-dark(#f0efeb, #393936);
+  /* PFDL's tokens, their values written out here until @purple-fabric/ui's stylesheet supplies them: delete this
+     group then. Rules read these names, or the short names after them. */
+  --surface-canvas: light-dark(#f1f5f9, #070c1e);
+  --surface-card: light-dark(#ffffff, #121b2d);
+  --surface-raised: light-dark(#ffffff, #1a2537);
+  --surface-hover: light-dark(#f1f5f9, #1e283b);
+  --text-strong: light-dark(#0f172a, #f1f5f9);
+  --text-muted: light-dark(#606f86, #8494a9);
+  --text-on-primary: #ffffff;
+  --text-link: light-dark(#0047ab, #7795e8);
+  --border-default: light-dark(#e2e8f0, #222c3f);
+  --border-control: light-dark(#77879d, #64748b);
+  --action-primary: light-dark(#0047ab, #3870be);
+  --nav-active-bg: light-dark(#e8f1fe, #343a4b);
+  --focus-ring-color: light-dark(#1d4ed8, #8ea6eb);
+  --focus-ring: 0 0 0 2px var(--surface-card), 0 0 0 4px var(--focus-ring-color);
+  --shadow-popover: 0 8px 24px rgba(0, 0, 0, 0.12);
+  --radius-card-lg: 14px;
+  --fs-page-title-fluid: clamp(20px, calc(18px + 0.5vw), 24px);
+  --tracking-title: -0.017em;
+  --tracking-card: -0.01em;
+  --viz-1: light-dark(#245fd4, #427ff7);
+  --viz-2: light-dark(#d45e00, #e26b1b);
+  --viz-3: light-dark(#00978e, #00a49a);
+  --viz-4: #bc8800;
+  --viz-5: light-dark(#b8338a, #d14ba0);
+  --viz-6: light-dark(#1d8b3d, #3aa151);
+  --viz-7: light-dark(#773ac1, #955be3);
+  --viz-8: light-dark(#b32228, #d74745);
+  --font-sans: "Roboto Variable", "Roboto", "Noto Sans Arabic", "Noto Sans Devanagari", "Noto Sans Bengali",
+    "Noto Sans Tamil", "Noto Sans Telugu", "Noto Sans Kannada", "Noto Sans Malayalam", "Noto Sans Gujarati",
+    "Noto Sans Gurmukhi", "Noto Sans Oriya", -apple-system, BlinkMacSystemFont, "Segoe UI", "Helvetica Neue",
+    Helvetica, sans-serif;
+
+  --ground: var(--surface-card);
+  --line: var(--border-default);
+  --ink: var(--text-strong);
+  --muted: var(--text-muted);
+  --surface: var(--surface-raised);
+  --bubble: var(--surface-hover); /* the one neutral fill: quotes, the initials, a file's tile */
   --shade: #000000;
-  --brand: var(--ink);
-  --on-brand: var(--surface);
+  --brand: var(--action-primary); /* a widget's valid colour replaces both of these, set on the app's root */
+  --on-brand: var(--text-on-primary);
+  --mine: var(--action-primary); /* the visitor's bubble: the widget's colour as it is, in both schemes */
+  --logo-tile: #ffffff; /* logos are drawn for white, so their tile is white in both schemes */
+  --on-mine: var(--text-on-primary);
   --gutter: 16px;
   --mono: ui-monospace, "Cascadia Mono", "SF Mono", Menlo, Consolas, monospace;
   color-scheme: light;
@@ -38,15 +76,19 @@ body,
 body {
   background: var(--ground);
   color: var(--ink);
-  font: 400 16px/1.6 "Inter Variable", "Inter", system-ui, sans-serif;
-  font-feature-settings: "cv11", "ss01";
+  font: 400 16px/1.6 var(--font-sans);
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
 }
 
 ::selection {
-  background: color-mix(in srgb, var(--ink) 16%, transparent);
+  background: color-mix(in srgb, var(--brand) 22%, transparent);
   color: var(--ink);
+}
+
+.mine::selection {
+  background: color-mix(in srgb, var(--on-mine) 30%, transparent);
+  color: var(--on-mine);
 }
 
 button,
@@ -61,7 +103,7 @@ button {
 }
 
 :focus-visible {
-  outline: 3px solid var(--ink);
+  outline: 2px solid var(--focus-ring-color);
   outline-offset: 2px;
 }
 
@@ -119,7 +161,7 @@ button {
 }
 
 /* Who answers: the assistant's picture, round; else the customer's logo, on a small white tile; else the title's
-   initials on the bubble's grey (the brand colour stays on what can be pressed). The same mark heads the chat, opens an empty one and sits beside every answer. */
+   initials on the bubble's grey (the widget's colour is kept for send, the caret and the visitor's bubble). The same mark heads the chat, opens an empty one and sits beside every answer. */
 .mark {
   --size: 32px;
   display: grid;
@@ -132,7 +174,7 @@ button {
   background: var(--bubble);
   color: var(--ink);
   font-size: calc(var(--size) * 0.38);
-  font-weight: 650;
+  font-weight: 600;
   letter-spacing: 0.01em;
   user-select: none;
 }
@@ -145,7 +187,7 @@ button {
 
 .mark.logo {
   border-radius: 8px;
-  background: #ffffff; /* logos are drawn for white */
+  background: var(--logo-tile);
   box-shadow: inset 0 0 0 1px var(--line);
 }
 
@@ -158,10 +200,10 @@ h1 {
   flex: 1;
   min-width: 0;
   margin: 0;
-  font-size: 16px;
-  font-weight: 600;
-  line-height: 1.3;
-  letter-spacing: -0.01em;
+  font-size: 17px;
+  font-weight: 500;
+  line-height: 1.25;
+  letter-spacing: var(--tracking-card);
   overflow-wrap: anywhere;
 }
 
@@ -214,16 +256,17 @@ h1 {
   mask-image: linear-gradient(transparent, var(--ink) 14px, var(--ink) calc(100% - 14px), transparent);
 }
 
-/* The AI notice and the credit: one quiet line, always in sight under the composer, from a 400px panel down to a
-   360px phone. Narrower still, the credit moves under the notice rather than cut it short. A notice too long for a
-   line of its own ends in an ellipsis; its whole text stays in the page for screen readers and shows on hover. */
+/* The AI notice and the credit: one quiet line, always in sight under the composer, at the design language's
+   smallest size (12px), from a 400px panel down to a 360px phone. Narrower, the credit moves under the notice
+   rather than cut it short. A notice too long for a line of its own ends in an ellipsis; its whole text stays in
+   the page for screen readers and shows on hover. */
 .notice {
   display: flex;
   flex-wrap: wrap;
   justify-content: center;
   gap: 0 0.4em;
-  margin: 0 var(--gutter);
-  font-size: 11px;
+  margin: 0 6px; /* centred text: narrower sides than the gutter keep it on one line on a 360px phone */
+  font-size: 12px;
   line-height: 16px;
   white-space: nowrap;
   color: var(--muted);
@@ -242,9 +285,10 @@ h1 {
   margin-inline-end: 0.4em;
 }
 
-@media (max-width: 380px) {
-  .notice {
-    font-size: 10.5px;
+/* Under 356px the two no longer share a line, so the dot between them goes. */
+@media (max-width: 355.98px) {
+  .credit::before {
+    content: none;
   }
 }
 
@@ -254,14 +298,17 @@ h1 {
   gap: 24px;
 }
 
-/* The visitor's own words: a soft bubble at the end of the line. */
+/* The visitor's own words: a bubble in the primary colour at the end of the line. */
 .mine {
   align-self: flex-end;
   max-width: 85%;
   margin: 0;
   padding: 10px 16px;
-  border-radius: 20px;
-  background: var(--bubble);
+  border-radius: var(--radius-card-lg);
+  background: var(--mine);
+  color: var(--on-mine);
+  /* an edge for a colour close to the page's own, light or dark */
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--on-mine) 16%, transparent);
   white-space: pre-wrap;
   overflow-wrap: anywhere;
 }
@@ -309,7 +356,7 @@ h1 {
   margin-inline-start: -8px;
 }
 
-/* Helpful or not: 32px icon buttons; the chosen thumb fills in ink, never the brand (the Pressable Colour Rule). */
+/* Helpful or not: 32px icon buttons; the chosen thumb fills in ink, never the widget's colour (the Stand-In Rule). */
 .acts .thumb {
   padding: 8px;
 }
@@ -345,8 +392,7 @@ h1 {
 
 .ask:focus-within {
   outline: 2px solid transparent; /* shown by forced colours, which drop the ring below */
-  border-color: color-mix(in srgb, var(--ink) 40%, var(--line));
-  box-shadow: 0 0 0 3px color-mix(in srgb, var(--ink) 8%, transparent);
+  box-shadow: var(--focus-ring);
 }
 
 .ask label {
@@ -440,7 +486,7 @@ h1 {
 .md :is(h2, h3, h4, h5, h6) {
   margin-block-start: 6px;
   line-height: 1.3;
-  font-weight: 700;
+  font-weight: 600;
   text-wrap: balance;
 }
 
@@ -494,7 +540,7 @@ h1 {
 }
 
 .md a {
-  color: var(--ink);
+  color: var(--text-link);
   text-decoration: underline;
   text-decoration-thickness: 1px;
   text-underline-offset: 3px;
@@ -531,7 +577,7 @@ h1 {
 }
 
 .code {
-  background: var(--ground);
+  background: var(--surface);
 }
 
 .code figcaption,
@@ -548,7 +594,7 @@ h1 {
   padding-inline-start: 14px;
   border-block-end: 1px solid var(--line);
   font-size: 13px;
-  font-weight: 650;
+  font-weight: 600;
   color: var(--muted);
 }
 
@@ -560,6 +606,116 @@ h1 {
   font: 13.5px/1.6 var(--mono);
   tab-size: 2;
   scrollbar-width: thin;
+}
+
+/* A formula: MathML the browser lays out in a maths face (temml's stylesheet), a step larger so it sits level with
+   the text. One on its own line is centred and scrolls sideways in place when wider than the answer. temml spaces a
+   matrix's cells with inline styles, which the content policy refuses, so they are spaced here. */
+.maths math {
+  font-size: 1.12em;
+}
+
+.maths.block {
+  overflow-x: auto;
+  overflow-y: hidden;
+  padding-block: 2px;
+  scrollbar-width: thin;
+}
+
+.maths.block:focus-visible {
+  outline-offset: -2px;
+}
+
+.maths.block math {
+  display: block math; /* MathML's own block, which centres the formula; temml asks for it inline */
+}
+
+.maths mtd {
+  padding-inline: 0.4em; /* a matrix's cells */
+}
+
+.maths mtable.tml-jot mtd {
+  padding-inline: 0; /* aligned steps sit tight on their = signs */
+}
+
+/* Highlighted code: a few quiet hues on the code's card, each above 5:1 in either scheme. Comments step back
+   in the muted ink and italic; anything without a class stays the ink. */
+.code {
+  --hl-keyword: light-dark(#a1306f, #e88cc4);
+  --hl-string: light-dark(#2a7a3b, #94cf96);
+  --hl-number: light-dark(#b04a00, #f2a86a);
+  --hl-title: light-dark(#2459b8, #93b7ff);
+  --hl-type: light-dark(#8a5200, #e2b866);
+  --hl-attr: light-dark(#9a3b28, #f09c86);
+  --hl-meta: light-dark(#6a4bb0, #bba4f2);
+  --hl-deletion: light-dark(#b3261e, #ff9b93);
+}
+
+.hljs-keyword,
+.hljs-selector-tag,
+.hljs-doctag,
+.hljs-name {
+  color: var(--hl-keyword);
+}
+
+.hljs-string,
+.hljs-regexp,
+.hljs-addition,
+.hljs-char {
+  color: var(--hl-string);
+}
+
+.hljs-number,
+.hljs-literal,
+.hljs-symbol,
+.hljs-bullet {
+  color: var(--hl-number);
+}
+
+.hljs-title,
+.hljs-section {
+  color: var(--hl-title);
+}
+
+.hljs-type,
+.hljs-built_in,
+.hljs-title.class_,
+.hljs-title.class_.inherited__ {
+  color: var(--hl-type);
+}
+
+.hljs-attr,
+.hljs-attribute,
+.hljs-property,
+.hljs-variable,
+.hljs-template-variable,
+.hljs-selector-attr,
+.hljs-selector-class,
+.hljs-selector-id {
+  color: var(--hl-attr);
+}
+
+.hljs-meta,
+.hljs-meta .hljs-keyword {
+  color: var(--hl-meta);
+}
+
+.hljs-deletion {
+  color: var(--hl-deletion);
+}
+
+.hljs-comment,
+.hljs-quote {
+  color: var(--muted);
+  font-style: italic;
+}
+
+.hljs-emphasis {
+  font-style: italic;
+}
+
+.hljs-strong {
+  font-weight: 600;
 }
 
 /* A drawing in box-drawing characters: lines set close enough that its upright strokes join. */
@@ -591,7 +747,7 @@ h1 {
 .diagram pre,
 .table .scroll,
 .diagram .scroll {
-  --edge: var(--ground);
+  --edge: var(--surface); /* the card they sit on */
   background:
     linear-gradient(to right, var(--edge) 40%, transparent) left / 28px 100% no-repeat local,
     linear-gradient(to left, var(--edge) 40%, transparent) right / 28px 100% no-repeat local,
@@ -599,10 +755,6 @@ h1 {
     radial-gradient(farthest-side at 100% 50%, color-mix(in srgb, var(--shade) 22%, transparent), transparent) right / 12px 100% no-repeat scroll,
     var(--edge);
   scrollbar-color: color-mix(in srgb, var(--muted) 60%, transparent) transparent;
-}
-
-.table .scroll {
-  --edge: var(--surface);
 }
 
 /* A diagram keeps its own light sheet in either scheme: its source's colours assume one. */
@@ -615,7 +767,7 @@ h1 {
 .diagram pre:focus-visible,
 .table .scroll:focus-visible,
 .diagram .scroll:focus-visible {
-  outline-offset: -3px;
+  outline-offset: -2px;
 }
 
 .table,
@@ -625,7 +777,7 @@ h1 {
 }
 
 /* A diagram fills the card's width while its words stay readable, and scrolls sideways beyond that. Its code, when
-   shown, sits on the cream ground under it, as any code does. */
+   shown, sits on the same card under it, as any code does. */
 .diagram .scroll {
   overflow-x: auto;
   scrollbar-width: thin;
@@ -644,14 +796,14 @@ h1 {
    the light and the dark card. Marks are thin and the grid quiet; text always wears the text colours, and a series'
    identity comes from the key beside it, never from coloured words. */
 .chart {
-  --c1: light-dark(#2a78d6, #3987e5);
-  --c2: light-dark(#eb6834, #d95926);
-  --c3: light-dark(#1baf7a, #199e70);
-  --c4: light-dark(#eda100, #c98500);
-  --c5: light-dark(#e87ba4, #d55181);
-  --c6: light-dark(#008300, #008300);
-  --c7: light-dark(#6250d6, #9085e9);
-  --c8: light-dark(#e34948, #e66767);
+  --c1: var(--viz-1);
+  --c2: var(--viz-2);
+  --c3: var(--viz-3);
+  --c4: var(--viz-4);
+  --c5: var(--viz-5);
+  --c6: var(--viz-6);
+  --c7: var(--viz-7);
+  --c8: var(--viz-8);
 }
 
 .c1 { color: var(--c1); }
@@ -666,7 +818,7 @@ h1 {
 .chart figcaption {
   padding: 12px 14px 0;
   font-size: 15px;
-  font-weight: 650;
+  font-weight: 600;
   line-height: 1.35;
 }
 
@@ -690,7 +842,7 @@ h1 {
   gap: 6px;
 }
 
-/* The reading: values lead in the ink, names follow in the quieter umber, each beside its series' key. */
+/* The reading: values lead in the ink, names follow in the muted ink, each beside its series' key. */
 .chart .tip {
   position: absolute;
   top: 2px;
@@ -719,7 +871,7 @@ h1 {
 .chart .tip > span:first-child,
 .chart .tip strong {
   color: var(--ink);
-  font-weight: 650;
+  font-weight: 600;
 }
 
 .chart .key {
@@ -747,7 +899,7 @@ h1 {
 }
 
 .chart .plot:focus-visible {
-  outline-offset: -3px;
+  outline-offset: -2px;
 }
 
 .chart svg {
@@ -870,7 +1022,7 @@ h1 {
 
 .chart .kinds button[aria-pressed="true"] {
   background: var(--surface);
-  box-shadow: 0 1px 2px color-mix(in srgb, var(--shade) 12%, transparent), 0 0 0 1px var(--line);
+  box-shadow: 0 0 0 1px var(--line);
   font-weight: 600;
   color: var(--ink);
 }
@@ -914,7 +1066,7 @@ h1 {
   inset-block-start: 0;
   padding: 8px 12px;
   background: var(--line);
-  font-weight: 700;
+  font-weight: 600;
   text-align: start;
   white-space: nowrap;
 }
@@ -983,7 +1135,7 @@ h1 {
   min-height: 32px;
   border-radius: 8px;
   font-size: 13px;
-  font-weight: 500;
+  font-weight: 600;
 }
 
 .quiet {
@@ -1049,7 +1201,7 @@ h1 {
   border-radius: 50%;
   background: var(--surface);
   color: var(--ink);
-  box-shadow: 0 6px 16px -8px color-mix(in srgb, var(--shade) 35%, transparent);
+  box-shadow: var(--shadow-popover);
 }
 
 .latest .glyph {
@@ -1073,17 +1225,14 @@ h1 {
   margin: 0 var(--gutter) 6px;
   padding: 8px;
   padding-inline-start: 16px;
-  border: 1px solid var(--line);
-  border-radius: 20px;
+  border: 1px solid var(--border-control); /* a field's edge, 3:1 against the page */
+  border-radius: var(--radius-card-lg);
   background: var(--surface);
-  box-shadow: 0 8px 24px -16px color-mix(in srgb, var(--shade) 40%, transparent);
   transition: border-color 0.15s ease-out;
 }
 
 .compose:focus-within {
-  border-color: color-mix(in srgb, var(--ink) 40%, var(--line));
-  box-shadow: 0 8px 24px -16px color-mix(in srgb, var(--shade) 40%, transparent),
-    0 0 0 3px color-mix(in srgb, var(--ink) 8%, transparent);
+  box-shadow: var(--focus-ring);
 }
 
 textarea {
@@ -1163,9 +1312,10 @@ textarea::placeholder {
 
 .side h2 {
   margin: 0;
-  font-size: 16px;
-  font-weight: 700;
-  line-height: 1.3;
+  font-size: 17px;
+  font-weight: 500;
+  line-height: 1.25;
+  letter-spacing: var(--tracking-card);
 }
 
 .side h2:focus {
@@ -1210,11 +1360,11 @@ textarea::placeholder {
 }
 
 .chats button[aria-current="true"] {
-  background: var(--bubble);
+  background: var(--nav-active-bg);
 }
 
 .chats button:focus-visible {
-  outline-offset: -3px; /* the card clips its rows, so the ring is drawn inside */
+  outline-offset: -2px; /* the card clips its rows, so the ring is drawn inside */
 }
 
 .topic {
@@ -1238,7 +1388,7 @@ textarea::placeholder {
   color: var(--ink); /* the muted ink on the current row's fill is short of AA for small text */
 }
 
-/* While the list loads: rows sketched in sand, breathing like the working dots */
+/* While the list loads: rows sketched in the hairline colour, breathing like the working dots */
 .sketch li {
   display: grid;
   gap: 10px;
@@ -1306,7 +1456,7 @@ textarea::placeholder {
 }
 
 .places button[aria-current="page"] {
-  background: var(--bubble);
+  background: var(--nav-active-bg);
 }
 
 .places .glyph {
@@ -1332,10 +1482,10 @@ textarea::placeholder {
 
 .view h2 {
   margin: 0;
-  font-size: 20px;
-  font-weight: 600;
-  line-height: 1.3;
-  letter-spacing: -0.015em;
+  font-size: var(--fs-page-title-fluid);
+  font-weight: 700;
+  line-height: 1.25;
+  letter-spacing: var(--tracking-title);
   overflow-wrap: anywhere;
   text-wrap: balance;
 }
@@ -1389,7 +1539,7 @@ textarea::placeholder {
   min-width: 0;
   min-height: 40px;
   padding: 8px 12px;
-  border: 1px solid var(--line);
+  border: 1px solid var(--border-control);
   border-radius: 10px;
   background: var(--surface);
   caret-color: var(--brand);
@@ -1398,8 +1548,7 @@ textarea::placeholder {
 
 .name-row input:focus-visible {
   outline: 2px solid transparent; /* invisible here, drawn by forced colours, which drop the ring below */
-  border-color: color-mix(in srgb, var(--ink) 40%, var(--line));
-  box-shadow: 0 0 0 3px color-mix(in srgb, var(--ink) 8%, transparent);
+  box-shadow: var(--focus-ring);
 }
 
 .name-row .secondary {
@@ -1534,7 +1683,7 @@ textarea::placeholder {
 }
 
 .pin-open:focus-visible {
-  outline-offset: -3px; /* the card clips its rows, so the ring is drawn inside */
+  outline-offset: -2px; /* the card clips its rows, so the ring is drawn inside */
 }
 
 .asked,
@@ -1640,8 +1789,8 @@ textarea::placeholder {
 
 .compose.dropping {
   border-style: dashed;
-  border-color: color-mix(in srgb, var(--ink) 40%, var(--line));
-  box-shadow: 0 0 0 3px color-mix(in srgb, var(--ink) 8%, transparent);
+  border-color: var(--focus-ring-color);
+  box-shadow: var(--focus-ring);
 }
 
 .files {
@@ -1827,7 +1976,7 @@ textarea::placeholder {
   padding-block: 22px 16px;
   padding-inline: 12px;
   border-inline-end: 1px solid var(--line);
-  background: color-mix(in srgb, var(--bubble) 45%, var(--ground));
+  background: var(--surface-canvas);
   scrollbar-width: thin;
   scrollbar-color: var(--line) transparent;
 }
@@ -1854,7 +2003,6 @@ textarea::placeholder {
 .page .compose {
   padding: 10px;
   padding-inline-start: 18px;
-  border-radius: 24px;
 }
 
 .page .mine {
@@ -1901,10 +2049,10 @@ textarea::placeholder {
 
 .empty .welcome {
   max-width: 28ch;
-  font-size: 20px;
-  font-weight: 600;
-  line-height: 1.35;
-  letter-spacing: -0.015em;
+  font-size: var(--fs-page-title-fluid); /* 20px in the panel, up to 24px where the welcome leads a whole page */
+  font-weight: 700;
+  line-height: 1.3;
+  letter-spacing: var(--tracking-title);
   text-wrap: balance;
 }
 
@@ -1914,10 +2062,6 @@ textarea::placeholder {
 
 .page.empty .log {
   justify-content: flex-end;
-}
-
-.page.empty .welcome {
-  font-size: 26px; /* the wide frame's step: the welcome leads a whole page there */
 }
 
 .page.empty .foot {
@@ -1946,10 +2090,6 @@ textarea::placeholder {
 
   .mine {
     max-width: 92%;
-  }
-
-  .notice {
-    font-size: 10px;
   }
 
   /* Three header buttons leave the title too little room: New chat stays in the list of chats instead. */

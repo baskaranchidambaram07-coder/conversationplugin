@@ -67,5 +67,5 @@ test("a page that is the assistant shows it edge to edge as a conversation app; 
   await expect(frame.getByRole("button", { name: /full screen|Close chat/ })).toHaveCount(0);
 
   await page.setViewportSize({ width: 600, height: 800 });
-  await expect.poll(() => corner(page)).toBe("20px");
+  await expect.poll(() => corner(page)).toBe("14px");
 });

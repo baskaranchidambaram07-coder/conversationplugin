@@ -221,7 +221,7 @@ export const strings = {
   white: "white",
   black: "black",
   faintOnLight: "On light screens these buttons hardly stand out from the chat's light background.",
-  creamOnDark: "On dark screens this colour gives way to a light grey, so the buttons stay visible.",
+  greyOnDark: "On dark screens this colour gives way to a light grey, so the buttons stay visible.",
   logo: "Logo address",
   logoHint: "A square image on https. The title's initials show while it loads, or if it cannot load.",
   picture: "Assistant picture",

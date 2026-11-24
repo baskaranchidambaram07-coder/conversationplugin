@@ -782,7 +782,7 @@ function NewWidget(props: {
     welcome_message: null,
     suggested_prompts: [],
     ai_notice: null,
-    brand_color: "#2B241F",
+    brand_color: "#0047AB", // the design language's primary, until the customer chooses their own
     logo_url: null,
     color_scheme: "auto",
     launcher_position: "bottom-right",

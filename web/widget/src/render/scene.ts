@@ -40,12 +40,13 @@ export type Line = {
   color: string;
   from: string; // what it joins, for the spoken description
   to: string;
+  shift?: number; // px the label sits above (below 0) or under its point on the line: a sequence message's sits above
 };
 
 export type Scene = { kind: "draw.io" | "Excalidraw" | "Mermaid" | "text"; shapes: Shape[]; lines: Line[] };
 
-export const INK = "#1f1e1d";
-const PAPER = "#ffffff";
+export const INK = "#0f172a"; // --text-strong, in its light value: a diagram keeps a light sheet in both schemes
+export const PAPER = "#ffffff";
 const MAX_ITEMS = 500;
 
 /** A colour the diagram may use: #rgb or #rrggbb, a plain colour name, or none. Never a url() or anything else. */

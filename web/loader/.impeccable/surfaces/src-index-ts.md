@@ -5,24 +5,26 @@ primary_target: "src/index.ts"
 related_targets: []
 ---
 
-# Surface brief: the widget (launcher, panel frame, and the chat inside it)
+# Surface brief: the launcher and the panel frame (module M1)
 
-Scope: the loader's launcher and panel frame on the customer's page (M1), and the chat page inside the frame (M2), which inherits this world. Mode: Operate. Visitors: public visitors and signed-in residents equally, many on phones, many reading English as a second language. Task: find the launcher, open it, ask, read the answer, close it. The customer's title, brand colour and logo fill the world; one small "Powered by Purple Fabric" note sits inside the open chat.
+Scope: the loader's launcher, greeting and panel frame on the customer's page. The chat inside the frame has its own brief (`web/widget`, `src/App.tsx`). Mode: Operate. Visitors: public visitors and signed-in residents equally, many on phones, many reading English as a second language. Task: find the launcher, open it, close it.
 
-Unresolved: whether the credit links anywhere; whether a customer may hide it.
+Constraints: at most 6 KB compressed, plain TypeScript, no framework, nothing stored on the visitor's device, no error ever reaching the host page. Nothing of ours but this one file loads on the customer's page, so the design language's values are written into its stylesheet string as plain colours.
+
+Unresolved: none for the launcher itself.
 
 ## Direction contract
 
-THESIS: A friendly consumer app the visitor already knows how to use, sitting politely on someone else's page: soft cards on a warm ground, plain words, and the customer's colour only where something can be pressed. It refuses the category default's coloured header bar, avatar and two-tone bubbles.
+THESIS: The least of the PF design language (PFDL 2.3.0, its Cobalt theme) that a customer's page has to carry: a round launcher in the widget's colour, an optional greeting, and a frame in the chat's own ground. It refuses anything else of ours on the host page.
 
-OWN-WORLD: Warm tinted ground (#fbf3ea), white cards, soft border (#e7dacb), ink (#2b241f), secondary ink (#6f625a). The brand colour fills only actionable things: the launcher, send, suggested questions. Corners: panel 24px, cards 18px, inputs and chips fully round. A rounded humanist sans, self-hosted in the chat; the loader draws no text. Shadows long, soft and low-contrast.
+OWN-WORLD: Launcher: a 56px circle in the widget's colour (cobalt #0047ab without one), its glyph white or black by contrast, a soft shadow that deepens under the pointer. Greeting: a white card (#1a2537 in the dark), slate ink, a hairline, 12px corners with the one nearest the launcher pinched to 4px. Panel: 14px corners, the chat's ground (#ffffff, #121b2d in the dark), a hairline, the deepest shadow. Focus: 2px of white, then 2px of #1d4ed8, so it holds on any page.
 
-STORY: The visitor notices a small round button in the customer's colour, opens it, reads a plain welcome and the AI notice, taps a suggested question or types one, and reads the answer on a white card.
+STORY: The visitor notices a small round button, reads the greeting if there is one, opens the chat, and closes it with the same button.
 
-FIRST VIEWPORT: Closed: a 56px round launcher in the brand colour, 24px from the configured bottom corner, a chat glyph in whichever of white or black contrasts more. Open on screens 600px and wider: a 400 x 640 panel (shrunk to fit the window) on the warm ground with a 24px radius, 16px above the launcher, which becomes the close button. Under 600px the panel fills the screen with no radius, the launcher steps aside, and the chat's own header carries the close button.
+FIRST VIEWPORT: Closed: the launcher 24px from the configured bottom corner, the greeting 12px above it. Open on a window 600px wide and 520px tall or more: a 400 by 640 panel 16px above the launcher, which becomes the close button. On a smaller window the panel fills the screen with no border or radius and the launcher steps aside.
 
-Signature interaction and motion grammar: a soft spring when the launcher is pressed (it settles back with a slight overshoot); the panel rises 12px and fades in over 200ms, with no bounce on entry; reduced motion removes all movement and keeps only the fade.
+Signature interaction and motion grammar: the launcher lifts 2px under the pointer and presses to 92%; the panel rises 12px and fades in over 180ms on cubic-bezier(.2,0,0,1), with no bounce; reduced motion keeps only the fade.
 
-FORM: Warm Consumer App, a dealt challenger rated competitive (not on my ordered list of seven), chosen by the user over the assigned Ticket Stub. seed:a841235b66c8bebb
+FORM: The organisation's own design language, pinned by the user in words on 20 November 2026 ("re-design the widget ui and console ui properly as per the new skill", then "do the interim re-skin"); the roll ran for the record and the pin beats it. seed:1f3f1633ecff7b9b
 
 FINISH: unreviewed and undocumented is unfinished; this build ends with the finish review, the verdict, DESIGN.md, and every shipping raster carrying its provenance
