@@ -115,7 +115,7 @@ resource "aws_vpc_security_group_egress_rule" "gateway_to_internet" {
 #trivy:ignore:AWS-0104 Transcribe's streaming socket answers on 8443 only and AWS publishes no address list for it (docs/voice.md)
 resource "aws_vpc_security_group_egress_rule" "gateway_to_transcribe" {
   security_group_id = aws_security_group.gateway.id
-  description       = "Amazon Transcribe's streaming socket, which hears a visitor's voice (M11)"
+  description       = "Amazon Transcribe streaming socket, which hears the voice of a visitor (M11)" # EC2 refuses an apostrophe here
   cidr_ipv4         = "0.0.0.0/0"
   ip_protocol       = "tcp"
   from_port         = 8443
