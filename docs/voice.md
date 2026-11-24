@@ -308,15 +308,15 @@ How they are chosen:
 | Dev on AWS (`UCP_SPEECH=aws`, set by Terraform) | Transcribe, with the task role | Polly |
 | The browser journeys (`e2e/gateway.config.ts`) | The fake speech service, from Chromium's fake microphone | Silence, played through Web Audio |
 
-**One step needs an AWS administrator.**
-- The permissions boundary and the deployer's policy each gain one statement, `SpeechInTheDeploymentsRegion`. It allows `polly:SynthesizeSpeech` and `transcribe:StartStreamTranscriptionWebSocket`, in `us-east-1` only.
-- An administrator publishes both files again (`infra/aws/iam/README.md`, "Updating a policy").
-- Until then, AWS refuses the calls. The chat says voice is unavailable and, where the widget allows, listens and speaks with the browser's own engines instead.
+**What AWS has to allow.**
+- **Permission:** the permissions boundary and the deployer's policy each carry one statement, `SpeechInTheDeploymentsRegion`. It allows `polly:SynthesizeSpeech` and `transcribe:StartStreamTranscriptionWebSocket`, in `us-east-1` only. An administrator published both on 24 November (`infra/aws/iam/README.md`, "Updating a policy").
+- **The way out:** Polly answers on port 443, as PF does. Transcribe's streaming socket answers on port 8443 only, so the gateway's security group has a rule of its own for it (`gateway_to_transcribe` in `infra/aws/stack/network.tf`).
+- Where AWS refuses or cannot be reached, the chat says voice is unavailable and, where the widget allows, listens and speaks with the browser's own engines instead.
 
-**Checked against AWS without that permission (19 November):**
-- Polly and Transcribe both accepted our signature and refused only for lack of permission. AWS checks permission only after the signature.
-- Transcribe's refusal came back as an event-stream frame, which our code read.
-- Once the policies are published, the chat with `UCP_SPEECH=aws` proves the voices and an en-GB recording end to end.
+**Checked against AWS:**
+- **19 November, without the permission:** Polly and Transcribe both accepted our signature and refused only for lack of permission. Transcribe's refusal came back as an event-stream frame, which our code read.
+- **24 November, with it, speaking:** on the hosted sample page, a voice conversation through the dev gateway had every piece of its answer voiced by Polly (ten of ten, as MP3).
+- **24 November, with it, listening:** from the build machine, the gateway's own Transcribe code heard an en-GB recording word for word. From the dev gateway the connection timed out: its security group let it out on port 443 only. The rule above was added for that; listening through dev is to be checked once the rule is applied.
 
 ## 11. Sources
 
