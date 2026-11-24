@@ -297,7 +297,7 @@ How they are chosen:
 - **An administrator** opens Languages on the Look station, opens a language, ticks its regions, then picks the default.
 - **A visitor** starts in the language they chose last time, else the first of their browser's languages the widget offers, else the default. They can change it in the voice bar.
 - **The chat's own words** stay in English. Translating them is separate work (M2-T11).
-- **The voices** are Polly's neural ones, one per language (`aws_speech.LANGUAGES`). Each was chosen from Polly's published list and is still to be confirmed by the live check below.
+- **The voices** are Polly's neural ones, one per language (`aws_speech.LANGUAGES`). Each was chosen from Polly's published list. The live check below confirmed British English; the other twenty are still to be heard.
 
 ### Running it
 
@@ -316,7 +316,8 @@ How they are chosen:
 **Checked against AWS:**
 - **19 November, without the permission:** Polly and Transcribe both accepted our signature and refused only for lack of permission. Transcribe's refusal came back as an event-stream frame, which our code read.
 - **24 November, with it, speaking:** on the hosted sample page, a voice conversation through the dev gateway had every piece of its answer voiced by Polly (ten of ten, as MP3).
-- **24 November, with it, listening:** from the build machine, the gateway's own Transcribe code heard an en-GB recording word for word. From the dev gateway the connection timed out: its security group let it out on port 443 only. The rule above was added for that; listening through dev is to be checked once the rule is applied.
+- **24 November, with it, listening:** from the build machine, the gateway's own Transcribe code heard an en-GB recording word for word. From the dev gateway the connection timed out: its security group let it out on port 443 only. The rule above was added for that and applied the same day.
+- **24 November, end to end:** on the hosted sample page, with Chromium's fake microphone playing that recording, the dev gateway heard the question into the box. In a voice conversation it heard it again, asked it, and Polly read the answer aloud (nine pieces of nine).
 
 ## 11. Sources
 
